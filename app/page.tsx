@@ -10,20 +10,22 @@ export default function Home() {
       <Navbar />
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-10 lg:px-8">
-        <section className="grid items-center gap-10 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
+        <HotGames />
+
+        <section className="grid items-start gap-10 py-14 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-7">
             <span className="inline-flex rounded-full border border-cyan-300/12 bg-cyan-300/8 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-cyan-200">
               Gamer Marketplace
             </span>
 
             <div className="space-y-4">
-              <h1 className="font-throne max-w-3xl text-6xl leading-none sm:text-7xl">
+              <h1 className="font-throne max-w-4xl text-5xl leading-none sm:text-6xl">
                 Buy gaming accounts, services and currency.
               </h1>
-              <p className="max-w-2xl text-lg leading-8 text-slate-400">
-                Loot Master is a gaming marketplace where players can shop for
-                game currency, boosting services and accounts across different
-                titles.
+              <p className="max-w-3xl text-lg leading-8 text-slate-400">
+                Loot Master is a gamer marketplace where players can buy accounts,
+                boosting services and in-game currency for different titles in one
+                place.
               </p>
             </div>
 
@@ -58,9 +60,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/8 bg-[linear-gradient(135deg,#111827_0%,#0f172a_55%,#082f49_100%)] p-6 text-white shadow-[0_24px_80px_rgba(2,8,23,0.45)]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.18),transparent_35%)]" />
-            <div className="space-y-6">
+          <div className="rounded-[2rem] border border-white/8 bg-[linear-gradient(135deg,#111827_0%,#0f172a_55%,#082f49_100%)] p-6 shadow-[0_24px_80px_rgba(2,8,23,0.45)]">
+            <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <span className="text-xs uppercase tracking-[0.3em] text-cyan-200/80">
                   Marketplace
@@ -72,11 +73,7 @@ export default function Home() {
 
               <div className="rounded-[1.5rem] bg-white/8 p-5 ring-1 ring-white/10">
                 <p className="text-sm text-slate-300">What players can buy</p>
-                <p className="mt-2 text-3xl font-black">Accounts, services and gold</p>
-                <p className="mt-3 text-sm text-slate-300">
-                  Pick a game first, then move into the category that fits what
-                  you need.
-                </p>
+                <p className="mt-2 text-3xl">Accounts, boosts and gold</p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
@@ -96,8 +93,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        <HotGames />
 
         <section
           id="games"
