@@ -17,6 +17,7 @@ export type GameServer = {
   id: string;
   name: string;
   region: string;
+  factions: string[];
   type: string;
   total: number;
   sideA: {
@@ -92,6 +93,7 @@ export const tbcAnniversaryServers: GameServer[] = [
     id: "spineshatter-eu",
     name: "Spineshatter EU",
     region: "EU",
+    factions: ["Horde", "Alliance"],
     type: "PvP",
     total: 102826,
     sideA: {
@@ -107,6 +109,7 @@ export const tbcAnniversaryServers: GameServer[] = [
     id: "nightslayer-us",
     name: "Nightslayer US",
     region: "US",
+    factions: ["Horde", "Alliance"],
     type: "PvP",
     total: 78944,
     sideA: {
@@ -122,6 +125,7 @@ export const tbcAnniversaryServers: GameServer[] = [
     id: "thunderstrike-eu",
     name: "Thunderstrike EU",
     region: "EU",
+    factions: ["Horde", "Alliance"],
     type: "PvE",
     total: 66850,
     sideA: {
@@ -137,6 +141,7 @@ export const tbcAnniversaryServers: GameServer[] = [
     id: "dreamscythe-us",
     name: "Dreamscythe US",
     region: "US",
+    factions: ["Horde", "Alliance"],
     type: "PvE",
     total: 59775,
     sideA: {

@@ -47,12 +47,16 @@ export default async function ServerSelectionPage(
         </div>
 
         {servers.length > 0 ? (
-          <section
-            className={`mt-12 grid gap-6 ${
-              category === "gold" ? "xl:grid-cols-[1.1fr_0.9fr]" : "lg:grid-cols-2"
-            }`}
-          >
-            <div className="grid gap-5 lg:grid-cols-2">
+          category === "gold" ? (
+            <section className="mt-12">
+              <GoldPurchaseMenu
+                gameTitle={game.title}
+                categoryTitle={selectedCategory.title}
+                servers={servers}
+              />
+            </section>
+          ) : (
+            <section className="mt-12 grid gap-5 lg:grid-cols-2">
               {servers.map((server) => (
                 <article
                   key={server.id}
@@ -61,6 +65,9 @@ export default async function ServerSelectionPage(
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <h2 className="text-3xl font-black">{server.name}</h2>
+                      <p className="mt-2 text-sm text-slate-400">
+                        {server.factions.join(" / ")}
+                      </p>
                     </div>
                     <span className="rounded-full border border-cyan-300/15 bg-cyan-300/8 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
                       {server.region}
@@ -68,16 +75,8 @@ export default async function ServerSelectionPage(
                   </div>
                 </article>
               ))}
-            </div>
-
-            {category === "gold" ? (
-              <GoldPurchaseMenu
-                gameTitle={game.title}
-                categoryTitle={selectedCategory.title}
-                servers={servers}
-              />
-            ) : null}
-          </section>
+            </section>
+          )
         ) : (
           <section className="mt-12 rounded-[2rem] border border-white/8 bg-[#0c1324] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)]">
             <p className="text-sm font-bold uppercase tracking-[0.24em] text-cyan-300">

@@ -23,7 +23,13 @@ export function GoldPurchaseMenu({
   const [selectedServerId, setSelectedServerId] = useState<string>(
     servers[0]?.id ?? ""
   );
+  const [selectedFaction, setSelectedFaction] = useState<string>(
+    servers[0]?.factions[0] ?? "Horde"
+  );
   const [goldAmount, setGoldAmount] = useState<number>(3000);
+  const [nickname, setNickname] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState("Face to face");
+  const [email, setEmail] = useState("");
 
   const selectedServer =
     servers.find((server) => server.id === selectedServerId) ?? servers[0];
@@ -55,7 +61,14 @@ export function GoldPurchaseMenu({
           <select
             id="server-select"
             value={selectedServerId}
-            onChange={(event) => setSelectedServerId(event.target.value)}
+            onChange={(event) => {
+              const nextServer =
+                servers.find((server) => server.id === event.target.value) ??
+                servers[0];
+
+              setSelectedServerId(event.target.value);
+              setSelectedFaction(nextServer?.factions[0] ?? "Horde");
+            }}
             className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30"
           >
             {servers.map((server) => (
@@ -64,6 +77,28 @@ export function GoldPurchaseMenu({
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+            Faction
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {selectedServer?.factions.map((faction) => (
+              <button
+                key={faction}
+                type="button"
+                onClick={() => setSelectedFaction(faction)}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                  selectedFaction === faction
+                    ? "bg-cyan-400 text-slate-950"
+                    : "border border-white/10 bg-white/6 text-white hover:bg-white/10"
+                }`}
+              >
+                {faction}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div>
@@ -92,6 +127,63 @@ export function GoldPurchaseMenu({
           </div>
         </div>
 
+        <div className="grid gap-4">
+          <div>
+            <label
+              htmlFor="nickname"
+              className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+            >
+              Nickname
+            </label>
+            <input
+              id="nickname"
+              type="text"
+              value={nickname}
+              onChange={(event) => setNickname(event.target.value)}
+              placeholder="Your character name"
+              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/30"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="delivery-method"
+              className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+            >
+              Delivery method
+            </label>
+            <select
+              id="delivery-method"
+              value={deliveryMethod}
+              onChange={(event) => setDeliveryMethod(event.target.value)}
+              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30"
+            >
+              {["Face to face", "Auction House", "Mailbox"].map((method) => (
+                <option key={method} value={method} className="bg-slate-950">
+                  {method}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="email"
+              className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="your@email.com"
+              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/30"
+            />
+          </div>
+        </div>
+
         <div className="rounded-[1.25rem] border border-cyan-300/15 bg-cyan-300/8 p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -103,7 +195,7 @@ export function GoldPurchaseMenu({
               </p>
             </div>
             <span className="rounded-full border border-cyan-300/15 bg-cyan-300/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-100">
-              {selectedServer?.region ?? "--"}
+              {selectedServer?.region ?? "--"} / {selectedFaction}
             </span>
           </div>
         </div>
