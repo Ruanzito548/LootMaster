@@ -46,12 +46,6 @@ export function HotGames() {
           <h2 className="text-3xl font-black leading-tight sm:text-4xl">Highlights</h2>
         </div>
 
-        <Link
-          href="/admin"
-          className="inline-flex rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/12"
-        >
-          Admin
-        </Link>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">

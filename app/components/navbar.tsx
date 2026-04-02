@@ -61,21 +61,13 @@ export function Navbar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/admin"
-              className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 md:inline-flex"
-            >
-              Admin
-            </Link>
-            <button
-              type="button"
-              onClick={() => setIsOpen(true)}
-              className="rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-transform duration-200 hover:-translate-y-0.5"
-            >
-              Choose game
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-transform duration-200 hover:-translate-y-0.5"
+          >
+            Choose game
+          </button>
         </div>
       </header>
 

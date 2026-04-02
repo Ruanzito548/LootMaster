@@ -154,12 +154,20 @@ export function HotGamesAdmin() {
         </section>
 
         <div className="mt-8">
-          <Link
-            href="/"
-            className="inline-flex rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-          >
-            Back to home
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/admin"
+              className="inline-flex rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            >
+              Back to admin
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            >
+              Back to home
+            </Link>
+          </div>
         </div>
       </main>
     </div>
