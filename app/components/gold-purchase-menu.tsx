@@ -20,19 +20,23 @@ export function GoldPurchaseMenu({
   categoryTitle,
   servers,
 }: GoldPurchaseMenuProps) {
-  const [selectedServerId, setSelectedServerId] = useState<string>(
-    servers[0]?.id ?? ""
-  );
-  const [selectedFaction, setSelectedFaction] = useState<string>(
-    servers[0]?.factions[0] ?? "Horde"
-  );
-  const [goldAmount, setGoldAmount] = useState<number>(3000);
+  const [selectedServerId, setSelectedServerId] = useState("");
+  const [selectedFaction, setSelectedFaction] = useState("");
+  const [goldAmount, setGoldAmount] = useState(MIN_GOLD);
   const [nickname, setNickname] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("Face to face");
   const [email, setEmail] = useState("");
 
-  const selectedServer =
-    servers.find((server) => server.id === selectedServerId) ?? servers[0];
+  const selectedServer = servers.find((server) => server.id === selectedServerId);
+  const serverSelected = selectedServerId !== "";
+  const factionSelected = selectedFaction !== "";
+  const goldUnlocked = serverSelected && factionSelected;
+  const detailsUnlocked = goldUnlocked && goldAmount >= MIN_GOLD;
+  const formReady =
+    detailsUnlocked &&
+    nickname.trim() !== "" &&
+    deliveryMethod.trim() !== "" &&
+    email.trim() !== "";
   const price = (goldAmount / 1000) * PRICE_PER_THOUSAND;
 
   return (
@@ -62,15 +66,18 @@ export function GoldPurchaseMenu({
             id="server-select"
             value={selectedServerId}
             onChange={(event) => {
-              const nextServer =
-                servers.find((server) => server.id === event.target.value) ??
-                servers[0];
-
               setSelectedServerId(event.target.value);
-              setSelectedFaction(nextServer?.factions[0] ?? "Horde");
+              setSelectedFaction("");
+              setGoldAmount(MIN_GOLD);
+              setNickname("");
+              setDeliveryMethod("Face to face");
+              setEmail("");
             }}
             className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30"
           >
+            <option value="" className="bg-slate-950">
+              Select a server
+            </option>
             {servers.map((server) => (
               <option key={server.id} value={server.id} className="bg-slate-950">
                 {server.name} ({server.region})
@@ -79,21 +86,26 @@ export function GoldPurchaseMenu({
           </select>
         </div>
 
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+        <div className={!serverSelected ? "opacity-40" : ""}>
+          <p
+            className={`text-xs font-bold uppercase tracking-[0.18em] ${
+              serverSelected ? "text-slate-400" : "text-slate-600"
+            }`}
+          >
             Faction
           </p>
           <div className="mt-3 flex flex-wrap gap-3">
-            {selectedServer?.factions.map((faction) => (
+            {(selectedServer?.factions ?? ["Horde", "Alliance"]).map((faction) => (
               <button
                 key={faction}
                 type="button"
+                disabled={!serverSelected}
                 onClick={() => setSelectedFaction(faction)}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   selectedFaction === faction
                     ? "bg-cyan-400 text-slate-950"
                     : "border border-white/10 bg-white/6 text-white hover:bg-white/10"
-                }`}
+                } ${!serverSelected ? "cursor-not-allowed" : ""}`}
               >
                 {faction}
               </button>
@@ -101,9 +113,13 @@ export function GoldPurchaseMenu({
           </div>
         </div>
 
-        <div>
+        <div className={!goldUnlocked ? "opacity-40" : ""}>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+            <p
+              className={`text-xs font-bold uppercase tracking-[0.18em] ${
+                goldUnlocked ? "text-slate-400" : "text-slate-600"
+              }`}
+            >
               Gold amount
             </p>
             <span className="rounded-full bg-cyan-300 px-3 py-1 text-xs font-bold text-slate-950">
@@ -117,8 +133,9 @@ export function GoldPurchaseMenu({
             max={MAX_GOLD}
             step={GOLD_STEP}
             value={goldAmount}
+            disabled={!goldUnlocked}
             onChange={(event) => setGoldAmount(Number(event.target.value))}
-            className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-cyan-300"
+            className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-cyan-300 disabled:cursor-not-allowed"
           />
 
           <div className="mt-2 flex justify-between text-xs text-slate-500">
@@ -127,11 +144,13 @@ export function GoldPurchaseMenu({
           </div>
         </div>
 
-        <div className="grid gap-4">
+        <div className={`grid gap-4 ${!detailsUnlocked ? "opacity-40" : ""}`}>
           <div>
             <label
               htmlFor="nickname"
-              className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+              className={`text-xs font-bold uppercase tracking-[0.18em] ${
+                detailsUnlocked ? "text-slate-400" : "text-slate-600"
+              }`}
             >
               Nickname
             </label>
@@ -139,24 +158,28 @@ export function GoldPurchaseMenu({
               id="nickname"
               type="text"
               value={nickname}
+              disabled={!detailsUnlocked}
               onChange={(event) => setNickname(event.target.value)}
               placeholder="Your character name"
-              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/30"
+              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/30 disabled:cursor-not-allowed"
             />
           </div>
 
           <div>
             <label
               htmlFor="delivery-method"
-              className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+              className={`text-xs font-bold uppercase tracking-[0.18em] ${
+                detailsUnlocked ? "text-slate-400" : "text-slate-600"
+              }`}
             >
               Delivery method
             </label>
             <select
               id="delivery-method"
               value={deliveryMethod}
+              disabled={!detailsUnlocked}
               onChange={(event) => setDeliveryMethod(event.target.value)}
-              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30"
+              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30 disabled:cursor-not-allowed"
             >
               {["Face to face", "Auction House", "Mailbox"].map((method) => (
                 <option key={method} value={method} className="bg-slate-950">
@@ -169,7 +192,9 @@ export function GoldPurchaseMenu({
           <div>
             <label
               htmlFor="email"
-              className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+              className={`text-xs font-bold uppercase tracking-[0.18em] ${
+                detailsUnlocked ? "text-slate-400" : "text-slate-600"
+              }`}
             >
               Email
             </label>
@@ -177,9 +202,10 @@ export function GoldPurchaseMenu({
               id="email"
               type="email"
               value={email}
+              disabled={!detailsUnlocked}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="your@email.com"
-              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/30"
+              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/30 disabled:cursor-not-allowed"
             />
           </div>
         </div>
@@ -191,11 +217,11 @@ export function GoldPurchaseMenu({
                 Selected server
               </p>
               <p className="mt-2 text-lg font-black">
-                {selectedServer?.name ?? "No server"}
+                {selectedServer?.name ?? "No server selected"}
               </p>
             </div>
             <span className="rounded-full border border-cyan-300/15 bg-cyan-300/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-100">
-              {selectedServer?.region ?? "--"} / {selectedFaction}
+              {selectedServer?.region ?? "--"} / {selectedFaction || "--"}
             </span>
           </div>
         </div>
@@ -210,7 +236,8 @@ export function GoldPurchaseMenu({
 
         <button
           type="button"
-          className="w-full rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300"
+          disabled={!formReady}
+          className="w-full rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-slate-500"
         >
           Continue
         </button>
