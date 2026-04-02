@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { startTransition, useEffect, useState } from "react";
 
-import { defaultHotGameIds, games } from "../data/games";
 import { saveHotGames, subscribeToHotGames } from "../../lib/hot-games";
 import { firebaseEnabled } from "../../lib/firebase";
+import { defaultHotGameIds, games } from "../data/games";
 
 export function HotGamesAdmin() {
   const [storedIds, setStoredIds] = useState<string[]>(defaultHotGameIds);
@@ -33,8 +33,7 @@ export function HotGamesAdmin() {
       return source.includes(gameId)
         ? source.filter((id) => id !== gameId)
         : [...source, gameId];
-    }
-    );
+    });
   };
 
   const saveSelection = async () => {
@@ -60,36 +59,32 @@ export function HotGamesAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#f7ecd2_0%,#f4eee2_32%,#ebe3d2_62%,#e5dac6_100%)] text-zinc-950">
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
-        <div className="space-y-5">
-          <p className="text-sm font-bold uppercase tracking-[0.28em] text-amber-900">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#eef8f7_0%,#e4f0ef_55%,#d8e5ea_100%)] text-slate-950">
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
+        <div className="space-y-4">
+          <p className="text-sm font-bold uppercase tracking-[0.28em] text-teal-700">
             Admin
           </p>
           <h1 className="text-4xl font-black leading-tight sm:text-5xl">
-            Escolha quais jogos entram no bloco de destaque.
+            Gerenciar hots
           </h1>
-          <p className="max-w-3xl text-base leading-8 text-zinc-700">
-            Essa pagina controla a area de jogos em tendencia da home usando um
-            documento do Firestore. A home e o admin passam a ler a mesma fonte
-            de dados.
+          <p className="max-w-2xl text-base leading-8 text-slate-600">
+            Selecione os jogos que devem aparecer em destaque.
           </p>
         </div>
 
         {!firebaseEnabled ? (
-          <section className="mt-10 rounded-[2rem] border border-amber-500/30 bg-amber-50 px-6 py-5 text-amber-950">
+          <section className="mt-8 rounded-[1.5rem] border border-amber-500/30 bg-amber-50 px-6 py-5 text-amber-950">
             <p className="text-sm font-bold uppercase tracking-[0.24em]">
               Firebase pendente
             </p>
-            <p className="mt-3 max-w-3xl text-sm leading-7">
-              Preencha as variaveis de ambiente do arquivo `.env.local` com as
-              chaves do seu projeto Firebase. Eu deixei um modelo em
-              `.env.example`.
+            <p className="mt-3 text-sm leading-7">
+              Adicione as variaveis do projeto para liberar o salvamento.
             </p>
           </section>
         ) : null}
 
-        <section className="mt-10 rounded-[2rem] border border-black/10 bg-white/80 p-8 shadow-sm">
+        <section className="mt-8 rounded-[2rem] border border-slate-900/10 bg-white/80 p-8 shadow-sm">
           <div className="grid gap-4">
             {games.map((game) => {
               const isSelected = activeIds.includes(game.id);
@@ -97,60 +92,52 @@ export function HotGamesAdmin() {
               return (
                 <label
                   key={game.id}
-                  className={`flex cursor-pointer items-start justify-between gap-4 rounded-[1.5rem] border p-5 transition-colors ${
+                  className={`flex cursor-pointer items-center justify-between gap-4 rounded-[1.25rem] border p-5 transition-colors ${
                     isSelected
-                      ? "border-amber-500/40 bg-amber-50"
-                      : "border-black/10 bg-white"
+                      ? "border-teal-500/40 bg-teal-50"
+                      : "border-slate-900/10 bg-white"
                   }`}
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-xl font-black">{game.title}</h2>
-                      <span className="rounded-full border border-amber-900/15 bg-amber-100/70 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-amber-900">
+                      <h2 className="text-lg font-black">{game.title}</h2>
+                      <span className="rounded-full border border-teal-900/10 bg-teal-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-800">
                         {game.tag}
                       </span>
                     </div>
-                    <p className="max-w-2xl text-sm leading-7 text-zinc-600">
-                      {game.description}
-                    </p>
                   </div>
 
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggleGame(game.id)}
-                    className="mt-1 h-5 w-5 accent-zinc-950"
+                    className="h-5 w-5 accent-teal-700"
                   />
                 </label>
               );
             })}
           </div>
 
-          <div className="mt-8 flex flex-col gap-4 border-t border-black/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-zinc-800">
-                {activeIds.length} jogo(s) marcados como destaque.
-              </p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Clique em salvar para atualizar a home.
-              </p>
-            </div>
+          <div className="mt-8 flex flex-col gap-4 border-t border-slate-900/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-semibold text-slate-800">
+              {activeIds.length} jogo(s) selecionados.
+            </p>
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={resetSelection}
-                className="rounded-full border border-zinc-950/15 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition-colors hover:bg-zinc-50"
+                className="rounded-full border border-slate-900/10 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50"
               >
-                Restaurar padrao
+                Padrao
               </button>
               <button
                 type="button"
                 onClick={() => void saveSelection()}
                 disabled={!firebaseEnabled}
-                className="rounded-full bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
+                className="rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
-                Salvar destaques
+                Salvar
               </button>
             </div>
           </div>
@@ -171,7 +158,7 @@ export function HotGamesAdmin() {
         <div className="mt-8">
           <Link
             href="/"
-            className="inline-flex rounded-full border border-zinc-950/15 bg-white/70 px-5 py-3 text-sm font-semibold text-zinc-900 transition-colors hover:bg-white"
+            className="inline-flex rounded-full border border-slate-900/10 bg-white/80 px-5 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-white"
           >
             Voltar para a home
           </Link>
