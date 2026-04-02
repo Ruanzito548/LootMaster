@@ -56,9 +56,10 @@ export function HotGames() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         {hotGames.map((game) => (
-          <article
+          <Link
             key={game.id}
-            className="rounded-[1.75rem] border border-white/10 bg-black/20 p-6 backdrop-blur-sm"
+            href={`/games/${game.id}`}
+            className="rounded-[1.75rem] border border-white/10 bg-black/20 p-6 backdrop-blur-sm transition-colors hover:border-cyan-300/25 hover:bg-cyan-300/8"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -80,10 +81,10 @@ export function HotGames() {
                 Trending now
               </span>
               <span className="rounded-full bg-cyan-300 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-950">
-                Trending
+                Open
               </span>
             </div>
-          </article>
+          </Link>
         ))}
       </div>
     </section>

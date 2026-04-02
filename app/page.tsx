@@ -13,20 +13,22 @@ export default function Home() {
         <section className="grid items-center gap-10 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
           <div className="space-y-7">
             <span className="inline-flex rounded-full border border-cyan-300/12 bg-cyan-300/8 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-cyan-200">
-              World of Warcraft Gold
+              Gamer Marketplace
             </span>
 
             <div className="space-y-4">
               <h1 className="font-throne max-w-3xl text-6xl leading-none sm:text-7xl">
-                Choose your game.
+                Buy gaming accounts, services and currency.
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-slate-400">
-                A darker, sharper storefront for your gold marketplace.
+                Loot Master is a gaming marketplace where players can shop for
+                game currency, boosting services and accounts across different
+                titles.
               </p>
             </div>
 
             <div id="fluxo" className="flex flex-wrap gap-3">
-              {["Game", "Server", "Faction"].map((step, index) => (
+              {["Accounts", "Services", "Currency"].map((step, index) => (
                 <div
                   key={step}
                   className={`rounded-full px-4 py-2 text-sm font-semibold ${
@@ -45,7 +47,7 @@ export default function Home() {
                 href="#games"
                 className="rounded-full bg-cyan-400 px-6 py-3 text-center text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300"
               >
-                View games
+                Explore games
               </a>
               <Link
                 href="/admin"
@@ -61,23 +63,24 @@ export default function Home() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <span className="text-xs uppercase tracking-[0.3em] text-cyan-200/80">
-                  Flow
+                  Marketplace
                 </span>
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs">
-                  Step 1
+                  Live
                 </span>
               </div>
 
               <div className="rounded-[1.5rem] bg-white/8 p-5 ring-1 ring-white/10">
-                <p className="text-sm text-slate-300">Current</p>
-                <p className="mt-2 text-3xl font-black">Game</p>
+                <p className="text-sm text-slate-300">What players can buy</p>
+                <p className="mt-2 text-3xl font-black">Accounts, services and gold</p>
                 <p className="mt-3 text-sm text-slate-300">
-                  Server and faction come next.
+                  Pick a game first, then move into the category that fits what
+                  you need.
                 </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                {["Game", "Server", "Faction"].map((item, index) => (
+                {["Gold", "Boost", "Accounts"].map((item, index) => (
                   <div
                     key={item}
                     className={`rounded-2xl border px-4 py-5 text-center text-sm font-semibold ${
@@ -105,7 +108,7 @@ export default function Home() {
               Games
             </p>
             <h2 className="font-throne mt-3 text-4xl leading-tight sm:text-5xl">
-              Select a category.
+              Choose a game to start browsing.
             </h2>
           </div>
 
