@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { GoldPurchaseMenu } from "../../../components/gold-purchase-menu";
 import {
   getGameById,
   getServersByGameId,
@@ -46,41 +47,36 @@ export default async function ServerSelectionPage(
         </div>
 
         {servers.length > 0 ? (
-          <section className="mt-12 grid gap-5 lg:grid-cols-2">
-            {servers.map((server) => (
-              <article
-                key={server.id}
-                className="rounded-[1.5rem] border border-white/8 bg-[linear-gradient(180deg,#12192c_0%,#0b1324_100%)] p-5 shadow-[0_24px_80px_rgba(2,8,23,0.28)]"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-3xl font-black">{server.name}</h2>
-                    <p className="mt-1 text-sm text-slate-400">{server.region}</p>
+          <section
+            className={`mt-12 grid gap-6 ${
+              category === "gold" ? "xl:grid-cols-[1.1fr_0.9fr]" : "lg:grid-cols-2"
+            }`}
+          >
+            <div className="grid gap-5 lg:grid-cols-2">
+              {servers.map((server) => (
+                <article
+                  key={server.id}
+                  className="rounded-[1.5rem] border border-white/8 bg-[linear-gradient(180deg,#12192c_0%,#0b1324_100%)] p-5 shadow-[0_24px_80px_rgba(2,8,23,0.28)]"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-3xl font-black">{server.name}</h2>
+                    </div>
+                    <span className="rounded-full border border-cyan-300/15 bg-cyan-300/8 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+                      {server.region}
+                    </span>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xl font-black text-slate-100">{server.type}</p>
-                    <p className="mt-1 text-sm text-slate-400">{server.total}</p>
-                  </div>
-                </div>
+                </article>
+              ))}
+            </div>
 
-                <div className="mt-5 overflow-hidden rounded-xl border border-amber-300/80">
-                  <div className="flex h-10 text-sm font-bold">
-                    <div
-                      className="flex items-center justify-center bg-indigo-800 text-white"
-                      style={{ width: `${server.sideA.percent}%` }}
-                    >
-                      {server.sideA.amount} - {server.sideA.percent}%
-                    </div>
-                    <div
-                      className="flex items-center justify-center bg-red-900 text-white"
-                      style={{ width: `${server.sideB.percent}%` }}
-                    >
-                      {server.sideB.amount} - {server.sideB.percent}%
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
+            {category === "gold" ? (
+              <GoldPurchaseMenu
+                gameTitle={game.title}
+                categoryTitle={selectedCategory.title}
+                servers={servers}
+              />
+            ) : null}
           </section>
         ) : (
           <section className="mt-12 rounded-[2rem] border border-white/8 bg-[#0c1324] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)]">
