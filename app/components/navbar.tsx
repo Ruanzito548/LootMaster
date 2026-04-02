@@ -1,0 +1,41 @@
+import Link from "next/link";
+
+const links = [
+  { href: "#como-funciona", label: "Como funciona" },
+  { href: "#beneficios", label: "Beneficios" },
+  { href: "#faq", label: "FAQ" },
+];
+
+export function Navbar() {
+  return (
+    <header className="sticky top-0 z-50 border-b border-black/10 bg-white/80 backdrop-blur-xl">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
+        <Link
+          href="/"
+          className="text-lg font-black uppercase tracking-[0.28em] text-zinc-950"
+        >
+          Loot Master
+        </Link>
+
+        <nav className="hidden items-center gap-8 text-sm font-medium text-zinc-600 md:flex">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="transition-colors hover:text-zinc-950"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        <Link
+          href="#cta"
+          className="rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
+        >
+          Comecar
+        </Link>
+      </div>
+    </header>
+  );
+}
