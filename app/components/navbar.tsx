@@ -38,8 +38,10 @@ export function Navbar() {
               onClick={() => setIsOpen(true)}
               className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-400 text-lg text-slate-950">
-                ≡
+              <span className="flex h-8 w-8 flex-col items-center justify-center gap-1 rounded-full bg-cyan-400">
+                <span className="h-0.5 w-4 rounded-full bg-slate-950" />
+                <span className="h-0.5 w-4 rounded-full bg-slate-950" />
+                <span className="h-0.5 w-4 rounded-full bg-slate-950" />
               </span>
               Games
             </button>
@@ -126,8 +128,8 @@ export function Navbar() {
                   <div>
                     <div className="flex items-center gap-2">
                       {isHot ? (
-                        <span className="text-sm text-orange-300" aria-hidden="true">
-                          🔥
+                        <span className="rounded-full border border-orange-300/20 bg-orange-300/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-orange-200">
+                          Hot
                         </span>
                       ) : null}
                       <p className="text-base font-black transition-colors group-hover:text-cyan-100">
