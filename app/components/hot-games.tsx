@@ -1,59 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 
-import {
-  defaultHotGameIds,
-  games,
-  HOT_GAMES_STORAGE_KEY,
-} from "../data/games";
-
-function getStoredHotGames() {
-  if (typeof window === "undefined") {
-    return defaultHotGameIds;
-  }
-
-  const saved = window.localStorage.getItem(HOT_GAMES_STORAGE_KEY);
-
-  if (!saved) {
-    return defaultHotGameIds;
-  }
-
-  try {
-    const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed)) {
-      return defaultHotGameIds;
-    }
-
-    return parsed.filter((item): item is string => typeof item === "string");
-  } catch {
-    return defaultHotGameIds;
-  }
-}
-
-function subscribe(onStoreChange: () => void) {
-  if (typeof window === "undefined") {
-    return () => undefined;
-  }
-
-  const handleChange = () => onStoreChange();
-
-  window.addEventListener("storage", handleChange);
-  window.addEventListener("hot-games-updated", handleChange);
-
-  return () => {
-    window.removeEventListener("storage", handleChange);
-    window.removeEventListener("hot-games-updated", handleChange);
-  };
-}
+import { defaultHotGameIds, games } from "../data/games";
+import { subscribeToHotGames } from "../../lib/hot-games";
+import { firebaseEnabled } from "../../lib/firebase";
 
 export function HotGames() {
-  const hotIds = useSyncExternalStore(
-    subscribe,
-    getStoredHotGames,
-    () => defaultHotGameIds
-  );
+  const [hotIds, setHotIds] = useState<string[]>(defaultHotGameIds);
+
+  useEffect(() => subscribeToHotGames(setHotIds), []);
 
   const hotGames = games.filter((game) => hotIds.includes(game.id));
 
@@ -68,8 +25,9 @@ export function HotGames() {
         </p>
         <h2 className="mt-4 text-3xl font-black">Nenhum jogo em destaque agora.</h2>
         <p className="mt-4 max-w-2xl text-base leading-8 text-zinc-300">
-          Abra a pagina de admin para escolher quais jogos vao aparecer nessa
-          area de tendencia.
+          {firebaseEnabled
+            ? "Abra a pagina de admin para escolher quais jogos vao aparecer nessa area de tendencia."
+            : "Configure o Firebase para controlar quais jogos vao aparecer nessa area de tendencia."}
         </p>
       </section>
     );
@@ -94,7 +52,7 @@ export function HotGames() {
           href="/admin"
           className="inline-flex rounded-full border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/15"
         >
-          Gerenciar destaques
+          {firebaseEnabled ? "Gerenciar destaques" : "Configurar Firebase"}
         </Link>
       </div>
 

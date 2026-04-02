@@ -1,65 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useSyncExternalStore } from "react";
+import { startTransition, useEffect, useState } from "react";
 
-import {
-  defaultHotGameIds,
-  games,
-  HOT_GAMES_STORAGE_KEY,
-} from "../data/games";
-
-function readHotGames() {
-  if (typeof window === "undefined") {
-    return defaultHotGameIds;
-  }
-
-  const saved = window.localStorage.getItem(HOT_GAMES_STORAGE_KEY);
-
-  if (!saved) {
-    return defaultHotGameIds;
-  }
-
-  try {
-    const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed)) {
-      return defaultHotGameIds;
-    }
-
-    return parsed.filter((item): item is string => typeof item === "string");
-  } catch {
-    return defaultHotGameIds;
-  }
-}
-
-function subscribe(onStoreChange: () => void) {
-  if (typeof window === "undefined") {
-    return () => undefined;
-  }
-
-  const handleChange = () => onStoreChange();
-
-  window.addEventListener("storage", handleChange);
-  window.addEventListener("hot-games-updated", handleChange);
-
-  return () => {
-    window.removeEventListener("storage", handleChange);
-    window.removeEventListener("hot-games-updated", handleChange);
-  };
-}
+import { defaultHotGameIds, games } from "../data/games";
+import { saveHotGames, subscribeToHotGames } from "../../lib/hot-games";
+import { firebaseEnabled } from "../../lib/firebase";
 
 export function HotGamesAdmin() {
-  const storedIds = useSyncExternalStore(
-    subscribe,
-    readHotGames,
-    () => defaultHotGameIds
-  );
+  const [storedIds, setStoredIds] = useState<string[]>(defaultHotGameIds);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [saved, setSaved] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const activeIds = selectedIds ?? storedIds;
+
+  useEffect(
+    () =>
+      subscribeToHotGames((ids) => {
+        startTransition(() => {
+          setStoredIds(ids);
+        });
+      }),
+    []
+  );
 
   const toggleGame = (gameId: string) => {
     setSaved(false);
+    setErrorMessage(null);
     setSelectedIds((current) => {
       const source = current ?? storedIds;
 
@@ -70,19 +37,26 @@ export function HotGamesAdmin() {
     );
   };
 
-  const saveSelection = () => {
-    window.localStorage.setItem(
-      HOT_GAMES_STORAGE_KEY,
-      JSON.stringify(activeIds)
-    );
-    window.dispatchEvent(new Event("hot-games-updated"));
-    setSelectedIds(null);
-    setSaved(true);
+  const saveSelection = async () => {
+    try {
+      setErrorMessage(null);
+      await saveHotGames(activeIds);
+      setSelectedIds(null);
+      setSaved(true);
+    } catch (error) {
+      setSaved(false);
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel salvar no Firebase."
+      );
+    }
   };
 
   const resetSelection = () => {
     setSelectedIds(defaultHotGameIds);
     setSaved(false);
+    setErrorMessage(null);
   };
 
   return (
@@ -96,11 +70,24 @@ export function HotGamesAdmin() {
             Escolha quais jogos entram no bloco de destaque.
           </h1>
           <p className="max-w-3xl text-base leading-8 text-zinc-700">
-            Essa pagina controla a area de jogos em tendencia da home. A
-            selecao fica salva no navegador para voce iterar no layout enquanto
-            definimos o restante do funil.
+            Essa pagina controla a area de jogos em tendencia da home usando um
+            documento do Firestore. A home e o admin passam a ler a mesma fonte
+            de dados.
           </p>
         </div>
+
+        {!firebaseEnabled ? (
+          <section className="mt-10 rounded-[2rem] border border-amber-500/30 bg-amber-50 px-6 py-5 text-amber-950">
+            <p className="text-sm font-bold uppercase tracking-[0.24em]">
+              Firebase pendente
+            </p>
+            <p className="mt-3 max-w-3xl text-sm leading-7">
+              Preencha as variaveis de ambiente do arquivo `.env.local` com as
+              chaves do seu projeto Firebase. Eu deixei um modelo em
+              `.env.example`.
+            </p>
+          </section>
+        ) : null}
 
         <section className="mt-10 rounded-[2rem] border border-black/10 bg-white/80 p-8 shadow-sm">
           <div className="grid gap-4">
@@ -159,7 +146,8 @@ export function HotGamesAdmin() {
               </button>
               <button
                 type="button"
-                onClick={saveSelection}
+                onClick={() => void saveSelection()}
+                disabled={!firebaseEnabled}
                 className="rounded-full bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
               >
                 Salvar destaques
@@ -170,6 +158,12 @@ export function HotGamesAdmin() {
           {saved ? (
             <p className="mt-4 text-sm font-semibold text-emerald-700">
               Destaques salvos com sucesso.
+            </p>
+          ) : null}
+
+          {errorMessage ? (
+            <p className="mt-4 text-sm font-semibold text-rose-700">
+              {errorMessage}
             </p>
           ) : null}
         </section>

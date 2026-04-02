@@ -6,8 +6,6 @@ export type Game = {
   description: string;
 };
 
-export const HOT_GAMES_STORAGE_KEY = "loot-master-hot-games";
-
 export const games: Game[] = [
   {
     id: "retail",
