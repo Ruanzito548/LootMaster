@@ -1,14 +1,11 @@
 import Link from "next/link";
 
 import { HotGames } from "./components/hot-games";
-import { Navbar } from "./components/navbar";
 import { games, serviceCategories } from "./data/games";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,#10192d_0%,#0b1324_42%,#070b14_100%)] text-white">
-      <Navbar />
-
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-10 lg:px-8">
         <HotGames />
 
