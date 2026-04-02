@@ -6,13 +6,13 @@ import { games } from "./data/games";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#eef8f7_0%,#e4f0ef_55%,#d8e5ea_100%)] text-slate-950">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#10192d_0%,#0b1324_42%,#070b14_100%)] text-white">
       <Navbar />
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-10 lg:px-8">
         <section className="grid items-center gap-10 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
           <div className="space-y-7">
-            <span className="inline-flex rounded-full border border-teal-900/10 bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-teal-800">
+            <span className="inline-flex rounded-full border border-cyan-300/12 bg-cyan-300/8 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-cyan-200">
               World of Warcraft Gold
             </span>
 
@@ -20,9 +20,9 @@ export default function Home() {
               <h1 className="max-w-3xl text-5xl font-black leading-none tracking-tight sm:text-6xl">
                 Escolha o game.
               </h1>
-              <p className="max-w-2xl text-lg leading-8 text-slate-600">
-                Layout reduzido para testarmos uma nova paleta e uma home mais
-                direta.
+              <p className="max-w-2xl text-lg leading-8 text-slate-400">
+                Visual mais escuro, direto e com cara premium para a vitrine de
+                gold.
               </p>
             </div>
 
@@ -32,8 +32,8 @@ export default function Home() {
                   key={step}
                   className={`rounded-full px-4 py-2 text-sm font-semibold ${
                     index === 0
-                      ? "bg-teal-700 text-white"
-                      : "border border-slate-900/10 bg-white/75 text-slate-600"
+                      ? "bg-cyan-400 text-slate-950"
+                      : "border border-white/10 bg-white/5 text-slate-300"
                   }`}
                 >
                   {step}
@@ -44,20 +44,21 @@ export default function Home() {
             <div className="flex flex-col gap-4 sm:flex-row">
               <a
                 href="#games"
-                className="rounded-full bg-teal-700 px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-teal-800"
+                className="rounded-full bg-cyan-400 px-6 py-3 text-center text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300"
               >
                 Ver jogos
               </a>
               <Link
                 href="/admin"
-                className="rounded-full border border-slate-900/10 bg-white/80 px-6 py-3 text-center text-sm font-semibold text-slate-900 transition-colors hover:bg-white"
+                className="rounded-full border border-white/10 bg-white/6 px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white/10"
               >
                 Abrir admin
               </Link>
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-slate-900/10 bg-[linear-gradient(135deg,#0f172a_0%,#164e63_100%)] p-6 text-white shadow-[0_24px_80px_rgba(8,47,73,0.22)]">
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/8 bg-[linear-gradient(135deg,#111827_0%,#0f172a_55%,#082f49_100%)] p-6 text-white shadow-[0_24px_80px_rgba(2,8,23,0.45)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.18),transparent_35%)]" />
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <span className="text-xs uppercase tracking-[0.3em] text-cyan-200/80">
@@ -98,10 +99,10 @@ export default function Home() {
 
         <section
           id="games"
-          className="rounded-[2rem] border border-slate-900/10 bg-white/80 p-8 shadow-sm"
+          className="rounded-[2rem] border border-white/8 bg-[#0c1324] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)]"
         >
           <div className="pb-8">
-            <p className="text-sm font-bold uppercase tracking-[0.28em] text-teal-700">
+            <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
               Games
             </p>
             <h2 className="mt-3 text-3xl font-black leading-tight sm:text-4xl">
@@ -113,29 +114,29 @@ export default function Home() {
             {games.map((game, index) => (
               <article
                 key={game.title}
-                className="rounded-[1.75rem] border border-slate-900/10 bg-[linear-gradient(180deg,#ffffff_0%,#f2fbfa_100%)] p-6 transition-transform duration-200 hover:-translate-y-1"
+                className="rounded-[1.75rem] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-6 transition-transform duration-200 hover:-translate-y-1 hover:border-cyan-300/20"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <span className="text-sm font-bold text-teal-700">
+                    <span className="text-sm font-bold text-cyan-300">
                       0{index + 1}
                     </span>
                     <h3 className="mt-3 max-w-md text-2xl font-black leading-tight">
                       {game.title}
                     </h3>
                   </div>
-                  <span className="rounded-full border border-teal-900/10 bg-teal-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-800">
+                  <span className="rounded-full border border-cyan-300/15 bg-cyan-300/8 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
                     {game.tag}
                   </span>
                 </div>
 
-                <div className="mt-8 flex items-center justify-between border-t border-slate-900/8 pt-5">
-                  <span className="text-sm font-semibold text-slate-500">
+                <div className="mt-8 flex items-center justify-between border-t border-white/8 pt-5">
+                  <span className="text-sm font-semibold text-slate-400">
                     Selecionar
                   </span>
                   <Link
                     href="/admin"
-                    className="rounded-full bg-slate-950 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white"
+                    className="rounded-full bg-cyan-400 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-950"
                   >
                     Select
                   </Link>

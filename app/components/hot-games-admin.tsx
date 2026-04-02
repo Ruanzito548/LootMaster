@@ -59,22 +59,22 @@ export function HotGamesAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#eef8f7_0%,#e4f0ef_55%,#d8e5ea_100%)] text-slate-950">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#10192d_0%,#0b1324_45%,#070b14_100%)] text-white">
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
-          <p className="text-sm font-bold uppercase tracking-[0.28em] text-teal-700">
+          <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
             Admin
           </p>
           <h1 className="text-4xl font-black leading-tight sm:text-5xl">
             Gerenciar hots
           </h1>
-          <p className="max-w-2xl text-base leading-8 text-slate-600">
+          <p className="max-w-2xl text-base leading-8 text-slate-400">
             Selecione os jogos que devem aparecer em destaque.
           </p>
         </div>
 
         {!firebaseEnabled ? (
-          <section className="mt-8 rounded-[1.5rem] border border-amber-500/30 bg-amber-50 px-6 py-5 text-amber-950">
+          <section className="mt-8 rounded-[1.5rem] border border-amber-400/20 bg-amber-400/8 px-6 py-5 text-amber-100">
             <p className="text-sm font-bold uppercase tracking-[0.24em]">
               Firebase pendente
             </p>
@@ -84,7 +84,7 @@ export function HotGamesAdmin() {
           </section>
         ) : null}
 
-        <section className="mt-8 rounded-[2rem] border border-slate-900/10 bg-white/80 p-8 shadow-sm">
+        <section className="mt-8 rounded-[2rem] border border-white/8 bg-[#0c1324] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)]">
           <div className="grid gap-4">
             {games.map((game) => {
               const isSelected = activeIds.includes(game.id);
@@ -94,14 +94,14 @@ export function HotGamesAdmin() {
                   key={game.id}
                   className={`flex cursor-pointer items-center justify-between gap-4 rounded-[1.25rem] border p-5 transition-colors ${
                     isSelected
-                      ? "border-teal-500/40 bg-teal-50"
-                      : "border-slate-900/10 bg-white"
+                      ? "border-cyan-300/30 bg-cyan-300/8"
+                      : "border-white/8 bg-white/4"
                   }`}
                 >
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <h2 className="text-lg font-black">{game.title}</h2>
-                      <span className="rounded-full border border-teal-900/10 bg-teal-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-800">
+                      <span className="rounded-full border border-cyan-300/15 bg-cyan-300/8 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
                         {game.tag}
                       </span>
                     </div>
@@ -111,15 +111,15 @@ export function HotGamesAdmin() {
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggleGame(game.id)}
-                    className="h-5 w-5 accent-teal-700"
+                    className="h-5 w-5 accent-cyan-300"
                   />
                 </label>
               );
             })}
           </div>
 
-          <div className="mt-8 flex flex-col gap-4 border-t border-slate-900/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-semibold text-slate-800">
+          <div className="mt-8 flex flex-col gap-4 border-t border-white/8 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-semibold text-slate-300">
               {activeIds.length} jogo(s) selecionados.
             </p>
 
@@ -127,7 +127,7 @@ export function HotGamesAdmin() {
               <button
                 type="button"
                 onClick={resetSelection}
-                className="rounded-full border border-slate-900/10 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50"
+                className="rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
               >
                 Padrao
               </button>
@@ -135,7 +135,7 @@ export function HotGamesAdmin() {
                 type="button"
                 onClick={() => void saveSelection()}
                 disabled={!firebaseEnabled}
-                className="rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-slate-500"
               >
                 Salvar
               </button>
@@ -158,7 +158,7 @@ export function HotGamesAdmin() {
         <div className="mt-8">
           <Link
             href="/"
-            className="inline-flex rounded-full border border-slate-900/10 bg-white/80 px-5 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-white"
+            className="inline-flex rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
           >
             Voltar para a home
           </Link>

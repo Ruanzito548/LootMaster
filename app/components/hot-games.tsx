@@ -18,13 +18,13 @@ export function HotGames() {
     return (
       <section
         id="hots"
-        className="rounded-[2rem] border border-slate-900/10 bg-white/80 px-8 py-10 text-slate-950"
+        className="rounded-[2rem] border border-white/8 bg-[#0c1324] px-8 py-10 text-white"
       >
-        <p className="text-sm font-bold uppercase tracking-[0.28em] text-teal-700">
+        <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
           Hots
         </p>
         <h2 className="mt-4 text-3xl font-black">Nenhum destaque ativo.</h2>
-        <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
+        <p className="mt-4 max-w-2xl text-base leading-8 text-slate-400">
           {firebaseEnabled
             ? "Abra o admin para escolher os destaques."
             : "Configure o Firebase para liberar os destaques."}
@@ -36,7 +36,7 @@ export function HotGames() {
   return (
     <section
       id="hots"
-      className="rounded-[2rem] border border-slate-900/10 bg-[linear-gradient(135deg,#0f172a_0%,#164e63_100%)] p-8 text-white shadow-[0_24px_80px_rgba(8,47,73,0.22)]"
+      className="rounded-[2rem] border border-white/8 bg-[radial-gradient(circle_at_top_left,#133353_0%,#0b1324_38%,#070b14_100%)] p-8 text-white shadow-[0_24px_80px_rgba(2,8,23,0.45)]"
     >
       <div className="flex flex-col gap-4 pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
@@ -50,7 +50,7 @@ export function HotGames() {
 
         <Link
           href="/admin"
-          className="inline-flex rounded-full border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/15"
+          className="inline-flex rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/12"
         >
           Admin
         </Link>
@@ -60,7 +60,7 @@ export function HotGames() {
         {hotGames.map((game) => (
           <article
             key={game.id}
-            className="rounded-[1.75rem] border border-white/10 bg-white/8 p-6"
+            className="rounded-[1.75rem] border border-white/10 bg-black/20 p-6 backdrop-blur-sm"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -81,7 +81,7 @@ export function HotGames() {
               <span className="text-sm font-semibold text-slate-300">
                 Tendencia atual
               </span>
-              <span className="rounded-full bg-cyan-200 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-950">
+              <span className="rounded-full bg-cyan-300 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-950">
                 Trending
               </span>
             </div>
