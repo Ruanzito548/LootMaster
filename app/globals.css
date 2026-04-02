@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "ThroneOfShadows";
+  src: url("/fonts/ThroneOfShadows.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -23,4 +31,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+.font-throne {
+  font-family: "ThroneOfShadows", "Times New Roman", serif;
+  letter-spacing: 0.04em;
 }

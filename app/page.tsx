@@ -17,7 +17,7 @@ export default function Home() {
             </span>
 
             <div className="space-y-4">
-              <h1 className="max-w-3xl text-5xl font-black leading-none tracking-tight sm:text-6xl">
+              <h1 className="font-throne max-w-3xl text-6xl leading-none sm:text-7xl">
                 Escolha o game.
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-slate-400">
@@ -105,7 +105,7 @@ export default function Home() {
             <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
               Games
             </p>
-            <h2 className="mt-3 text-3xl font-black leading-tight sm:text-4xl">
+            <h2 className="font-throne mt-3 text-4xl leading-tight sm:text-5xl">
               Selecione uma categoria.
             </h2>
           </div>
