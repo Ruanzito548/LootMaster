@@ -32,21 +32,8 @@ export function Navbar() {
     <>
       <header className="sticky top-0 z-50 border-b border-white/8 bg-[#070b14]/80 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsOpen(true)}
-              className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-            >
-              <span className="flex h-8 w-8 flex-col items-center justify-center gap-1 rounded-full bg-cyan-400">
-                <span className="h-0.5 w-4 rounded-full bg-slate-950" />
-                <span className="h-0.5 w-4 rounded-full bg-slate-950" />
-                <span className="h-0.5 w-4 rounded-full bg-slate-950" />
-              </span>
-              Games
-            </button>
-
-            <Link href="/" className="font-throne text-2xl text-white">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="font-throne text-2xl text-white hover:text-cyan-300 transition-colors">
               Loot Master
             </Link>
           </div>
@@ -63,13 +50,28 @@ export function Navbar() {
             ))}
           </nav>
 
-          <button
-            type="button"
-            onClick={() => setIsOpen(true)}
-            className="rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-transform duration-200 hover:-translate-y-0.5"
-          >
-            Choose game
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 md:inline-flex hidden"
+            >
+              <span className="flex h-6 w-6 flex-col items-center justify-center gap-1">
+                <span className="h-0.5 w-4 rounded-full bg-cyan-400" />
+                <span className="h-0.5 w-4 rounded-full bg-cyan-400" />
+                <span className="h-0.5 w-4 rounded-full bg-cyan-400" />
+              </span>
+              Games
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-cyan-400/50"
+            >
+              Game
+            </button>
+          </div>
         </div>
       </header>
 
@@ -82,7 +84,7 @@ export function Navbar() {
           type="button"
           aria-label="Close menu"
           onClick={() => setIsOpen(false)}
-          className={`absolute inset-0 bg-[#020617]/70 backdrop-blur-sm transition-opacity ${
+          className={`absolute inset-0 bg-[#020617]/70 backdrop-blur-sm transition-opacity duration-300 ${
             isOpen ? "opacity-100" : "opacity-0"
           }`}
         />
@@ -97,15 +99,15 @@ export function Navbar() {
               <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
                 Games
               </p>
-              <h2 className="font-throne mt-3 text-4xl">Choose your game</h2>
+              <h2 className="font-throne mt-3 text-4xl">Escolha seu jogo</h2>
             </div>
 
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10 hover:border-white/20"
             >
-              Close
+              Fechar
             </button>
           </div>
 
