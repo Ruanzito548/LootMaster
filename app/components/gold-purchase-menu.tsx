@@ -142,6 +142,16 @@ export function GoldPurchaseMenu({
             <span>{MIN_GOLD.toLocaleString()}</span>
             <span>{MAX_GOLD.toLocaleString()}</span>
           </div>
+
+          {goldUnlocked ? (
+            <div className="mt-4 rounded-[1rem] border border-white/8 bg-white/4 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                Price
+              </p>
+              <p className="mt-2 text-3xl font-black">${price}</p>
+              <p className="mt-2 text-sm text-slate-400">$20 per 1,000 gold</p>
+            </div>
+          ) : null}
         </div>
 
         <div className={`grid gap-4 ${!detailsUnlocked ? "opacity-40" : ""}`}>
@@ -224,14 +234,6 @@ export function GoldPurchaseMenu({
               {selectedServer?.region ?? "--"} / {selectedFaction || "--"}
             </span>
           </div>
-        </div>
-
-        <div className="rounded-[1.25rem] border border-white/8 bg-white/4 p-4">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-            Price
-          </p>
-          <p className="mt-2 text-4xl font-black">${price}</p>
-          <p className="mt-2 text-sm text-slate-400">$20 per 1,000 gold</p>
         </div>
 
         <button
