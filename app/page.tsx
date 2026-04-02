@@ -1,31 +1,8 @@
-import { Navbar } from "./components/navbar";
+import Link from "next/link";
 
-const games = [
-  {
-    title: "World of Warcraft Retail",
-    tag: "Live",
-    description:
-      "Versao principal para jogadores que querem compra rapida, entrega recorrente e maior volume de gold.",
-  },
-  {
-    title: "World of Warcraft Classic Era",
-    tag: "Classic",
-    description:
-      "Fluxo dedicado para realms permanentes, com identidade mais old school e foco em estabilidade.",
-  },
-  {
-    title: "World of Warcraft TBC Anniversary",
-    tag: "Progression",
-    description:
-      "Camada separada para jogadores da experiencia Burning Crusade com selecao posterior de servidor.",
-  },
-  {
-    title: "World of Warcraft Mist of Pandaria",
-    tag: "Pandaria",
-    description:
-      "Entrada pronta para a fase Pandaria, mantendo a navegacao consistente para o restante do funil.",
-  },
-];
+import { games } from "./data/games";
+import { HotGames } from "./components/hot-games";
+import { Navbar } from "./components/navbar";
 
 export default function Home() {
   return (
@@ -121,6 +98,8 @@ export default function Home() {
           </div>
         </section>
 
+        <HotGames />
+
         <section
           id="games"
           className="rounded-[2rem] border border-black/10 bg-white/72 p-8 shadow-sm"
@@ -168,9 +147,12 @@ export default function Home() {
                   <span className="text-sm font-semibold text-zinc-500">
                     Proximo: selecionar servidor
                   </span>
-                  <span className="rounded-full bg-zinc-950 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white">
+                  <Link
+                    href="/admin"
+                    className="rounded-full bg-zinc-950 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white"
+                  >
                     Select
-                  </span>
+                  </Link>
                 </div>
               </article>
             ))}

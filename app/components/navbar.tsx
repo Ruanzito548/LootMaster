@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 const links = [
+  { href: "#hots", label: "Hots" },
   { href: "#games", label: "Games" },
   { href: "#fluxo", label: "Fluxo" },
   { href: "#proximo-passo", label: "Proximo passo" },
@@ -29,12 +30,20 @@ export function Navbar() {
           ))}
         </nav>
 
-        <Link
-          href="#games"
-          className="rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
-        >
-          Escolher jogo
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin"
+            className="hidden rounded-full border border-zinc-950/12 bg-white/70 px-4 py-2.5 text-sm font-semibold text-zinc-900 transition-colors hover:bg-white md:inline-flex"
+          >
+            Admin
+          </Link>
+          <Link
+            href="#games"
+            className="rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
+          >
+            Escolher jogo
+          </Link>
+        </div>
       </div>
     </header>
   );
