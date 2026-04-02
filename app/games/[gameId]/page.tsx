@@ -1,25 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getGameById } from "../../data/games";
-
-const categories = [
-  {
-    title: "Gold",
-    description: "Fast delivery offers for in-game currency.",
-    accent: "bg-amber-300 text-slate-950",
-  },
-  {
-    title: "Boost",
-    description: "Progression services, carries and character help.",
-    accent: "bg-cyan-300 text-slate-950",
-  },
-  {
-    title: "Accounts",
-    description: "Account listings and ready-to-play options.",
-    accent: "bg-violet-300 text-slate-950",
-  },
-];
+import { getGameById, serviceCategories } from "../../data/games";
 
 export default async function GamePage(props: PageProps<"/games/[gameId]">) {
   const { gameId } = await props.params;
@@ -55,9 +37,9 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
         </div>
 
         <section className="mt-12 grid gap-5 lg:grid-cols-3">
-          {categories.map((category) => (
+          {serviceCategories.map((category) => (
             <article
-              key={category.title}
+              key={category.id}
               className="rounded-[1.75rem] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-6 shadow-[0_24px_80px_rgba(2,8,23,0.25)]"
             >
               <div className="flex items-start justify-between gap-4">
@@ -74,12 +56,12 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                 </span>
               </div>
 
-              <button
-                type="button"
+              <Link
+                href={`/games/${game.id}/${category.id}`}
                 className="mt-10 rounded-full bg-white/8 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/12"
               >
                 View {category.title}
-              </button>
+              </Link>
             </article>
           ))}
         </section>
