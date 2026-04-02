@@ -134,7 +134,7 @@ export default function Home() {
                     Select
                   </span>
                   <Link
-                    href="/admin"
+                    href={`/games/${game.id}`}
                     className="rounded-full bg-cyan-400 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-950"
                   >
                     Select

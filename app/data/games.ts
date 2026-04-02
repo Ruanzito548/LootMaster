@@ -42,3 +42,7 @@ export const games: Game[] = [
 ];
 
 export const defaultHotGameIds = ["retail", "mist-of-pandaria"];
+
+export function getGameById(id: string) {
+  return games.find((game) => game.id === id);
+}

@@ -127,7 +127,7 @@ export function Navbar() {
               return (
                 <Link
                   key={game.id}
-                  href="#games"
+                  href={`/games/${game.id}`}
                   onClick={() => setIsOpen(false)}
                   className="group flex items-center justify-between rounded-[1.4rem] border border-white/8 bg-white/4 px-5 py-4 transition-colors hover:border-cyan-300/25 hover:bg-cyan-300/8"
                 >
