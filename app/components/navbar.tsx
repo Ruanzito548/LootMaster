@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 const links = [
-  { href: "#como-funciona", label: "Como funciona" },
-  { href: "#beneficios", label: "Beneficios" },
-  { href: "#faq", label: "FAQ" },
+  { href: "#games", label: "Games" },
+  { href: "#fluxo", label: "Fluxo" },
+  { href: "#proximo-passo", label: "Proximo passo" },
 ];
 
 export function Navbar() {
@@ -30,10 +30,10 @@ export function Navbar() {
         </nav>
 
         <Link
-          href="#cta"
+          href="#games"
           className="rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
         >
-          Comecar
+          Escolher jogo
         </Link>
       </div>
     </header>
