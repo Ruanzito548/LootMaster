@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { games } from "../data/games";
+import { subscribeToHotGames } from "../../lib/hot-games";
+import { defaultHotGameIds, games } from "../data/games";
 
 const links = [
   { href: "#hots", label: "Hots" },
@@ -12,6 +13,20 @@ const links = [
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [hotIds, setHotIds] = useState<string[]>(defaultHotGameIds);
+
+  useEffect(() => subscribeToHotGames(setHotIds), []);
+
+  const orderedGames = [...games].sort((a, b) => {
+    const aHot = hotIds.includes(a.id);
+    const bHot = hotIds.includes(b.id);
+
+    if (aHot === bHot) {
+      return 0;
+    }
+
+    return aHot ? -1 : 1;
+  });
 
   return (
     <>
@@ -23,7 +38,7 @@ export function Navbar() {
               onClick={() => setIsOpen(true)}
               className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-400 text-slate-950">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-400 text-lg text-slate-950">
                 ≡
               </span>
               Games
@@ -58,20 +73,20 @@ export function Navbar() {
               onClick={() => setIsOpen(true)}
               className="rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-transform duration-200 hover:-translate-y-0.5"
             >
-              Escolher jogo
+              Choose game
             </button>
           </div>
         </div>
       </header>
 
-        <div
+      <div
         className={`fixed inset-0 z-50 transition ${
           isOpen ? "pointer-events-auto" : "pointer-events-none"
         }`}
       >
         <button
           type="button"
-          aria-label="Fechar menu"
+          aria-label="Close menu"
           onClick={() => setIsOpen(false)}
           className={`absolute inset-0 bg-[#020617]/70 backdrop-blur-sm transition-opacity ${
             isOpen ? "opacity-100" : "opacity-0"
@@ -88,7 +103,7 @@ export function Navbar() {
               <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
                 Games
               </p>
-              <h2 className="font-throne mt-3 text-4xl">Escolha seu jogo</h2>
+              <h2 className="font-throne mt-3 text-4xl">Choose your game</h2>
             </div>
 
             <button
@@ -96,52 +111,47 @@ export function Navbar() {
               onClick={() => setIsOpen(false)}
               className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10"
             >
-              Fechar
+              Close
             </button>
           </div>
 
           <div className="mt-6 flex items-center justify-between text-xs font-bold uppercase tracking-[0.26em] text-slate-500">
-            <span>Disponiveis</span>
-            <span>{games.length}</span>
+            <span>Available</span>
+            <span>{orderedGames.length}</span>
           </div>
 
           <div className="mt-4 flex-1 space-y-3 overflow-y-auto pr-1">
-            {games.map((game) => (
-              <Link
-                key={game.id}
-                href="#games"
-                onClick={() => setIsOpen(false)}
-                className="group flex items-center justify-between rounded-[1.4rem] border border-white/8 bg-white/4 px-5 py-4 transition-colors hover:border-cyan-300/25 hover:bg-cyan-300/8"
-              >
-                <div>
-                  <p className="text-lg font-black transition-colors group-hover:text-cyan-100">
-                    {game.title}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-400">{game.shortTitle}</p>
-                </div>
-                <span className="rounded-full border border-cyan-300/15 bg-cyan-300/8 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
-                  {game.tag}
-                </span>
-              </Link>
-            ))}
-          </div>
+            {orderedGames.map((game) => {
+              const isHot = hotIds.includes(game.id);
 
-          <div className="mt-6 rounded-[1.5rem] border border-white/8 bg-black/20 p-5">
-            <p className="text-sm font-semibold text-slate-300">Fluxo</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {["Game", "Servidor", "Faccao"].map((step, index) => (
-                <span
-                  key={step}
-                  className={`rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] ${
-                    index === 0
-                      ? "bg-cyan-400 text-slate-950"
-                      : "border border-white/10 bg-white/5 text-slate-400"
-                  }`}
+              return (
+                <Link
+                  key={game.id}
+                  href="#games"
+                  onClick={() => setIsOpen(false)}
+                  className="group flex items-center justify-between rounded-[1.4rem] border border-white/8 bg-white/4 px-5 py-4 transition-colors hover:border-cyan-300/25 hover:bg-cyan-300/8"
                 >
-                  {step}
-                </span>
-              ))}
-            </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      {isHot ? (
+                        <span className="text-sm text-orange-300" aria-hidden="true">
+                          🔥
+                        </span>
+                      ) : null}
+                      <p className="text-base font-black transition-colors group-hover:text-cyan-100">
+                        {game.title}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {game.shortTitle}
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-cyan-300/15 bg-cyan-300/8 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200">
+                    {game.tag}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </aside>
       </div>

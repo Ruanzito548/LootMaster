@@ -18,16 +18,15 @@ export default function Home() {
 
             <div className="space-y-4">
               <h1 className="font-throne max-w-3xl text-6xl leading-none sm:text-7xl">
-                Escolha o game.
+                Choose your game.
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-slate-400">
-                Visual mais escuro, direto e com cara premium para a vitrine de
-                gold.
+                A darker, sharper storefront for your gold marketplace.
               </p>
             </div>
 
             <div id="fluxo" className="flex flex-wrap gap-3">
-              {["Game", "Servidor", "Faccao"].map((step, index) => (
+              {["Game", "Server", "Faction"].map((step, index) => (
                 <div
                   key={step}
                   className={`rounded-full px-4 py-2 text-sm font-semibold ${
@@ -46,13 +45,13 @@ export default function Home() {
                 href="#games"
                 className="rounded-full bg-cyan-400 px-6 py-3 text-center text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300"
               >
-                Ver jogos
+                View games
               </a>
               <Link
                 href="/admin"
                 className="rounded-full border border-white/10 bg-white/6 px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white/10"
               >
-                Abrir admin
+                Open admin
               </Link>
             </div>
           </div>
@@ -65,20 +64,20 @@ export default function Home() {
                   Flow
                 </span>
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs">
-                  Etapa 1
+                  Step 1
                 </span>
               </div>
 
               <div className="rounded-[1.5rem] bg-white/8 p-5 ring-1 ring-white/10">
-                <p className="text-sm text-slate-300">Atual</p>
+                <p className="text-sm text-slate-300">Current</p>
                 <p className="mt-2 text-3xl font-black">Game</p>
                 <p className="mt-3 text-sm text-slate-300">
-                  Depois seguimos com servidor e faccao.
+                  Server and faction come next.
                 </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                {["Game", "Servidor", "Faccao"].map((item, index) => (
+                {["Game", "Server", "Faction"].map((item, index) => (
                   <div
                     key={item}
                     className={`rounded-2xl border px-4 py-5 text-center text-sm font-semibold ${
@@ -106,7 +105,7 @@ export default function Home() {
               Games
             </p>
             <h2 className="font-throne mt-3 text-4xl leading-tight sm:text-5xl">
-              Selecione uma categoria.
+              Select a category.
             </h2>
           </div>
 
@@ -132,7 +131,7 @@ export default function Home() {
 
                 <div className="mt-8 flex items-center justify-between border-t border-white/8 pt-5">
                   <span className="text-sm font-semibold text-slate-400">
-                    Selecionar
+                    Select
                   </span>
                   <Link
                     href="/admin"

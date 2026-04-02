@@ -65,21 +65,19 @@ export function HotGamesAdmin() {
           <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
             Admin
           </p>
-          <h1 className="text-4xl font-black leading-tight sm:text-5xl">
-            Gerenciar hots
-          </h1>
+          <h1 className="text-4xl font-black leading-tight sm:text-5xl">Manage hots</h1>
           <p className="max-w-2xl text-base leading-8 text-slate-400">
-            Selecione os jogos que devem aparecer em destaque.
+            Select the games that should appear as highlights.
           </p>
         </div>
 
         {!firebaseEnabled ? (
           <section className="mt-8 rounded-[1.5rem] border border-amber-400/20 bg-amber-400/8 px-6 py-5 text-amber-100">
             <p className="text-sm font-bold uppercase tracking-[0.24em]">
-              Firebase pendente
+              Firebase pending
             </p>
             <p className="mt-3 text-sm leading-7">
-              Adicione as variaveis do projeto para liberar o salvamento.
+              Add the project environment variables to enable saving.
             </p>
           </section>
         ) : null}
@@ -120,7 +118,7 @@ export function HotGamesAdmin() {
 
           <div className="mt-8 flex flex-col gap-4 border-t border-white/8 pt-6 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm font-semibold text-slate-300">
-              {activeIds.length} jogo(s) selecionados.
+              {activeIds.length} game(s) selected.
             </p>
 
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -129,7 +127,7 @@ export function HotGamesAdmin() {
                 onClick={resetSelection}
                 className="rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
               >
-                Padrao
+                Default
               </button>
               <button
                 type="button"
@@ -144,7 +142,7 @@ export function HotGamesAdmin() {
 
           {saved ? (
             <p className="mt-4 text-sm font-semibold text-emerald-700">
-              Destaques salvos com sucesso.
+              Highlights saved successfully.
             </p>
           ) : null}
 
@@ -160,7 +158,7 @@ export function HotGamesAdmin() {
             href="/"
             className="inline-flex rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
           >
-            Voltar para a home
+            Back to home
           </Link>
         </div>
       </main>

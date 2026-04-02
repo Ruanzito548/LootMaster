@@ -23,11 +23,11 @@ export function HotGames() {
         <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
           Hots
         </p>
-        <h2 className="mt-4 text-3xl font-black">Nenhum destaque ativo.</h2>
+        <h2 className="mt-4 text-3xl font-black">No active highlights.</h2>
         <p className="mt-4 max-w-2xl text-base leading-8 text-slate-400">
           {firebaseEnabled
-            ? "Abra o admin para escolher os destaques."
-            : "Configure o Firebase para liberar os destaques."}
+            ? "Open admin to choose the highlighted games."
+            : "Configure Firebase to enable highlights."}
         </p>
       </section>
     );
@@ -43,9 +43,7 @@ export function HotGames() {
           <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-200">
             Hots
           </p>
-          <h2 className="text-3xl font-black leading-tight sm:text-4xl">
-            Em destaque
-          </h2>
+          <h2 className="text-3xl font-black leading-tight sm:text-4xl">Highlights</h2>
         </div>
 
         <Link
@@ -79,7 +77,7 @@ export function HotGames() {
 
             <div className="mt-8 flex items-center justify-between border-t border-white/10 pt-5">
               <span className="text-sm font-semibold text-slate-300">
-                Tendencia atual
+                Trending now
               </span>
               <span className="rounded-full bg-cyan-300 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-950">
                 Trending
