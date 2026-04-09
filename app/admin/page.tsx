@@ -16,7 +16,7 @@ export default function AdminPage() {
           </p>
         </div>
 
-        <section className="mt-8 grid gap-5 lg:grid-cols-2">
+        <section className="mt-8 grid gap-5 lg:grid-cols-3">
           <Link
             href="/admin/manage-hots"
             className="rounded-[1.75rem] border border-white/8 bg-[#0c1324] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)] transition-colors hover:border-cyan-300/20 hover:bg-white/4"
@@ -31,11 +31,24 @@ export default function AdminPage() {
           </Link>
 
           <Link
-            href="/admin/dashboard"
+            href="/admin/gold-settings"
             className="rounded-[1.75rem] border border-white/8 bg-[#0c1324] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)] transition-colors hover:border-cyan-300/20 hover:bg-white/4"
           >
             <p className="text-sm font-bold uppercase tracking-[0.24em] text-cyan-300">
               Section 02
+            </p>
+            <h2 className="mt-4 text-3xl font-black">Gold settings</h2>
+            <p className="mt-4 text-base leading-8 text-slate-400">
+              Update gold value, minimum purchase and the funnel selection flow.
+            </p>
+          </Link>
+
+          <Link
+            href="/admin/dashboard"
+            className="rounded-[1.75rem] border border-white/8 bg-[#0c1324] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)] transition-colors hover:border-cyan-300/20 hover:bg-white/4"
+          >
+            <p className="text-sm font-bold uppercase tracking-[0.24em] text-cyan-300">
+              Section 03
             </p>
             <h2 className="mt-4 text-3xl font-black">Dashboard</h2>
             <p className="mt-4 text-base leading-8 text-slate-400">

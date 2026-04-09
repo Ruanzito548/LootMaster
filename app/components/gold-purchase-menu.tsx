@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 
+import { defaultGoldConfig, goldSelectionModes } from "../data/gold-config";
 import type { GameServer } from "../data/games";
+import { subscribeToGoldConfig } from "../../lib/gold-config";
 
 type GoldPurchaseMenuProps = {
   gameTitle: string;
@@ -10,34 +12,47 @@ type GoldPurchaseMenuProps = {
   servers: GameServer[];
 };
 
-const GOLD_STEP = 1000;
-const MIN_GOLD = 1000;
-const MAX_GOLD = 10000;
-const PRICE_PER_THOUSAND = 20;
-
 export function GoldPurchaseMenu({
   gameTitle,
   categoryTitle,
   servers,
 }: GoldPurchaseMenuProps) {
+  const [goldConfig, setGoldConfig] = useState(defaultGoldConfig);
   const [selectedServerId, setSelectedServerId] = useState("");
   const [selectedFaction, setSelectedFaction] = useState("");
-  const [goldAmount, setGoldAmount] = useState(MIN_GOLD);
+  const [goldAmount, setGoldAmount] = useState(defaultGoldConfig.minGold);
   const [nickname, setNickname] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("Face to face");
   const [email, setEmail] = useState("");
+
+  useEffect(
+    () =>
+      subscribeToGoldConfig((config) => {
+        startTransition(() => {
+          setGoldConfig(config);
+        });
+      }),
+    []
+  );
 
   const selectedServer = servers.find((server) => server.id === selectedServerId);
   const serverSelected = selectedServerId !== "";
   const factionSelected = selectedFaction !== "";
   const goldUnlocked = serverSelected && factionSelected;
-  const detailsUnlocked = goldUnlocked && goldAmount >= MIN_GOLD;
+  const safeGoldAmount = Math.min(
+    Math.max(goldAmount, goldConfig.minGold),
+    goldConfig.maxGold
+  );
+  const detailsUnlocked = goldUnlocked && safeGoldAmount >= goldConfig.minGold;
   const formReady =
     detailsUnlocked &&
     nickname.trim() !== "" &&
     deliveryMethod.trim() !== "" &&
     email.trim() !== "";
-  const price = (goldAmount / 1000) * PRICE_PER_THOUSAND;
+  const price = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
+  const selectionModeLabel =
+    goldSelectionModes.find((mode) => mode.id === goldConfig.selectionMode)?.label ??
+    goldSelectionModes[0].label;
 
   return (
     <aside className="rounded-[1.75rem] border border-white/8 bg-[#0c1324] p-6 shadow-[0_24px_80px_rgba(2,8,23,0.35)]">
@@ -53,6 +68,9 @@ export function GoldPurchaseMenu({
           </p>
           <p className="mt-2 text-lg font-black">{gameTitle}</p>
           <p className="mt-1 text-sm text-slate-400">{categoryTitle}</p>
+          <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+            Modo: {selectionModeLabel}
+          </p>
         </div>
 
         <div>
@@ -68,7 +86,7 @@ export function GoldPurchaseMenu({
             onChange={(event) => {
               setSelectedServerId(event.target.value);
               setSelectedFaction("");
-              setGoldAmount(MIN_GOLD);
+              setGoldAmount(goldConfig.minGold);
               setNickname("");
               setDeliveryMethod("Face to face");
               setEmail("");
@@ -123,24 +141,24 @@ export function GoldPurchaseMenu({
               Gold amount
             </p>
             <span className="rounded-full bg-cyan-300 px-3 py-1 text-xs font-bold text-slate-950">
-              {goldAmount.toLocaleString()} gold
+              {safeGoldAmount.toLocaleString()} gold
             </span>
           </div>
 
           <input
             type="range"
-            min={MIN_GOLD}
-            max={MAX_GOLD}
-            step={GOLD_STEP}
-            value={goldAmount}
+            min={goldConfig.minGold}
+            max={goldConfig.maxGold}
+            step={goldConfig.goldStep}
+            value={safeGoldAmount}
             disabled={!goldUnlocked}
             onChange={(event) => setGoldAmount(Number(event.target.value))}
             className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-cyan-300 disabled:cursor-not-allowed"
           />
 
           <div className="mt-2 flex justify-between text-xs text-slate-500">
-            <span>{MIN_GOLD.toLocaleString()}</span>
-            <span>{MAX_GOLD.toLocaleString()}</span>
+            <span>{goldConfig.minGold.toLocaleString()}</span>
+            <span>{goldConfig.maxGold.toLocaleString()}</span>
           </div>
 
           {goldUnlocked ? (
@@ -149,7 +167,9 @@ export function GoldPurchaseMenu({
                 Price
               </p>
               <p className="mt-2 text-3xl font-black">${price}</p>
-              <p className="mt-2 text-sm text-slate-400">$20 per 1,000 gold</p>
+              <p className="mt-2 text-sm text-slate-400">
+                ${goldConfig.pricePerThousand} per 1,000 gold
+              </p>
             </div>
           ) : null}
         </div>
