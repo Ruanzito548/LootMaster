@@ -2,25 +2,27 @@
 
 import { startTransition, useEffect, useState } from "react";
 
-import { defaultGoldConfig, goldSelectionModes } from "../data/gold-config";
+import { defaultGoldConfig, getGoldConfigFor, goldSelectionModes } from "../data/gold-config";
 import type { GameServer } from "../data/games";
 import { subscribeToGoldConfig } from "../../lib/gold-config";
 
 type GoldPurchaseMenuProps = {
+  gameId: string;
   gameTitle: string;
   categoryTitle: string;
   servers: GameServer[];
 };
 
 export function GoldPurchaseMenu({
+  gameId,
   gameTitle,
   categoryTitle,
   servers,
 }: GoldPurchaseMenuProps) {
-  const [goldConfig, setGoldConfig] = useState(defaultGoldConfig);
+  const [fullGoldConfig, setFullGoldConfig] = useState(defaultGoldConfig);
   const [selectedServerId, setSelectedServerId] = useState("");
   const [selectedFaction, setSelectedFaction] = useState("");
-  const [goldAmount, setGoldAmount] = useState(defaultGoldConfig.minGold);
+  const [goldAmount, setGoldAmount] = useState(defaultGoldConfig.default.minGold);
   const [nickname, setNickname] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("Face to face");
   const [email, setEmail] = useState("");
@@ -29,11 +31,13 @@ export function GoldPurchaseMenu({
     () =>
       subscribeToGoldConfig((config) => {
         startTransition(() => {
-          setGoldConfig(config);
+          setFullGoldConfig(config);
         });
       }),
     []
   );
+
+  const goldConfig = getGoldConfigFor(fullGoldConfig, gameId, selectedServerId, selectedFaction);
 
   const selectedServer = servers.find((server) => server.id === selectedServerId);
   const serverSelected = selectedServerId !== "";
@@ -50,9 +54,7 @@ export function GoldPurchaseMenu({
     deliveryMethod.trim() !== "" &&
     email.trim() !== "";
   const price = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
-  const selectionModeLabel =
-    goldSelectionModes.find((mode) => mode.id === goldConfig.selectionMode)?.label ??
-    goldSelectionModes[0].label;
+  const selectionModeLabel = "Jogo -> Servidor -> Faccao";
 
   return (
     <aside className="rounded-[1.75rem] border border-white/8 bg-[#0c1324] p-6 shadow-[0_24px_80px_rgba(2,8,23,0.35)]">

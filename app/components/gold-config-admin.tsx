@@ -5,28 +5,21 @@ import { startTransition, useEffect, useState } from "react";
 
 import {
   defaultGoldConfig,
+  getGoldConfigFor,
   goldSelectionModes,
   type GoldConfig,
+  type GoldConfigEntry,
 } from "../data/gold-config";
+import { games, getServersByGameId, type GameServer } from "../data/games";
 import { firebaseEnabled } from "../../lib/firebase";
 import { saveGoldConfig, subscribeToGoldConfig } from "../../lib/gold-config";
 
-function normalizeGoldConfig(config: GoldConfig): GoldConfig {
-  const minGold = Number.isFinite(config.minGold)
-    ? Math.max(1000, Math.round(config.minGold / 1000) * 1000)
-    : defaultGoldConfig.minGold;
-  const maxGold = Math.max(defaultGoldConfig.maxGold, minGold);
-
-  return {
-    ...config,
-    pricePerThousand: Number.isFinite(config.pricePerThousand)
-      ? Math.max(1, config.pricePerThousand)
-      : defaultGoldConfig.pricePerThousand,
-    minGold,
-    maxGold,
-    goldStep: defaultGoldConfig.goldStep,
-    selectionMode: "game-server-faction",
-  };
+function buildKey(gameId?: string, serverId?: string, faction?: string): string {
+  const parts = [];
+  if (gameId) parts.push(gameId);
+  if (serverId) parts.push(serverId);
+  if (faction) parts.push(faction);
+  return parts.join("|");
 }
 
 export function GoldConfigAdmin() {
@@ -35,8 +28,21 @@ export function GoldConfigAdmin() {
   const [saved, setSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const activeConfig = draftConfig ?? storedConfig;
+
+  const [selectedGameId, setSelectedGameId] = useState<string>("");
+  const [selectedServerId, setSelectedServerId] = useState<string>("");
+  const [selectedFaction, setSelectedFaction] = useState<string>("");
+
+  const selectedGame = games.find((g) => g.id === selectedGameId);
+  const servers = selectedGameId ? getServersByGameId(selectedGameId) : [];
+  const selectedServer = servers.find((s) => s.id === selectedServerId);
+  const factions = selectedServer?.factions ?? ["Horde", "Alliance"];
+
+  const currentKey = buildKey(selectedGameId, selectedServerId, selectedFaction);
+  const currentEntry = getGoldConfigFor(activeConfig, selectedGameId, selectedServerId, selectedFaction);
+
   const selectionMode =
-    goldSelectionModes.find((mode) => mode.id === activeConfig.selectionMode) ??
+    goldSelectionModes.find((mode) => mode.id === "game-server-faction") ??
     goldSelectionModes[0];
 
   useEffect(
@@ -49,19 +55,33 @@ export function GoldConfigAdmin() {
     []
   );
 
-  const updateDraftConfig = (partial: Partial<GoldConfig>) => {
+  const updateDraftEntry = (partial: Partial<GoldConfigEntry>) => {
     setSaved(false);
     setErrorMessage(null);
-    setDraftConfig((current) => ({
-      ...(current ?? storedConfig),
-      ...partial,
-    }));
+    setDraftConfig((current) => {
+      const config = current ?? storedConfig;
+      const newEntry = { ...currentEntry, ...partial };
+      if (currentKey) {
+        return {
+          ...config,
+          overrides: {
+            ...config.overrides,
+            [currentKey]: newEntry,
+          },
+        };
+      } else {
+        return {
+          ...config,
+          default: newEntry,
+        };
+      }
+    });
   };
 
   const saveConfig = async () => {
     try {
       setErrorMessage(null);
-      const nextConfig = normalizeGoldConfig(activeConfig);
+      const nextConfig = activeConfig; // already sanitized in lib
       await saveGoldConfig(nextConfig);
       setDraftConfig(null);
       setSaved(true);
@@ -81,6 +101,27 @@ export function GoldConfigAdmin() {
     setErrorMessage(null);
   };
 
+  const resetCurrent = () => {
+    setDraftConfig((current) => {
+      const config = current ?? storedConfig;
+      if (currentKey) {
+        const newOverrides = { ...config.overrides };
+        delete newOverrides[currentKey];
+        return {
+          ...config,
+          overrides: newOverrides,
+        };
+      } else {
+        return {
+          ...config,
+          default: defaultGoldConfig.default,
+        };
+      }
+    });
+    setSaved(false);
+    setErrorMessage(null);
+  };
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,#10192d_0%,#0b1324_45%,#070b14_100%)] text-white">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
@@ -92,8 +133,7 @@ export function GoldConfigAdmin() {
             Gold settings
           </h1>
           <p className="max-w-2xl text-base leading-8 text-slate-400">
-            Ajuste o valor do gold, a quantidade minima comprada e mantenha o
-            fluxo Jogo, Servidor e Faccao.
+            Ajuste o valor do gold, a quantidade minima comprada e configure por jogo, servidor e faccao.
           </p>
         </div>
 
@@ -113,6 +153,87 @@ export function GoldConfigAdmin() {
             <div className="grid gap-6">
               <div>
                 <label
+                  htmlFor="game-select"
+                  className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+                >
+                  Jogo
+                </label>
+                <select
+                  id="game-select"
+                  value={selectedGameId}
+                  onChange={(event) => {
+                    setSelectedGameId(event.target.value);
+                    setSelectedServerId("");
+                    setSelectedFaction("");
+                  }}
+                  className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30"
+                >
+                  <option value="" className="bg-slate-950">
+                    Default (todos os jogos)
+                  </option>
+                  {games.map((game) => (
+                    <option key={game.id} value={game.id} className="bg-slate-950">
+                      {game.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="server-select"
+                  className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+                >
+                  Servidor
+                </label>
+                <select
+                  id="server-select"
+                  value={selectedServerId}
+                  disabled={!selectedGameId}
+                  onChange={(event) => {
+                    setSelectedServerId(event.target.value);
+                    setSelectedFaction("");
+                  }}
+                  className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30 disabled:cursor-not-allowed"
+                >
+                  <option value="" className="bg-slate-950">
+                    Default (todos os servidores)
+                  </option>
+                  {servers.map((server) => (
+                    <option key={server.id} value={server.id} className="bg-slate-950">
+                      {server.name} ({server.region})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="faction-select"
+                  className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+                >
+                  Faccao
+                </label>
+                <select
+                  id="faction-select"
+                  value={selectedFaction}
+                  disabled={!selectedServerId}
+                  onChange={(event) => setSelectedFaction(event.target.value)}
+                  className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30 disabled:cursor-not-allowed"
+                >
+                  <option value="" className="bg-slate-950">
+                    Default (todas as faccoes)
+                  </option>
+                  {factions.map((faction) => (
+                    <option key={faction} value={faction} className="bg-slate-950">
+                      {faction}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
                   htmlFor="price-per-thousand"
                   className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
                 >
@@ -123,9 +244,9 @@ export function GoldConfigAdmin() {
                   type="number"
                   min="1"
                   step="1"
-                  value={activeConfig.pricePerThousand}
+                  value={currentEntry.pricePerThousand}
                   onChange={(event) =>
-                    updateDraftConfig({
+                    updateDraftEntry({
                       pricePerThousand: Number(event.target.value),
                     })
                   }
@@ -148,9 +269,9 @@ export function GoldConfigAdmin() {
                   type="number"
                   min="1000"
                   step="1000"
-                  value={activeConfig.minGold}
+                  value={currentEntry.minGold}
                   onChange={(event) =>
-                    updateDraftConfig({
+                    updateDraftEntry({
                       minGold: Number(event.target.value),
                     })
                   }
@@ -170,10 +291,17 @@ export function GoldConfigAdmin() {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
+                  onClick={resetCurrent}
+                  className="rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                >
+                  Reset atual
+                </button>
+                <button
+                  type="button"
                   onClick={resetConfig}
                   className="rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
                 >
-                  Default
+                  Reset tudo
                 </button>
                 <button
                   type="button"
@@ -201,9 +329,11 @@ export function GoldConfigAdmin() {
 
           <aside className="rounded-[2rem] border border-cyan-300/12 bg-[linear-gradient(180deg,rgba(34,211,238,0.12)_0%,rgba(12,19,36,0.95)_100%)] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)]">
             <p className="text-sm font-bold uppercase tracking-[0.24em] text-cyan-200">
-              Fluxo ativo
+              Configuracao atual
             </p>
-            <h2 className="mt-4 text-3xl font-black">{selectionMode.label}</h2>
+            <h2 className="mt-4 text-3xl font-black">
+              {selectedGame?.title ?? "Default"} / {selectedServer?.name ?? "Todos"} / {selectedFaction || "Todas"}
+            </h2>
             <p className="mt-4 text-base leading-8 text-slate-300">
               {selectionMode.description}
             </p>
@@ -214,7 +344,7 @@ export function GoldConfigAdmin() {
                   Valor do gold
                 </p>
                 <p className="mt-2 text-3xl font-black">
-                  ${activeConfig.pricePerThousand}
+                  ${currentEntry.pricePerThousand}
                 </p>
                 <p className="mt-2 text-sm text-slate-400">por 1.000 gold</p>
               </div>
@@ -224,7 +354,7 @@ export function GoldConfigAdmin() {
                   Compra minima
                 </p>
                 <p className="mt-2 text-3xl font-black">
-                  {activeConfig.minGold.toLocaleString()}
+                  {currentEntry.minGold.toLocaleString()}
                 </p>
                 <p className="mt-2 text-sm text-slate-400">gold</p>
               </div>

@@ -50,6 +50,7 @@ export default async function ServerSelectionPage(
           category === "gold" ? (
             <section className="mt-12">
               <GoldPurchaseMenu
+                gameId={game.id}
                 gameTitle={game.title}
                 categoryTitle={selectedCategory.title}
                 servers={servers}

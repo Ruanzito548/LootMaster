@@ -5,41 +5,47 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 
-import { defaultGoldConfig, type GoldConfig } from "../app/data/gold-config";
+import { defaultGoldConfig, defaultGoldConfigEntry, type GoldConfig, type GoldConfigEntry } from "../app/data/gold-config";
 import { db, firebaseEnabled } from "./firebase";
 
 const goldConfigRef =
   db && firebaseEnabled ? doc(db, "app-config", "gold") : null;
 
-type GoldConfigPayload = Partial<Record<keyof GoldConfig, unknown>>;
+type GoldConfigPayload = Partial<{
+  default: Partial<Record<keyof GoldConfigEntry, unknown>>;
+  overrides: Record<string, Partial<Record<keyof GoldConfigEntry, unknown>>>;
+}>;
 
-function sanitizeNumber(value: unknown, fallback: number) {
-  return typeof value === "number" && Number.isFinite(value) && value > 0
-    ? value
-    : fallback;
-}
+function sanitizeGoldConfigEntry(payload?: Partial<Record<keyof GoldConfigEntry, unknown>>): GoldConfigEntry {
+  const minGold = typeof payload?.minGold === "number" && Number.isFinite(payload.minGold) && payload.minGold > 0
+    ? Math.max(1000, Math.round(payload.minGold / 1000) * 1000)
+    : defaultGoldConfigEntry.minGold;
+  const maxGold = typeof payload?.maxGold === "number" && Number.isFinite(payload.maxGold) && payload.maxGold >= minGold
+    ? payload.maxGold
+    : Math.max(defaultGoldConfigEntry.maxGold, minGold);
 
-function sanitizeSelectionMode(value: unknown): GoldConfig["selectionMode"] {
-  return value === "game-server-faction"
-    ? value
-    : defaultGoldConfig.selectionMode;
+  return {
+    pricePerThousand: typeof payload?.pricePerThousand === "number" && Number.isFinite(payload.pricePerThousand) && payload.pricePerThousand >= 1
+      ? payload.pricePerThousand
+      : defaultGoldConfigEntry.pricePerThousand,
+    minGold,
+    maxGold,
+    goldStep: defaultGoldConfigEntry.goldStep,
+  };
 }
 
 function sanitizeGoldConfig(payload?: GoldConfigPayload): GoldConfig {
-  const minGold = sanitizeNumber(payload?.minGold, defaultGoldConfig.minGold);
-  const goldStep = sanitizeNumber(payload?.goldStep, defaultGoldConfig.goldStep);
-  const rawMaxGold = sanitizeNumber(payload?.maxGold, defaultGoldConfig.maxGold);
-  const normalizedMaxGold = Math.max(rawMaxGold, minGold);
+  const defaultEntry = payload?.default ? sanitizeGoldConfigEntry(payload.default) : defaultGoldConfig.default;
+  const overrides: Record<string, GoldConfigEntry> = {};
+  if (payload?.overrides) {
+    for (const [key, entryPayload] of Object.entries(payload.overrides)) {
+      overrides[key] = sanitizeGoldConfigEntry(entryPayload);
+    }
+  }
 
   return {
-    pricePerThousand: sanitizeNumber(
-      payload?.pricePerThousand,
-      defaultGoldConfig.pricePerThousand
-    ),
-    minGold,
-    maxGold: normalizedMaxGold,
-    goldStep,
-    selectionMode: sanitizeSelectionMode(payload?.selectionMode),
+    default: defaultEntry,
+    overrides,
   };
 }
 
