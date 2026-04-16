@@ -38,21 +38,42 @@ export function HotGames() {
   return (
     <section
       id="hots"
-      className="loot-panel rounded-[2rem] p-8 text-white"
+      className="loot-panel animate-hot-section-background relative overflow-hidden rounded-[2rem] p-8 text-white transition-all duration-500 hover:shadow-[0_0_80px_rgba(247,186,44,0.2),inset_0_0_80px_rgba(247,186,44,0.1)]"
     >
-      <div className="flex flex-col gap-4 pb-8 lg:flex-row lg:items-end lg:justify-between">
+      {/* Orbe de luz flutuante superior esquerda */}
+      <div className="animate-pulse-intense absolute -top-20 -left-20 w-64 h-64 rounded-full bg-[#f7ba2c]/15 blur-3xl" style={{ animationDuration: '6s' }} />
+      
+      {/* Orbe de luz flutuante inferior direita */}
+      <div className="animate-pulse-intense absolute -bottom-16 -right-16 w-80 h-80 rounded-full bg-[#2db2ff]/10 blur-3xl" style={{ animationDuration: '8s', animationDelay: '2s' }} />
+      
+      {/* Orbe de luz adicional no meio */}
+      <div className="animate-pulse-intense absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-[linear-gradient(135deg,#f7ba2c/5,#2db2ff/5)] blur-3xl" style={{ animationDuration: '10s', animationDelay: '1s' }} />
+      
+      {/* Efeito de brilho radiante */}
+      <div className="absolute inset-0 rounded-[2rem] opacity-0 hover:opacity-100 transition-opacity duration-700 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 bg-radial-gradient from-white/10 via-transparent to-transparent" />
+      </div>
+
+      {/* Borda superior com gradiente brilhante */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f7ba2c]/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500" />
+      
+      {/* Cantos brilhantes */}
+      <div className="absolute top-0 left-0 w-20 h-20 border-t border-l border-[#f7ba2c]/20 rounded-tl-[2rem] opacity-0 hover:opacity-100 transition-opacity duration-500" />
+      <div className="absolute top-0 right-0 w-20 h-20 border-t border-r border-[#f7ba2c]/20 rounded-tr-[2rem] opacity-0 hover:opacity-100 transition-opacity duration-500" />
+
+      <div className="relative z-10 flex flex-col gap-4 pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
-          <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d]">
+          <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d] drop-shadow-[0_0_10px_rgba(255,193,77,0.3)]">
             Hots
           </p>
-          <h2 className="text-3xl font-black leading-tight text-[#ffc94d] sm:text-4xl">
+          <h2 className="text-3xl font-black leading-tight text-[#ffc94d] sm:text-4xl drop-shadow-[0_0_20px_rgba(255,193,77,0.2)]">
             Highlights
           </h2>
         </div>
 
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="relative z-20 grid gap-5 lg:grid-cols-2">
         {hotGames.map((game, index) => (
           <Link
             key={game.id}
