@@ -38,24 +38,9 @@ export function HotGames() {
   return (
     <section
       id="hots"
-      className="loot-panel relative overflow-hidden rounded-[2rem] p-8 text-white"
+      className="loot-panel rounded-[2rem] p-8 text-white"
     >
-      {/* Video de fundo */}
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="absolute inset-0 h-full w-full object-cover rounded-[2rem]"
-        style={{ zIndex: 0 }}
-      >
-        <source src="/hotwallpaper.mp4" type="video/mp4" />
-      </video>
-
-      {/* Overlay para melhorar contraste */}
-      <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-b from-black/40 via-black/50 to-black/60 pointer-events-none" style={{ zIndex: 1 }} />
-
-      <div className="relative z-10 flex flex-col gap-4 pb-8 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-4 pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
           <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d]">
             Hots
@@ -73,6 +58,26 @@ export function HotGames() {
             key={game.id}
             href={`/games/${game.id}`}
             className={`group relative overflow-hidden rounded-[1.75rem] border border-[#ffd76a]/12 p-6 backdrop-blur-sm transition-all duration-500 hover:border-[#4dc6ff]/50 hover:shadow-[0_0_40px_rgba(77,198,255,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] hover:-translate-y-1 hover:scale-[1.01]`}
+            style={
+              game.id === "tbc-anniversary"
+                ? {
+                    backgroundImage:
+                      "linear-gradient(rgba(255,191,68,0.14),rgba(14,57,112,0.28)), url('/wowtbc.jpg')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }
+                : game.id === "retail"
+                ? {
+                    backgroundImage:
+                      "linear-gradient(rgba(255,191,68,0.14),rgba(14,57,112,0.28)), url('/midnightwallpaper.jpeg')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }
+                : {
+                    backgroundImage:
+                      "linear-gradient(180deg,rgba(255,191,68,0.09),rgba(14,57,112,0.16))",
+                  }
+            }
           >
             {/* Efeito de brilho radial no hover */}
             <div className="absolute inset-0 rounded-[1.75rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(77,198,255,0.15), transparent 70%)' }} />
