@@ -57,7 +57,7 @@ export function HotGames() {
           <Link
             key={game.id}
             href={`/games/${game.id}`}
-            className={`rounded-[1.75rem] border border-[#ffd76a]/12 p-6 backdrop-blur-sm transition-colors hover:border-[#4dc6ff]/25 hover:bg-[#0d3f7a]/22 ${
+            className={`group relative overflow-hidden rounded-[1.75rem] border border-[#ffd76a]/12 p-6 backdrop-blur-sm transition-all duration-500 hover:border-[#4dc6ff]/40 hover:shadow-[0_0_50px_rgba(77,198,255,0.25),inset_0_0_50px_rgba(77,198,255,0.1)] hover:-translate-y-2 hover:scale-[1.02] ${
               index < 2 ? "animate-hot-card" : ""
             }`}
             style={
@@ -81,26 +81,36 @@ export function HotGames() {
                   }
             }
           >
-            <div className="flex items-start justify-between gap-4">
+            {/* Elementos decorativos flutuantes */}
+            <div className="absolute left-4 top-4 h-16 w-16 rounded-full bg-[#f7ba2c]/20 blur-xl opacity-0 transition-opacity duration-500 group-hover:opacity-60 animate-pulse" />
+            <div className="absolute bottom-4 right-4 h-20 w-20 rounded-full bg-[#4dc6ff]/15 blur-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-50 animate-pulse" style={{ animationDelay: '1s' }} />
+            <div className="absolute right-8 top-8 h-12 w-12 rounded-full bg-[#ff6b6b]/10 blur-lg opacity-0 transition-opacity duration-500 group-hover:opacity-40 animate-pulse" style={{ animationDelay: '2s' }} />
+
+            {/* Efeito de brilho que passa pelo card */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+            </div>
+
+            <div className="relative z-10 flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#ffc94d]/85">
+                <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#ffc94d]/85 group-hover:text-[#ffd76a] transition-colors duration-300">
                   Hot pick
                 </p>
-                <h3 className="mt-3 text-2xl font-black leading-tight text-[#ffc94d]">
+                <h3 className="mt-3 text-2xl font-black leading-tight text-[#ffc94d] group-hover:text-[#ffeb3b] group-hover:drop-shadow-[0_0_20px_rgba(255,235,59,0.5)] transition-all duration-300">
                   {game.title}
                 </h3>
               </div>
 
-              <span className="rounded-full border border-[#84d5ff]/20 bg-[#0d3f7a]/40 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#d8f4ff]">
+              <span className="rounded-full border border-[#84d5ff]/20 bg-[#0d3f7a]/40 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#d8f4ff] group-hover:border-[#4dc6ff]/50 group-hover:bg-[#4dc6ff]/20 group-hover:shadow-[0_0_15px_rgba(77,198,255,0.3)] transition-all duration-300">
                 {game.tag}
               </span>
             </div>
 
-            <div className="mt-8 flex items-center justify-between border-t border-[#ffd76a]/10 pt-5">
-              <span className="text-sm font-semibold text-[#dbcaa7]">
+            <div className="relative z-10 mt-8 flex items-center justify-between border-t border-[#ffd76a]/10 pt-5 group-hover:border-[#4dc6ff]/30 transition-colors duration-300">
+              <span className="text-sm font-semibold text-[#dbcaa7] group-hover:text-[#e8f4ff] transition-colors duration-300">
                 Trending now
               </span>
-              <span className="rounded-full bg-[linear-gradient(180deg,#ffe27c_0%,#f7ba2c_65%,#cc7a15_100%)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#2f1405]">
+              <span className="rounded-full bg-[linear-gradient(180deg,#ffe27c_0%,#f7ba2c_65%,#cc7a15_100%)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#2f1405] group-hover:shadow-[0_0_20px_rgba(247,186,44,0.4)] group-hover:scale-105 transition-all duration-300">
                 Open
               </span>
             </div>
