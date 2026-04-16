@@ -68,6 +68,13 @@ export function HotGames() {
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }
+                : game.id === "retail"
+                ? {
+                    backgroundImage:
+                      "linear-gradient(rgba(255,191,68,0.14),rgba(14,57,112,0.28)), url('/midnightwallpaper.jpeg')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }
                 : {
                     backgroundImage:
                       "linear-gradient(180deg,rgba(255,191,68,0.09),rgba(14,57,112,0.16))",
