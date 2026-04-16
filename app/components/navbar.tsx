@@ -182,9 +182,9 @@ export function Navbar() {
                   style={{
                     backgroundImage:
                       game.id === "tbc-anniversary"
-                        ? "linear-gradient(rgba(26,58,32,0.95),rgba(10,26,12,0.95)), url('/wowtbc.jpg')"
+                        ? "url('/wowtbc.jpg')"
                         : game.id === "retail"
-                        ? "linear-gradient(rgba(13,24,40,0.95),rgba(7,16,29,0.95)), url('/midnightwallpaper.jpeg')"
+                        ? "url('/midnightwallpaper.jpeg')"
                         : undefined,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
