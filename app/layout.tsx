@@ -6,6 +6,9 @@ import { Footer } from "./components/footer";
 export const metadata: Metadata = {
   title: "Loot Master",
   description: "World of Warcraft gold marketplace flow",
+  icons: {
+    icon: "/lootmasterlogo.png",
+  },
 };
 
 export default function RootLayout({
