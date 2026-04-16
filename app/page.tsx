@@ -204,6 +204,16 @@ export default function Home() {
               <article
                 key={game.id}
                 className="loot-panel rounded-[1.75rem] p-6"
+                style={
+                  game.id === "tbc-anniversary"
+                    ? {
+                        backgroundImage:
+                          "linear-gradient(rgba(7,11,26,0.78),rgba(7,11,26,0.78)), url('/wowtbc.jpg')",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : undefined
+                }
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>

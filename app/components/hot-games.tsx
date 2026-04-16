@@ -57,9 +57,22 @@ export function HotGames() {
           <Link
             key={game.id}
             href={`/games/${game.id}`}
-            className={`rounded-[1.75rem] border border-[#ffd76a]/12 bg-[linear-gradient(180deg,rgba(255,191,68,0.09),rgba(14,57,112,0.16))] p-6 backdrop-blur-sm transition-colors hover:border-[#4dc6ff]/25 hover:bg-[#0d3f7a]/22 ${
+            className={`rounded-[1.75rem] border border-[#ffd76a]/12 p-6 backdrop-blur-sm transition-colors hover:border-[#4dc6ff]/25 hover:bg-[#0d3f7a]/22 ${
               index < 2 ? "animate-hot-card" : ""
             }`}
+            style={
+              game.id === "tbc-anniversary"
+                ? {
+                    backgroundImage:
+                      "linear-gradient(rgba(255,191,68,0.14),rgba(14,57,112,0.28)), url('/wowtbc.jpg')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }
+                : {
+                    backgroundImage:
+                      "linear-gradient(180deg,rgba(255,191,68,0.09),rgba(14,57,112,0.16))",
+                  }
+            }
           >
             <div className="flex items-start justify-between gap-4">
               <div>

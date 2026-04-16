@@ -23,6 +23,16 @@ export default function GamesIndexPage() {
               key={game.id}
               href={`/games/${game.id}`}
               className="loot-panel rounded-[1.75rem] p-8 transition-colors hover:border-[#4dc6ff]/20 hover:bg-white/4"
+              style={
+                game.id === "tbc-anniversary"
+                  ? {
+                      backgroundImage:
+                        "linear-gradient(rgba(7,11,26,0.78),rgba(7,11,26,0.78)), url('/wowtbc.jpg')",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : undefined
+              }
             >
               <div className="flex items-center justify-between gap-4">
                 <div>
