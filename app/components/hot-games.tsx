@@ -58,31 +58,26 @@ export function HotGames() {
             key={game.id}
             href={`/games/${game.id}`}
             className={`group relative overflow-hidden rounded-[1.75rem] border border-[#ffd76a]/12 p-6 backdrop-blur-sm transition-all duration-500 hover:border-[#4dc6ff]/50 hover:shadow-[0_0_40px_rgba(77,198,255,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] hover:-translate-y-1 hover:scale-[1.01]`}
-            style={
-              game.id === "tbc-anniversary"
-                ? {
-                    backgroundImage:
-                      "linear-gradient(rgba(255,191,68,0.14),rgba(14,57,112,0.28)), url('/wowtbc.jpg')",
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }
-                : game.id === "retail"
-                ? {
-                    backgroundImage:
-                      "linear-gradient(rgba(255,191,68,0.14),rgba(14,57,112,0.28)), url('/midnightwallpaper.jpeg')",
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }
-                : {
-                    backgroundImage:
-                      "linear-gradient(180deg,rgba(255,191,68,0.09),rgba(14,57,112,0.16))",
-                  }
-            }
           >
-            {/* Efeito de brilho radial no hover */}
-            <div className="absolute inset-0 rounded-[1.75rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(77,198,255,0.15), transparent 70%)' }} />
+            {/* Video de fundo */}
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover rounded-[1.75rem]"
+              style={{ zIndex: 0 }}
+            >
+              <source src="/hotwallpaper.mp4" type="video/mp4" />
+            </video>
 
-            <div className="relative z-10 flex items-start justify-between gap-4">
+            {/* Overlay para melhorar contraste do texto */}
+            <div className="absolute inset-0 rounded-[1.75rem] bg-gradient-to-t from-black/60 via-black/30 to-black/20 pointer-events-none" style={{ zIndex: 1 }} />
+
+            {/* Efeito de brilho radial no hover */}
+            <div className="absolute inset-0 rounded-[1.75rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(77,198,255,0.15), transparent 70%)', zIndex: 2 }} />
+
+            <div className="relative z-20 flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#ffc94d]/85 group-hover:text-[#ffd76a] transition-colors duration-300">
                   Hot pick
@@ -97,7 +92,7 @@ export function HotGames() {
               </span>
             </div>
 
-            <div className="relative z-10 mt-8 flex items-center justify-between pt-5">
+            <div className="relative z-20 mt-8 flex items-center justify-between pt-5">
               <span className="text-sm font-semibold text-[#dbcaa7] group-hover:text-[#c5e9ff] transition-colors duration-300">
                 Trending now
               </span>
