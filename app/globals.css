@@ -318,6 +318,34 @@ body {
     hot-card-glow 4.8s ease-in-out infinite;
 }
 
+@keyframes hot-card-border-glow {
+  0%, 100% {
+    border-color: rgba(255, 215, 106, 0.12);
+    box-shadow: 0 0 0 rgba(77, 198, 255, 0);
+  }
+  50% {
+    border-color: rgba(77, 198, 255, 0.4);
+    box-shadow: 0 0 20px rgba(77, 198, 255, 0.15);
+  }
+}
+
+@keyframes hot-card-hover-glow {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.08;
+  }
+}
+
+.hot-card-border-effect {
+  animation: hot-card-border-glow 3s ease-in-out infinite;
+}
+
+.hot-card-hover-effect {
+  animation: hot-card-hover-glow 4s ease-in-out infinite;
+}
+
 .animate-treasure-pulse {
   animation: treasure-pulse 4s ease-in-out infinite;
 }
