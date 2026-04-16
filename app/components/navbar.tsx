@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { subscribeToHotGames } from "../../lib/hot-games";
@@ -33,8 +34,14 @@ export function Navbar() {
       <header className="sticky top-0 z-50 border-b border-white/8 bg-[#070b14]/80 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
           <div className="flex items-center gap-4">
-            <Link href="/" className="font-throne text-2xl text-white hover:text-cyan-300 transition-colors">
-              Loot Master
+            <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+              <Image 
+                src="/lootmasterlogo.png" 
+                alt="Loot Master Logo" 
+                width={40} 
+                height={40}
+                className="h-10 w-auto"
+              />
             </Link>
           </div>
 
