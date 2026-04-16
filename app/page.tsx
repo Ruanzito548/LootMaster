@@ -6,8 +6,10 @@ import { games, serviceCategories } from "./data/games";
 
 export default function Home() {
   return (
-    <div id="home" className="min-h-screen overflow-hidden text-white">
+    <div className="min-h-screen overflow-hidden text-white">
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-10 lg:px-8">
+        <HotGames />
+
         <section className="relative grid items-center gap-10 py-14 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="loot-orb animate-treasure-pulse left-[-6rem] top-8 h-36 w-36 bg-[#f7ba2c]/30" />
           <div className="loot-orb animate-treasure-pulse right-8 top-16 h-24 w-24 bg-[#38bdf8]/35" />
@@ -15,22 +17,22 @@ export default function Home() {
 
           <div className="space-y-7">
             <span className="inline-flex rounded-full border border-[#ffd76a]/20 bg-[#f7ba2c]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-[#ffc94d]">
-              Site Gold
+              Treasure Marketplace
             </span>
 
             <div className="space-y-4">
               <h1 className="font-throne max-w-4xl text-5xl leading-none text-[#ffcf57] drop-shadow-[0_6px_24px_rgba(247,186,44,0.28)] sm:text-6xl">
-                Estrutura pronta para Home, Perfil, Brindes e Grade de Jogos.
+                Gold, crystals and power-up vibes for every game run.
               </h1>
               <p className="max-w-3xl text-lg leading-8 text-[#dbcaa7]">
-                A navegacao agora foi organizada para seguir a ideia do mapa:
-                home page, destaques, perfil com inventario, area de brindes,
-                saldo LM Coins e menu lateral com os jogos que operamos.
+                Loot Master brings the same energy as the logo: enchanted treasure,
+                bright rewards and a premium fantasy storefront for accounts,
+                boosts and in-game currency.
               </p>
             </div>
 
             <div id="fluxo" className="flex flex-wrap gap-3">
-              {["Home", "Perfil", "Brindes", "LM Coins", "Jogos"].map((step, index) => (
+              {["Accounts", "Services", "Currency"].map((step, index) => (
                 <div
                   key={step}
                   className={`rounded-full border px-4 py-2 text-sm font-semibold ${
@@ -46,16 +48,16 @@ export default function Home() {
 
             <div className="flex flex-col gap-4 sm:flex-row">
               <Link
-                href="#hots"
+                href="#games"
                 className="loot-gold-button rounded-full px-6 py-3 text-center text-sm font-semibold transition-all duration-200 hover:scale-[1.02]"
               >
-                Ver destaques
+                Explore games
               </Link>
               <Link
-                href="#profile"
+                href="#how-it-works"
                 className="loot-blue-button rounded-full px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-[#123a72]"
               >
-                Abrir estrutura
+                See how it works
               </Link>
             </div>
           </div>
@@ -67,7 +69,7 @@ export default function Home() {
             <div className="space-y-5 relative">
               <div className="flex items-center justify-between">
                 <span className="text-xs uppercase tracking-[0.3em] text-[#ffc94d]/85">
-                  Home Page
+                  Treasure Vault
                 </span>
                 <span className="rounded-full border border-[#fff1be]/15 bg-[#fff1be]/10 px-3 py-1 text-xs text-[#ffcf57]">
                   Live
@@ -76,9 +78,9 @@ export default function Home() {
 
               <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
                 <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,222,124,0.18),rgba(45,178,255,0.06))] p-5 ring-1 ring-[#fff1be]/10">
-                  <p className="text-sm text-[#dbcaa7]">Componentes principais</p>
+                  <p className="text-sm text-[#dbcaa7]">What players can buy</p>
                   <p className="mt-2 text-3xl text-[#ffcf57]">
-                    Navbar, Home, Hots, Jogos e Footer
+                    Accounts, boosts and gold
                   </p>
                 </div>
 
@@ -96,7 +98,7 @@ export default function Home() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                {["Perfil", "Brindes", "Coins"].map((item, index) => (
+                {["Gold", "Boost", "Accounts"].map((item, index) => (
                   <div
                     key={item}
                     className={`rounded-2xl border px-4 py-5 text-center text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
@@ -112,9 +114,9 @@ export default function Home() {
 
               <div className="grid gap-3 border-t border-white/10 pt-5 sm:grid-cols-3">
                 {[
-                  { label: "Jogos", value: games.length },
-                  { label: "Categorias", value: serviceCategories.length },
-                  { label: "Menu", value: "Lateral" },
+                  { label: "Games", value: games.length },
+                  { label: "Categories", value: serviceCategories.length },
+                  { label: "Highlights", value: "Live" },
                 ].map((metric) => (
                   <div
                     key={metric.label}
@@ -133,36 +135,39 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="profile" className="grid gap-5 py-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <section
+          id="how-it-works"
+          className="grid gap-5 py-6 lg:grid-cols-[0.9fr_1.1fr]"
+        >
           <div className="loot-panel rounded-[1.8rem] p-6">
             <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
-              Perfil
+              Flow
             </p>
             <h2 className="mt-4 text-3xl font-black leading-tight text-[#ffcf57]">
-              Perfil com inventario, foto e historico.
+              From glowing loot to checkout in a few clicks.
             </h2>
             <p className="mt-4 max-w-xl text-base leading-8 text-[#dbcaa7]">
-              Essa area espelha a parte do mapa com perfil do usuario, foto de
-              capa/perfil, inventario e historico de vendas/compras.
+              The homepage now feels closer to the brand art, while still guiding
+              players from discovery into the right game, category and order path.
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             {[
               {
-                title: "Inventario",
+                title: "1. Pick a game",
                 description:
-                  "Saldo em coins, tickets e chaves em um mesmo bloco de acesso rapido.",
+                  "Start from the homepage and open the title you want to shop for.",
               },
               {
-                title: "Foto de perfil",
+                title: "2. Choose a category",
                 description:
-                  "Espaco para capa e identidade visual da conta do usuario.",
+                  "Browse gold, boosts or accounts depending on the service.",
               },
               {
-                title: "Historico",
+                title: "3. Continue to server",
                 description:
-                  "Area pronta para compras e vendas feitas dentro da plataforma.",
+                  "Move into the server selection flow and complete the order path.",
               },
             ].map((step) => (
               <article
@@ -178,97 +183,19 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="coins" className="py-6">
-          <div className="loot-panel rounded-[2rem] p-8">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
-                  LM Coins
-                </p>
-                <h2 className="mt-3 text-4xl font-black leading-tight text-[#ffcf57]">
-                  Saldo centralizado com coins, tickets e chaves.
-                </h2>
-                <p className="mt-4 max-w-2xl text-base leading-8 text-[#dbcaa7]">
-                  O saldo LM Coins entra como parte fixa da experiencia principal,
-                  ficando visivel e conectado ao inventario do usuario.
-                </p>
-              </div>
-
-              <div className="grid min-w-[18rem] gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                {[
-                  { label: "Saldo em coins", value: "12.450" },
-                  { label: "Tickets", value: "18" },
-                  { label: "Chaves", value: "7" },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-[1.25rem] border border-[#84d5ff]/14 bg-[#0d3f7a]/18 px-5 py-4"
-                  >
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#c7ecff]">
-                      {item.label}
-                    </p>
-                    <p className="mt-2 text-2xl font-black text-[#ffcf57]">
-                      {item.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="brindes" className="py-6">
-          <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-            <div className="loot-panel rounded-[1.8rem] p-6">
-              <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
-                Brindes
-              </p>
-              <h2 className="mt-4 text-3xl font-black leading-tight text-[#ffcf57]">
-                Roleta e baus como blocos dedicados.
-              </h2>
-              <p className="mt-4 max-w-xl text-base leading-8 text-[#dbcaa7]">
-                A navbar pode levar para uma area de recompensas com roleta,
-                baus e outras dinamicas promocionais do ecossistema.
-              </p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              {[
-                {
-                  title: "Roleta",
-                  description: "Entrada para giros, recompensas rapidas e eventos sazonais.",
-                },
-                {
-                  title: "Baus",
-                  description: "Area para abrir premios, chaves e recompensas especiais.",
-                },
-              ].map((item) => (
-                <article key={item.title} className="loot-panel rounded-[1.6rem] p-5">
-                  <h3 className="text-2xl font-black text-[#ffc94d]">{item.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-[#dbcaa7]">
-                    {item.description}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <HotGames />
-
         <section id="games" className="py-10">
           <div className="flex flex-col gap-3 pb-8 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
-                Grade de jogos
+                Games
               </p>
               <h2 className="mt-3 text-4xl font-black leading-tight text-[#ffcf57]">
-                Blocos dos jogos que operamos.
+                Choose where the order starts.
               </h2>
             </div>
             <p className="max-w-2xl text-sm leading-7 text-[#cdb991]">
-              Cada card funciona como pagina de entrada do jogo e leva para a
-              respectiva pagina de venda.
+              Every card leads into the same route structure already live in the
+              marketplace flow.
             </p>
           </div>
 
@@ -312,7 +239,7 @@ export default function Home() {
                     href={`/games/${game.id}`}
                     className="loot-gold-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-all duration-200 hover:scale-[1.02]"
                   >
-                    Pagina de venda
+                    Open {game.shortTitle}
                   </Link>
                 </div>
               </article>
@@ -323,23 +250,23 @@ export default function Home() {
         <section className="py-8">
           <div className="loot-panel rounded-[2rem] p-8">
             <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d]">
-              Footer
+              Ready
             </p>
             <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <h2 className="text-4xl font-black leading-tight text-[#ffcf57]">
-                  Informacoes, comunidade e navegacao complementar.
+                  Send players from highlight to checkout path faster.
                 </h2>
                 <p className="mt-4 max-w-2xl text-base leading-8 text-[#dbcaa7]">
-                  O rodape fecha a estrutura do site com links institucionais,
-                  suporte e comunidade, como no mapa que voce mandou.
+                  Highlights surface hot games, the homepage explains the offer,
+                  and the game grid now lands users directly inside the funnel.
                 </p>
               </div>
               <Link
-                href="#games"
+                href="#hots"
                 className="loot-blue-button inline-flex rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#123a72]"
               >
-                Ver jogos
+                Review highlights
               </Link>
             </div>
           </div>

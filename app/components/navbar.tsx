@@ -8,12 +8,8 @@ import { subscribeToHotGames } from "../../lib/hot-games";
 import { defaultHotGameIds, games } from "../data/games";
 
 const links = [
-  { href: "#home", label: "Home" },
   { href: "#hots", label: "Hots" },
-  { href: "#games", label: "Jogos" },
-  { href: "#brindes", label: "Brindes" },
-  { href: "#profile", label: "Perfil" },
-  { href: "#coins", label: "LM Coins" },
+  { href: "#games", label: "Games" },
 ];
 
 export function Navbar() {
@@ -49,7 +45,7 @@ export function Navbar() {
             </Link>
           </div>
 
-          <nav className="hidden items-center gap-6 text-sm font-medium text-[#dbcaa7] xl:flex">
+          <nav className="hidden items-center gap-8 text-sm font-medium text-[#dbcaa7] md:flex">
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -62,27 +58,6 @@ export function Navbar() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-2 lg:flex">
-              <Link
-                href="#profile"
-                className="loot-secondary-button rounded-full px-4 py-2.5 text-sm font-semibold transition-colors"
-              >
-                Perfil
-              </Link>
-              <Link
-                href="#brindes"
-                className="loot-blue-button rounded-full px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-              >
-                Brindes
-              </Link>
-              <Link
-                href="#coins"
-                className="loot-gold-button rounded-full px-4 py-2.5 text-sm font-semibold"
-              >
-                LM Coins
-              </Link>
-            </div>
-
             <button
               type="button"
               onClick={() => setIsOpen(true)}
@@ -93,7 +68,7 @@ export function Navbar() {
                 <span className="h-0.5 w-4 rounded-full bg-[#4dc6ff]" />
                 <span className="h-0.5 w-4 rounded-full bg-[#4dc6ff]" />
               </span>
-              Menu lateral
+              Games
             </button>
 
             <button
@@ -101,7 +76,7 @@ export function Navbar() {
               onClick={() => setIsOpen(true)}
               className="loot-gold-button rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-105"
             >
-              Jogos
+              Game
             </button>
           </div>
         </div>
@@ -129,7 +104,7 @@ export function Navbar() {
           <div className="flex items-center justify-between border-b border-[#ffd76a]/10 pb-5">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
-                Menu lateral
+                Games
               </p>
               <h2 className="font-throne mt-3 text-4xl text-[#ffc94d]">
                 Escolha seu jogo
@@ -146,7 +121,7 @@ export function Navbar() {
           </div>
 
           <div className="mt-6 flex items-center justify-between text-xs font-bold uppercase tracking-[0.26em] text-[#b39a74]">
-            <span>Jogos</span>
+            <span>Available</span>
             <span>{orderedGames.length}</span>
           </div>
 

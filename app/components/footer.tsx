@@ -27,17 +27,11 @@ export function Footer() {
 
           <div className="flex flex-col gap-3">
             <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffc94d]">
-              Informacoes
+              Navegacao
             </h3>
             <nav className="flex flex-col gap-2 text-sm">
               <Link href="/" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
                 Home
-              </Link>
-              <Link href="#profile" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
-                Perfil
-              </Link>
-              <Link href="#coins" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
-                LM Coins
               </Link>
               <Link href="#games" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
                 Games
@@ -50,15 +44,9 @@ export function Footer() {
 
           <div className="flex flex-col gap-3">
             <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffc94d]">
-              Site Gold
+              Suporte
             </h3>
             <nav className="flex flex-col gap-2 text-sm">
-              <a
-                href="#brindes"
-                className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]"
-              >
-                Brindes
-              </a>
               <a
                 href="mailto:support@lootmaster.com"
                 className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]"
