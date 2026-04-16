@@ -154,6 +154,7 @@ export function GoldPurchaseMenu({
                 {safeGoldAmount.toLocaleString()} gold
               </span>
             )}
+          </div>
           <input
             type="range"
             min={goldConfig.minGold}
