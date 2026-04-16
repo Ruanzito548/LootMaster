@@ -2,22 +2,22 @@ import Link from "next/link";
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#10192d_0%,#0b1324_45%,#070b14_100%)] text-white">
+    <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
-          <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
+          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">
             Admin
           </p>
-          <h1 className="text-4xl font-black leading-tight sm:text-5xl">
+          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">
             Dashboard
           </h1>
-          <p className="max-w-2xl text-base leading-8 text-slate-400">
+          <p className="loot-muted max-w-2xl text-base leading-8">
             Future admin tools and controls will live here.
           </p>
         </div>
 
-        <section className="mt-8 rounded-[2rem] border border-white/8 bg-[#0c1324] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)]">
-          <p className="text-sm font-semibold text-slate-300">
+        <section className="loot-panel mt-8 rounded-[2rem] p-8">
+          <p className="loot-muted text-sm font-semibold">
             Placeholder page ready for the next admin features.
           </p>
         </section>
@@ -25,13 +25,13 @@ export default function DashboardPage() {
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
             href="/admin"
-            className="rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
           >
             Back to admin
           </Link>
           <Link
             href="/"
-            className="rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
           >
             Back to home
           </Link>

@@ -123,16 +123,16 @@ export function GoldConfigAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#10192d_0%,#0b1324_45%,#070b14_100%)] text-white">
+    <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
-          <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
+          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">
             Admin
           </p>
-          <h1 className="text-4xl font-black leading-tight sm:text-5xl">
+          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">
             Gold settings
           </h1>
-          <p className="max-w-2xl text-base leading-8 text-slate-400">
+          <p className="loot-muted max-w-2xl text-base leading-8">
             Ajuste o valor do gold, a quantidade minima comprada e configure por jogo, servidor e faccao.
           </p>
         </div>
@@ -149,12 +149,12 @@ export function GoldConfigAdmin() {
         ) : null}
 
         <section className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-          <div className="rounded-[2rem] border border-white/8 bg-[#0c1324] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)]">
+          <div className="loot-panel rounded-[2rem] p-8">
             <div className="grid gap-6">
               <div>
                 <label
                   htmlFor="game-select"
-                  className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+                  className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
                 >
                   Jogo
                 </label>
@@ -166,13 +166,13 @@ export function GoldConfigAdmin() {
                     setSelectedServerId("");
                     setSelectedFaction("");
                   }}
-                  className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30"
+                  className="loot-select mt-3 px-4 py-3 text-sm font-semibold"
                 >
-                  <option value="" className="bg-slate-950">
+                  <option value="">
                     Default (todos os jogos)
                   </option>
                   {games.map((game) => (
-                    <option key={game.id} value={game.id} className="bg-slate-950">
+                    <option key={game.id} value={game.id}>
                       {game.title}
                     </option>
                   ))}
@@ -182,7 +182,7 @@ export function GoldConfigAdmin() {
               <div>
                 <label
                   htmlFor="server-select"
-                  className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+                  className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
                 >
                   Servidor
                 </label>
@@ -194,13 +194,13 @@ export function GoldConfigAdmin() {
                     setSelectedServerId(event.target.value);
                     setSelectedFaction("");
                   }}
-                  className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30 disabled:cursor-not-allowed"
+                  className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
                 >
-                  <option value="" className="bg-slate-950">
+                  <option value="">
                     Default (todos os servidores)
                   </option>
                   {servers.map((server) => (
-                    <option key={server.id} value={server.id} className="bg-slate-950">
+                    <option key={server.id} value={server.id}>
                       {server.name} ({server.region})
                     </option>
                   ))}
@@ -210,7 +210,7 @@ export function GoldConfigAdmin() {
               <div>
                 <label
                   htmlFor="faction-select"
-                  className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+                  className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
                 >
                   Faccao
                 </label>
@@ -219,13 +219,13 @@ export function GoldConfigAdmin() {
                   value={selectedFaction}
                   disabled={!selectedServerId}
                   onChange={(event) => setSelectedFaction(event.target.value)}
-                  className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30 disabled:cursor-not-allowed"
+                  className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
                 >
-                  <option value="" className="bg-slate-950">
+                  <option value="">
                     Default (todas as faccoes)
                   </option>
                   {factions.map((faction) => (
-                    <option key={faction} value={faction} className="bg-slate-950">
+                    <option key={faction} value={faction}>
                       {faction}
                     </option>
                   ))}
@@ -235,7 +235,7 @@ export function GoldConfigAdmin() {
               <div>
                 <label
                   htmlFor="price-per-thousand"
-                  className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+                  className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
                 >
                   Valor por 1.000 gold
                 </label>
@@ -250,9 +250,9 @@ export function GoldConfigAdmin() {
                       pricePerThousand: Number(event.target.value),
                     })
                   }
-                  className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30"
+                  className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
                 />
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-[#7d8597]">
                   Exemplo: `20` para cobrar $20 a cada 1.000 gold.
                 </p>
               </div>
@@ -260,7 +260,7 @@ export function GoldConfigAdmin() {
               <div>
                 <label
                   htmlFor="min-gold"
-                  className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+                  className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
                 >
                   Quantidade minima comprada
                 </label>
@@ -275,16 +275,16 @@ export function GoldConfigAdmin() {
                       minGold: Number(event.target.value),
                     })
                   }
-                  className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30"
+                  className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
                 />
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-[#7d8597]">
                   O slider de compra respeita blocos de 1.000.
                 </p>
               </div>
             </div>
 
-            <div className="mt-8 flex flex-col gap-4 border-t border-white/8 pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm font-semibold text-slate-300">
+            <div className="mt-8 flex flex-col gap-4 border-t border-[#ffd76a]/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <p className="loot-muted text-sm font-semibold">
                 Configuracao atual pronta para o menu de gold.
               </p>
 
@@ -292,14 +292,14 @@ export function GoldConfigAdmin() {
                 <button
                   type="button"
                   onClick={resetCurrent}
-                  className="rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                  className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
                 >
                   Reset atual
                 </button>
                 <button
                   type="button"
                   onClick={resetConfig}
-                  className="rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                  className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
                 >
                   Reset tudo
                 </button>
@@ -307,7 +307,7 @@ export function GoldConfigAdmin() {
                   type="button"
                   onClick={() => void saveConfig()}
                   disabled={!firebaseEnabled}
-                  className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-slate-500"
+                  className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200"
                 >
                   Salvar
                 </button>
@@ -327,36 +327,36 @@ export function GoldConfigAdmin() {
             ) : null}
           </div>
 
-          <aside className="rounded-[2rem] border border-cyan-300/12 bg-[linear-gradient(180deg,rgba(34,211,238,0.12)_0%,rgba(12,19,36,0.95)_100%)] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)]">
-            <p className="text-sm font-bold uppercase tracking-[0.24em] text-cyan-200">
+          <aside className="loot-panel rounded-[2rem] p-8">
+            <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">
               Configuracao atual
             </p>
-            <h2 className="mt-4 text-3xl font-black">
+            <h2 className="loot-title mt-4 text-3xl font-black">
               {selectedGame?.title ?? "Default"} / {selectedServer?.name ?? "Todos"} / {selectedFaction || "Todas"}
             </h2>
-            <p className="mt-4 text-base leading-8 text-slate-300">
+            <p className="loot-muted mt-4 text-base leading-8">
               {selectionMode.description}
             </p>
 
             <div className="mt-8 grid gap-4">
-              <div className="rounded-[1.25rem] border border-white/8 bg-[#0c1324] p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+              <div className="rounded-[1.25rem] border border-[#ffd76a]/10 bg-white/4 p-4">
+                <p className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
                   Valor do gold
                 </p>
-                <p className="mt-2 text-3xl font-black">
+                <p className="loot-title mt-2 text-3xl font-black">
                   ${currentEntry.pricePerThousand}
                 </p>
-                <p className="mt-2 text-sm text-slate-400">por 1.000 gold</p>
+                <p className="loot-muted mt-2 text-sm">por 1.000 gold</p>
               </div>
 
-              <div className="rounded-[1.25rem] border border-white/8 bg-[#0c1324] p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+              <div className="rounded-[1.25rem] border border-[#ffd76a]/10 bg-white/4 p-4">
+                <p className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
                   Compra minima
                 </p>
-                <p className="mt-2 text-3xl font-black">
+                <p className="loot-title mt-2 text-3xl font-black">
                   {currentEntry.minGold.toLocaleString()}
                 </p>
-                <p className="mt-2 text-sm text-slate-400">gold</p>
+                <p className="loot-muted mt-2 text-sm">gold</p>
               </div>
             </div>
           </aside>
@@ -366,13 +366,13 @@ export function GoldConfigAdmin() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/admin"
-              className="inline-flex rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors"
             >
               Back to admin
             </Link>
             <Link
               href="/"
-              className="inline-flex rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors"
             >
               Back to home
             </Link>

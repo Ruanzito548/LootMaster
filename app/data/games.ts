@@ -72,19 +72,19 @@ export const serviceCategories: ServiceCategory[] = [
     id: "gold",
     title: "Gold",
     description: "Fast delivery offers for in-game currency.",
-    accent: "bg-amber-300 text-slate-950",
+    accent: "bg-[linear-gradient(180deg,#ffe27c_0%,#f7ba2c_65%,#cc7a15_100%)] text-[#2f1405]",
   },
   {
     id: "boost",
     title: "Boost",
     description: "Progression services, carries and character help.",
-    accent: "bg-cyan-300 text-slate-950",
+    accent: "border border-[#84d5ff]/20 bg-[#0d3f7a]/40 text-[#d8f4ff]",
   },
   {
     id: "accounts",
     title: "Accounts",
     description: "Account listings and ready-to-play options.",
-    accent: "bg-violet-300 text-slate-950",
+    accent: "border border-[#ffd76a]/18 bg-[#fff1be]/10 text-[#ffc94d]",
   },
 ];
 

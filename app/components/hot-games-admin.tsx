@@ -59,14 +59,14 @@ export function HotGamesAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#10192d_0%,#0b1324_45%,#070b14_100%)] text-white">
+    <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
-          <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
+          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">
             Admin
           </p>
-          <h1 className="text-4xl font-black leading-tight sm:text-5xl">Manage hots</h1>
-          <p className="max-w-2xl text-base leading-8 text-slate-400">
+          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Manage hots</h1>
+          <p className="loot-muted max-w-2xl text-base leading-8">
             Select the games that should appear as highlights.
           </p>
         </div>
@@ -82,7 +82,7 @@ export function HotGamesAdmin() {
           </section>
         ) : null}
 
-        <section className="mt-8 rounded-[2rem] border border-white/8 bg-[#0c1324] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.35)]">
+        <section className="loot-panel mt-8 rounded-[2rem] p-8">
           <div className="grid gap-4">
             {games.map((game) => {
               const isSelected = activeIds.includes(game.id);
@@ -92,14 +92,14 @@ export function HotGamesAdmin() {
                   key={game.id}
                   className={`flex cursor-pointer items-center justify-between gap-4 rounded-[1.25rem] border p-5 transition-colors ${
                     isSelected
-                      ? "border-cyan-300/30 bg-cyan-300/8"
-                      : "border-white/8 bg-white/4"
+                      ? "border-[#ffd76a]/24 bg-[#f7ba2c]/10"
+                      : "border-[#ffd76a]/10 bg-white/4"
                   }`}
                 >
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-lg font-black">{game.title}</h2>
-                      <span className="rounded-full border border-cyan-300/15 bg-cyan-300/8 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+                      <h2 className="loot-title text-lg font-black">{game.title}</h2>
+                      <span className="loot-badge-blue rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]">
                         {game.tag}
                       </span>
                     </div>
@@ -109,15 +109,15 @@ export function HotGamesAdmin() {
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggleGame(game.id)}
-                    className="h-5 w-5 accent-cyan-300"
+                    className="h-5 w-5 accent-[#f7ba2c]"
                   />
                 </label>
               );
             })}
           </div>
 
-          <div className="mt-8 flex flex-col gap-4 border-t border-white/8 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-semibold text-slate-300">
+          <div className="mt-8 flex flex-col gap-4 border-t border-[#ffd76a]/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <p className="loot-muted text-sm font-semibold">
               {activeIds.length} game(s) selected.
             </p>
 
@@ -125,7 +125,7 @@ export function HotGamesAdmin() {
               <button
                 type="button"
                 onClick={resetSelection}
-                className="rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
               >
                 Default
               </button>
@@ -133,7 +133,7 @@ export function HotGamesAdmin() {
                 type="button"
                 onClick={() => void saveSelection()}
                 disabled={!firebaseEnabled}
-                className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-slate-500"
+                className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200"
               >
                 Salvar
               </button>
@@ -157,13 +157,13 @@ export function HotGamesAdmin() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/admin"
-              className="inline-flex rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors"
             >
               Back to admin
             </Link>
             <Link
               href="/"
-              className="inline-flex rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors"
             >
               Back to home
             </Link>

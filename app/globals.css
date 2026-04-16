@@ -61,6 +61,11 @@ body {
     0 24px 70px rgba(3, 10, 20, 0.42);
 }
 
+.loot-shell {
+  min-height: 100vh;
+  color: white;
+}
+
 .loot-gold-button {
   background: linear-gradient(180deg, #ffe27c 0%, #f7ba2c 52%, #cc7a15 100%);
   color: #2a1204;
@@ -73,10 +78,78 @@ body {
   filter: brightness(1.04);
 }
 
+.loot-secondary-button {
+  background: linear-gradient(180deg, rgba(255, 241, 190, 0.08), rgba(45, 178, 255, 0.08));
+  border: 1px solid rgba(255, 214, 117, 0.16);
+  color: #f8eed4;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.loot-secondary-button:hover {
+  background: linear-gradient(180deg, rgba(255, 241, 190, 0.12), rgba(45, 178, 255, 0.12));
+}
+
 .loot-blue-button {
   background: linear-gradient(180deg, rgba(75, 188, 255, 0.26), rgba(11, 66, 143, 0.8));
   border: 1px solid rgba(132, 213, 255, 0.22);
   box-shadow: inset 0 1px 0 rgba(190, 238, 255, 0.12);
+}
+
+.loot-input,
+.loot-select,
+.loot-textarea {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 214, 117, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f8eed4;
+  outline: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.loot-input::placeholder,
+.loot-textarea::placeholder {
+  color: #8b96ab;
+}
+
+.loot-input:focus,
+.loot-select:focus,
+.loot-textarea:focus {
+  border-color: rgba(77, 198, 255, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.loot-select option {
+  background: #09111d;
+  color: #f8eed4;
+}
+
+.loot-muted {
+  color: #cdb991;
+}
+
+.loot-label {
+  color: #a89a7b;
+}
+
+.loot-kicker {
+  color: #ffc94d;
+}
+
+.loot-title {
+  color: #ffcf57;
+}
+
+.loot-badge {
+  border: 1px solid rgba(255, 214, 117, 0.18);
+  background: rgba(247, 186, 44, 0.12);
+  color: #ffc94d;
+}
+
+.loot-badge-blue {
+  border: 1px solid rgba(132, 213, 255, 0.2);
+  background: rgba(13, 63, 122, 0.36);
+  color: #d8f4ff;
 }
 
 .loot-orb {

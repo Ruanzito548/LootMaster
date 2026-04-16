@@ -57,20 +57,20 @@ export function GoldPurchaseMenu({
   const selectionModeLabel = "Jogo -> Servidor -> Faccao";
 
   return (
-    <aside className="rounded-[1.75rem] border border-white/8 bg-[#0c1324] p-6 shadow-[0_24px_80px_rgba(2,8,23,0.35)]">
-      <p className="text-sm font-bold uppercase tracking-[0.24em] text-cyan-300">
+    <aside className="loot-panel rounded-[1.75rem] p-6">
+      <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">
         Buy menu
       </p>
-      <h2 className="mt-4 text-3xl font-black">Configure your order</h2>
+      <h2 className="loot-title mt-4 text-3xl font-black">Configure your order</h2>
 
       <div className="mt-8 space-y-6">
-        <div className="rounded-[1.25rem] border border-white/8 bg-white/4 p-4">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+        <div className="rounded-[1.25rem] border border-[#ffd76a]/10 bg-white/4 p-4">
+          <p className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
             Product
           </p>
-          <p className="mt-2 text-lg font-black">{gameTitle}</p>
-          <p className="mt-1 text-sm text-slate-400">{categoryTitle}</p>
-          <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+          <p className="loot-title mt-2 text-lg font-black">{gameTitle}</p>
+          <p className="loot-muted mt-1 text-sm">{categoryTitle}</p>
+          <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-[#d8f4ff]">
             Modo: {selectionModeLabel}
           </p>
         </div>
@@ -78,7 +78,7 @@ export function GoldPurchaseMenu({
         <div>
           <label
             htmlFor="server-select"
-            className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400"
+            className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
           >
             Server
           </label>
@@ -93,13 +93,13 @@ export function GoldPurchaseMenu({
               setDeliveryMethod("Face to face");
               setEmail("");
             }}
-            className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30"
+            className="loot-select mt-3 px-4 py-3 text-sm font-semibold"
           >
-            <option value="" className="bg-slate-950">
+            <option value="">
               Select a server
             </option>
             {servers.map((server) => (
-              <option key={server.id} value={server.id} className="bg-slate-950">
+              <option key={server.id} value={server.id}>
                 {server.name} ({server.region})
               </option>
             ))}
@@ -109,7 +109,7 @@ export function GoldPurchaseMenu({
         <div className={!serverSelected ? "opacity-40" : ""}>
           <p
             className={`text-xs font-bold uppercase tracking-[0.18em] ${
-              serverSelected ? "text-slate-400" : "text-slate-600"
+              serverSelected ? "text-[#a89a7b]" : "text-[#5e6470]"
             }`}
           >
             Faction
@@ -123,8 +123,8 @@ export function GoldPurchaseMenu({
                 onClick={() => setSelectedFaction(faction)}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   selectedFaction === faction
-                    ? "bg-cyan-400 text-slate-950"
-                    : "border border-white/10 bg-white/6 text-white hover:bg-white/10"
+                    ? "loot-gold-button"
+                    : "loot-secondary-button border px-4 py-2 text-[#f8eed4]"
                 } ${!serverSelected ? "cursor-not-allowed" : ""}`}
               >
                 {faction}
@@ -137,12 +137,12 @@ export function GoldPurchaseMenu({
           <div className="flex items-center justify-between">
             <p
               className={`text-xs font-bold uppercase tracking-[0.18em] ${
-                goldUnlocked ? "text-slate-400" : "text-slate-600"
+                goldUnlocked ? "text-[#a89a7b]" : "text-[#5e6470]"
               }`}
             >
               Gold amount
             </p>
-            <span className="rounded-full bg-cyan-300 px-3 py-1 text-xs font-bold text-slate-950">
+            <span className="rounded-full bg-[linear-gradient(180deg,#ffe27c_0%,#f7ba2c_65%,#cc7a15_100%)] px-3 py-1 text-xs font-bold text-[#2f1405]">
               {safeGoldAmount.toLocaleString()} gold
             </span>
           </div>
@@ -155,21 +155,21 @@ export function GoldPurchaseMenu({
             value={safeGoldAmount}
             disabled={!goldUnlocked}
             onChange={(event) => setGoldAmount(Number(event.target.value))}
-            className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-cyan-300 disabled:cursor-not-allowed"
+            className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-[#f7ba2c] disabled:cursor-not-allowed"
           />
 
-          <div className="mt-2 flex justify-between text-xs text-slate-500">
+          <div className="mt-2 flex justify-between text-xs text-[#7d8597]">
             <span>{goldConfig.minGold.toLocaleString()}</span>
             <span>{goldConfig.maxGold.toLocaleString()}</span>
           </div>
 
           {goldUnlocked ? (
-            <div className="mt-4 rounded-[1rem] border border-white/8 bg-white/4 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+            <div className="mt-4 rounded-[1rem] border border-[#ffd76a]/10 bg-white/4 p-4">
+              <p className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
                 Price
               </p>
-              <p className="mt-2 text-3xl font-black">${price}</p>
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="loot-title mt-2 text-3xl font-black">${price}</p>
+              <p className="loot-muted mt-2 text-sm">
                 ${goldConfig.pricePerThousand} per 1,000 gold
               </p>
             </div>
@@ -181,7 +181,7 @@ export function GoldPurchaseMenu({
             <label
               htmlFor="nickname"
               className={`text-xs font-bold uppercase tracking-[0.18em] ${
-                detailsUnlocked ? "text-slate-400" : "text-slate-600"
+                detailsUnlocked ? "text-[#a89a7b]" : "text-[#5e6470]"
               }`}
             >
               Nickname
@@ -193,7 +193,7 @@ export function GoldPurchaseMenu({
               disabled={!detailsUnlocked}
               onChange={(event) => setNickname(event.target.value)}
               placeholder="Your character name"
-              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/30 disabled:cursor-not-allowed"
+              className="loot-input mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
             />
           </div>
 
@@ -201,7 +201,7 @@ export function GoldPurchaseMenu({
             <label
               htmlFor="delivery-method"
               className={`text-xs font-bold uppercase tracking-[0.18em] ${
-                detailsUnlocked ? "text-slate-400" : "text-slate-600"
+                detailsUnlocked ? "text-[#a89a7b]" : "text-[#5e6470]"
               }`}
             >
               Delivery method
@@ -211,10 +211,10 @@ export function GoldPurchaseMenu({
               value={deliveryMethod}
               disabled={!detailsUnlocked}
               onChange={(event) => setDeliveryMethod(event.target.value)}
-              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors focus:border-cyan-300/30 disabled:cursor-not-allowed"
+              className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
             >
               {["Face to face", "Auction House", "Mailbox"].map((method) => (
-                <option key={method} value={method} className="bg-slate-950">
+                <option key={method} value={method}>
                   {method}
                 </option>
               ))}
@@ -225,7 +225,7 @@ export function GoldPurchaseMenu({
             <label
               htmlFor="email"
               className={`text-xs font-bold uppercase tracking-[0.18em] ${
-                detailsUnlocked ? "text-slate-400" : "text-slate-600"
+                detailsUnlocked ? "text-[#a89a7b]" : "text-[#5e6470]"
               }`}
             >
               Email
@@ -237,22 +237,22 @@ export function GoldPurchaseMenu({
               disabled={!detailsUnlocked}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="your@email.com"
-              className="mt-3 w-full rounded-[1rem] border border-white/8 bg-white/4 px-4 py-3 text-sm font-semibold text-white outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/30 disabled:cursor-not-allowed"
+              className="loot-input mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
             />
           </div>
         </div>
 
-        <div className="rounded-[1.25rem] border border-cyan-300/15 bg-cyan-300/8 p-4">
+        <div className="rounded-[1.25rem] border border-[#84d5ff]/18 bg-[#0d3f7a]/24 p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#d8f4ff]">
                 Selected server
               </p>
-              <p className="mt-2 text-lg font-black">
+              <p className="loot-title mt-2 text-lg font-black">
                 {selectedServer?.name ?? "No server selected"}
               </p>
             </div>
-            <span className="rounded-full border border-cyan-300/15 bg-cyan-300/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-100">
+            <span className="loot-badge-blue rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]">
               {selectedServer?.region ?? "--"} / {selectedFaction || "--"}
             </span>
           </div>
@@ -261,7 +261,7 @@ export function GoldPurchaseMenu({
         <button
           type="button"
           disabled={!formReady}
-          className="w-full rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-slate-500"
+          className="loot-gold-button w-full rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200"
         >
           Continue
         </button>
