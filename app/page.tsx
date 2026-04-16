@@ -212,6 +212,13 @@ export default function Home() {
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
+                    : game.id === "retail"
+                    ? {
+                        backgroundImage:
+                          "linear-gradient(rgba(7,11,26,0.78),rgba(7,11,26,0.78)), url('/midnightwallpaper.jpeg')",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
                     : undefined
                 }
               >
