@@ -27,17 +27,23 @@ export function Footer() {
 
           <div className="flex flex-col gap-3">
             <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffc94d]">
-              Navegacao
+              Navegação
             </h3>
             <nav className="flex flex-col gap-2 text-sm">
               <Link href="/" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
                 Home
               </Link>
-              <Link href="#games" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
-                Games
+              <Link href="/games" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
+                Jogos
               </Link>
-              <Link href="#hots" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
-                Hots
+              <Link href="/coins" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
+                LM Coins
+              </Link>
+              <Link href="/rewards" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
+                Brindes
+              </Link>
+              <Link href="/profile" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
+                Perfil
               </Link>
             </nav>
           </div>

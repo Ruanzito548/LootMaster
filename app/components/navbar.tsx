@@ -8,8 +8,11 @@ import { subscribeToHotGames } from "../../lib/hot-games";
 import { defaultHotGameIds, games } from "../data/games";
 
 const links = [
-  { href: "#hots", label: "Hots" },
-  { href: "#games", label: "Games" },
+  { href: "/", label: "Home" },
+  { href: "/games", label: "Jogos" },
+  { href: "/coins", label: "LM Coins" },
+  { href: "/rewards", label: "Brindes" },
+  { href: "/profile", label: "Perfil" },
 ];
 
 export function Navbar() {
