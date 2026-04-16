@@ -172,7 +172,21 @@ export function GoldPurchaseMenu({
           </div>
 
           {goldUnlocked ? (
-            <div className="mt-4 rounded-[1rem] border border-[#ffd76a]/10 bg-white/4 p-4">
+            <div
+              className={`mt-4 rounded-[1rem] border p-4 ${
+                isTbc ? "border-[#99ff99]/20" : "border-[#ffd76a]/10 bg-white/4"
+              }`}
+              style={
+                isTbc
+                  ? {
+                      backgroundImage:
+                        'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/goldtbc.jpeg")',
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : undefined
+              }
+            >
               <p className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
                 Price
               </p>
