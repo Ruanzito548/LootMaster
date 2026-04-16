@@ -42,47 +42,49 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
         </div>
 
         <section className="mt-12 grid gap-5 lg:grid-cols-3">
-          {serviceCategories.map((category) => (
-            <article
-              key={category.id}
-              className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : ""}`}
-              style={
-                isTbc && category.id === "gold"
-                  ? {
-                      backgroundImage:
-                        'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/goldtbc.jpeg")',
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }
-                  : undefined
-              }
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className={`text-3xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>
-                    {category.title}
-                  </h2>
-                  <p className={`mt-4 text-sm leading-7 ${isTbc ? "tbc-muted" : "loot-muted"}`}>
-                    {category.description}
-                  </p>
-                </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${category.accent} ${isTbc ? "tbc-badge" : ""}`}
-                >
-                  Open
-                </span>
-              </div>
+          {serviceCategories.map((category) => {
+            const isGoldTbc = isTbc && category.id === "gold";
 
+            return (
               <Link
+                key={category.id}
                 href={`/games/${game.id}/${category.id}`}
-                className={`mt-10 inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors ${
-                  isTbc ? "tbc-secondary-button" : "loot-secondary-button"
-                }`}
+                className={`group block overflow-hidden rounded-[1.75rem] border transition duration-300 ease-out ${
+                  isTbc ? "tbc-panel" : "loot-panel"
+                } ${isGoldTbc ? "border-[#99ff99]/20 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(157,255,144,0.28)] hover:border-[#9eff99]/40 hover:-translate-y-1 hover:scale-[1.02]" : "border-transparent hover:shadow-[0_0_20px_rgba(45,178,255,0.18)] hover:-translate-y-1"}`}
+                style={
+                  isGoldTbc
+                    ? {
+                        backgroundImage:
+                          'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/goldtbc.jpeg")',
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : undefined
+                }
               >
-                View {category.title}
+                <article className="h-full rounded-[1.75rem] p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className={`text-3xl font-black transition-colors ${isTbc ? "tbc-title" : "loot-title"}`}>
+                        {category.title}
+                      </h2>
+                      <p className={`mt-4 text-sm leading-7 transition-colors ${isTbc ? "tbc-muted" : "loot-muted"}`}>
+                        {category.description}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${category.accent} ${isTbc ? "tbc-badge" : ""} transition-colors ${
+                        isGoldTbc ? "border-[#9eff99]/30 bg-[#9eff99]/10 text-[#e8ffeb]" : ""
+                      }`}
+                    >
+                      Open
+                    </span>
+                  </div>
+                </article>
               </Link>
-            </article>
-          ))}
+            );
+          })}
         </section>
       </main>
     </div>
