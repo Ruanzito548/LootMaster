@@ -46,6 +46,16 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
             <article
               key={category.id}
               className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : ""}`}
+              style={
+                isTbc && category.id === "gold"
+                  ? {
+                      backgroundImage:
+                        'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/goldtbc.jpeg")',
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : undefined
+              }
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
