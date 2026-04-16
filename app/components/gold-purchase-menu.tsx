@@ -19,6 +19,7 @@ export function GoldPurchaseMenu({
   categoryTitle,
   servers,
 }: GoldPurchaseMenuProps) {
+  const isTbc = gameId === "tbc-anniversary";
   const [fullGoldConfig, setFullGoldConfig] = useState(defaultGoldConfig);
   const [selectedServerId, setSelectedServerId] = useState("");
   const [selectedFaction, setSelectedFaction] = useState("");
@@ -57,11 +58,13 @@ export function GoldPurchaseMenu({
   const selectionModeLabel = "Jogo -> Servidor -> Faccao";
 
   return (
-    <aside className="loot-panel rounded-[1.75rem] p-6">
-      <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">
+    <aside className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : ""}`}>
+      <p className={`text-sm font-bold uppercase tracking-[0.24em] ${isTbc ? "tbc-kicker" : "loot-kicker"}`}>
         Buy menu
       </p>
-      <h2 className="loot-title mt-4 text-3xl font-black">Configure your order</h2>
+      <h2 className={`mt-4 text-3xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>
+        Configure your order
+      </h2>
 
       <div className="mt-8 space-y-6">
         <div className="rounded-[1.25rem] border border-[#ffd76a]/10 bg-white/4 p-4">
@@ -123,7 +126,9 @@ export function GoldPurchaseMenu({
                 onClick={() => setSelectedFaction(faction)}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   selectedFaction === faction
-                    ? "loot-gold-button"
+                    ? isTbc
+                      ? "tbc-gold-button"
+                      : "loot-gold-button"
                     : "loot-secondary-button border px-4 py-2 text-[#f8eed4]"
                 } ${!serverSelected ? "cursor-not-allowed" : ""}`}
               >
@@ -142,11 +147,13 @@ export function GoldPurchaseMenu({
             >
               Gold amount
             </p>
-            <span className="rounded-full bg-[linear-gradient(180deg,#ffe27c_0%,#f7ba2c_65%,#cc7a15_100%)] px-3 py-1 text-xs font-bold text-[#2f1405]">
-              {safeGoldAmount.toLocaleString()} gold
-            </span>
-          </div>
-
+            {goldUnlocked && (
+              <span className={`${isTbc
+                ? "rounded-full bg-[#2f733e]/20 text-[#d2f5c2]"
+                : "rounded-full bg-[linear-gradient(180deg,#ffe27c_0%,#f7ba2c_65%,#cc7a15_100%)] text-[#2f1405]"} px-3 py-1 text-xs font-bold`}>
+                {safeGoldAmount.toLocaleString()} gold
+              </span>
+            )}
           <input
             type="range"
             min={goldConfig.minGold}
@@ -176,7 +183,7 @@ export function GoldPurchaseMenu({
           ) : null}
         </div>
 
-        <div className={`grid gap-4 ${!detailsUnlocked ? "opacity-40" : ""}`}>
+        <div className="grid gap-4">
           <div>
             <label
               htmlFor="nickname"
@@ -252,7 +259,7 @@ export function GoldPurchaseMenu({
                 {selectedServer?.name ?? "No server selected"}
               </p>
             </div>
-            <span className="loot-badge-blue rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]">
+            <span className={`${isTbc ? "tbc-badge" : "loot-badge-blue"} rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]`}>
               {selectedServer?.region ?? "--"} / {selectedFaction || "--"}
             </span>
           </div>
@@ -261,7 +268,7 @@ export function GoldPurchaseMenu({
         <button
           type="button"
           disabled={!formReady}
-          className="loot-gold-button w-full rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200"
+          className={`${isTbc ? "tbc-gold-button" : "loot-gold-button"} w-full rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200`}
         >
           Continue
         </button>

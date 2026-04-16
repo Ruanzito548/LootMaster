@@ -89,6 +89,57 @@ body {
   background: linear-gradient(180deg, rgba(255, 241, 190, 0.12), rgba(45, 178, 255, 0.12));
 }
 
+.tbc-shell {
+  color: #d7ffdf;
+  background-image:
+    radial-gradient(circle at top left, rgba(123, 255, 142, 0.12), transparent 24%),
+    radial-gradient(circle at 75% 15%, rgba(84, 255, 140, 0.08), transparent 18%),
+    linear-gradient(180deg, #08150a 0%, #06120a 50%, #020703 100%);
+}
+
+.tbc-panel {
+  background:
+    linear-gradient(180deg, rgba(42, 112, 58, 0.88), rgba(5, 11, 4, 0.95)),
+    rgba(3, 8, 4, 0.8);
+  border-color: rgba(69, 190, 95, 0.22);
+}
+
+.tbc-gold-button {
+  background: linear-gradient(180deg, #7eea72 0%, #2c8f42 52%, #0f4c22 100%);
+  color: #f6ffee;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 18px 36px rgba(47, 111, 58, 0.26);
+}
+
+.tbc-secondary-button {
+  background: linear-gradient(180deg, rgba(80, 206, 113, 0.1), rgba(11, 61, 26, 0.24));
+  border-color: rgba(80, 206, 113, 0.2);
+  color: #d4ffd9;
+}
+
+.tbc-secondary-button:hover {
+  background: linear-gradient(180deg, rgba(118, 255, 152, 0.18), rgba(19, 85, 36, 0.3));
+}
+
+.tbc-title {
+  color: #b8ffb4;
+}
+
+.tbc-muted {
+  color: #a4cda1;
+}
+
+.tbc-kicker {
+  color: #8be88a;
+}
+
+.tbc-badge {
+  border-color: rgba(158, 255, 153, 0.35);
+  background: rgba(96, 210, 124, 0.16);
+  color: #e1ffe0;
+}
+
 .loot-blue-button {
   background: linear-gradient(180deg, rgba(75, 188, 255, 0.26), rgba(11, 66, 143, 0.8));
   border: 1px solid rgba(132, 213, 255, 0.22);
