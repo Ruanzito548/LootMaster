@@ -13,7 +13,7 @@ export default function Home() {
         <section className="relative grid items-center gap-10 py-14 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="loot-orb animate-treasure-pulse left-[-6rem] top-8 h-36 w-36 bg-[#f7ba2c]/30" />
           <div className="loot-orb animate-treasure-pulse right-8 top-16 h-24 w-24 bg-[#38bdf8]/35" />
-          <div className="loot-orb bottom-[-2rem] right-[-2rem] h-32 w-32 bg-[#8dff31]/20" />
+          <div className="loot-orb bottom-[-2rem] right-[-2rem] h-32 w-32 bg-[#60a5fa]/20" />
 
           <div className="space-y-7">
             <span className="inline-flex rounded-full border border-[#ffd76a]/20 bg-[#f7ba2c]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-[#ffe8ad]">
@@ -63,7 +63,7 @@ export default function Home() {
           </div>
 
           <div className="loot-panel relative overflow-hidden rounded-[2rem] p-6">
-            <div className="absolute left-6 top-8 h-20 w-20 rounded-full bg-[#8dff31]/20 blur-2xl" />
+            <div className="absolute left-6 top-8 h-20 w-20 rounded-full bg-[#f7ba2c]/20 blur-2xl" />
             <div className="absolute bottom-6 right-6 h-28 w-28 rounded-full bg-[#2db2ff]/20 blur-2xl" />
             <div className="absolute right-[-1rem] top-10 h-28 w-28 rotate-12 rounded-[2rem] border border-[#84d5ff]/25 bg-[linear-gradient(180deg,rgba(95,208,255,0.35),rgba(22,76,167,0.15))] animate-crystal-float" />
             <div className="space-y-5 relative">
@@ -77,7 +77,7 @@ export default function Home() {
               </div>
 
               <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-                <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,222,124,0.16),rgba(255,222,124,0.04))] p-5 ring-1 ring-[#fff1be]/10">
+                <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,222,124,0.18),rgba(45,178,255,0.06))] p-5 ring-1 ring-[#fff1be]/10">
                   <p className="text-sm text-[#dbcaa7]">What players can buy</p>
                   <p className="mt-2 text-3xl text-[#fff3cf]">
                     Accounts, boosts and gold

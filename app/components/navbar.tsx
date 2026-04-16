@@ -31,7 +31,7 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[#ffd76a]/10 bg-[#120904]/84 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-[#ffd76a]/10 bg-[#08111f]/84 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center transition-opacity hover:opacity-80">
@@ -91,13 +91,13 @@ export function Navbar() {
           type="button"
           aria-label="Close menu"
           onClick={() => setIsOpen(false)}
-          className={`absolute inset-0 bg-[#050303]/78 backdrop-blur-sm transition-opacity duration-300 ${
+          className={`absolute inset-0 bg-[#050b14]/78 backdrop-blur-sm transition-opacity duration-300 ${
             isOpen ? "opacity-100" : "opacity-0"
           }`}
         />
 
         <aside
-          className={`absolute left-0 top-0 flex h-full w-full max-w-[22rem] flex-col border-r border-[#ffd76a]/12 bg-[linear-gradient(180deg,#1f120b_0%,#0c0806_100%)] p-6 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] transition-transform duration-300 ${
+          className={`absolute left-0 top-0 flex h-full w-full max-w-[22rem] flex-col border-r border-[#ffd76a]/12 bg-[linear-gradient(180deg,#0f2240_0%,#07101d_100%)] p-6 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] transition-transform duration-300 ${
             isOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
