@@ -402,6 +402,42 @@ body {
   animation: pulse-intense 6s ease-in-out infinite;
 }
 
+@keyframes flame {
+  0%, 100% {
+    transform: translateY(0) scaleX(1) scaleY(1) rotateZ(-2deg);
+    opacity: 0.4;
+  }
+  25% {
+    transform: translateY(-15px) scaleX(0.9) scaleY(1.1) rotateZ(1deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-25px) scaleX(1.1) scaleY(1.2) rotateZ(-1deg);
+    opacity: 0.9;
+  }
+  75% {
+    transform: translateY(-15px) scaleX(0.95) scaleY(1.15) rotateZ(2deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes flame-flicker {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-flame {
+  animation: flame 4s ease-in-out infinite;
+}
+
+.animate-flame-flicker {
+  animation: flame-flicker 2s ease-in-out infinite;
+}
+
 .animate-crystal-float {
   animation: crystal-float 6s ease-in-out infinite;
 }

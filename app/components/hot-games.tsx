@@ -61,6 +61,30 @@ export function HotGames() {
       <div className="absolute top-0 left-0 w-20 h-20 border-t border-l border-[#f7ba2c]/20 rounded-tl-[2rem] opacity-0 hover:opacity-100 transition-opacity duration-500" />
       <div className="absolute top-0 right-0 w-20 h-20 border-t border-r border-[#f7ba2c]/20 rounded-tr-[2rem] opacity-0 hover:opacity-100 transition-opacity duration-500" />
 
+      {/* Efeito de fogo - labaredas na base */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none overflow-hidden rounded-b-[2rem]">
+        {/* Labareda esquerda */}
+        <div className="absolute bottom-0 left-[5%] w-20 h-32 bg-gradient-to-t from-[#ff4400] via-[#ff8800] to-transparent animate-flame" style={{ animationDelay: '0s' }} />
+        
+        {/* Labareda centro-esquerda */}
+        <div className="absolute bottom-0 left-[25%] w-24 h-40 bg-gradient-to-t from-[#cc3300] via-[#ff6600] to-transparent animate-flame" style={{ animationDelay: '0.5s' }} />
+        
+        {/* Labareda centro */}
+        <div className="absolute bottom-0 left-[45%] w-32 h-36 bg-gradient-to-t from-[#ff5500] via-[#ffaa00] to-transparent animate-flame" style={{ animationDelay: '1s' }} />
+        
+        {/* Labareda centro-direita */}
+        <div className="absolute bottom-0 right-[25%] w-28 h-38 bg-gradient-to-t from-[#cc2200] via-[#ff7700] to-transparent animate-flame" style={{ animationDelay: '1.5s' }} />
+        
+        {/* Labareda direita */}
+        <div className="absolute bottom-0 right-[5%] w-24 h-34 bg-gradient-to-t from-[#ff3300] via-[#ff9900] to-transparent animate-flame" style={{ animationDelay: '0.8s' }} />
+
+        {/* Overlay de fogo adicional com blur */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#ff4400]/20 via-transparent to-transparent blur-2xl" />
+      </div>
+
+      {/* Brilho de fogo radiante na base */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#ff6600]/15 to-transparent pointer-events-none rounded-b-[2rem]" />
+
       <div className="relative z-10 flex flex-col gap-4 pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
           <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d] drop-shadow-[0_0_10px_rgba(255,193,77,0.3)]">
