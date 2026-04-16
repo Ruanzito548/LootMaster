@@ -174,11 +174,21 @@ export function Navbar() {
                   key={game.id}
                   href={`/games/${game.id}`}
                   onClick={() => setIsOpen(false)}
-                  className={`group flex items-center justify-between rounded-[1.4rem] border px-5 py-4 transition-colors ${
+                  className={`group relative overflow-hidden flex items-center justify-between rounded-[1.4rem] border px-5 py-4 transition-all ${
                     isTbc
-                      ? "border-[#a8ff9f]/15 bg-[rgba(168,255,159,0.06)] hover:border-[#a8ff9f]/30 hover:bg-[#1a3a20]/25"
-                      : "border-[#ffd76a]/10 bg-[rgba(255,241,190,0.04)] hover:border-[#4dc6ff]/25 hover:bg-[#0d3f7a]/22"
+                      ? "border-[#a8ff9f]/15 hover:border-[#a8ff9f]/30 hover:shadow-[0_0_20px_rgba(168,255,159,0.15)]"
+                      : "border-[#ffd76a]/10 hover:border-[#4dc6ff]/25 hover:shadow-[0_0_20px_rgba(77,198,255,0.15)]"
                   }`}
+                  style={{
+                    backgroundImage:
+                      game.id === "tbc-anniversary"
+                        ? "linear-gradient(rgba(26,58,32,0.95),rgba(10,26,12,0.95)), url('/wowtbc.jpg')"
+                        : game.id === "retail"
+                        ? "linear-gradient(rgba(13,24,40,0.95),rgba(7,16,29,0.95)), url('/midnightwallpaper.jpeg')"
+                        : undefined,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
                 >
                   <div>
                     <div className="flex items-center gap-2">
@@ -194,16 +204,22 @@ export function Navbar() {
                       <p className={`text-base font-black transition-colors ${
                         isTbc
                           ? "text-[#d4ffcc] group-hover:text-[#e8ffeb]"
-                          : "text-[#ffc94d] group-hover:text-[#d9f4ff]"
+                          : "text-[#ffc94d] group-hover:text-[#ffeb3b]"
                       }`}>
                         {game.title}
                       </p>
                     </div>
-                    <p className="mt-1 text-xs text-[#bba685]">
+                    <p className={`mt-1 text-xs ${
+                      isTbc ? "text-[#a8d0a8]" : "text-[#c5d4e0]"
+                    }`}>
                       {game.shortTitle}
                     </p>
                   </div>
-                  <span className="rounded-full border border-[#84d5ff]/18 bg-[#0d3f7a]/36 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#c7ecff]">
+                  <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] transition-all ${
+                    isTbc
+                      ? "border-[#a8ff9f]/30 bg-[#a8ff9f]/20 text-[#e0ffe0] group-hover:border-[#a8ff9f]/50 group-hover:shadow-[0_0_12px_rgba(168,255,159,0.3)]"
+                      : "border-[#4dc6ff]/25 bg-[#4dc6ff]/15 text-[#d0e8ff] group-hover:border-[#4dc6ff]/50 group-hover:shadow-[0_0_12px_rgba(77,198,255,0.3)]"
+                  }`}>
                     {game.tag}
                   </span>
                 </Link>
