@@ -38,9 +38,9 @@ export function Navbar() {
               <Image 
                 src="/lootmasterlogo.png" 
                 alt="Loot Master Logo" 
-                width={40} 
-                height={40}
-                className="h-10 w-auto"
+                width={70} 
+                height={70}
+                className="h-16 w-auto"
               />
             </Link>
           </div>
