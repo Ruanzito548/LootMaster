@@ -16,12 +16,12 @@ export default function Home() {
           <div className="loot-orb bottom-[-2rem] right-[-2rem] h-32 w-32 bg-[#60a5fa]/20" />
 
           <div className="space-y-7">
-            <span className="inline-flex rounded-full border border-[#ffd76a]/20 bg-[#f7ba2c]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-[#ffe8ad]">
+            <span className="inline-flex rounded-full border border-[#ffd76a]/20 bg-[#f7ba2c]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-[#ffc94d]">
               Treasure Marketplace
             </span>
 
             <div className="space-y-4">
-              <h1 className="font-throne max-w-4xl text-5xl leading-none text-[#fff3cf] drop-shadow-[0_6px_24px_rgba(247,186,44,0.2)] sm:text-6xl">
+              <h1 className="font-throne max-w-4xl text-5xl leading-none text-[#ffcf57] drop-shadow-[0_6px_24px_rgba(247,186,44,0.28)] sm:text-6xl">
                 Gold, crystals and power-up vibes for every game run.
               </h1>
               <p className="max-w-3xl text-lg leading-8 text-[#dbcaa7]">
@@ -68,10 +68,10 @@ export default function Home() {
             <div className="absolute right-[-1rem] top-10 h-28 w-28 rotate-12 rounded-[2rem] border border-[#84d5ff]/25 bg-[linear-gradient(180deg,rgba(95,208,255,0.35),rgba(22,76,167,0.15))] animate-crystal-float" />
             <div className="space-y-5 relative">
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-[0.3em] text-[#ffe8ad]/80">
+                <span className="text-xs uppercase tracking-[0.3em] text-[#ffc94d]/85">
                   Treasure Vault
                 </span>
-                <span className="rounded-full border border-[#fff1be]/15 bg-[#fff1be]/10 px-3 py-1 text-xs text-[#fff3cf]">
+                <span className="rounded-full border border-[#fff1be]/15 bg-[#fff1be]/10 px-3 py-1 text-xs text-[#ffcf57]">
                   Live
                 </span>
               </div>
@@ -79,7 +79,7 @@ export default function Home() {
               <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
                 <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,222,124,0.18),rgba(45,178,255,0.06))] p-5 ring-1 ring-[#fff1be]/10">
                   <p className="text-sm text-[#dbcaa7]">What players can buy</p>
-                  <p className="mt-2 text-3xl text-[#fff3cf]">
+                  <p className="mt-2 text-3xl text-[#ffcf57]">
                     Accounts, boosts and gold
                   </p>
                 </div>
@@ -125,7 +125,7 @@ export default function Home() {
                     <p className="text-xs uppercase tracking-[0.22em] text-[#b6a17b]">
                       {metric.label}
                     </p>
-                    <p className="mt-2 text-2xl font-black text-[#fff3cf]">
+                    <p className="mt-2 text-2xl font-black text-[#ffcf57]">
                       {metric.value}
                     </p>
                   </div>
@@ -143,7 +143,7 @@ export default function Home() {
             <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
               Flow
             </p>
-            <h2 className="mt-4 text-3xl font-black leading-tight text-[#fff3cf]">
+            <h2 className="mt-4 text-3xl font-black leading-tight text-[#ffcf57]">
               From glowing loot to checkout in a few clicks.
             </h2>
             <p className="mt-4 max-w-xl text-base leading-8 text-[#dbcaa7]">
@@ -174,7 +174,7 @@ export default function Home() {
                 key={step.title}
                 className="loot-panel rounded-[1.6rem] p-5"
               >
-                <h3 className="text-xl font-black text-[#fff0c0]">{step.title}</h3>
+                <h3 className="text-xl font-black text-[#ffc94d]">{step.title}</h3>
                 <p className="mt-3 text-sm leading-7 text-[#dbcaa7]">
                   {step.description}
                 </p>
@@ -189,7 +189,7 @@ export default function Home() {
               <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
                 Games
               </p>
-              <h2 className="mt-3 text-4xl font-black leading-tight text-[#fff3cf]">
+              <h2 className="mt-3 text-4xl font-black leading-tight text-[#ffcf57]">
                 Choose where the order starts.
               </h2>
             </div>
@@ -210,7 +210,7 @@ export default function Home() {
                     <span className="inline-flex rounded-full border border-[#84d5ff]/20 bg-[#0d3f7a]/40 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#c7ecff]">
                       {game.tag}
                     </span>
-                    <h3 className="mt-4 text-3xl font-black leading-tight text-[#fff0c0]">
+                    <h3 className="mt-4 text-3xl font-black leading-tight text-[#ffc94d]">
                       {game.title}
                     </h3>
                   </div>
@@ -249,12 +249,12 @@ export default function Home() {
 
         <section className="py-8">
           <div className="loot-panel rounded-[2rem] p-8">
-            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffe8ad]">
+            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d]">
               Ready
             </p>
             <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h2 className="text-4xl font-black leading-tight text-[#fff3cf]">
+                <h2 className="text-4xl font-black leading-tight text-[#ffcf57]">
                   Send players from highlight to checkout path faster.
                 </h2>
                 <p className="mt-4 max-w-2xl text-base leading-8 text-[#dbcaa7]">

@@ -17,7 +17,7 @@ export function Footer() {
                 height={56}
                 className="h-14 w-auto"
               />
-              <span className="font-throne text-2xl text-[#fff0c0]">Loot Master</span>
+              <span className="font-throne text-2xl text-[#ffc94d]">Loot Master</span>
             </Link>
             <p className="text-sm text-[#cdb991]">
               Seu marketplace com vibe de tesouro para ouro, contas e servicos do
@@ -26,7 +26,7 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffe8ad]">
+            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffc94d]">
               Navegacao
             </h3>
             <nav className="flex flex-col gap-2 text-sm">
@@ -43,7 +43,7 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffe8ad]">
+            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffc94d]">
               Suporte
             </h3>
             <nav className="flex flex-col gap-2 text-sm">
@@ -69,7 +69,7 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffe8ad]">
+            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffc94d]">
               Comunidade
             </h3>
             <div className="flex gap-3">

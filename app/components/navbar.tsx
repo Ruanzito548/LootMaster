@@ -106,7 +106,7 @@ export function Navbar() {
               <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
                 Games
               </p>
-              <h2 className="font-throne mt-3 text-4xl text-[#fff0c0]">
+              <h2 className="font-throne mt-3 text-4xl text-[#ffc94d]">
                 Escolha seu jogo
               </h2>
             </div>
@@ -139,11 +139,11 @@ export function Navbar() {
                   <div>
                     <div className="flex items-center gap-2">
                       {isHot ? (
-                        <span className="rounded-full border border-[#ffd76a]/24 bg-[#f7ba2c]/14 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#ffe8ad]">
+                        <span className="rounded-full border border-[#ffd76a]/24 bg-[#f7ba2c]/14 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#ffc94d]">
                           Hot
                         </span>
                       ) : null}
-                      <p className="text-base font-black text-[#fff0c0] transition-colors group-hover:text-[#d9f4ff]">
+                      <p className="text-base font-black text-[#ffc94d] transition-colors group-hover:text-[#d9f4ff]">
                         {game.title}
                       </p>
                     </div>
