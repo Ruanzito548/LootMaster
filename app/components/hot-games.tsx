@@ -68,7 +68,7 @@ export function HotGames() {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        {hotGames.map((game, index) => (
+        {hotGames.map((game) => (
           <Link
             key={game.id}
             href={`/games/${game.id}`}
@@ -92,9 +92,7 @@ export function HotGames() {
               </span>
             </div>
 
-            <div className="relative z-20 mt-8 flex items-center justify-between pt-5">
-                          <div className="relative z-10 mt-8 flex items-center justify-between pt-5">
-                <div className="relative z-20 grid gap-5 lg:grid-cols-2">
+            <div className="relative z-10 mt-8 flex items-center justify-between pt-5">
               <span className="text-sm font-semibold text-[#dbcaa7] group-hover:text-[#c5e9ff] transition-colors duration-300">
                 Trending now
               </span>
