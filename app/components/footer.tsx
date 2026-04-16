@@ -1,83 +1,87 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-white/8 bg-[#070b14]/80 backdrop-blur-xl mt-auto">
+    <footer className="mt-auto border-t border-[#ffd76a]/10 bg-[#120904]/88 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-12 lg:px-8">
-        {/* Main Content */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-          {/* Brand */}
           <div className="flex flex-col gap-4">
-            <Link href="/" className="font-throne text-2xl text-white">
-              Loot Master
+            <Link href="/" className="flex items-center gap-3 text-white">
+              <Image
+                src="/lootmasterlogo.png"
+                alt="Loot Master Logo"
+                width={56}
+                height={56}
+                className="h-14 w-auto"
+              />
+              <span className="font-throne text-2xl text-[#fff0c0]">Loot Master</span>
             </Link>
-            <p className="text-sm text-slate-400">
-              Seu marketplace de ouro do World of Warcraft
+            <p className="text-sm text-[#cdb991]">
+              Seu marketplace com vibe de tesouro para ouro, contas e servicos do
+              World of Warcraft.
             </p>
           </div>
 
-          {/* Links */}
           <div className="flex flex-col gap-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-slate-300">
-              Navegação
+            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffe8ad]">
+              Navegacao
             </h3>
             <nav className="flex flex-col gap-2 text-sm">
-              <Link href="/" className="text-slate-400 transition-colors hover:text-cyan-300">
+              <Link href="/" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
                 Home
               </Link>
-              <Link href="#games" className="text-slate-400 transition-colors hover:text-cyan-300">
+              <Link href="#games" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
                 Games
               </Link>
-              <Link href="#hots" className="text-slate-400 transition-colors hover:text-cyan-300">
+              <Link href="#hots" className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]">
                 Hots
               </Link>
             </nav>
           </div>
 
-          {/* Suporte */}
           <div className="flex flex-col gap-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-slate-300">
+            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffe8ad]">
               Suporte
             </h3>
             <nav className="flex flex-col gap-2 text-sm">
-              <a 
-                href="mailto:support@lootmaster.com" 
-                className="text-slate-400 transition-colors hover:text-cyan-300"
+              <a
+                href="mailto:support@lootmaster.com"
+                className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]"
               >
                 Contato
               </a>
-              <a 
-                href="#faq" 
-                className="text-slate-400 transition-colors hover:text-cyan-300"
+              <a
+                href="#faq"
+                className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]"
               >
                 FAQ
               </a>
-              <a 
-                href="#terms" 
-                className="text-slate-400 transition-colors hover:text-cyan-300"
+              <a
+                href="#terms"
+                className="text-[#cdb991] transition-colors hover:text-[#8dd0ff]"
               >
                 Termos
               </a>
             </nav>
           </div>
 
-          {/* Redes Sociais */}
           <div className="flex flex-col gap-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-slate-300">
-              Redes Sociais
+            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[#ffe8ad]">
+              Comunidade
             </h3>
             <div className="flex gap-3">
-              <a 
-                href="#discord" 
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              <a
+                href="#discord"
+                className="inline-flex items-center gap-2 rounded-full border border-[#84d5ff]/18 bg-[#0d3f7a]/30 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0d3f7a]/50"
               >
                 Discord
               </a>
-              <a 
-                href="#twitter" 
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              <a
+                href="#twitter"
+                className="inline-flex items-center gap-2 rounded-full border border-[#ffd76a]/14 bg-[#fff1be]/8 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#fff1be]/12"
               >
                 Twitter
               </a>
@@ -85,17 +89,15 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="h-px bg-gradient-to-r from-transparent via-[#ffd76a]/20 to-transparent" />
 
-        {/* Bottom */}
-        <div className="flex flex-col items-center justify-between gap-4 md:flex-row md:gap-0 text-xs text-slate-500">
-          <p>© {currentYear} Loot Master. Todos os direitos reservados.</p>
+        <div className="flex flex-col items-center justify-between gap-4 text-xs text-[#9c8765] md:flex-row md:gap-0">
+          <p>&copy; {currentYear} Loot Master. Todos os direitos reservados.</p>
           <div className="flex gap-6">
-            <a href="#privacy" className="transition-colors hover:text-slate-300">
+            <a href="#privacy" className="transition-colors hover:text-[#dbcaa7]">
               Privacidade
             </a>
-            <a href="#cookies" className="transition-colors hover:text-slate-300">
+            <a href="#cookies" className="transition-colors hover:text-[#dbcaa7]">
               Cookies
             </a>
           </div>

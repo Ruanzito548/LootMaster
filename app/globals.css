@@ -9,30 +9,83 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #090503;
+  --foreground: #f7ead1;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: "ThroneOfShadows", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Code", "Consolas", monospace;
+  --loot-ink: #140b06;
+  --loot-brown: #26140c;
+  --loot-panel: rgba(34, 18, 10, 0.78);
+  --loot-gold: #f7ba2c;
+  --loot-gold-soft: #ffd76a;
+  --loot-blue: #2db2ff;
+  --loot-blue-deep: #0e4b9d;
+  --loot-green: #8dff31;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #090503;
+    --foreground: #f7ead1;
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: "ThroneOfShadows", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  background-image:
+    radial-gradient(circle at top, rgba(247, 186, 44, 0.12), transparent 30%),
+    radial-gradient(circle at 20% 30%, rgba(45, 178, 255, 0.1), transparent 25%),
+    radial-gradient(circle at 80% 20%, rgba(141, 255, 49, 0.08), transparent 18%),
+    linear-gradient(180deg, #140a04 0%, #090503 52%, #050304 100%);
 }
 
 .font-throne {
   font-family: "ThroneOfShadows", "Times New Roman", serif;
   letter-spacing: 0.04em;
+}
+
+.loot-panel {
+  background:
+    linear-gradient(180deg, rgba(93, 49, 22, 0.65), rgba(22, 11, 7, 0.9)),
+    var(--loot-panel);
+  border: 1px solid rgba(255, 214, 117, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 185, 0.08),
+    0 24px 70px rgba(0, 0, 0, 0.35);
+}
+
+.loot-gold-button {
+  background: linear-gradient(180deg, #ffe27c 0%, #f7ba2c 52%, #cc7a15 100%);
+  color: #2a1204;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 251, 225, 0.9),
+    0 18px 36px rgba(247, 186, 44, 0.28);
+}
+
+.loot-gold-button:hover {
+  filter: brightness(1.04);
+}
+
+.loot-blue-button {
+  background: linear-gradient(180deg, rgba(75, 188, 255, 0.26), rgba(11, 66, 143, 0.8));
+  border: 1px solid rgba(132, 213, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(190, 238, 255, 0.12);
+}
+
+.loot-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(10px);
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 @keyframes hot-card-float {
@@ -55,8 +108,38 @@ body {
   }
 }
 
+@keyframes treasure-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+@keyframes crystal-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
 .animate-hot-card {
   animation:
     hot-card-float 4.8s ease-in-out infinite,
     hot-card-glow 4.8s ease-in-out infinite;
+}
+
+.animate-treasure-pulse {
+  animation: treasure-pulse 4s ease-in-out infinite;
+}
+
+.animate-crystal-float {
+  animation: crystal-float 6s ease-in-out infinite;
 }

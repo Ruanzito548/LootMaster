@@ -1,28 +1,33 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import { HotGames } from "./components/hot-games";
 import { games, serviceCategories } from "./data/games";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#10192d_0%,#0b1324_42%,#070b14_100%)] text-white">
+    <div className="min-h-screen overflow-hidden text-white">
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-10 lg:px-8">
         <HotGames />
 
-        <section className="grid items-start gap-10 py-14 lg:grid-cols-[1.15fr_0.85fr]">
+        <section className="relative grid items-center gap-10 py-14 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="loot-orb animate-treasure-pulse left-[-6rem] top-8 h-36 w-36 bg-[#f7ba2c]/30" />
+          <div className="loot-orb animate-treasure-pulse right-8 top-16 h-24 w-24 bg-[#38bdf8]/35" />
+          <div className="loot-orb bottom-[-2rem] right-[-2rem] h-32 w-32 bg-[#8dff31]/20" />
+
           <div className="space-y-7">
-            <span className="inline-flex rounded-full border border-cyan-300/12 bg-cyan-300/8 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-cyan-200">
-              Gamer Marketplace
+            <span className="inline-flex rounded-full border border-[#ffd76a]/20 bg-[#f7ba2c]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-[#ffe8ad]">
+              Treasure Marketplace
             </span>
 
             <div className="space-y-4">
-              <h1 className="font-throne max-w-4xl text-5xl leading-none sm:text-6xl">
-                Buy gaming accounts, services and currency.
+              <h1 className="font-throne max-w-4xl text-5xl leading-none text-[#fff3cf] drop-shadow-[0_6px_24px_rgba(247,186,44,0.2)] sm:text-6xl">
+                Gold, crystals and power-up vibes for every game run.
               </h1>
-              <p className="max-w-3xl text-lg leading-8 text-slate-400">
-                Loot Master is a gamer marketplace where players can buy accounts,
-                boosting services and in-game currency for different titles in one
-                place.
+              <p className="max-w-3xl text-lg leading-8 text-[#dbcaa7]">
+                Loot Master brings the same energy as the logo: enchanted treasure,
+                bright rewards and a premium fantasy storefront for accounts,
+                boosts and in-game currency.
               </p>
             </div>
 
@@ -30,10 +35,10 @@ export default function Home() {
               {["Accounts", "Services", "Currency"].map((step, index) => (
                 <div
                   key={step}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                  className={`rounded-full border px-4 py-2 text-sm font-semibold ${
                     index === 0
-                      ? "bg-cyan-400 text-slate-950"
-                      : "border border-white/10 bg-white/5 text-slate-300"
+                      ? "border-[#fff1be]/50 bg-[linear-gradient(180deg,#ffe27c_0%,#f7ba2c_65%,#cc7a15_100%)] text-[#311204]"
+                      : "border-[#83d3ff]/15 bg-[#0f2a4e]/35 text-[#c5e9ff]"
                   }`}
                 >
                   {step}
@@ -44,43 +49,62 @@ export default function Home() {
             <div className="flex flex-col gap-4 sm:flex-row">
               <Link
                 href="#games"
-                className="rounded-full bg-cyan-400 px-6 py-3 text-center text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300"
+                className="loot-gold-button rounded-full px-6 py-3 text-center text-sm font-semibold transition-all duration-200 hover:scale-[1.02]"
               >
                 Explore games
               </Link>
               <Link
                 href="#how-it-works"
-                className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                className="loot-blue-button rounded-full px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-[#123a72]"
               >
                 See how it works
               </Link>
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/8 bg-[linear-gradient(135deg,#111827_0%,#0f172a_55%,#082f49_100%)] p-6 shadow-[0_24px_80px_rgba(2,8,23,0.45)]">
-            <div className="space-y-5">
+          <div className="loot-panel relative overflow-hidden rounded-[2rem] p-6">
+            <div className="absolute left-6 top-8 h-20 w-20 rounded-full bg-[#8dff31]/20 blur-2xl" />
+            <div className="absolute bottom-6 right-6 h-28 w-28 rounded-full bg-[#2db2ff]/20 blur-2xl" />
+            <div className="absolute right-[-1rem] top-10 h-28 w-28 rotate-12 rounded-[2rem] border border-[#84d5ff]/25 bg-[linear-gradient(180deg,rgba(95,208,255,0.35),rgba(22,76,167,0.15))] animate-crystal-float" />
+            <div className="space-y-5 relative">
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-[0.3em] text-cyan-200/80">
-                  Marketplace
+                <span className="text-xs uppercase tracking-[0.3em] text-[#ffe8ad]/80">
+                  Treasure Vault
                 </span>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-xs">
+                <span className="rounded-full border border-[#fff1be]/15 bg-[#fff1be]/10 px-3 py-1 text-xs text-[#fff3cf]">
                   Live
                 </span>
               </div>
 
-              <div className="rounded-[1.5rem] bg-white/8 p-5 ring-1 ring-white/10">
-                <p className="text-sm text-slate-300">What players can buy</p>
-                <p className="mt-2 text-3xl">Accounts, boosts and gold</p>
+              <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+                <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,222,124,0.16),rgba(255,222,124,0.04))] p-5 ring-1 ring-[#fff1be]/10">
+                  <p className="text-sm text-[#dbcaa7]">What players can buy</p>
+                  <p className="mt-2 text-3xl text-[#fff3cf]">
+                    Accounts, boosts and gold
+                  </p>
+                </div>
+
+                <div className="relative mx-auto flex max-w-[20rem] items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-[#f7ba2c]/15 blur-3xl" />
+                  <Image
+                    src="/lootmasterlogo.png"
+                    alt="Loot Master treasure logo"
+                    width={460}
+                    height={460}
+                    priority
+                    className="relative z-10 h-auto w-full drop-shadow-[0_18px_42px_rgba(247,186,44,0.24)]"
+                  />
+                </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
                 {["Gold", "Boost", "Accounts"].map((item, index) => (
                   <div
                     key={item}
-                    className={`rounded-2xl border px-4 py-5 text-center text-sm font-semibold ${
+                    className={`rounded-2xl border px-4 py-5 text-center text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
                       index === 0
-                        ? "border-cyan-200/50 bg-cyan-200/15 text-cyan-100"
-                        : "border-white/10 bg-white/6 text-slate-300"
+                        ? "border-[#fff1be]/35 bg-[linear-gradient(180deg,rgba(247,186,44,0.24),rgba(204,122,21,0.18))] text-[#fff1be]"
+                        : "border-[#84d5ff]/12 bg-[#0c2647]/35 text-[#c5e9ff]"
                     }`}
                   >
                     {item}
@@ -96,12 +120,12 @@ export default function Home() {
                 ].map((metric) => (
                   <div
                     key={metric.label}
-                    className="rounded-2xl border border-white/8 bg-black/15 px-4 py-4"
+                    className="rounded-2xl border border-[#fff1be]/10 bg-black/20 px-4 py-4"
                   >
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
+                    <p className="text-xs uppercase tracking-[0.22em] text-[#b6a17b]">
                       {metric.label}
                     </p>
-                    <p className="mt-2 text-2xl font-black text-white">
+                    <p className="mt-2 text-2xl font-black text-[#fff3cf]">
                       {metric.value}
                     </p>
                   </div>
@@ -115,17 +139,16 @@ export default function Home() {
           id="how-it-works"
           className="grid gap-5 py-6 lg:grid-cols-[0.9fr_1.1fr]"
         >
-          <div className="rounded-[1.8rem] border border-white/8 bg-white/4 p-6">
-            <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
+          <div className="loot-panel rounded-[1.8rem] p-6">
+            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
               Flow
             </p>
-            <h2 className="mt-4 text-3xl font-black leading-tight">
-              From game selection to order in a few clicks.
+            <h2 className="mt-4 text-3xl font-black leading-tight text-[#fff3cf]">
+              From glowing loot to checkout in a few clicks.
             </h2>
-            <p className="mt-4 max-w-xl text-base leading-8 text-slate-400">
-              The homepage now mirrors the purchase funnel already implemented in
-              the app, so players can jump straight from discovery into the right
-              game and category.
+            <p className="mt-4 max-w-xl text-base leading-8 text-[#dbcaa7]">
+              The homepage now feels closer to the brand art, while still guiding
+              players from discovery into the right game, category and order path.
             </p>
           </div>
 
@@ -149,10 +172,10 @@ export default function Home() {
             ].map((step) => (
               <article
                 key={step.title}
-                className="rounded-[1.6rem] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5"
+                className="loot-panel rounded-[1.6rem] p-5"
               >
-                <h3 className="text-xl font-black">{step.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-400">
+                <h3 className="text-xl font-black text-[#fff0c0]">{step.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-[#dbcaa7]">
                   {step.description}
                 </p>
               </article>
@@ -163,14 +186,14 @@ export default function Home() {
         <section id="games" className="py-10">
           <div className="flex flex-col gap-3 pb-8 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">
+              <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
                 Games
               </p>
-              <h2 className="mt-3 text-4xl font-black leading-tight">
+              <h2 className="mt-3 text-4xl font-black leading-tight text-[#fff3cf]">
                 Choose where the order starts.
               </h2>
             </div>
-            <p className="max-w-2xl text-sm leading-7 text-slate-400">
+            <p className="max-w-2xl text-sm leading-7 text-[#cdb991]">
               Every card leads into the same route structure already live in the
               marketplace flow.
             </p>
@@ -180,23 +203,23 @@ export default function Home() {
             {games.map((game) => (
               <article
                 key={game.id}
-                className="rounded-[1.75rem] border border-white/8 bg-[linear-gradient(160deg,rgba(17,24,39,0.9),rgba(8,47,73,0.35))] p-6 shadow-[0_24px_80px_rgba(2,8,23,0.25)]"
+                className="loot-panel rounded-[1.75rem] p-6"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <span className="inline-flex rounded-full border border-cyan-300/15 bg-cyan-300/8 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+                    <span className="inline-flex rounded-full border border-[#84d5ff]/20 bg-[#0d3f7a]/40 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#c7ecff]">
                       {game.tag}
                     </span>
-                    <h3 className="mt-4 text-3xl font-black leading-tight">
+                    <h3 className="mt-4 text-3xl font-black leading-tight text-[#fff0c0]">
                       {game.title}
                     </h3>
                   </div>
-                  <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs font-semibold text-slate-300">
+                  <span className="rounded-full border border-[#fff1be]/12 bg-[#fff1be]/8 px-3 py-1 text-xs font-semibold text-[#e4d0a7]">
                     {game.shortTitle}
                   </span>
                 </div>
 
-                <p className="mt-5 text-sm leading-7 text-slate-400">
+                <p className="mt-5 text-sm leading-7 text-[#dbcaa7]">
                   {game.description}
                 </p>
 
@@ -204,7 +227,7 @@ export default function Home() {
                   {serviceCategories.map((category) => (
                     <span
                       key={`${game.id}-${category.id}`}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300"
+                      className="rounded-full border border-[#84d5ff]/15 bg-[#0f2745]/40 px-3 py-1 text-xs font-semibold text-[#c7ecff]"
                     >
                       {category.title}
                     </span>
@@ -214,7 +237,7 @@ export default function Home() {
                 <div className="mt-8">
                   <Link
                     href={`/games/${game.id}`}
-                    className="inline-flex rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300"
+                    className="loot-gold-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-all duration-200 hover:scale-[1.02]"
                   >
                     Open {game.shortTitle}
                   </Link>
@@ -225,23 +248,23 @@ export default function Home() {
         </section>
 
         <section className="py-8">
-          <div className="rounded-[2rem] border border-cyan-300/12 bg-[linear-gradient(120deg,rgba(34,211,238,0.12),rgba(15,23,42,0.96))] p-8 shadow-[0_24px_80px_rgba(2,8,23,0.28)]">
-            <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-200">
+          <div className="loot-panel rounded-[2rem] p-8">
+            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffe8ad]">
               Ready
             </p>
             <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h2 className="text-4xl font-black leading-tight">
+                <h2 className="text-4xl font-black leading-tight text-[#fff3cf]">
                   Send players from highlight to checkout path faster.
                 </h2>
-                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
+                <p className="mt-4 max-w-2xl text-base leading-8 text-[#dbcaa7]">
                   Highlights surface hot games, the homepage explains the offer,
                   and the game grid now lands users directly inside the funnel.
                 </p>
               </div>
               <Link
                 href="#hots"
-                className="inline-flex rounded-full border border-white/10 bg-white/8 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/12"
+                className="loot-blue-button inline-flex rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#123a72]"
               >
                 Review highlights
               </Link>
