@@ -82,9 +82,6 @@ export function HotGames() {
             {/* Efeito de brilho radial no hover */}
             <div className="absolute inset-0 rounded-[1.75rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(77,198,255,0.15), transparent 70%)' }} />
 
-            {/* Borda superior brilhante */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#4dc6ff]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
             <div className="relative z-10 flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#ffc94d]/85 group-hover:text-[#ffd76a] transition-colors duration-300">
