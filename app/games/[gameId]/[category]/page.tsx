@@ -15,6 +15,7 @@ export default async function ServerSelectionPage(
   const game = getGameById(gameId);
   const selectedCategory = getServiceCategoryById(category);
   const isTbc = game?.id === "tbc-anniversary";
+  const isMidnight = game?.id === "retail";
 
   if (!game || !selectedCategory) {
     notFound();

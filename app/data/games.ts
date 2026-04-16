@@ -33,8 +33,8 @@ export type GameServer = {
 export const games: Game[] = [
   {
     id: "retail",
-    title: "World of Warcraft Retail",
-    shortTitle: "Retail",
+    title: "World of Warcraft Midnight",
+    shortTitle: "Midnight",
     tag: "Live",
     description:
       "Versao principal para jogadores que querem compra rapida, entrega recorrente e maior volume de gold.",

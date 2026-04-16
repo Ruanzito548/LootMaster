@@ -20,6 +20,7 @@ export function GoldPurchaseMenu({
   servers,
 }: GoldPurchaseMenuProps) {
   const isTbc = gameId === "tbc-anniversary";
+  const isMidnight = gameId === "retail";
   const [fullGoldConfig, setFullGoldConfig] = useState(defaultGoldConfig);
   const [selectedServerId, setSelectedServerId] = useState("");
   const [selectedFaction, setSelectedFaction] = useState("");
@@ -174,13 +175,20 @@ export function GoldPurchaseMenu({
           {goldUnlocked ? (
             <div
               className={`mt-4 rounded-[1rem] border p-4 ${
-                isTbc ? "border-[#99ff99]/20" : "border-[#ffd76a]/10 bg-white/4"
+                isTbc ? "border-[#99ff99]/20" : isMidnight ? "border-[#4dc6ff]/20" : "border-[#ffd76a]/10 bg-white/4"
               }`}
               style={
                 isTbc
                   ? {
                       backgroundImage:
                         'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/goldtbc.jpeg")',
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : isMidnight
+                  ? {
+                      backgroundImage:
+                        'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/midnightgold.jpeg")',
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }
