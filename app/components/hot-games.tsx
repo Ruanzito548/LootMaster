@@ -97,7 +97,7 @@ export function HotGames() {
               </span>
             </div>
 
-            <div className="relative z-10 mt-8 flex items-center justify-between border-t border-[#ffd76a]/10 pt-5 group-hover:border-[#4dc6ff]/20 transition-colors duration-300">
+            <div className="relative z-10 mt-8 flex items-center justify-between pt-5">
               <span className="text-sm font-semibold text-[#dbcaa7] group-hover:text-[#c5e9ff] transition-colors duration-300">
                 Trending now
               </span>
