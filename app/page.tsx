@@ -6,14 +6,14 @@ import { games, serviceCategories } from "./data/games";
 
 export default function Home() {
   return (
-    <div className="min-h-screen overflow-hidden text-white">
+    <div className="home-shell min-h-screen overflow-hidden text-white">
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-10 lg:px-8">
         <HotGames />
 
         <section className="relative grid items-center gap-10 py-14 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="loot-orb animate-treasure-pulse left-[-6rem] top-8 h-36 w-36 bg-[#f7ba2c]/30" />
-          <div className="loot-orb animate-treasure-pulse right-8 top-16 h-24 w-24 bg-[#38bdf8]/35" />
-          <div className="loot-orb bottom-[-2rem] right-[-2rem] h-32 w-32 bg-[#60a5fa]/20" />
+          <div className="loot-orb animate-treasure-pulse right-8 top-16 h-24 w-24 bg-[#f7ba2c]/20" />
+          <div className="loot-orb bottom-[-2rem] right-[-2rem] h-32 w-32 bg-[#cc8800]/18" />
 
           <div className="space-y-7">
             <span className="inline-flex rounded-full border border-[#ffd76a]/20 bg-[#f7ba2c]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-[#ffc94d]">
@@ -38,7 +38,7 @@ export default function Home() {
                   className={`rounded-full border px-4 py-2 text-sm font-semibold ${
                     index === 0
                       ? "border-[#fff1be]/50 bg-[linear-gradient(180deg,#ffe27c_0%,#f7ba2c_65%,#cc7a15_100%)] text-[#311204]"
-                      : "border-[#83d3ff]/15 bg-[#0f2a4e]/35 text-[#c5e9ff]"
+                      : "border-[#ffd76a]/15 bg-[#1a0f00]/50 text-[#ffe699]"
                   }`}
                 >
                   {step}
@@ -55,17 +55,17 @@ export default function Home() {
               </Link>
               <Link
                 href="#how-it-works"
-                className="loot-blue-button rounded-full px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-[#123a72]"
+                className="loot-secondary-button rounded-full px-6 py-3 text-center text-sm font-semibold transition-colors hover:brightness-110"
               >
                 See how it works
               </Link>
             </div>
           </div>
 
-          <div className="loot-panel relative overflow-hidden rounded-[2rem] p-6">
+          <div className="home-panel relative overflow-hidden rounded-[2rem] p-6">
             <div className="absolute left-6 top-8 h-20 w-20 rounded-full bg-[#f7ba2c]/20 blur-2xl" />
-            <div className="absolute bottom-6 right-6 h-28 w-28 rounded-full bg-[#2db2ff]/20 blur-2xl" />
-            <div className="absolute right-[-1rem] top-10 h-28 w-28 rotate-12 rounded-[2rem] border border-[#84d5ff]/25 bg-[linear-gradient(180deg,rgba(95,208,255,0.35),rgba(22,76,167,0.15))] animate-crystal-float" />
+            <div className="absolute bottom-6 right-6 h-28 w-28 rounded-full bg-[#c87800]/18 blur-2xl" />
+            <div className="absolute right-[-1rem] top-10 h-28 w-28 rotate-12 rounded-[2rem] border border-[#ffd76a]/20 bg-[linear-gradient(180deg,rgba(247,186,44,0.22),rgba(100,60,0,0.12))] animate-crystal-float" />
             <div className="space-y-5 relative">
               <div className="flex items-center justify-between">
                 <span className="text-xs uppercase tracking-[0.3em] text-[#ffc94d]/85">
@@ -77,7 +77,7 @@ export default function Home() {
               </div>
 
               <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-                <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,222,124,0.18),rgba(45,178,255,0.06))] p-5 ring-1 ring-[#fff1be]/10">
+                <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,222,124,0.18),rgba(80,50,0,0.08))] p-5 ring-1 ring-[#fff1be]/10">
                   <p className="text-sm text-[#dbcaa7]">What players can buy</p>
                   <p className="mt-2 text-3xl text-[#ffcf57]">
                     Accounts, boosts and gold
@@ -104,7 +104,7 @@ export default function Home() {
                     className={`rounded-2xl border px-4 py-5 text-center text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
                       index === 0
                         ? "border-[#fff1be]/35 bg-[linear-gradient(180deg,rgba(247,186,44,0.24),rgba(204,122,21,0.18))] text-[#fff1be]"
-                        : "border-[#84d5ff]/12 bg-[#0c2647]/35 text-[#c5e9ff]"
+                        : "border-[#ffd76a]/12 bg-[#120c00]/45 text-[#ffe699]"
                     }`}
                   >
                     {item}
@@ -139,8 +139,8 @@ export default function Home() {
           id="how-it-works"
           className="grid gap-5 py-6 lg:grid-cols-[0.9fr_1.1fr]"
         >
-          <div className="loot-panel rounded-[1.8rem] p-6">
-            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
+          <div className="home-panel rounded-[1.8rem] p-6">
+            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d]">
               Flow
             </p>
             <h2 className="mt-4 text-3xl font-black leading-tight text-[#ffcf57]">
@@ -172,7 +172,7 @@ export default function Home() {
             ].map((step) => (
               <article
                 key={step.title}
-                className="loot-panel rounded-[1.6rem] p-5"
+                className="home-panel rounded-[1.6rem] p-5"
               >
                 <h3 className="text-xl font-black text-[#ffc94d]">{step.title}</h3>
                 <p className="mt-3 text-sm leading-7 text-[#dbcaa7]">
@@ -186,7 +186,7 @@ export default function Home() {
         <section id="games" className="py-10">
           <div className="flex flex-col gap-3 pb-8 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
+              <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d]">
                 Games
               </p>
               <h2 className="mt-3 text-4xl font-black leading-tight text-[#ffcf57]">
@@ -203,7 +203,7 @@ export default function Home() {
             {games.map((game) => (
               <article
                 key={game.id}
-                className="loot-panel rounded-[1.75rem] p-6"
+                className="home-panel rounded-[1.75rem] p-6"
                 style={
                   game.id === "tbc-anniversary"
                     ? {
@@ -224,7 +224,7 @@ export default function Home() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <span className="inline-flex rounded-full border border-[#84d5ff]/20 bg-[#0d3f7a]/40 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#c7ecff]">
+                    <span className="inline-flex rounded-full border border-[#ffd76a]/20 bg-[#1a0f00]/50 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#ffe699]">
                       {game.tag}
                     </span>
                     <h3 className="mt-4 text-3xl font-black leading-tight text-[#ffc94d]">
@@ -244,7 +244,7 @@ export default function Home() {
                   {serviceCategories.map((category) => (
                     <span
                       key={`${game.id}-${category.id}`}
-                      className="rounded-full border border-[#84d5ff]/15 bg-[#0f2745]/40 px-3 py-1 text-xs font-semibold text-[#c7ecff]"
+                      className="rounded-full border border-[#ffd76a]/15 bg-[#1a0f00]/40 px-3 py-1 text-xs font-semibold text-[#ffe699]"
                     >
                       {category.title}
                     </span>
@@ -265,7 +265,7 @@ export default function Home() {
         </section>
 
         <section className="py-8">
-          <div className="loot-panel rounded-[2rem] p-8">
+          <div className="home-panel rounded-[2rem] p-8">
             <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d]">
               Ready
             </p>
@@ -281,7 +281,7 @@ export default function Home() {
               </div>
               <Link
                 href="#hots"
-                className="loot-blue-button inline-flex rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#123a72]"
+                className="loot-secondary-button inline-flex rounded-full px-6 py-3 text-sm font-semibold transition-colors hover:brightness-110"
               >
                 Review highlights
               </Link>
