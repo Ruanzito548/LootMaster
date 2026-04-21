@@ -53,6 +53,32 @@ export function Navbar() {
       }`}>
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
           <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-2.5 text-sm font-semibold transition-colors ${
+                isTbc
+                  ? "border-[#a8ff9f]/25 bg-[#1a3a20]/50 text-[#e0ffe0] hover:bg-[#204a25]"
+                  : isMidnight
+                  ? "border-[#4dc6ff]/25 bg-[#0d2f55]/55 text-[#dff3ff] hover:bg-[#15467a]"
+                  : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
+              }`}
+              aria-label="Abrir menu lateral"
+            >
+              <span className="flex h-5 w-5 flex-col items-center justify-center gap-1">
+                <span className={`h-0.5 w-4 rounded-full ${
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : "bg-[#4dc6ff]"
+                }`} />
+                <span className={`h-0.5 w-4 rounded-full ${
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : "bg-[#4dc6ff]"
+                }`} />
+                <span className={`h-0.5 w-4 rounded-full ${
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : "bg-[#4dc6ff]"
+                }`} />
+              </span>
+              <span className="hidden sm:inline">Menu</span>
+            </button>
+
             <Link href="/" className="flex items-center transition-opacity hover:opacity-80">
               <Image
                 src="/lootmasterlogo.png"
@@ -89,31 +115,6 @@ export function Navbar() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsOpen(true)}
-              className={`inline-flex items-center gap-3 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors lg:hidden ${
-                isTbc
-                  ? "border-[#a8ff9f]/25 bg-[#1a3a20]/50 text-[#e0ffe0] hover:bg-[#204a25]"
-                  : isMidnight
-                  ? "border-[#4dc6ff]/25 bg-[#0d2f55]/55 text-[#dff3ff] hover:bg-[#15467a]"
-                  : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
-              }`}
-            >
-              <span className="flex h-6 w-6 flex-col items-center justify-center gap-1">
-                <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : "bg-[#4dc6ff]"
-                }`} />
-                <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : "bg-[#4dc6ff]"
-                }`} />
-                <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : "bg-[#4dc6ff]"
-                }`} />
-              </span>
-              Games
-            </button>
-
             <Link
               href="/games"
               className={`loot-gold-button rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-105 ${
