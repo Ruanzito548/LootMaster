@@ -16,6 +16,12 @@ const links = [
   { href: "/profile", label: "Perfil" },
 ];
 
+function isLinkActive(pathname: string | null, href: string) {
+  if (!pathname) return false;
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [hotIds, setHotIds] = useState<string[]>(defaultHotGameIds);
@@ -58,17 +64,23 @@ export function Navbar() {
             </Link>
           </div>
 
-          <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
+          <nav className="hidden items-center gap-8 text-sm font-medium lg:flex">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`transition-colors ${
-                  isTbc 
-                    ? "text-[#b8e6b8] hover:text-[#d4ffcc]" 
+                className={`rounded-full border px-3 py-1.5 transition-colors ${
+                  isLinkActive(pathname, link.href)
+                    ? isTbc
+                      ? "border-[#a8ff9f]/35 bg-[#a8ff9f]/12 text-[#e4ffe0]"
+                      : isMidnight
+                      ? "border-[#4dc6ff]/35 bg-[#4dc6ff]/14 text-[#e4f6ff]"
+                      : "border-[#ffd76a]/28 bg-[#ffd76a]/10 text-[#fff1be]"
+                    : isTbc
+                    ? "border-transparent text-[#b8e6b8] hover:text-[#d4ffcc]"
                     : isMidnight
-                    ? "text-[#a8d8ff] hover:text-[#dff3ff]"
-                    : "text-[#dbcaa7] hover:text-[#fff1be]"
+                    ? "border-transparent text-[#a8d8ff] hover:text-[#dff3ff]"
+                    : "border-transparent text-[#dbcaa7] hover:text-[#fff1be]"
                 }`}
               >
                 {link.label}
@@ -80,7 +92,7 @@ export function Navbar() {
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              className={`hidden items-center gap-3 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors md:inline-flex ${
+              className={`inline-flex items-center gap-3 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors lg:hidden ${
                 isTbc
                   ? "border-[#a8ff9f]/25 bg-[#1a3a20]/50 text-[#e0ffe0] hover:bg-[#204a25]"
                   : isMidnight
@@ -102,15 +114,27 @@ export function Navbar() {
               Games
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsOpen(true)}
+            <Link
+              href="/games"
               className={`loot-gold-button rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-105 ${
                 isTbc ? "tbc-gold-button" : isMidnight ? "midnight-gold-button" : ""
               }`}
             >
-              Game
-            </button>
+              Explorar
+            </Link>
+
+            <Link
+              href="/admin/games"
+              className={`hidden rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors xl:inline-flex ${
+                isTbc
+                  ? "border-[#a8ff9f]/25 bg-[#1a3a20]/45 text-[#e0ffe0] hover:bg-[#204a25]"
+                  : isMidnight
+                  ? "border-[#4dc6ff]/25 bg-[#0d2f55]/50 text-[#dff3ff] hover:bg-[#15467a]"
+                  : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
+              }`}
+            >
+              Admin
+            </Link>
           </div>
         </div>
       </header>
@@ -176,6 +200,31 @@ export function Navbar() {
           }`}>
             <span>Available</span>
             <span>{orderedGames.length}</span>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {links.map((link) => (
+              <Link
+                key={`drawer-${link.href}`}
+                href={link.href}
+                onClick={() => setIsOpen(false)}
+                className={`rounded-xl border px-3 py-2 text-center text-xs font-bold uppercase tracking-[0.16em] transition-colors ${
+                  isLinkActive(pathname, link.href)
+                    ? isTbc
+                      ? "border-[#a8ff9f]/30 bg-[#a8ff9f]/12 text-[#e4ffe0]"
+                      : isMidnight
+                      ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/12 text-[#e4f6ff]"
+                      : "border-[#ffd76a]/24 bg-[#ffd76a]/10 text-[#fff1be]"
+                    : isTbc
+                    ? "border-[#a8ff9f]/12 text-[#b8e6b8] hover:border-[#a8ff9f]/24"
+                    : isMidnight
+                    ? "border-[#4dc6ff]/14 text-[#a8d8ff] hover:border-[#4dc6ff]/28"
+                    : "border-[#ffd76a]/10 text-[#dbcaa7] hover:border-[#ffd76a]/20"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
 
           <div className="mt-4 flex-1 space-y-3 overflow-y-auto pr-1">
