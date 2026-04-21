@@ -22,6 +22,10 @@ function buildKey(gameId?: string, serverId?: string, faction?: string): string 
   return parts.join("|");
 }
 
+function normalizeGoldAmount(value: number): number {
+  return Math.max(1000, Math.ceil(value / 1000) * 1000);
+}
+
 export function GoldConfigAdmin() {
   const [storedConfig, setStoredConfig] = useState(defaultGoldConfig);
   const [draftConfig, setDraftConfig] = useState<GoldConfig | null>(null);
@@ -279,11 +283,16 @@ export function GoldConfigAdmin() {
                   min="1000"
                   step="1000"
                   value={currentEntry.minGold}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    const parsedMinGold = Number(event.target.value);
+                    if (!Number.isFinite(parsedMinGold) || parsedMinGold <= 0) {
+                      return;
+                    }
+
                     updateDraftEntry({
-                      minGold: Number(event.target.value),
-                    })
-                  }
+                      minGold: normalizeGoldAmount(parsedMinGold),
+                    });
+                  }}
                   className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
                 />
                 <p className="mt-2 text-sm text-[#7d8597]">

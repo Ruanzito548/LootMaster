@@ -16,12 +16,16 @@ type GoldConfigPayload = Partial<{
   overrides: Record<string, Partial<Record<keyof GoldConfigEntry, unknown>>>;
 }>;
 
+function normalizeGoldAmount(value: number): number {
+  return Math.max(1000, Math.ceil(value / 1000) * 1000);
+}
+
 function sanitizeGoldConfigEntry(payload?: Partial<Record<keyof GoldConfigEntry, unknown>>): GoldConfigEntry {
   const minGold = typeof payload?.minGold === "number" && Number.isFinite(payload.minGold) && payload.minGold > 0
-    ? Math.max(1000, Math.round(payload.minGold / 1000) * 1000)
+    ? normalizeGoldAmount(payload.minGold)
     : defaultGoldConfigEntry.minGold;
   const maxGold = typeof payload?.maxGold === "number" && Number.isFinite(payload.maxGold) && payload.maxGold >= minGold
-    ? payload.maxGold
+    ? normalizeGoldAmount(payload.maxGold)
     : Math.max(defaultGoldConfigEntry.maxGold, minGold);
 
   return {
