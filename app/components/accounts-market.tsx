@@ -139,58 +139,70 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
       </div>
 
       {filteredListings.length > 0 ? (
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
           {filteredListings.map((account) => (
             <article
               key={account.id}
-              className={`rounded-[1.25rem] border p-5 ${isTbc ? "border-[#99ff99]/20 bg-[#102417]/35" : "border-[#ffd76a]/12 bg-white/4"}`}
-              style={(() => {
-                const image = getAccountBackgroundImage(account);
-                if (!image) return undefined;
-
-                return {
-                  backgroundImage: `linear-gradient(rgba(7, 16, 10, 0.72), rgba(7, 16, 10, 0.72)), url(${image})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center right",
-                };
-              })()}
+              className={`overflow-hidden rounded-[1.25rem] border ${isTbc ? "border-[#99ff99]/20 bg-[#102417]/35" : "border-[#ffd76a]/12 bg-white/4"}`}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className={`text-2xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>{account.title}</h3>
-                  <p className={`mt-2 text-sm ${isTbc ? "tbc-muted" : "text-[#cdb991]"}`}>
-                    {account.serverName} / {account.faction}
-                  </p>
-                </div>
-                <span className={`${isTbc ? "tbc-badge" : "loot-badge-blue"} rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]`}>
-                  Lv {account.level}
-                </span>
-              </div>
+              <div
+                className="h-48 w-full"
+                style={(() => {
+                  const image = getAccountBackgroundImage(account);
+                  if (!image) {
+                    return {
+                      backgroundImage: isTbc
+                        ? "linear-gradient(rgba(11, 28, 18, 0.88), rgba(11, 28, 18, 0.88))"
+                        : "linear-gradient(rgba(6, 18, 29, 0.82), rgba(6, 18, 29, 0.82))",
+                    };
+                  }
 
-              <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                <div className={`rounded-xl border px-3 py-2 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : "border-[#ffd76a]/10 bg-black/20"}`}>
-                  <p className={isTbc ? "text-[#8ccda0]" : "text-[#7d8597]"}>Race</p>
-                  <p className={`font-semibold ${isTbc ? "text-[#e6ffe9]" : "text-[#f8eed4]"}`}>{account.race}</p>
-                </div>
-                <div className={`rounded-xl border px-3 py-2 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : "border-[#ffd76a]/10 bg-black/20"}`}>
-                  <p className={isTbc ? "text-[#8ccda0]" : "text-[#7d8597]"}>Class</p>
-                  <p className={`font-semibold ${isTbc ? "text-[#e6ffe9]" : "text-[#f8eed4]"}`}>{account.className}</p>
-                </div>
-                <div className={`rounded-xl border px-3 py-2 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : "border-[#ffd76a]/10 bg-black/20"}`}>
-                  <p className={isTbc ? "text-[#8ccda0]" : "text-[#7d8597]"}>Price</p>
-                  <p className={`font-semibold ${isTbc ? "text-[#e6ffe9]" : "text-[#f8eed4]"}`}>${account.price}</p>
-                </div>
-              </div>
+                  return {
+                    backgroundImage: `linear-gradient(rgba(7, 16, 10, 0.62), rgba(7, 16, 10, 0.62)), url(${image})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  };
+                })()}
+              />
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {account.highlights.map((highlight) => (
-                  <span
-                    key={`${account.id}-${highlight}`}
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${isTbc ? "border-[#99ff99]/24 bg-[#173728]/65 text-[#d2f5c2]" : "border-[#84d5ff]/18 bg-[#0d3f7a]/35 text-[#d8f4ff]"}`}
-                  >
-                    {highlight}
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className={`text-2xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>{account.title}</h3>
+                    <p className={`mt-2 text-sm ${isTbc ? "tbc-muted" : "text-[#cdb991]"}`}>
+                      {account.serverName} / {account.faction}
+                    </p>
+                  </div>
+                  <span className={`${isTbc ? "tbc-badge" : "loot-badge-blue"} rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]`}>
+                    Lv {account.level}
                   </span>
-                ))}
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
+                  <div className={`rounded-xl border px-3 py-2 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : "border-[#ffd76a]/10 bg-black/20"}`}>
+                    <p className={isTbc ? "text-[#8ccda0]" : "text-[#7d8597]"}>Race</p>
+                    <p className={`font-semibold ${isTbc ? "text-[#e6ffe9]" : "text-[#f8eed4]"}`}>{account.race}</p>
+                  </div>
+                  <div className={`rounded-xl border px-3 py-2 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : "border-[#ffd76a]/10 bg-black/20"}`}>
+                    <p className={isTbc ? "text-[#8ccda0]" : "text-[#7d8597]"}>Class</p>
+                    <p className={`font-semibold ${isTbc ? "text-[#e6ffe9]" : "text-[#f8eed4]"}`}>{account.className}</p>
+                  </div>
+                  <div className={`rounded-xl border px-3 py-2 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : "border-[#ffd76a]/10 bg-black/20"}`}>
+                    <p className={isTbc ? "text-[#8ccda0]" : "text-[#7d8597]"}>Price</p>
+                    <p className={`font-semibold ${isTbc ? "text-[#e6ffe9]" : "text-[#f8eed4]"}`}>${account.price}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {account.highlights.map((highlight) => (
+                    <span
+                      key={`${account.id}-${highlight}`}
+                      className={`rounded-full border px-3 py-1 text-xs font-semibold ${isTbc ? "border-[#99ff99]/24 bg-[#173728]/65 text-[#d2f5c2]" : "border-[#84d5ff]/18 bg-[#0d3f7a]/35 text-[#d8f4ff]"}`}
+                    >
+                      {highlight}
+                    </span>
+                  ))}
+                </div>
               </div>
             </article>
           ))}
