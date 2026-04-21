@@ -52,17 +52,16 @@ export default async function ServerSelectionPage(
           </div>
         </div>
 
-        {servers.length > 0 ? (
-          category === "gold" ? (
-            <section className="mt-12">
-              <GoldPurchaseMenu
-                gameId={game.id}
-                gameTitle={game.title}
-                categoryTitle={selectedCategory.title}
-                servers={servers}
-              />
-            </section>
-          ) : (
+        {category === "gold" ? (
+          <section className="mt-12">
+            <GoldPurchaseMenu
+              gameId={game.id}
+              gameTitle={game.title}
+              categoryTitle={selectedCategory.title}
+              servers={servers}
+            />
+          </section>
+        ) : servers.length > 0 ? (
             <section className="mt-12 grid gap-5 lg:grid-cols-2">
               {servers.map((server) => (
                 <article
@@ -83,7 +82,6 @@ export default async function ServerSelectionPage(
                 </article>
               ))}
             </section>
-          )
         ) : (
           <section className={`loot-panel mt-12 rounded-[2rem] p-8 ${isTbc ? "tbc-panel" : ""}`}>
             <p className={`text-sm font-bold uppercase tracking-[0.24em] ${isTbc ? "tbc-kicker" : "loot-kicker"}`}>

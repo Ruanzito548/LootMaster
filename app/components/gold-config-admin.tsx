@@ -58,15 +58,20 @@ export function GoldConfigAdmin() {
   const updateDraftEntry = (partial: Partial<GoldConfigEntry>) => {
     setSaved(false);
     setErrorMessage(null);
+    const nextGameId = selectedGameId;
+    const nextServerId = selectedServerId;
+    const nextFaction = selectedFaction;
     setDraftConfig((current) => {
       const config = current ?? storedConfig;
-      const newEntry = { ...currentEntry, ...partial };
-      if (currentKey) {
+      const key = buildKey(nextGameId, nextServerId, nextFaction);
+      const baseEntry = getGoldConfigFor(config, nextGameId, nextServerId, nextFaction);
+      const newEntry = { ...baseEntry, ...partial };
+      if (key) {
         return {
           ...config,
           overrides: {
             ...config.overrides,
-            [currentKey]: newEntry,
+            [key]: newEntry,
           },
         };
       } else {
@@ -102,11 +107,15 @@ export function GoldConfigAdmin() {
   };
 
   const resetCurrent = () => {
+    const nextGameId = selectedGameId;
+    const nextServerId = selectedServerId;
+    const nextFaction = selectedFaction;
     setDraftConfig((current) => {
       const config = current ?? storedConfig;
-      if (currentKey) {
+      const key = buildKey(nextGameId, nextServerId, nextFaction);
+      if (key) {
         const newOverrides = { ...config.overrides };
-        delete newOverrides[currentKey];
+        delete newOverrides[key];
         return {
           ...config,
           overrides: newOverrides,

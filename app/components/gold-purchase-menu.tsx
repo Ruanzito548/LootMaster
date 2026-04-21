@@ -28,6 +28,7 @@ export function GoldPurchaseMenu({
   const [nickname, setNickname] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("Face to face");
   const [email, setEmail] = useState("");
+  const hasServerOptions = servers.length > 0;
 
   useEffect(
     () =>
@@ -42,8 +43,8 @@ export function GoldPurchaseMenu({
   const goldConfig = getGoldConfigFor(fullGoldConfig, gameId, selectedServerId, selectedFaction);
 
   const selectedServer = servers.find((server) => server.id === selectedServerId);
-  const serverSelected = selectedServerId !== "";
-  const factionSelected = selectedFaction !== "";
+  const serverSelected = !hasServerOptions || selectedServerId !== "";
+  const factionSelected = !hasServerOptions || selectedFaction !== "";
   const goldUnlocked = serverSelected && factionSelected;
   const safeGoldAmount = Math.min(
     Math.max(goldAmount, goldConfig.minGold),
@@ -56,7 +57,9 @@ export function GoldPurchaseMenu({
     deliveryMethod.trim() !== "" &&
     email.trim() !== "";
   const price = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
-  const selectionModeLabel = "Jogo -> Servidor -> Faccao";
+  const selectionModeLabel = hasServerOptions
+    ? "Jogo -> Servidor -> Faccao"
+    : "Jogo";
 
   return (
     <aside className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : ""}`}>
@@ -89,18 +92,21 @@ export function GoldPurchaseMenu({
           <select
             id="server-select"
             value={selectedServerId}
+            disabled={!hasServerOptions}
             onChange={(event) => {
-              setSelectedServerId(event.target.value);
+              const nextServerId = event.target.value;
+              const nextConfig = getGoldConfigFor(fullGoldConfig, gameId, nextServerId, "");
+              setSelectedServerId(nextServerId);
               setSelectedFaction("");
-              setGoldAmount(goldConfig.minGold);
+              setGoldAmount(nextConfig.minGold);
               setNickname("");
               setDeliveryMethod("Face to face");
               setEmail("");
             }}
-            className="loot-select mt-3 px-4 py-3 text-sm font-semibold"
+            className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
           >
             <option value="">
-              Select a server
+              {hasServerOptions ? "Select a server" : "No server selection for this game"}
             </option>
             {servers.map((server) => (
               <option key={server.id} value={server.id}>
@@ -110,10 +116,10 @@ export function GoldPurchaseMenu({
           </select>
         </div>
 
-        <div className={!serverSelected ? "opacity-40" : ""}>
+        <div className={!hasServerOptions || !serverSelected ? "opacity-40" : ""}>
           <p
             className={`text-xs font-bold uppercase tracking-[0.18em] ${
-              serverSelected ? "text-[#a89a7b]" : "text-[#5e6470]"
+              hasServerOptions && serverSelected ? "text-[#a89a7b]" : "text-[#5e6470]"
             }`}
           >
             Faction
@@ -123,7 +129,7 @@ export function GoldPurchaseMenu({
               <button
                 key={faction}
                 type="button"
-                disabled={!serverSelected}
+                disabled={!hasServerOptions || !serverSelected}
                 onClick={() => setSelectedFaction(faction)}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   selectedFaction === faction
@@ -131,7 +137,7 @@ export function GoldPurchaseMenu({
                       ? "tbc-gold-button"
                       : "loot-gold-button"
                     : "loot-secondary-button border px-4 py-2 text-[#f8eed4]"
-                } ${!serverSelected ? "cursor-not-allowed" : ""}`}
+                } ${!hasServerOptions || !serverSelected ? "cursor-not-allowed" : ""}`}
               >
                 {faction}
               </button>
