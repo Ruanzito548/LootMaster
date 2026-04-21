@@ -170,7 +170,7 @@ export function GoldPurchaseMenu({
             type="range"
             min={goldConfig.minGold}
             max={goldConfig.maxGold}
-            step={goldConfig.goldStep}
+            step={Math.max(1, goldConfig.minGold)}
             value={safeGoldAmount}
             disabled={!goldUnlocked}
             onChange={(event) => setGoldAmount(Number(event.target.value))}

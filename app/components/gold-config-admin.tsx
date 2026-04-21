@@ -35,6 +35,25 @@ export function GoldConfigAdmin() {
   const selectedServer = servers.find((s) => s.id === selectedServerId);
   const factions = selectedServer?.factions ?? ["Horde", "Alliance"];
 
+  useEffect(() => {
+    if (!selectedServerId) {
+      setSelectedFaction("");
+      return;
+    }
+
+    const availableFactions = selectedServer?.factions ?? [];
+    if (availableFactions.length === 0) {
+      setSelectedFaction("");
+      return;
+    }
+
+    setSelectedFaction((current) =>
+      current && availableFactions.includes(current)
+        ? current
+        : availableFactions[0]
+    );
+  }, [selectedServerId, selectedServer]);
+
   const currentKey = selectedGameId
     ? buildGoldKey(selectedGameId, selectedServerId || undefined, selectedFaction || undefined)
     : "";
@@ -102,7 +121,11 @@ export function GoldConfigAdmin() {
     }
   };
 
-  const canSave = firebaseEnabled && !saving && selectedGameId !== "";
+  const canSave =
+    firebaseEnabled &&
+    !saving &&
+    selectedGameId !== "" &&
+    (selectedServerId === "" || selectedFaction !== "");
 
   return (
     <div className="loot-shell">
@@ -168,8 +191,10 @@ export function GoldConfigAdmin() {
                   value={selectedServerId}
                   disabled={!selectedGameId || servers.length === 0}
                   onChange={(event) => {
-                    setSelectedServerId(event.target.value);
-                    setSelectedFaction("");
+                    const nextServerId = event.target.value;
+                    const nextServer = servers.find((server) => server.id === nextServerId);
+                    setSelectedServerId(nextServerId);
+                    setSelectedFaction(nextServer?.factions?.[0] ?? "");
                   }}
                   className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
                 >
@@ -184,10 +209,10 @@ export function GoldConfigAdmin() {
                 </select>
               </div>
 
-              {/* Faccao — opcional */}
+              {/* Faccao — obrigatoria quando houver servidor selecionado */}
               <div>
                 <label htmlFor="faction-select" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                  Faccao <span className="normal-case text-[#7d8597]">(opcional)</span>
+                  Faccao
                 </label>
                 <select
                   id="faction-select"
@@ -196,7 +221,9 @@ export function GoldConfigAdmin() {
                   onChange={(event) => setSelectedFaction(event.target.value)}
                   className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
                 >
-                  <option value="">Todas as faccoes</option>
+                  {!selectedServerId ? (
+                    <option value="">Selecione um servidor primeiro</option>
+                  ) : null}
                   {factions.map((faction) => (
                     <option key={faction} value={faction}>
                       {faction}
