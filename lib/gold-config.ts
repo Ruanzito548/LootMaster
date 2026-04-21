@@ -16,40 +16,48 @@ type GoldConfigPayload = Partial<{
   overrides: Record<string, Partial<Record<keyof GoldConfigEntry, unknown>>>;
 }>;
 
-function normalizeGoldAmount(value: number): number {
-  return Math.max(1000, Math.ceil(value / 1000) * 1000);
+function toPositiveInt(value: unknown, fallback: number): number {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return Math.round(value);
+  }
+  return fallback;
 }
 
-function sanitizeGoldConfigEntry(payload?: Partial<Record<keyof GoldConfigEntry, unknown>>): GoldConfigEntry {
-  const minGold = typeof payload?.minGold === "number" && Number.isFinite(payload.minGold) && payload.minGold > 0
-    ? normalizeGoldAmount(payload.minGold)
-    : defaultGoldConfigEntry.minGold;
-  const maxGold = typeof payload?.maxGold === "number" && Number.isFinite(payload.maxGold) && payload.maxGold >= minGold
-    ? normalizeGoldAmount(payload.maxGold)
-    : Math.max(defaultGoldConfigEntry.maxGold, minGold);
+function parseGoldConfigEntry(payload?: Partial<Record<keyof GoldConfigEntry, unknown>>): GoldConfigEntry {
+  const pricePerThousand = toPositiveInt(payload?.pricePerThousand, defaultGoldConfigEntry.pricePerThousand);
+  const minGold = toPositiveInt(payload?.minGold, defaultGoldConfigEntry.minGold);
+  const maxGold = toPositiveInt(payload?.maxGold, defaultGoldConfigEntry.maxGold);
 
   return {
-    pricePerThousand: typeof payload?.pricePerThousand === "number" && Number.isFinite(payload.pricePerThousand) && payload.pricePerThousand >= 1
-      ? payload.pricePerThousand
-      : defaultGoldConfigEntry.pricePerThousand,
+    pricePerThousand,
     minGold,
-    maxGold,
+    maxGold: Math.max(maxGold, minGold),
     goldStep: defaultGoldConfigEntry.goldStep,
   };
 }
 
-function sanitizeGoldConfig(payload?: GoldConfigPayload): GoldConfig {
-  const defaultEntry = payload?.default ? sanitizeGoldConfigEntry(payload.default) : defaultGoldConfig.default;
+function parseGoldConfig(payload?: GoldConfigPayload): GoldConfig {
+  const defaultEntry = payload?.default
+    ? parseGoldConfigEntry(payload.default)
+    : defaultGoldConfig.default;
+
   const overrides: Record<string, GoldConfigEntry> = {};
   if (payload?.overrides) {
     for (const [key, entryPayload] of Object.entries(payload.overrides)) {
-      overrides[key] = sanitizeGoldConfigEntry(entryPayload);
+      overrides[key] = parseGoldConfigEntry(entryPayload);
     }
   }
 
+  return { default: defaultEntry, overrides };
+}
+
+function serializeGoldConfig(config: GoldConfig): GoldConfigPayload & { updatedAt: string } {
   return {
-    default: defaultEntry,
-    overrides,
+    default: { ...config.default },
+    overrides: Object.fromEntries(
+      Object.entries(config.overrides).map(([key, entry]) => [key, { ...entry }])
+    ),
+    updatedAt: new Date().toISOString(),
   };
 }
 
@@ -68,8 +76,7 @@ export function subscribeToGoldConfig(
         onChange(defaultGoldConfig);
         return;
       }
-
-      onChange(sanitizeGoldConfig(snapshot.data() as GoldConfigPayload));
+      onChange(parseGoldConfig(snapshot.data() as GoldConfigPayload));
     },
     () => {
       onChange(defaultGoldConfig);
@@ -82,14 +89,5 @@ export async function saveGoldConfig(config: GoldConfig) {
     throw new Error("Firebase nao configurado.");
   }
 
-  const sanitizedConfig = sanitizeGoldConfig(config);
-
-  await setDoc(
-    goldConfigRef,
-    {
-      ...sanitizedConfig,
-      updatedAt: new Date().toISOString(),
-    },
-    { merge: true }
-  );
+  await setDoc(goldConfigRef, serializeGoldConfig(config));
 }
