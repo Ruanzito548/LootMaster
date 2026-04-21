@@ -32,6 +32,8 @@ export function GoldConfigAdmin() {
 
   const selectedGame = games.find((g) => g.id === selectedGameId);
   const servers = selectedGameId ? getServersByGameId(selectedGameId) : [];
+  const requiresServerSelection = servers.length > 0;
+  const scopeReady = selectedGameId !== "" && (!requiresServerSelection || selectedServerId !== "");
   const selectedServer = servers.find((s) => s.id === selectedServerId);
   const factions = selectedServer?.factions ?? ["Horde", "Alliance"];
 
@@ -124,8 +126,38 @@ export function GoldConfigAdmin() {
   const canSave =
     firebaseEnabled &&
     !saving &&
-    selectedGameId !== "" &&
-    (selectedServerId === "" || selectedFaction !== "");
+    scopeReady &&
+    (!requiresServerSelection || selectedFaction !== "");
+
+  const dashboardRows = games.flatMap((game) => {
+    const gameServers = getServersByGameId(game.id);
+
+    if (gameServers.length === 0) {
+      const key = buildGoldKey(game.id);
+      return [
+        {
+          key,
+          game: game.title,
+          server: "-",
+          faction: "-",
+          config: savedConfig[key],
+        },
+      ];
+    }
+
+    return gameServers.flatMap((server) =>
+      (server.factions.length > 0 ? server.factions : ["-"]).map((faction) => {
+        const key = buildGoldKey(game.id, server.id, faction === "-" ? undefined : faction);
+        return {
+          key,
+          game: game.title,
+          server: server.name,
+          faction,
+          config: savedConfig[key],
+        };
+      })
+    );
+  });
 
   return (
     <div className="loot-shell">
@@ -152,6 +184,51 @@ export function GoldConfigAdmin() {
             </p>
           </section>
         ) : null}
+
+        <section className="mt-8 loot-panel rounded-[2rem] p-8">
+          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">
+            Preview Dashboard
+          </p>
+          <h2 className="loot-title mt-4 text-2xl font-black">
+            Configuracao por jogo / servidor / faccao
+          </h2>
+
+          <div className="mt-6 grid gap-3 max-h-[26rem] overflow-auto pr-1">
+            {dashboardRows.map((row) => (
+              <article
+                key={row.key}
+                className="rounded-[1.1rem] border border-[#ffd76a]/10 bg-white/4 p-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[#f8eed4]">
+                    {row.game} / {row.server} / {row.faction}
+                  </p>
+                  <span className="font-mono text-[11px] text-[#7d8597]">
+                    {row.key}
+                  </span>
+                </div>
+
+                {row.config ? (
+                  <div className="mt-3 grid gap-2 text-sm text-[#d8f4ff] sm:grid-cols-3">
+                    <p>
+                      Preco: <span className="font-semibold">${row.config.pricePerThousand}</span>
+                    </p>
+                    <p>
+                      Min: <span className="font-semibold">{row.config.minGold.toLocaleString()}</span>
+                    </p>
+                    <p>
+                      Max: <span className="font-semibold">{row.config.maxGold.toLocaleString()}</span>
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm font-semibold text-rose-300">
+                    Nao configurado
+                  </p>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
 
         <section className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
           <div className="loot-panel rounded-[2rem] p-8">
@@ -181,10 +258,10 @@ export function GoldConfigAdmin() {
                 </select>
               </div>
 
-              {/* Servidor — opcional */}
+              {/* Servidor */}
               <div>
                 <label htmlFor="server-select" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                  Servidor <span className="normal-case text-[#7d8597]">(opcional)</span>
+                  Servidor
                 </label>
                 <select
                   id="server-select"
@@ -199,7 +276,7 @@ export function GoldConfigAdmin() {
                   className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
                 >
                   <option value="">
-                    {servers.length === 0 ? "Nenhum servidor cadastrado" : "Todos os servidores"}
+                    {servers.length === 0 ? "Nenhum servidor cadastrado" : "Selecione um servidor"}
                   </option>
                   {servers.map((server) => (
                     <option key={server.id} value={server.id}>
@@ -232,8 +309,8 @@ export function GoldConfigAdmin() {
                 </select>
               </div>
 
-              {/* Campos de preco/minimo — so aparecem se jogo foi selecionado */}
-              {selectedGameId ? (
+              {/* Campos de preco/minimo — so aparecem com escopo pronto */}
+              {scopeReady ? (
                 <>
                   <div>
                     <label htmlFor="price-per-thousand" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
@@ -290,11 +367,16 @@ export function GoldConfigAdmin() {
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-[#7d8597]">Selecione um jogo para editar a configuracao.</p>
+                <p className="text-sm text-[#7d8597]">
+                  {selectedGameId === ""
+                    ? "Selecione um jogo para editar a configuracao."
+                    : "Selecione um servidor para editar a configuracao."
+                  }
+                </p>
               )}
             </div>
 
-            {selectedGameId ? (
+            {scopeReady ? (
               <div className="mt-8 flex flex-col gap-4 border-t border-[#ffd76a]/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-1">
                   {currentKey && (
