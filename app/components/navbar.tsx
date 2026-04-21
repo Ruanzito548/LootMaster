@@ -28,6 +28,8 @@ export function Navbar() {
   const pathname = usePathname();
   const isTbc = pathname?.includes("tbc-anniversary");
   const isMidnight = pathname?.includes("retail");
+  const isClassic = pathname?.includes("classic-era");
+  const isPandaria = pathname?.includes("mist-of-pandaria");
 
   useEffect(() => subscribeToHotGames(setHotIds), []);
 
@@ -49,6 +51,10 @@ export function Navbar() {
           ? "border-[#a8ff9f]/20 bg-[#0a1a0c]/88" 
           : isMidnight
           ? "border-[#4dc6ff]/20 bg-[#071427]/88"
+          : isClassic
+          ? "border-[#f1c686]/22 bg-[#1c130b]/88"
+          : isPandaria
+          ? "border-[#8df0c8]/24 bg-[#071c16]/88"
           : "border-[#ffd76a]/10 bg-[#08111f]/84"
       }`}>
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
@@ -61,19 +67,23 @@ export function Navbar() {
                   ? "border-[#a8ff9f]/25 bg-[#1a3a20]/50 text-[#e0ffe0] hover:bg-[#204a25]"
                   : isMidnight
                   ? "border-[#4dc6ff]/25 bg-[#0d2f55]/55 text-[#dff3ff] hover:bg-[#15467a]"
+                  : isClassic
+                  ? "border-[#e9b775]/28 bg-[#4e311a]/55 text-[#ffe8c9] hover:bg-[#5f3d22]"
+                  : isPandaria
+                  ? "border-[#8df0c8]/28 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
                   : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
               }`}
               aria-label="Abrir menu lateral"
             >
               <span className="flex h-5 w-5 flex-col items-center justify-center gap-1">
                 <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : "bg-[#4dc6ff]"
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : "bg-[#4dc6ff]"
                 }`} />
                 <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : "bg-[#4dc6ff]"
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : "bg-[#4dc6ff]"
                 }`} />
                 <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : "bg-[#4dc6ff]"
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : "bg-[#4dc6ff]"
                 }`} />
               </span>
               <span className="hidden sm:inline">Menu</span>
@@ -101,11 +111,19 @@ export function Navbar() {
                       ? "border-[#a8ff9f]/35 bg-[#a8ff9f]/12 text-[#e4ffe0]"
                       : isMidnight
                       ? "border-[#4dc6ff]/35 bg-[#4dc6ff]/14 text-[#e4f6ff]"
+                      : isClassic
+                      ? "border-[#f1c686]/35 bg-[#f1c686]/14 text-[#ffeed5]"
+                      : isPandaria
+                      ? "border-[#8df0c8]/35 bg-[#8df0c8]/14 text-[#e7fff6]"
                       : "border-[#ffd76a]/28 bg-[#ffd76a]/10 text-[#fff1be]"
                     : isTbc
                     ? "border-transparent text-[#b8e6b8] hover:text-[#d4ffcc]"
                     : isMidnight
                     ? "border-transparent text-[#a8d8ff] hover:text-[#dff3ff]"
+                    : isClassic
+                    ? "border-transparent text-[#e8c79e] hover:text-[#ffe6c4]"
+                    : isPandaria
+                    ? "border-transparent text-[#b9eddc] hover:text-[#e5fff5]"
                     : "border-transparent text-[#dbcaa7] hover:text-[#fff1be]"
                 }`}
               >
@@ -118,7 +136,7 @@ export function Navbar() {
             <Link
               href="/games"
               className={`loot-gold-button rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-105 ${
-                isTbc ? "tbc-gold-button" : isMidnight ? "midnight-gold-button" : ""
+                isTbc ? "tbc-gold-button" : isMidnight ? "midnight-gold-button" : isClassic ? "classic-gold-button" : isPandaria ? "pandaria-gold-button" : ""
               }`}
             >
               Explorar
@@ -131,6 +149,10 @@ export function Navbar() {
                   ? "border-[#a8ff9f]/25 bg-[#1a3a20]/45 text-[#e0ffe0] hover:bg-[#204a25]"
                   : isMidnight
                   ? "border-[#4dc6ff]/25 bg-[#0d2f55]/50 text-[#dff3ff] hover:bg-[#15467a]"
+                  : isClassic
+                  ? "border-[#e9b775]/25 bg-[#4e311a]/45 text-[#ffe8c9] hover:bg-[#5f3d22]"
+                  : isPandaria
+                  ? "border-[#8df0c8]/25 bg-[#185641]/45 text-[#e7fff6] hover:bg-[#226f54]"
                   : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
               }`}
             >
@@ -154,6 +176,10 @@ export function Navbar() {
               ? "bg-[#030805]/78" 
               : isMidnight
               ? "bg-[#020812]/80"
+              : isClassic
+              ? "bg-[#120c06]/80"
+              : isPandaria
+              ? "bg-[#03110d]/80"
               : "bg-[#050b14]/78"
           } ${isOpen ? "opacity-100" : "opacity-0"}`}
         />
@@ -164,6 +190,10 @@ export function Navbar() {
               ? "border-[#a8ff9f]/15 bg-[linear-gradient(180deg,#1a3a20_0%,#0a1a0c_100%)]"
               : isMidnight
               ? "border-[#4dc6ff]/18 bg-[linear-gradient(180deg,#0c2a4d_0%,#061323_100%)]"
+              : isClassic
+              ? "border-[#e9b775]/18 bg-[linear-gradient(180deg,#4a2e18_0%,#1b120a_100%)]"
+              : isPandaria
+              ? "border-[#8df0c8]/18 bg-[linear-gradient(180deg,#1b5f49_0%,#092118_100%)]"
               : "border-[#ffd76a]/12 bg-[linear-gradient(180deg,#0f2240_0%,#07101d_100%)]"
           } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
