@@ -122,7 +122,17 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                     : isAccountsCard
                     ? {
                         backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/global-imagens/accounts.png")',
+                          `linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("${
+                            isTbc
+                              ? "/wow/wow-tbc/tbc-accounts.png"
+                              : isMidnight
+                              ? "/wow/wow-retail/midnight-accounts.png"
+                              : isClassic
+                              ? "/wow/wow-classic-era/classic-era-accounts.png"
+                              : isPandaria
+                              ? "/wow/wow-pandaria/pandaria-accounts.png"
+                              : "/wow/global-imagens/accounts.png"
+                          }")`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
