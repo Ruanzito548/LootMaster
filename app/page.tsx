@@ -208,28 +208,28 @@ export default function Home() {
                   game.id === "tbc-anniversary"
                     ? {
                         backgroundImage:
-                          "linear-gradient(rgba(7,11,26,0.78),rgba(7,11,26,0.78)), url('/wow/wow-tbc/tbc-wallpaper.avif')",
+                          "linear-gradient(rgba(7,11,26,0.46),rgba(7,11,26,0.56)), url('/wow/wow-tbc/tbc-logo.jpg')",
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : game.id === "retail"
                     ? {
                         backgroundImage:
-                          "linear-gradient(rgba(7,11,26,0.78),rgba(7,11,26,0.78)), url('/wow/wow-retail/midnight-wallpaper.png')",
+                          "linear-gradient(rgba(7,11,26,0.46),rgba(7,11,26,0.56)), url('/wow/wow-retail/midinight-logo.jpeg')",
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : game.id === "classic-era"
                     ? {
                         backgroundImage:
-                          "linear-gradient(rgba(30,21,12,0.78),rgba(30,21,12,0.78)), url('/wow/wow-classic-era/classic-era-wallpaper.avif')",
+                          "linear-gradient(rgba(30,21,12,0.46),rgba(30,21,12,0.56)), url('/wow/wow-classic-era/classic-era-logo.jpg')",
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : game.id === "mist-of-pandaria"
                     ? {
                         backgroundImage:
-                          "linear-gradient(rgba(8,28,22,0.78),rgba(8,28,22,0.78)), url('/wow/wow-pandaria/pandaria-wallpaper.jpeg')",
+                          "linear-gradient(rgba(8,28,22,0.46),rgba(8,28,22,0.56)), url('/wow/wow-pandaria/pandaria-logo.jpg')",
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }

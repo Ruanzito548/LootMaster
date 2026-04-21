@@ -5,7 +5,7 @@ function getGameCardStyle(gameId: string) {
   if (gameId === "tbc-anniversary") {
     return {
       backgroundImage:
-        "linear-gradient(rgba(4,10,7,0.62),rgba(4,10,7,0.72)), url('/wow/wow-tbc/tbc-wallpaper.avif')",
+        "linear-gradient(rgba(4,10,7,0.46),rgba(4,10,7,0.58)), url('/wow/wow-tbc/tbc-logo.jpg')",
       backgroundSize: "cover",
       backgroundPosition: "center",
     };
@@ -14,7 +14,7 @@ function getGameCardStyle(gameId: string) {
   if (gameId === "retail") {
     return {
       backgroundImage:
-        "linear-gradient(rgba(5,10,24,0.62),rgba(5,10,24,0.75)), url('/wow/wow-retail/midnight-wallpaper.png')",
+        "linear-gradient(rgba(5,10,24,0.46),rgba(5,10,24,0.58)), url('/wow/wow-retail/midinight-logo.jpeg')",
       backgroundSize: "cover",
       backgroundPosition: "center",
     };
@@ -23,7 +23,7 @@ function getGameCardStyle(gameId: string) {
   if (gameId === "classic-era") {
     return {
       backgroundImage:
-        "linear-gradient(rgba(36,24,12,0.62),rgba(20,13,8,0.76)), url('/wow/wow-classic-era/classic-era-wallpaper.avif')",
+        "linear-gradient(rgba(36,24,12,0.46),rgba(20,13,8,0.58)), url('/wow/wow-classic-era/classic-era-logo.jpg')",
       backgroundSize: "cover",
       backgroundPosition: "center",
     };
@@ -32,7 +32,7 @@ function getGameCardStyle(gameId: string) {
   if (gameId === "mist-of-pandaria") {
     return {
       backgroundImage:
-        "linear-gradient(rgba(8,30,24,0.62),rgba(4,15,11,0.76)), url('/wow/wow-pandaria/pandaria-wallpaper.jpeg')",
+        "linear-gradient(rgba(8,30,24,0.46),rgba(4,15,11,0.58)), url('/wow/wow-pandaria/pandaria-logo.jpg')",
       backgroundSize: "cover",
       backgroundPosition: "center",
     };

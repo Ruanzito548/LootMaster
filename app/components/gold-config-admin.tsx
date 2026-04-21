@@ -169,7 +169,7 @@ export function GoldConfigAdmin() {
     if (gameId === "tbc-anniversary") {
       return {
         backgroundImage:
-            'linear-gradient(rgba(8, 18, 10, 0.78), rgba(8, 18, 10, 0.78)), url("/wow/wow-tbc/tbc-wallpaper.avif")',
+          'linear-gradient(rgba(8, 18, 10, 0.46), rgba(8, 18, 10, 0.58)), url("/wow/wow-tbc/tbc-logo.jpg")',
         backgroundSize: "cover",
         backgroundPosition: "center",
       };
@@ -178,7 +178,25 @@ export function GoldConfigAdmin() {
     if (gameId === "retail") {
       return {
         backgroundImage:
-            'linear-gradient(rgba(7, 16, 28, 0.78), rgba(7, 16, 28, 0.78)), url("/wow/wow-retail/midnight-wallpaper.png")',
+          'linear-gradient(rgba(7, 16, 28, 0.46), rgba(7, 16, 28, 0.58)), url("/wow/wow-retail/midinight-logo.jpeg")',
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      };
+    }
+
+    if (gameId === "classic-era") {
+      return {
+        backgroundImage:
+          'linear-gradient(rgba(30, 21, 12, 0.46), rgba(30, 21, 12, 0.58)), url("/wow/wow-classic-era/classic-era-logo.jpg")',
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      };
+    }
+
+    if (gameId === "mist-of-pandaria") {
+      return {
+        backgroundImage:
+          'linear-gradient(rgba(8, 28, 22, 0.46), rgba(8, 28, 22, 0.58)), url("/wow/wow-pandaria/pandaria-logo.jpg")',
         backgroundSize: "cover",
         backgroundPosition: "center",
       };

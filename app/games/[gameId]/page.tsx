@@ -117,13 +117,6 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
-                    : isMidnight
-                    ? {
-                        backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/wow/wow-retail/midnight-wallpaper.png")',
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
                     : undefined
                 }
               >
