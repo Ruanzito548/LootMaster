@@ -22,7 +22,15 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
           <Link
             href="/"
             className={`loot-secondary-button inline-flex w-fit rounded-full px-5 py-3 text-sm font-semibold transition-colors ${
-              isTbc ? "tbc-secondary-button" : isMidnight ? "midnight-secondary-button" : ""
+              isTbc
+                ? "tbc-secondary-button"
+                : isMidnight
+                ? "midnight-secondary-button"
+                : isClassic
+                ? "classic-secondary-button"
+                : isPandaria
+                ? "pandaria-secondary-button"
+                : ""
             }`}
           >
             Back to home
@@ -33,14 +41,18 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
           </span>
 
           <div className="space-y-4">
-            <h1 className={`font-throne text-6xl leading-none sm:text-7xl ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : "loot-title"}`}>
+            <h1 className={`font-throne text-6xl leading-none sm:text-7xl ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>
               {game.title}
             </h1>
-            <p className={`max-w-2xl text-lg leading-8 ${isTbc ? "tbc-muted" : isMidnight ? "midnight-muted" : "loot-muted"}`}>
+            <p className={`max-w-2xl text-lg leading-8 ${isTbc ? "tbc-muted" : isMidnight ? "midnight-muted" : isClassic ? "classic-muted" : isPandaria ? "pandaria-muted" : "loot-muted"}`}>
               {isTbc
                 ? "Welcome to the TBC Anniversary experience — choose your path with green fire style."
                 : isMidnight
                 ? "Welcome to the Midnight experience — choose your path with blue midnight style."
+                : isClassic
+                ? "Welcome to Classic Era — old-school adventure with warm tavern tones."
+                : isPandaria
+                ? "Welcome to Pandaria — jade energy, calm mist and focused progression."
                 : "Choose the service category you want to explore first."}
             </p>
           </div>
@@ -50,20 +62,30 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
           {serviceCategories.map((category) => {
             const isGoldTbc = isTbc && category.id === "gold";
             const isGoldMidnight = isMidnight && category.id === "gold";
+            const isGoldClassic = isClassic && category.id === "gold";
+            const isGoldPandaria = isPandaria && category.id === "gold";
 
             return (
               <Link
                 key={category.id}
                 href={`/games/${game.id}/${category.id}`}
                 className={`group block overflow-hidden rounded-[1.75rem] border transition duration-300 ease-out ${
-                  isTbc ? "tbc-panel" : isMidnight ? "midnight-panel" : "loot-panel"
+                  isTbc ? "tbc-panel" : isMidnight ? "midnight-panel" : isClassic ? "classic-panel" : isPandaria ? "pandaria-panel" : "loot-panel"
                 } ${
                   isGoldTbc
                     ? "border-[#99ff99]/20 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(157,255,144,0.28)] hover:border-[#9eff99]/40 hover:-translate-y-1 hover:scale-[1.02]"
                     : isGoldMidnight
                     ? "border-[#4dc6ff]/20 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(77,198,255,0.28)] hover:border-[#4dc6ff]/40 hover:-translate-y-1 hover:scale-[1.02]"
+                    : isGoldClassic
+                    ? "border-[#f1c686]/22 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(203,141,74,0.3)] hover:border-[#f1c686]/45 hover:-translate-y-1 hover:scale-[1.02]"
+                    : isGoldPandaria
+                    ? "border-[#8df0c8]/24 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(86,204,163,0.3)] hover:border-[#8df0c8]/45 hover:-translate-y-1 hover:scale-[1.02]"
                     : isMidnight
                     ? "border-[#4dc6ff]/20 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(77,198,255,0.28)] hover:border-[#4dc6ff]/40 hover:-translate-y-1 hover:scale-[1.02]"
+                    : isClassic
+                    ? "border-[#e9b775]/20 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(198,132,64,0.26)] hover:border-[#f1c686]/38 hover:-translate-y-1 hover:scale-[1.02]"
+                    : isPandaria
+                    ? "border-[#7de4be]/20 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(80,194,157,0.26)] hover:border-[#8df0c8]/38 hover:-translate-y-1 hover:scale-[1.02]"
                     : "border-transparent hover:shadow-[0_0_20px_rgba(45,178,255,0.18)] hover:-translate-y-1"
                 }`}
                 style={
@@ -81,6 +103,20 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
+                    : isGoldClassic
+                    ? {
+                        backgroundImage:
+                          'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("/classicerawallpaper.jpg")',
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : isGoldPandaria
+                    ? {
+                        backgroundImage:
+                          'linear-gradient(rgba(0, 0, 0, 0.46), rgba(0, 0, 0, 0.46)), url("/pandariawallpaper.jpg")',
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
                     : isMidnight
                     ? {
                         backgroundImage:
@@ -94,16 +130,24 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                 <article className="h-full rounded-[1.75rem] p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h2 className={`text-3xl font-black transition-colors ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : "loot-title"}`}>
+                      <h2 className={`text-3xl font-black transition-colors ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>
                         {category.title}
                       </h2>
-                      <p className={`mt-4 text-sm leading-7 transition-colors ${isTbc ? "tbc-muted" : isMidnight ? "midnight-muted" : "loot-muted"}`}>
+                      <p className={`mt-4 text-sm leading-7 transition-colors ${isTbc ? "tbc-muted" : isMidnight ? "midnight-muted" : isClassic ? "classic-muted" : isPandaria ? "pandaria-muted" : "loot-muted"}`}>
                         {category.description}
                       </p>
                     </div>
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${category.accent} ${isTbc ? "tbc-badge" : isMidnight ? "midnight-badge" : ""} transition-colors ${
-                        isGoldTbc ? "border-[#9eff99]/30 bg-[#9eff99]/10 text-[#e8ffeb]" : isGoldMidnight ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/10 text-[#e0f4ff]" : ""
+                      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${category.accent} ${isTbc ? "tbc-badge" : isMidnight ? "midnight-badge" : isClassic ? "classic-badge" : isPandaria ? "pandaria-badge" : ""} transition-colors ${
+                        isGoldTbc
+                          ? "border-[#9eff99]/30 bg-[#9eff99]/10 text-[#e8ffeb]"
+                          : isGoldMidnight
+                          ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/10 text-[#e0f4ff]"
+                          : isGoldClassic
+                          ? "border-[#f1c686]/35 bg-[#f1c686]/12 text-[#fff0da]"
+                          : isGoldPandaria
+                          ? "border-[#8df0c8]/35 bg-[#8df0c8]/12 text-[#e6fff4]"
+                          : ""
                       }`}
                     >
                       Open

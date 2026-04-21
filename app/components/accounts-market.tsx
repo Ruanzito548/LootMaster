@@ -33,6 +33,8 @@ function getAccountBackgroundImage(account: AccountListing): string | null {
 
 export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
   const isTbc = gameId === "tbc-anniversary";
+  const isClassic = gameId === "classic-era";
+  const isPandaria = gameId === "mist-of-pandaria";
   const [listings, setListings] = useState<AccountListing[]>([]);
 
   useEffect(
@@ -74,13 +76,13 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
   );
 
   return (
-    <section className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : ""}`}>
+    <section className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : isClassic ? "classic-panel" : isPandaria ? "pandaria-panel" : ""}`}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className={`text-sm font-bold uppercase tracking-[0.24em] ${isTbc ? "tbc-kicker" : "loot-kicker"}`}>Accounts market</p>
-          <h2 className={`mt-3 text-3xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>{gameTitle}</h2>
+          <p className={`text-sm font-bold uppercase tracking-[0.24em] ${isTbc ? "tbc-kicker" : isClassic ? "classic-kicker" : isPandaria ? "pandaria-kicker" : "loot-kicker"}`}>Accounts market</p>
+          <h2 className={`mt-3 text-3xl font-black ${isTbc ? "tbc-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>{gameTitle}</h2>
         </div>
-        <p className={`text-sm ${isTbc ? "tbc-muted" : "text-[#cdb991]"}`}>{filteredListings.length} resultados</p>
+        <p className={`text-sm ${isTbc ? "tbc-muted" : isClassic ? "classic-muted" : isPandaria ? "pandaria-muted" : "text-[#cdb991]"}`}>{filteredListings.length} resultados</p>
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-4">
@@ -160,6 +162,10 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
                   return {
                     backgroundImage: isTbc
                       ? "linear-gradient(rgba(18, 52, 28, 0.9), rgba(18, 52, 28, 0.9))"
+                      : isClassic
+                      ? "linear-gradient(rgba(58, 36, 18, 0.9), rgba(58, 36, 18, 0.9))"
+                      : isPandaria
+                      ? "linear-gradient(rgba(10, 48, 36, 0.9), rgba(10, 48, 36, 0.9))"
                       : "linear-gradient(rgba(10, 28, 44, 0.86), rgba(10, 28, 44, 0.86))",
                   };
                 }
@@ -171,16 +177,16 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
                 };
               })()}
             >
-              <div className={`absolute inset-0 transition-all duration-300 ${isTbc ? "bg-[#0a180f]/30 group-hover:bg-[#0a180f]/12" : "bg-black/30 group-hover:bg-black/10"}`} />
+              <div className={`absolute inset-0 transition-all duration-300 ${isTbc ? "bg-[#0a180f]/30 group-hover:bg-[#0a180f]/12" : isClassic ? "bg-[#1b120a]/30 group-hover:bg-[#1b120a]/12" : isPandaria ? "bg-[#062017]/30 group-hover:bg-[#062017]/12" : "bg-black/30 group-hover:bg-black/10"}`} />
               <div className="relative z-10 flex min-h-[30rem] flex-col justify-end bg-gradient-to-t from-black/45 via-black/12 to-transparent p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className={`text-2xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>{account.title}</h3>
-                    <p className={`mt-2 text-sm ${isTbc ? "tbc-muted" : "text-[#cdb991]"}`}>
+                    <h3 className={`text-2xl font-black ${isTbc ? "tbc-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>{account.title}</h3>
+                    <p className={`mt-2 text-sm ${isTbc ? "tbc-muted" : isClassic ? "classic-muted" : isPandaria ? "pandaria-muted" : "text-[#cdb991]"}`}>
                       {account.serverName} / {account.faction}
                     </p>
                   </div>
-                  <span className={`${isTbc ? "tbc-badge" : "loot-badge-blue"} rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]`}>
+                  <span className={`${isTbc ? "tbc-badge" : isClassic ? "classic-badge" : isPandaria ? "pandaria-badge" : "loot-badge-blue"} rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]`}>
                     Lv {account.level}
                   </span>
                 </div>
@@ -230,8 +236,8 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
           ))}
         </div>
       ) : (
-        <div className={`mt-6 rounded-[1.25rem] border p-5 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : "border-[#ffd76a]/12 bg-black/20"}`}>
-          <p className={`text-sm font-semibold ${isTbc ? "text-[#d2f5c2]" : "text-[#f8eed4]"}`}>Nenhuma conta encontrada com esse filtro.</p>
+        <div className={`mt-6 rounded-[1.25rem] border p-5 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : isClassic ? "border-[#f1c686]/20 bg-[#25190f]/70" : isPandaria ? "border-[#8df0c8]/20 bg-[#0d2a1f]/70" : "border-[#ffd76a]/12 bg-black/20"}`}>
+          <p className={`text-sm font-semibold ${isTbc ? "text-[#d2f5c2]" : isClassic ? "text-[#ffe7c6]" : isPandaria ? "text-[#ddfff1]" : "text-[#f8eed4]"}`}>Nenhuma conta encontrada com esse filtro.</p>
         </div>
       )}
     </section>

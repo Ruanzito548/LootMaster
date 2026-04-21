@@ -33,7 +33,15 @@ export default async function ServerSelectionPage(
           <Link
             href={`/games/${game.id}`}
             className={`inline-flex w-fit rounded-full px-5 py-3 text-sm font-semibold transition-colors ${
-              isTbc ? "tbc-secondary-button" : "loot-secondary-button"
+              isTbc
+                ? "tbc-secondary-button"
+                : isMidnight
+                ? "midnight-secondary-button"
+                : isClassic
+                ? "classic-secondary-button"
+                : isPandaria
+                ? "pandaria-secondary-button"
+                : "loot-secondary-button"
             }`}
           >
             Back to categories
@@ -46,10 +54,10 @@ export default async function ServerSelectionPage(
           ) : null}
 
           <div className="space-y-4">
-            <h1 className={`font-throne text-6xl leading-none sm:text-7xl ${isTbc ? "tbc-title" : "loot-title"}`}>
+            <h1 className={`font-throne text-6xl leading-none sm:text-7xl ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>
               {isTbc ? "TBC Anniversary Server Selection" : "Choose your server."}
             </h1>
-            <p className={`max-w-2xl text-lg leading-8 ${isTbc ? "tbc-muted" : "loot-muted"}`}>
+            <p className={`max-w-2xl text-lg leading-8 ${isTbc ? "tbc-muted" : isMidnight ? "midnight-muted" : isClassic ? "classic-muted" : isPandaria ? "pandaria-muted" : "loot-muted"}`}>
               {isTbc
                 ? `Pick a server for your ${selectedCategory.title} order in the TBC Anniversary realm.`
                 : `Select a server to continue with your ${selectedCategory.title.toLowerCase()} order.`}
@@ -78,16 +86,16 @@ export default async function ServerSelectionPage(
               {servers.map((server) => (
                 <article
                   key={server.id}
-                  className={`loot-panel rounded-[1.5rem] p-5 ${isTbc ? "tbc-panel" : ""}`}
+                  className={`loot-panel rounded-[1.5rem] p-5 ${isTbc ? "tbc-panel" : isMidnight ? "midnight-panel" : isClassic ? "classic-panel" : isPandaria ? "pandaria-panel" : ""}`}
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <h2 className={`text-3xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>{server.name}</h2>
-                      <p className={`mt-2 text-sm ${isTbc ? "tbc-muted" : "loot-muted"}`}>
+                      <h2 className={`text-3xl font-black ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>{server.name}</h2>
+                      <p className={`mt-2 text-sm ${isTbc ? "tbc-muted" : isMidnight ? "midnight-muted" : isClassic ? "classic-muted" : isPandaria ? "pandaria-muted" : "loot-muted"}`}>
                         {server.factions.join(" / ")}
                       </p>
                     </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${isTbc ? "tbc-badge" : "loot-badge-blue"}`}>
+                    <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${isTbc ? "tbc-badge" : isMidnight ? "midnight-badge" : isClassic ? "classic-badge" : isPandaria ? "pandaria-badge" : "loot-badge-blue"}`}>
                       {server.region}
                     </span>
                   </div>
@@ -95,12 +103,12 @@ export default async function ServerSelectionPage(
               ))}
             </section>
         ) : (
-          <section className={`loot-panel mt-12 rounded-[2rem] p-8 ${isTbc ? "tbc-panel" : ""}`}>
-            <p className={`text-sm font-bold uppercase tracking-[0.24em] ${isTbc ? "tbc-kicker" : "loot-kicker"}`}>
+          <section className={`loot-panel mt-12 rounded-[2rem] p-8 ${isTbc ? "tbc-panel" : isMidnight ? "midnight-panel" : isClassic ? "classic-panel" : isPandaria ? "pandaria-panel" : ""}`}>
+            <p className={`text-sm font-bold uppercase tracking-[0.24em] ${isTbc ? "tbc-kicker" : isMidnight ? "midnight-kicker" : isClassic ? "classic-kicker" : isPandaria ? "pandaria-kicker" : "loot-kicker"}`}>
               Servers
             </p>
-            <h2 className={`mt-4 text-3xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>Server list coming soon.</h2>
-            <p className={`mt-4 max-w-2xl text-base leading-8 ${isTbc ? "tbc-muted" : "loot-muted"}`}>
+            <h2 className={`mt-4 text-3xl font-black ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>Server list coming soon.</h2>
+            <p className={`mt-4 max-w-2xl text-base leading-8 ${isTbc ? "tbc-muted" : isMidnight ? "midnight-muted" : isClassic ? "classic-muted" : isPandaria ? "pandaria-muted" : "loot-muted"}`}>
               {isTbc
                 ? "This TBC realm doesn’t have server data yet — we can add it soon."
                 : "This game does not have server data yet. We can add it next."}

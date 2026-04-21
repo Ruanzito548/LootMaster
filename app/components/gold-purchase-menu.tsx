@@ -21,6 +21,8 @@ export function GoldPurchaseMenu({
 }: GoldPurchaseMenuProps) {
   const isTbc = gameId === "tbc-anniversary";
   const isMidnight = gameId === "retail";
+  const isClassic = gameId === "classic-era";
+  const isPandaria = gameId === "mist-of-pandaria";
   const [fullGoldConfig, setFullGoldConfig] = useState(emptyGoldConfig);
   const [selectedServerId, setSelectedServerId] = useState("");
   const [selectedFaction, setSelectedFaction] = useState("");
@@ -62,11 +64,11 @@ export function GoldPurchaseMenu({
     : "Jogo";
 
   return (
-    <aside className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : ""}`}>
-      <p className={`text-sm font-bold uppercase tracking-[0.24em] ${isTbc ? "tbc-kicker" : "loot-kicker"}`}>
+    <aside className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : isMidnight ? "midnight-panel" : isClassic ? "classic-panel" : isPandaria ? "pandaria-panel" : ""}`}>
+      <p className={`text-sm font-bold uppercase tracking-[0.24em] ${isTbc ? "tbc-kicker" : isMidnight ? "midnight-kicker" : isClassic ? "classic-kicker" : isPandaria ? "pandaria-kicker" : "loot-kicker"}`}>
         Buy menu
       </p>
-      <h2 className={`mt-4 text-3xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>
+      <h2 className={`mt-4 text-3xl font-black ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>
         Configure your order
       </h2>
 
@@ -139,6 +141,12 @@ export function GoldPurchaseMenu({
                   selectedFaction === faction
                     ? isTbc
                       ? "tbc-gold-button"
+                      : isMidnight
+                      ? "midnight-gold-button"
+                      : isClassic
+                      ? "classic-gold-button"
+                      : isPandaria
+                      ? "pandaria-gold-button"
                       : "loot-gold-button"
                     : "loot-secondary-button border px-4 py-2 text-[#f8eed4]"
                 } ${!hasServerOptions || !serverSelected ? "cursor-not-allowed" : ""}`}
@@ -161,6 +169,12 @@ export function GoldPurchaseMenu({
             {goldUnlocked && (
               <span className={`${isTbc
                 ? "rounded-full bg-[#2f733e]/20 text-[#d2f5c2]"
+                : isMidnight
+                ? "rounded-full bg-[#1d4d80]/25 text-[#dff3ff]"
+                : isClassic
+                ? "rounded-full bg-[#7c4f28]/28 text-[#ffe7c6]"
+                : isPandaria
+                ? "rounded-full bg-[#1f6f55]/28 text-[#ddfff0]"
                 : "rounded-full bg-[linear-gradient(180deg,#ffe27c_0%,#f7ba2c_65%,#cc7a15_100%)] text-[#2f1405]"} px-3 py-1 text-xs font-bold`}>
                 {safeGoldAmount.toLocaleString()} gold
               </span>
@@ -185,7 +199,15 @@ export function GoldPurchaseMenu({
           {goldUnlocked ? (
             <div
               className={`mt-4 rounded-[1rem] border p-4 ${
-                isTbc ? "border-[#99ff99]/20" : isMidnight ? "border-[#4dc6ff]/20" : "border-[#ffd76a]/10 bg-white/4"
+                isTbc
+                  ? "border-[#99ff99]/20"
+                  : isMidnight
+                  ? "border-[#4dc6ff]/20"
+                  : isClassic
+                  ? "border-[#f1c686]/24"
+                  : isPandaria
+                  ? "border-[#8df0c8]/24"
+                  : "border-[#ffd76a]/10 bg-white/4"
               }`}
               style={
                 isTbc
@@ -199,6 +221,20 @@ export function GoldPurchaseMenu({
                   ? {
                       backgroundImage:
                         'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/midnightgold.jpeg")',
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : isClassic
+                  ? {
+                      backgroundImage:
+                        'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("/classicerawallpaper.jpg")',
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : isPandaria
+                  ? {
+                      backgroundImage:
+                        'linear-gradient(rgba(0, 0, 0, 0.46), rgba(0, 0, 0, 0.46)), url("/pandariawallpaper.jpg")',
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }
@@ -292,7 +328,7 @@ export function GoldPurchaseMenu({
                 {selectedServer?.name ?? "No server selected"}
               </p>
             </div>
-            <span className={`${isTbc ? "tbc-badge" : "loot-badge-blue"} rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]`}>
+            <span className={`${isTbc ? "tbc-badge" : isMidnight ? "midnight-badge" : isClassic ? "classic-badge" : isPandaria ? "pandaria-badge" : "loot-badge-blue"} rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]`}>
               {selectedServer?.region ?? "--"} / {selectedFaction || "--"}
             </span>
           </div>
@@ -301,7 +337,7 @@ export function GoldPurchaseMenu({
         <button
           type="button"
           disabled={!formReady}
-          className={`${isTbc ? "tbc-gold-button" : "loot-gold-button"} w-full rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200`}
+          className={`${isTbc ? "tbc-gold-button" : isMidnight ? "midnight-gold-button" : isClassic ? "classic-gold-button" : isPandaria ? "pandaria-gold-button" : "loot-gold-button"} w-full rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200`}
         >
           Continue
         </button>
