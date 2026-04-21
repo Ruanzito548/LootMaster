@@ -71,7 +71,7 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
               <Link
                 key={category.id}
                 href={`/games/${game.id}/${category.id}`}
-                className={`group block overflow-hidden rounded-[1.75rem] border transition duration-300 ease-out ${
+                className={`group block min-h-[18.5rem] overflow-hidden rounded-[1.75rem] border transition duration-300 ease-out lg:min-h-[20rem] ${
                   isTbc ? "tbc-panel" : isMidnight ? "midnight-panel" : isClassic ? "classic-panel" : isPandaria ? "pandaria-panel" : "loot-panel"
                 } ${
                   isGoldTbc
@@ -136,7 +136,7 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                     : undefined
                 }
               >
-                <article className="h-full rounded-[1.75rem] p-6">
+                <article className="h-full rounded-[1.75rem] p-7 lg:p-8">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h2 className={`text-3xl font-black transition-colors ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>
