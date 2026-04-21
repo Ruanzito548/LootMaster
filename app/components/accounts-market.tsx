@@ -143,26 +143,27 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
           {filteredListings.map((account) => (
             <article
               key={account.id}
-              className={`overflow-hidden rounded-[1.25rem] border ${isTbc ? "border-[#99ff99]/20" : "border-[#ffd76a]/12"}`}
+              className={`group relative overflow-hidden rounded-[1.25rem] border transition-all duration-300 hover:-translate-y-1 ${isTbc ? "border-[#99ff99]/20 hover:border-[#99ff99]/35 hover:shadow-[0_16px_34px_rgba(50,170,90,0.28)]" : "border-[#ffd76a]/12 hover:border-[#ffd76a]/28 hover:shadow-[0_16px_34px_rgba(247,186,44,0.22)]"}`}
               style={(() => {
                 const image = getAccountBackgroundImage(account);
 
                 if (!image) {
                   return {
                     backgroundImage: isTbc
-                      ? "linear-gradient(rgba(11, 28, 18, 0.92), rgba(11, 28, 18, 0.92))"
-                      : "linear-gradient(rgba(6, 18, 29, 0.88), rgba(6, 18, 29, 0.88))",
+                      ? "linear-gradient(rgba(18, 52, 28, 0.9), rgba(18, 52, 28, 0.9))"
+                      : "linear-gradient(rgba(10, 28, 44, 0.86), rgba(10, 28, 44, 0.86))",
                   };
                 }
 
                 return {
-                  backgroundImage: `linear-gradient(rgba(6, 12, 9, 0.45), rgba(6, 12, 9, 0.78)), url(${image})`,
+                  backgroundImage: `url(${image})`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 };
               })()}
             >
-              <div className="flex min-h-[30rem] flex-col justify-end bg-gradient-to-t from-black/70 via-black/35 to-transparent p-5">
+              <div className={`absolute inset-0 transition-all duration-300 ${isTbc ? "bg-[#0a180f]/45 group-hover:bg-[#0a180f]/25" : "bg-black/45 group-hover:bg-black/25"}`} />
+              <div className="relative z-10 flex min-h-[30rem] flex-col justify-end bg-gradient-to-t from-black/62 via-black/25 to-transparent p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className={`text-2xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>{account.title}</h3>
