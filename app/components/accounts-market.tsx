@@ -143,7 +143,7 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
           {filteredListings.map((account) => (
             <article
               key={account.id}
-              className={`group relative overflow-hidden rounded-[1.25rem] border transition-all duration-300 hover:-translate-y-1 ${isTbc ? "border-[#99ff99]/20 hover:border-[#99ff99]/35 hover:shadow-[0_16px_34px_rgba(50,170,90,0.28)]" : "border-[#ffd76a]/12 hover:border-[#ffd76a]/28 hover:shadow-[0_16px_34px_rgba(247,186,44,0.22)]"}`}
+              className={`group relative overflow-hidden rounded-[1.25rem] border transition-all duration-300 transform-gpu hover:-translate-y-1 hover:scale-[1.03] ${isTbc ? "border-[#99ff99]/20 hover:border-[#99ff99]/35 hover:shadow-[0_16px_34px_rgba(50,170,90,0.28)]" : "border-[#ffd76a]/12 hover:border-[#ffd76a]/28 hover:shadow-[0_16px_34px_rgba(247,186,44,0.22)]"}`}
               style={(() => {
                 const image = getAccountBackgroundImage(account);
 
