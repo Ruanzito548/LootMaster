@@ -94,42 +94,42 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                   isGoldTbc
                     ? {
                         backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/wow/wow-tbc/tbc-gold.jpeg")',
+                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/wow-tbc/tbc-gold.jpeg")',
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : isGoldMidnight
                     ? {
                         backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/wow/wow-retail/midnight-gold.jpeg")',
+                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/wow-retail/midnight-gold.jpeg")',
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : isGoldClassic
                     ? {
                         backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("/wow/wow-classic-era/classic-era-gold.png")',
+                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/wow-classic-era/classic-era-gold.png")',
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : isGoldPandaria
                     ? {
                         backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.46), rgba(0, 0, 0, 0.46)), url("/wow/wow-pandaria/pandaria-gold.png")',
+                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/wow-pandaria/pandaria-gold.png")',
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : isAccountsCard
                     ? {
                         backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.42)), url("/wow/global-imagens/accounts.png")',
+                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/global-imagens/accounts.png")',
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : isBoostCard
                     ? {
                         backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.42)), url("/wow/global-imagens/boost.png")',
+                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/global-imagens/boost.png")',
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
