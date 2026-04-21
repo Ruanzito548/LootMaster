@@ -13,6 +13,7 @@ export type AccountRace =
   | "Human"
   | "Orc"
   | "Undead"
+  | "Troll"
   | "Tauren"
   | "Night Elf"
   | "Dwarf"
@@ -112,6 +113,58 @@ const accountListings: AccountListing[] = [
     level: 70,
     price: 99,
     highlights: ["Dual set", "Flight form", "Raid attuned"],
+  },
+  {
+    id: "tbc-acc-007",
+    gameId: "tbc-anniversary",
+    title: "Draenei Holy Priest",
+    serverId: "thunderstrike-eu",
+    serverName: "Thunderstrike EU",
+    faction: "Alliance",
+    race: "Draenei",
+    className: "Priest",
+    level: 70,
+    price: 129,
+    highlights: ["Healing set", "Heroic keys", "Jewelcrafting"],
+  },
+  {
+    id: "tbc-acc-008",
+    gameId: "tbc-anniversary",
+    title: "Dwarf Protection Warrior",
+    serverId: "spineshatter-eu",
+    serverName: "Spineshatter EU",
+    faction: "Alliance",
+    race: "Dwarf",
+    className: "Warrior",
+    level: 70,
+    price: 149,
+    highlights: ["Tank set", "Blacksmithing", "Raid attuned"],
+  },
+  {
+    id: "tbc-acc-009",
+    gameId: "tbc-anniversary",
+    title: "Troll Elemental Shaman",
+    serverId: "nightslayer-us",
+    serverName: "Nightslayer US",
+    faction: "Horde",
+    race: "Troll",
+    className: "Shaman",
+    level: 70,
+    price: 109,
+    highlights: ["Caster gear", "Totem set", "Enchanting"],
+  },
+  {
+    id: "tbc-acc-010",
+    gameId: "tbc-anniversary",
+    title: "Tauren Arms Warrior",
+    serverId: "dreamscythe-us",
+    serverName: "Dreamscythe US",
+    faction: "Horde",
+    race: "Tauren",
+    className: "Warrior",
+    level: 70,
+    price: 119,
+    highlights: ["PvP set", "Mining", "Epic weapon"],
   },
 ];
 
