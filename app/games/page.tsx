@@ -47,7 +47,7 @@ export default function GamesIndexPage() {
             <Link
               key={game.id}
               href={`/games/${game.id}`}
-              className="group relative overflow-hidden rounded-[1.75rem] border border-[#4dc6ff]/12 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[#4dc6ff]/30 hover:shadow-[0_18px_38px_rgba(22,118,196,0.3)]"
+              className="group relative min-h-[22rem] overflow-hidden rounded-[1.75rem] border border-[#4dc6ff]/12 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[#4dc6ff]/30 hover:shadow-[0_18px_38px_rgba(22,118,196,0.3)] sm:min-h-[24rem]"
               style={getGameCardStyle(game.id)}
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/52 via-black/18 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-65" />
