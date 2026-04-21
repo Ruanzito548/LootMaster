@@ -162,8 +162,8 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
                 };
               })()}
             >
-              <div className={`absolute inset-0 transition-all duration-300 ${isTbc ? "bg-[#0a180f]/45 group-hover:bg-[#0a180f]/25" : "bg-black/45 group-hover:bg-black/25"}`} />
-              <div className="relative z-10 flex min-h-[30rem] flex-col justify-end bg-gradient-to-t from-black/62 via-black/25 to-transparent p-5">
+              <div className={`absolute inset-0 transition-all duration-300 ${isTbc ? "bg-[#0a180f]/30 group-hover:bg-[#0a180f]/12" : "bg-black/30 group-hover:bg-black/10"}`} />
+              <div className="relative z-10 flex min-h-[30rem] flex-col justify-end bg-gradient-to-t from-black/45 via-black/12 to-transparent p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className={`text-2xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>{account.title}</h3>
