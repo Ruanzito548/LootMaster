@@ -4,30 +4,27 @@ import Link from "next/link";
 import { startTransition, useEffect, useState } from "react";
 
 import {
-  defaultGoldConfig,
+  buildGoldKey,
+  defaultGoldConfigEntry,
+  emptyGoldConfig,
   getGoldConfigFor,
-  goldSelectionModes,
   type GoldConfig,
   type GoldConfigEntry,
 } from "../data/gold-config";
-import { games, getServersByGameId, type GameServer } from "../data/games";
+import { games, getServersByGameId } from "../data/games";
 import { firebaseEnabled } from "../../lib/firebase";
-import { saveGoldConfig, subscribeToGoldConfig } from "../../lib/gold-config";
-
-function buildKey(gameId?: string, serverId?: string, faction?: string): string {
-  const parts = [];
-  if (gameId) parts.push(gameId);
-  if (serverId) parts.push(serverId);
-  if (faction) parts.push(faction);
-  return parts.join("|");
-}
+import {
+  deleteGoldConfigEntry,
+  saveGoldConfigEntry,
+  subscribeToGoldConfig,
+} from "../../lib/gold-config";
 
 export function GoldConfigAdmin() {
-  const [storedConfig, setStoredConfig] = useState(defaultGoldConfig);
-  const [draftConfig, setDraftConfig] = useState<GoldConfig | null>(null);
+  const [savedConfig, setSavedConfig] = useState<GoldConfig>(emptyGoldConfig);
+  const [draftEntry, setDraftEntry] = useState<GoldConfigEntry | null>(null);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const activeConfig = draftConfig ?? storedConfig;
 
   const [selectedGameId, setSelectedGameId] = useState<string>("");
   const [selectedServerId, setSelectedServerId] = useState<string>("");
@@ -38,98 +35,74 @@ export function GoldConfigAdmin() {
   const selectedServer = servers.find((s) => s.id === selectedServerId);
   const factions = selectedServer?.factions ?? ["Horde", "Alliance"];
 
-  const currentKey = buildKey(selectedGameId, selectedServerId, selectedFaction);
-  const currentEntry = getGoldConfigFor(activeConfig, selectedGameId, selectedServerId, selectedFaction);
+  const currentKey = selectedGameId
+    ? buildGoldKey(selectedGameId, selectedServerId || undefined, selectedFaction || undefined)
+    : "";
 
-  const selectionMode =
-    goldSelectionModes.find((mode) => mode.id === "game-server-faction") ??
-    goldSelectionModes[0];
+  const savedEntry = selectedGameId
+    ? getGoldConfigFor(savedConfig, selectedGameId, selectedServerId || undefined, selectedFaction || undefined)
+    : defaultGoldConfigEntry;
+
+  const activeEntry = draftEntry ?? savedEntry;
+
+  // indica se o escopo atual tem doc proprio salvo no Firebase
+  const hasSavedOverride = currentKey !== "" && !!savedConfig[currentKey];
+
+  useEffect(() => {
+    setDraftEntry(null);
+    setSaved(false);
+    setErrorMessage(null);
+  }, [selectedGameId, selectedServerId, selectedFaction]);
 
   useEffect(
     () =>
       subscribeToGoldConfig((config) => {
-        startTransition(() => {
-          setStoredConfig(config);
-        });
+        startTransition(() => setSavedConfig(config));
       }),
     []
   );
 
-  const updateDraftEntry = (partial: Partial<GoldConfigEntry>) => {
+  const updateDraft = (partial: Partial<GoldConfigEntry>) => {
     setSaved(false);
     setErrorMessage(null);
-    const nextGameId = selectedGameId;
-    const nextServerId = selectedServerId;
-    const nextFaction = selectedFaction;
-    setDraftConfig((current) => {
-      const config = current ?? storedConfig;
-      const key = buildKey(nextGameId, nextServerId, nextFaction);
-      const baseEntry = getGoldConfigFor(config, nextGameId, nextServerId, nextFaction);
-      const newEntry = { ...baseEntry, ...partial };
-      if (key) {
-        return {
-          ...config,
-          overrides: {
-            ...config.overrides,
-            [key]: newEntry,
-          },
-        };
-      } else {
-        return {
-          ...config,
-          default: newEntry,
-        };
-      }
-    });
+    setDraftEntry((prev) => ({ ...(prev ?? savedEntry), ...partial }));
   };
 
   const saveConfig = async () => {
+    if (!currentKey) return;
+    setSaving(true);
+    setErrorMessage(null);
     try {
-      setErrorMessage(null);
-      const nextConfig = activeConfig; // already sanitized in lib
-      await saveGoldConfig(nextConfig);
-      setDraftConfig(null);
+      await saveGoldConfigEntry(currentKey, activeEntry);
+      setDraftEntry(null);
       setSaved(true);
     } catch (error) {
-      setSaved(false);
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Nao foi possivel salvar a configuracao do gold."
+        error instanceof Error ? error.message : "Nao foi possivel salvar."
       );
+    } finally {
+      setSaving(false);
     }
   };
 
-  const resetConfig = () => {
-    setDraftConfig(defaultGoldConfig);
-    setSaved(false);
+  const resetCurrent = async () => {
+    if (!currentKey) return;
+    setSaving(true);
     setErrorMessage(null);
+    setSaved(false);
+    try {
+      await deleteGoldConfigEntry(currentKey);
+      setDraftEntry(null);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Nao foi possivel remover."
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const resetCurrent = () => {
-    const nextGameId = selectedGameId;
-    const nextServerId = selectedServerId;
-    const nextFaction = selectedFaction;
-    setDraftConfig((current) => {
-      const config = current ?? storedConfig;
-      const key = buildKey(nextGameId, nextServerId, nextFaction);
-      if (key) {
-        const newOverrides = { ...config.overrides };
-        delete newOverrides[key];
-        return {
-          ...config,
-          overrides: newOverrides,
-        };
-      } else {
-        return {
-          ...config,
-          default: defaultGoldConfig.default,
-        };
-      }
-    });
-    setSaved(false);
-    setErrorMessage(null);
-  };
+  const canSave = firebaseEnabled && !saving && selectedGameId !== "";
 
   return (
     <div className="loot-shell">
@@ -142,7 +115,7 @@ export function GoldConfigAdmin() {
             Gold settings
           </h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Ajuste o valor do gold, a quantidade minima comprada e configure por jogo, servidor e faccao.
+            Configure o preco e quantidade minima de gold por jogo, servidor e faccao. Cada combinacao e salva separadamente no Firebase.
           </p>
         </div>
 
@@ -160,11 +133,10 @@ export function GoldConfigAdmin() {
         <section className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
           <div className="loot-panel rounded-[2rem] p-8">
             <div className="grid gap-6">
+
+              {/* Jogo — obrigatorio */}
               <div>
-                <label
-                  htmlFor="game-select"
-                  className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
-                >
+                <label htmlFor="game-select" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
                   Jogo
                 </label>
                 <select
@@ -177,9 +149,7 @@ export function GoldConfigAdmin() {
                   }}
                   className="loot-select mt-3 px-4 py-3 text-sm font-semibold"
                 >
-                  <option value="">
-                    Default (todos os jogos)
-                  </option>
+                  <option value="">— Selecione um jogo —</option>
                   {games.map((game) => (
                     <option key={game.id} value={game.id}>
                       {game.title}
@@ -188,17 +158,15 @@ export function GoldConfigAdmin() {
                 </select>
               </div>
 
+              {/* Servidor — opcional */}
               <div>
-                <label
-                  htmlFor="server-select"
-                  className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
-                >
-                  Servidor
+                <label htmlFor="server-select" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
+                  Servidor <span className="normal-case text-[#7d8597]">(opcional)</span>
                 </label>
                 <select
                   id="server-select"
                   value={selectedServerId}
-                  disabled={!selectedGameId}
+                  disabled={!selectedGameId || servers.length === 0}
                   onChange={(event) => {
                     setSelectedServerId(event.target.value);
                     setSelectedFaction("");
@@ -206,7 +174,7 @@ export function GoldConfigAdmin() {
                   className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
                 >
                   <option value="">
-                    Default (todos os servidores)
+                    {servers.length === 0 ? "Nenhum servidor cadastrado" : "Todos os servidores"}
                   </option>
                   {servers.map((server) => (
                     <option key={server.id} value={server.id}>
@@ -216,12 +184,10 @@ export function GoldConfigAdmin() {
                 </select>
               </div>
 
+              {/* Faccao — opcional */}
               <div>
-                <label
-                  htmlFor="faction-select"
-                  className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
-                >
-                  Faccao
+                <label htmlFor="faction-select" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
+                  Faccao <span className="normal-case text-[#7d8597]">(opcional)</span>
                 </label>
                 <select
                   id="faction-select"
@@ -230,9 +196,7 @@ export function GoldConfigAdmin() {
                   onChange={(event) => setSelectedFaction(event.target.value)}
                   className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
                 >
-                  <option value="">
-                    Default (todas as faccoes)
-                  </option>
+                  <option value="">Todas as faccoes</option>
                   {factions.map((faction) => (
                     <option key={faction} value={faction}>
                       {faction}
@@ -241,96 +205,114 @@ export function GoldConfigAdmin() {
                 </select>
               </div>
 
-              <div>
-                <label
-                  htmlFor="price-per-thousand"
-                  className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
-                >
-                  Valor por 1.000 gold
-                </label>
-                <input
-                  id="price-per-thousand"
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={currentEntry.pricePerThousand}
-                  onChange={(event) =>
-                    updateDraftEntry({
-                      pricePerThousand: Number(event.target.value),
-                    })
-                  }
-                  className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
-                />
-                <p className="mt-2 text-sm text-[#7d8597]">
-                  Exemplo: `20` para cobrar $20 a cada 1.000 gold.
-                </p>
-              </div>
+              {/* Campos de preco/minimo — so aparecem se jogo foi selecionado */}
+              {selectedGameId ? (
+                <>
+                  <div>
+                    <label htmlFor="price-per-thousand" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
+                      Valor por 1.000 gold
+                    </label>
+                    <input
+                      id="price-per-thousand"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={activeEntry.pricePerThousand}
+                      onChange={(event) =>
+                        updateDraft({ pricePerThousand: Number(event.target.value) })
+                      }
+                      className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
+                    />
+                    <p className="mt-2 text-sm text-[#7d8597]">
+                      Exemplo: 20 para cobrar $20 a cada 1.000 gold.
+                    </p>
+                  </div>
 
-              <div>
-                <label
-                  htmlFor="min-gold"
-                  className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
-                >
-                  Quantidade minima comprada
-                </label>
-                <input
-                  id="min-gold"
-                  type="number"
-                  min="1000"
-                  step="1000"
-                  value={currentEntry.minGold}
-                  onChange={(event) =>
-                    updateDraftEntry({
-                      minGold: Number(event.target.value),
-                    })
-                  }
-                  className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
-                />
-                <p className="mt-2 text-sm text-[#7d8597]">
-                  Minimo permitido: 1.000. Valores menores sao ajustados automaticamente ao salvar.
-                </p>
-              </div>
+                  <div>
+                    <label htmlFor="min-gold" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
+                      Quantidade minima de compra
+                    </label>
+                    <input
+                      id="min-gold"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={activeEntry.minGold}
+                      onChange={(event) =>
+                        updateDraft({ minGold: Number(event.target.value) })
+                      }
+                      className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="max-gold" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
+                      Quantidade maxima de compra
+                    </label>
+                    <input
+                      id="max-gold"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={activeEntry.maxGold}
+                      onChange={(event) =>
+                        updateDraft({ maxGold: Number(event.target.value) })
+                      }
+                      className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-[#7d8597]">Selecione um jogo para editar a configuracao.</p>
+              )}
             </div>
 
-            <div className="mt-8 flex flex-col gap-4 border-t border-[#ffd76a]/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <p className="loot-muted text-sm font-semibold">
-                Configuracao atual pronta para o menu de gold.
-              </p>
+            {selectedGameId ? (
+              <div className="mt-8 flex flex-col gap-4 border-t border-[#ffd76a]/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-1">
+                  {currentKey && (
+                    <p className="font-mono text-xs text-[#7d8597]">
+                      chave: <span className="text-[#ffd76a]">{currentKey}</span>
+                    </p>
+                  )}
+                  {hasSavedOverride ? (
+                    <p className="text-xs font-semibold text-emerald-500">Config propria salva no Firebase</p>
+                  ) : (
+                    <p className="text-xs text-[#7d8597]">Usando heranca (sem config propria para este escopo)</p>
+                  )}
+                </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={resetCurrent}
-                  className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
-                >
-                  Reset atual
-                </button>
-                <button
-                  type="button"
-                  onClick={resetConfig}
-                  className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
-                >
-                  Reset tudo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void saveConfig()}
-                  disabled={!firebaseEnabled}
-                  className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200"
-                >
-                  Salvar
-                </button>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  {hasSavedOverride && (
+                    <button
+                      type="button"
+                      onClick={() => void resetCurrent()}
+                      disabled={saving}
+                      className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed"
+                    >
+                      Remover config
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void saveConfig()}
+                    disabled={!canSave}
+                    className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200"
+                  >
+                    {saving ? "Salvando..." : "Salvar"}
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : null}
 
             {saved ? (
-              <p className="mt-4 text-sm font-semibold text-emerald-700">
-                Configuracao do gold salva com sucesso.
+              <p className="mt-4 text-sm font-semibold text-emerald-500">
+                Configuracao salva com sucesso.
               </p>
             ) : null}
 
             {errorMessage ? (
-              <p className="mt-4 text-sm font-semibold text-rose-700">
+              <p className="mt-4 text-sm font-semibold text-rose-500">
                 {errorMessage}
               </p>
             ) : null}
@@ -338,54 +320,45 @@ export function GoldConfigAdmin() {
 
           <aside className="loot-panel rounded-[2rem] p-8">
             <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">
-              Configuracao atual
+              Preview
             </p>
-            <h2 className="loot-title mt-4 text-3xl font-black">
-              {selectedGame?.title ?? "Default"} / {selectedServer?.name ?? "Todos"} / {selectedFaction || "Todas"}
+            <h2 className="loot-title mt-4 text-2xl font-black">
+              {selectedGame?.title ?? "—"} {selectedServer ? `/ ${selectedServer.name}` : ""} {selectedFaction ? `/ ${selectedFaction}` : ""}
             </h2>
-            <p className="loot-muted mt-4 text-base leading-8">
-              {selectionMode.description}
-            </p>
 
-            <div className="mt-8 grid gap-4">
+            <div className="mt-6 grid gap-4">
               <div className="rounded-[1.25rem] border border-[#ffd76a]/10 bg-white/4 p-4">
                 <p className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
                   Valor do gold
                 </p>
                 <p className="loot-title mt-2 text-3xl font-black">
-                  ${currentEntry.pricePerThousand}
+                  ${activeEntry.pricePerThousand}
                 </p>
-                <p className="loot-muted mt-2 text-sm">por 1.000 gold</p>
+                <p className="loot-muted mt-1 text-sm">por 1.000 gold</p>
               </div>
 
               <div className="rounded-[1.25rem] border border-[#ffd76a]/10 bg-white/4 p-4">
                 <p className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                  Compra minima
+                  Minimo / Maximo
                 </p>
                 <p className="loot-title mt-2 text-3xl font-black">
-                  {currentEntry.minGold.toLocaleString()}
+                  {activeEntry.minGold.toLocaleString()}
                 </p>
-                <p className="loot-muted mt-2 text-sm">gold</p>
+                <p className="loot-muted mt-1 text-sm">
+                  ate {activeEntry.maxGold.toLocaleString()} gold
+                </p>
               </div>
             </div>
           </aside>
         </section>
 
-        <div className="mt-8">
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/admin"
-              className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors"
-            >
-              Back to admin
-            </Link>
-            <Link
-              href="/"
-              className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors"
-            >
-              Back to home
-            </Link>
-          </div>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link href="/admin" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
+            Back to admin
+          </Link>
+          <Link href="/" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
+            Back to home
+          </Link>
         </div>
       </main>
     </div>

@@ -1,20 +1,22 @@
 import {
+  collection,
+  deleteDoc,
   doc,
   onSnapshot,
   setDoc,
   type Unsubscribe,
 } from "firebase/firestore";
 
-import { defaultGoldConfig, defaultGoldConfigEntry, type GoldConfig, type GoldConfigEntry } from "../app/data/gold-config";
+import {
+  defaultGoldConfigEntry,
+  emptyGoldConfig,
+  type GoldConfig,
+  type GoldConfigEntry,
+} from "../app/data/gold-config";
 import { db, firebaseEnabled } from "./firebase";
 
-const goldConfigRef =
-  db && firebaseEnabled ? doc(db, "app-config", "gold") : null;
-
-type GoldConfigPayload = Partial<{
-  default: Partial<Record<keyof GoldConfigEntry, unknown>>;
-  overrides: Record<string, Partial<Record<keyof GoldConfigEntry, unknown>>>;
-}>;
+const goldConfigCol =
+  db && firebaseEnabled ? collection(db, "gold-config") : null;
 
 function toPositiveInt(value: unknown, fallback: number): number {
   if (typeof value === "number" && Number.isFinite(value) && value > 0) {
@@ -23,71 +25,66 @@ function toPositiveInt(value: unknown, fallback: number): number {
   return fallback;
 }
 
-function parseGoldConfigEntry(payload?: Partial<Record<keyof GoldConfigEntry, unknown>>): GoldConfigEntry {
-  const pricePerThousand = toPositiveInt(payload?.pricePerThousand, defaultGoldConfigEntry.pricePerThousand);
-  const minGold = toPositiveInt(payload?.minGold, defaultGoldConfigEntry.minGold);
-  const maxGold = toPositiveInt(payload?.maxGold, defaultGoldConfigEntry.maxGold);
-
+function parseEntry(data: Record<string, unknown>): GoldConfigEntry {
+  const minGold = toPositiveInt(data.minGold, defaultGoldConfigEntry.minGold);
+  const maxGold = toPositiveInt(data.maxGold, defaultGoldConfigEntry.maxGold);
   return {
-    pricePerThousand,
+    pricePerThousand: toPositiveInt(data.pricePerThousand, defaultGoldConfigEntry.pricePerThousand),
     minGold,
     maxGold: Math.max(maxGold, minGold),
-    goldStep: defaultGoldConfigEntry.goldStep,
+    goldStep: toPositiveInt(data.goldStep, defaultGoldConfigEntry.goldStep),
   };
 }
 
-function parseGoldConfig(payload?: GoldConfigPayload): GoldConfig {
-  const defaultEntry = payload?.default
-    ? parseGoldConfigEntry(payload.default)
-    : defaultGoldConfig.default;
-
-  const overrides: Record<string, GoldConfigEntry> = {};
-  if (payload?.overrides) {
-    for (const [key, entryPayload] of Object.entries(payload.overrides)) {
-      overrides[key] = parseGoldConfigEntry(entryPayload);
-    }
-  }
-
-  return { default: defaultEntry, overrides };
-}
-
-function serializeGoldConfig(config: GoldConfig): GoldConfigPayload & { updatedAt: string } {
-  return {
-    default: { ...config.default },
-    overrides: Object.fromEntries(
-      Object.entries(config.overrides).map(([key, entry]) => [key, { ...entry }])
-    ),
-    updatedAt: new Date().toISOString(),
-  };
-}
-
+/**
+ * Escuta toda a coleção gold-config.
+ * Cada documento tem ID igual à chave de escopo:
+ *   "tbc-anniversary"
+ *   "tbc-anniversary|nightslayer-us"
+ *   "tbc-anniversary|nightslayer-us|Horde"
+ */
 export function subscribeToGoldConfig(
   onChange: (config: GoldConfig) => void
 ): Unsubscribe {
-  if (!goldConfigRef) {
-    onChange(defaultGoldConfig);
+  if (!goldConfigCol) {
+    onChange(emptyGoldConfig);
     return () => undefined;
   }
 
   return onSnapshot(
-    goldConfigRef,
+    goldConfigCol,
     (snapshot) => {
-      if (!snapshot.exists()) {
-        onChange(defaultGoldConfig);
-        return;
+      const config: GoldConfig = {};
+      for (const docSnap of snapshot.docs) {
+        config[docSnap.id] = parseEntry(docSnap.data() as Record<string, unknown>);
       }
-      onChange(parseGoldConfig(snapshot.data() as GoldConfigPayload));
+      onChange(config);
     },
     () => {
-      onChange(defaultGoldConfig);
+      onChange(emptyGoldConfig);
     }
   );
 }
 
-export async function saveGoldConfig(config: GoldConfig) {
-  if (!goldConfigRef) {
+/** Salva (ou sobrescreve) a configuração de um escopo específico. */
+export async function saveGoldConfigEntry(key: string, entry: GoldConfigEntry): Promise<void> {
+  if (!goldConfigCol) {
     throw new Error("Firebase nao configurado.");
   }
-
-  await setDoc(goldConfigRef, serializeGoldConfig(config));
+  await setDoc(doc(goldConfigCol, key), {
+    pricePerThousand: entry.pricePerThousand,
+    minGold: entry.minGold,
+    maxGold: entry.maxGold,
+    goldStep: entry.goldStep,
+    updatedAt: new Date().toISOString(),
+  });
 }
+
+/** Remove a configuração de um escopo específico (volta ao fallback). */
+export async function deleteGoldConfigEntry(key: string): Promise<void> {
+  if (!goldConfigCol) {
+    throw new Error("Firebase nao configurado.");
+  }
+  await deleteDoc(doc(goldConfigCol, key));
+}
+

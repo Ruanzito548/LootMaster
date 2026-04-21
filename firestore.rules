@@ -13,9 +13,15 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
-    // APP CONFIG
+    // APP CONFIG (homepage, hots)
     match /app-config/{configId} {
       allow read, write: if request.auth != null;
+    }
+
+    // GOLD CONFIG — um documento por escopo (gameId, gameId|serverId, gameId|serverId|faction)
+    match /gold-config/{scopeKey} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
   }

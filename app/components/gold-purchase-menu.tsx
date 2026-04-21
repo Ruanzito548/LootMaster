@@ -2,7 +2,7 @@
 
 import { startTransition, useEffect, useState } from "react";
 
-import { defaultGoldConfig, getGoldConfigFor, goldSelectionModes } from "../data/gold-config";
+import { defaultGoldConfigEntry, emptyGoldConfig, getGoldConfigFor } from "../data/gold-config";
 import type { GameServer } from "../data/games";
 import { subscribeToGoldConfig } from "../../lib/gold-config";
 
@@ -21,10 +21,10 @@ export function GoldPurchaseMenu({
 }: GoldPurchaseMenuProps) {
   const isTbc = gameId === "tbc-anniversary";
   const isMidnight = gameId === "retail";
-  const [fullGoldConfig, setFullGoldConfig] = useState(defaultGoldConfig);
+  const [fullGoldConfig, setFullGoldConfig] = useState(emptyGoldConfig);
   const [selectedServerId, setSelectedServerId] = useState("");
   const [selectedFaction, setSelectedFaction] = useState("");
-  const [goldAmount, setGoldAmount] = useState(defaultGoldConfig.default.minGold);
+  const [goldAmount, setGoldAmount] = useState(defaultGoldConfigEntry.minGold);
   const [nickname, setNickname] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("Face to face");
   const [email, setEmail] = useState("");
@@ -95,7 +95,7 @@ export function GoldPurchaseMenu({
             disabled={!hasServerOptions}
             onChange={(event) => {
               const nextServerId = event.target.value;
-              const nextConfig = getGoldConfigFor(fullGoldConfig, gameId, nextServerId, "");
+              const nextConfig = getGoldConfigFor(fullGoldConfig, gameId, nextServerId, undefined);
               setSelectedServerId(nextServerId);
               setSelectedFaction("");
               setGoldAmount(nextConfig.minGold);
@@ -130,7 +130,11 @@ export function GoldPurchaseMenu({
                 key={faction}
                 type="button"
                 disabled={!hasServerOptions || !serverSelected}
-                onClick={() => setSelectedFaction(faction)}
+                onClick={() => {
+                  setSelectedFaction(faction);
+                  const nextConfig = getGoldConfigFor(fullGoldConfig, gameId, selectedServerId, faction);
+                  setGoldAmount(nextConfig.minGold);
+                }}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   selectedFaction === faction
                     ? isTbc

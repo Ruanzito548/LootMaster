@@ -1,13 +1,3 @@
-export const goldSelectionModes = [
-  {
-    id: "game-server-faction",
-    label: "Jogo -> Servidor -> Faccao",
-    description: "O jogador escolhe o jogo primeiro, depois o servidor e por fim a faccao.",
-  },
-] as const;
-
-export type GoldSelectionMode = (typeof goldSelectionModes)[number]["id"];
-
 export type GoldConfigEntry = {
   pricePerThousand: number;
   minGold: number;
@@ -15,10 +5,8 @@ export type GoldConfigEntry = {
   goldStep: number;
 };
 
-export type GoldConfig = {
-  default: GoldConfigEntry;
-  overrides: Record<string, GoldConfigEntry>;
-};
+/** Mapa de chave → configuração. Chave: "gameId", "gameId|serverId" ou "gameId|serverId|faction". */
+export type GoldConfig = Record<string, GoldConfigEntry>;
 
 export const defaultGoldConfigEntry: GoldConfigEntry = {
   pricePerThousand: 20,
@@ -27,10 +15,14 @@ export const defaultGoldConfigEntry: GoldConfigEntry = {
   goldStep: 1000,
 };
 
-export const defaultGoldConfig: GoldConfig = {
-  default: defaultGoldConfigEntry,
-  overrides: {},
-};
+export const emptyGoldConfig: GoldConfig = {};
+
+export function buildGoldKey(gameId: string, serverId?: string, faction?: string): string {
+  const parts: string[] = [gameId];
+  if (serverId) parts.push(serverId);
+  if (faction) parts.push(faction);
+  return parts.join("|");
+}
 
 export function getGoldConfigFor(
   goldConfig: GoldConfig,
@@ -38,15 +30,16 @@ export function getGoldConfigFor(
   serverId?: string,
   faction?: string
 ): GoldConfigEntry {
-  const keys: string[] = [];
-  if (gameId) keys.push(gameId);
-  if (serverId) keys.push(`${gameId}|${serverId}`);
-  if (faction) keys.push(`${gameId}|${serverId}|${faction}`);
-
-  for (const key of keys.reverse()) {
-    if (goldConfig.overrides[key]) {
-      return goldConfig.overrides[key];
-    }
+  if (faction && serverId) {
+    const key = buildGoldKey(gameId, serverId, faction);
+    if (goldConfig[key]) return goldConfig[key];
   }
-  return goldConfig.default;
+  if (serverId) {
+    const key = buildGoldKey(gameId, serverId);
+    if (goldConfig[key]) return goldConfig[key];
+  }
+  if (gameId) {
+    if (goldConfig[gameId]) return goldConfig[gameId];
+  }
+  return defaultGoldConfigEntry;
 }
