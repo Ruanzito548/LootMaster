@@ -1,5 +1,5 @@
-import { GoldConfigAdmin } from "../../components/gold-config-admin";
+import { redirect } from "next/navigation";
 
 export default function GoldSettingsPage() {
-  return <GoldConfigAdmin />;
+  redirect("/admin/preços/wow/gold-settings");
 }
