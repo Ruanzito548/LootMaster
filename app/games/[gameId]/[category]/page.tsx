@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AccountsMarket } from "../../../components/accounts-market";
 import { GoldPurchaseMenu } from "../../../components/gold-purchase-menu";
 import {
   getGameById,
@@ -59,6 +60,13 @@ export default async function ServerSelectionPage(
               gameTitle={game.title}
               categoryTitle={selectedCategory.title}
               servers={servers}
+            />
+          </section>
+        ) : category === "accounts" ? (
+          <section className="mt-12">
+            <AccountsMarket
+              gameId={game.id}
+              gameTitle={game.title}
             />
           </section>
         ) : servers.length > 0 ? (
