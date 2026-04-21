@@ -64,6 +64,8 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
             const isGoldMidnight = isMidnight && category.id === "gold";
             const isGoldClassic = isClassic && category.id === "gold";
             const isGoldPandaria = isPandaria && category.id === "gold";
+            const isAccountsCard = category.id === "accounts";
+            const isBoostCard = category.id === "boost";
 
             return (
               <Link
@@ -114,6 +116,20 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                     ? {
                         backgroundImage:
                           'linear-gradient(rgba(0, 0, 0, 0.46), rgba(0, 0, 0, 0.46)), url("/wow/wow-pandaria/pandaria-gold.png")',
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : isAccountsCard
+                    ? {
+                        backgroundImage:
+                          'linear-gradient(rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.42)), url("/wow/global-imagens/accounts.png")',
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : isBoostCard
+                    ? {
+                        backgroundImage:
+                          'linear-gradient(rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.42)), url("/wow/global-imagens/boost.png")',
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
