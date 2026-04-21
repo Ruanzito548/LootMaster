@@ -22,10 +22,6 @@ function buildKey(gameId?: string, serverId?: string, faction?: string): string 
   return parts.join("|");
 }
 
-function normalizeGoldAmount(value: number): number {
-  return Math.max(1000, Math.ceil(value / 1000) * 1000);
-}
-
 export function GoldConfigAdmin() {
   const [storedConfig, setStoredConfig] = useState(defaultGoldConfig);
   const [draftConfig, setDraftConfig] = useState<GoldConfig | null>(null);
@@ -283,20 +279,15 @@ export function GoldConfigAdmin() {
                   min="1000"
                   step="1000"
                   value={currentEntry.minGold}
-                  onChange={(event) => {
-                    const parsedMinGold = Number(event.target.value);
-                    if (!Number.isFinite(parsedMinGold) || parsedMinGold <= 0) {
-                      return;
-                    }
-
+                  onChange={(event) =>
                     updateDraftEntry({
-                      minGold: normalizeGoldAmount(parsedMinGold),
-                    });
-                  }}
+                      minGold: Number(event.target.value),
+                    })
+                  }
                   className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
                 />
                 <p className="mt-2 text-sm text-[#7d8597]">
-                  O slider de compra respeita blocos de 1.000.
+                  Minimo permitido: 1.000. Valores menores sao ajustados automaticamente ao salvar.
                 </p>
               </div>
             </div>
