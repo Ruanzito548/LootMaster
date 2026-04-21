@@ -129,39 +129,67 @@ export function GoldConfigAdmin() {
     scopeReady &&
     (!requiresServerSelection || selectedFaction !== "");
 
-  const dashboardRows = games.flatMap((game) => {
+  const dashboardByGame = games.map((game) => {
     const gameServers = getServersByGameId(game.id);
 
     if (gameServers.length === 0) {
       const key = buildGoldKey(game.id);
-      return [
-        {
-          key,
-          game: game.title,
-          server: "-",
-          faction: "-",
-          config: savedConfig[key],
-        },
-      ];
+      return {
+        gameId: game.id,
+        gameTitle: game.title,
+        rows: [
+          {
+            key,
+            server: "-",
+            faction: "-",
+            config: savedConfig[key],
+          },
+        ],
+      };
     }
 
-    return gameServers.flatMap((server) =>
-      (server.factions.length > 0 ? server.factions : ["-"]).map((faction) => {
-        const key = buildGoldKey(game.id, server.id, faction === "-" ? undefined : faction);
-        return {
-          key,
-          game: game.title,
-          server: server.name,
-          faction,
-          config: savedConfig[key],
-        };
-      })
-    );
+    return {
+      gameId: game.id,
+      gameTitle: game.title,
+      rows: gameServers.flatMap((server) =>
+        (server.factions.length > 0 ? server.factions : ["-"]).map((faction) => {
+          const key = buildGoldKey(game.id, server.id, faction === "-" ? undefined : faction);
+          return {
+            key,
+            server: server.name,
+            faction,
+            config: savedConfig[key],
+          };
+        })
+      ),
+    };
   });
+
+  const gameDashboardStyle = (gameId: string) => {
+    if (gameId === "tbc-anniversary") {
+      return {
+        backgroundImage:
+          'linear-gradient(rgba(8, 18, 10, 0.78), rgba(8, 18, 10, 0.78)), url("/wallpapertbc.avif")',
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      };
+    }
+
+    if (gameId === "retail") {
+      return {
+        backgroundImage:
+          'linear-gradient(rgba(7, 16, 28, 0.78), rgba(7, 16, 28, 0.78)), url("/midnightwallpaper.jpeg")',
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      };
+    }
+
+    return undefined;
+  };
 
   return (
     <div className="loot-shell">
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">
             Admin
@@ -185,7 +213,7 @@ export function GoldConfigAdmin() {
           </section>
         ) : null}
 
-        <section className="mt-8 loot-panel rounded-[2rem] p-8">
+        <section className="mt-8">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">
             Preview Dashboard
           </p>
@@ -193,44 +221,48 @@ export function GoldConfigAdmin() {
             Configuracao por jogo / servidor / faccao
           </h2>
 
-          <div className="mt-6 grid gap-3 max-h-[26rem] overflow-auto pr-1">
-            {dashboardRows.map((row) => (
+          <div className="mt-6 grid gap-5 xl:grid-cols-2">
+            {dashboardByGame.map((gameBlock) => (
               <article
-                key={row.key}
-                className="rounded-[1.1rem] border border-[#ffd76a]/10 bg-white/4 p-4"
+                key={gameBlock.gameId}
+                className="rounded-[1.4rem] border border-[#ffd76a]/10 bg-white/4 p-6"
+                style={gameDashboardStyle(gameBlock.gameId)}
               >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-[#f8eed4]">
-                    {row.game} / {row.server} / {row.faction}
-                  </p>
-                  <span className="font-mono text-[11px] text-[#7d8597]">
-                    {row.key}
-                  </span>
-                </div>
+                <h3 className="loot-title text-xl font-black">{gameBlock.gameTitle}</h3>
 
-                {row.config ? (
-                  <div className="mt-3 grid gap-2 text-sm text-[#d8f4ff] sm:grid-cols-3">
-                    <p>
-                      Preco: <span className="font-semibold">${row.config.pricePerThousand}</span>
-                    </p>
-                    <p>
-                      Min: <span className="font-semibold">{row.config.minGold.toLocaleString()}</span>
-                    </p>
-                    <p>
-                      Max: <span className="font-semibold">{row.config.maxGold.toLocaleString()}</span>
-                    </p>
-                  </div>
-                ) : (
-                  <p className="mt-3 text-sm font-semibold text-rose-300">
-                    Nao configurado
-                  </p>
-                )}
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {gameBlock.rows.map((row) => (
+                    <div
+                      key={row.key}
+                      className="rounded-[1rem] border border-[#ffd76a]/10 bg-black/25 p-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-[#f8eed4]">
+                          {row.server} / {row.faction}
+                        </p>
+                        <span className="font-mono text-[10px] text-[#9fb0c7]">
+                          {row.key}
+                        </span>
+                      </div>
+
+                      {row.config ? (
+                        <div className="mt-3 grid gap-1 text-sm text-[#d8f4ff]">
+                          <p>Preco: <span className="font-semibold">${row.config.pricePerThousand}</span></p>
+                          <p>Min: <span className="font-semibold">{row.config.minGold.toLocaleString()}</span></p>
+                          <p>Max: <span className="font-semibold">{row.config.maxGold.toLocaleString()}</span></p>
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-sm font-semibold text-rose-300">Nao configurado</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+        <section className="mt-8">
           <div className="loot-panel rounded-[2rem] p-8">
             <div className="grid gap-6">
 
@@ -427,38 +459,6 @@ export function GoldConfigAdmin() {
             ) : null}
           </div>
 
-          <aside className="loot-panel rounded-[2rem] p-8">
-            <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">
-              Preview
-            </p>
-            <h2 className="loot-title mt-4 text-2xl font-black">
-              {selectedGame?.title ?? "—"} {selectedServer ? `/ ${selectedServer.name}` : ""} {selectedFaction ? `/ ${selectedFaction}` : ""}
-            </h2>
-
-            <div className="mt-6 grid gap-4">
-              <div className="rounded-[1.25rem] border border-[#ffd76a]/10 bg-white/4 p-4">
-                <p className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                  Valor do gold
-                </p>
-                <p className="loot-title mt-2 text-3xl font-black">
-                  ${activeEntry.pricePerThousand}
-                </p>
-                <p className="loot-muted mt-1 text-sm">por 1.000 gold</p>
-              </div>
-
-              <div className="rounded-[1.25rem] border border-[#ffd76a]/10 bg-white/4 p-4">
-                <p className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                  Minimo / Maximo
-                </p>
-                <p className="loot-title mt-2 text-3xl font-black">
-                  {activeEntry.minGold.toLocaleString()}
-                </p>
-                <p className="loot-muted mt-1 text-sm">
-                  ate {activeEntry.maxGold.toLocaleString()} gold
-                </p>
-              </div>
-            </div>
-          </aside>
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">
