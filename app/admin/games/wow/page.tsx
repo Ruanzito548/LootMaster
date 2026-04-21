@@ -18,7 +18,7 @@ const sections = [
   },
 ];
 
-export default function WowPrecosPage() {
+export default function WowGamesPage() {
   return (
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
@@ -34,7 +34,7 @@ export default function WowPrecosPage() {
           {sections.map((section) => (
             <Link
               key={section.id}
-              href={`/admin/preços/wow/${section.id}`}
+              href={`/admin/games/wow/${section.id}`}
               className="loot-panel rounded-[1.75rem] p-8 transition-colors hover:border-[#4dc6ff]/20 hover:bg-white/4"
             >
               <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">Section</p>
@@ -46,7 +46,7 @@ export default function WowPrecosPage() {
 
         <div className="mt-8">
           <Link
-            href="/admin/preços"
+            href="/admin/games"
             className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors"
           >
             Back to games

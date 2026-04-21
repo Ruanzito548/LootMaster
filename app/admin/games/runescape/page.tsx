@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export default function RunescapePrecosPage() {
+export default function RunescapeGamesPage() {
   return (
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
@@ -11,7 +11,7 @@ export default function RunescapePrecosPage() {
         </p>
 
         <div className="mt-8">
-          <Link href="/admin/preços" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
+          <Link href="/admin/games" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
             Back to games
           </Link>
         </div>

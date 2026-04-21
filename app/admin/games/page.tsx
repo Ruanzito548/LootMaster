@@ -18,7 +18,7 @@ const games = [
   },
 ];
 
-export default function PrecosPage() {
+export default function GamesPage() {
   return (
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
@@ -34,7 +34,7 @@ export default function PrecosPage() {
           {games.map((game) => (
             <Link
               key={game.id}
-              href={`/admin/preços/${game.id}`}
+              href={`/admin/games/${game.id}`}
               className="loot-panel rounded-[1.75rem] p-8 transition-colors hover:border-[#4dc6ff]/20 hover:bg-white/4"
             >
               <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">Game</p>

@@ -31,7 +31,7 @@ export default function AdminPage() {
           </Link>
 
           <Link
-            href="/admin/preços"
+            href="/admin/games"
             className="loot-panel rounded-[1.75rem] p-8 transition-colors hover:border-[#4dc6ff]/20 hover:bg-white/4"
           >
             <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">
