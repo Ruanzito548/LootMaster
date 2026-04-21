@@ -162,8 +162,7 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
                 };
               })()}
             >
-              <div className="flex min-h-[30rem] flex-col justify-end p-5">
-                <div className={`rounded-[1rem] border p-4 backdrop-blur-sm ${isTbc ? "border-[#99ff99]/24 bg-[#0b1c12]/70" : "border-[#ffd76a]/15 bg-black/45"}`}>
+              <div className="flex min-h-[30rem] flex-col justify-end bg-gradient-to-t from-black/70 via-black/35 to-transparent p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className={`text-2xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>{account.title}</h3>
@@ -200,7 +199,6 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
                       {highlight}
                     </span>
                   ))}
-                </div>
                 </div>
               </div>
             </article>
