@@ -18,6 +18,18 @@ function inPriceRange(price: number, range: PriceFilter): boolean {
   return price > 150;
 }
 
+function getAccountBackgroundImage(account: AccountListing): string | null {
+  if (account.race === "Orc" && account.className === "Warrior") {
+    return "/race-classe/orc-male-warrior.png";
+  }
+
+  if (account.race === "Blood Elf" && account.className === "Paladin") {
+    return "/race-classe/belf-male-paladin.png";
+  }
+
+  return null;
+}
+
 export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
   const isTbc = gameId === "tbc-anniversary";
   const listings = useMemo(() => getAccountsByGameId(gameId), [gameId]);
@@ -129,7 +141,20 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
       {filteredListings.length > 0 ? (
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {filteredListings.map((account) => (
-            <article key={account.id} className={`rounded-[1.25rem] border p-5 ${isTbc ? "border-[#99ff99]/20 bg-[#102417]/35" : "border-[#ffd76a]/12 bg-white/4"}`}>
+            <article
+              key={account.id}
+              className={`rounded-[1.25rem] border p-5 ${isTbc ? "border-[#99ff99]/20 bg-[#102417]/35" : "border-[#ffd76a]/12 bg-white/4"}`}
+              style={(() => {
+                const image = getAccountBackgroundImage(account);
+                if (!image) return undefined;
+
+                return {
+                  backgroundImage: `linear-gradient(rgba(7, 16, 10, 0.72), rgba(7, 16, 10, 0.72)), url(${image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center right",
+                };
+              })()}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className={`text-2xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>{account.title}</h3>

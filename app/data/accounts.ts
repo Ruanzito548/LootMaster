@@ -166,6 +166,32 @@ const accountListings: AccountListing[] = [
     price: 119,
     highlights: ["PvP set", "Mining", "Epic weapon"],
   },
+  {
+    id: "tbc-acc-011",
+    gameId: "tbc-anniversary",
+    title: "Orc Fury Warrior PvP",
+    serverId: "nightslayer-us",
+    serverName: "Nightslayer US",
+    faction: "Horde",
+    race: "Orc",
+    className: "Warrior",
+    level: 70,
+    price: 169,
+    highlights: ["Dual wield", "Arena set", "Engineering"],
+  },
+  {
+    id: "tbc-acc-012",
+    gameId: "tbc-anniversary",
+    title: "Blood Elf Retribution Paladin",
+    serverId: "spineshatter-eu",
+    serverName: "Spineshatter EU",
+    faction: "Horde",
+    race: "Blood Elf",
+    className: "Paladin",
+    level: 70,
+    price: 189,
+    highlights: ["Retri set", "Epic mount", "Jewelcrafting"],
+  },
 ];
 
 export function getAccountsByGameId(gameId: string): AccountListing[] {
