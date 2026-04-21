@@ -95,7 +95,7 @@ body {
     linear-gradient(180deg, rgba(5, 24, 10, 0.82), rgba(3, 10, 4, 0.88)),
     radial-gradient(circle at top left, rgba(123, 255, 142, 0.15), transparent 24%),
     radial-gradient(circle at 75% 15%, rgba(84, 255, 140, 0.12), transparent 18%),
-    url("/wallpapertbc.avif");
+    url("/wow/wow-tbc/tbc-wallpaper.avif");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -150,7 +150,7 @@ body {
     linear-gradient(180deg, rgba(5, 10, 24, 0.82), rgba(3, 5, 15, 0.88)),
     radial-gradient(circle at top left, rgba(77, 198, 255, 0.15), transparent 24%),
     radial-gradient(circle at 75% 15%, rgba(77, 198, 255, 0.12), transparent 18%),
-    url("/midnightwallpaper.jpeg");
+    url("/wow/wow-retail/midnight-wallpaper.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -205,7 +205,7 @@ body {
     linear-gradient(180deg, rgba(36, 28, 16, 0.84), rgba(15, 11, 7, 0.9)),
     radial-gradient(circle at top left, rgba(255, 214, 140, 0.14), transparent 24%),
     radial-gradient(circle at 75% 15%, rgba(255, 196, 112, 0.12), transparent 18%),
-    url("/classicerawallpaper.jpg");
+    url("/wow/wow-classic-era/classic-era-wallpaper.avif");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -217,7 +217,7 @@ body {
     linear-gradient(180deg, rgba(6, 26, 21, 0.84), rgba(4, 14, 11, 0.9)),
     radial-gradient(circle at top left, rgba(122, 255, 210, 0.13), transparent 24%),
     radial-gradient(circle at 75% 15%, rgba(104, 224, 176, 0.11), transparent 18%),
-    url("/pandariawallpaper.jpg");
+    url("/wow/wow-pandaria/pandaria-wallpaper.jpeg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

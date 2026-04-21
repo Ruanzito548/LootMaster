@@ -213,28 +213,28 @@ export function GoldPurchaseMenu({
                 isTbc
                   ? {
                       backgroundImage:
-                        'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/goldtbc.jpeg")',
+                        'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/wow/wow-tbc/tbc-gold.jpeg")',
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }
                   : isMidnight
                   ? {
                       backgroundImage:
-                        'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/midnightgold.jpeg")',
+                        'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/wow/wow-retail/midnight-gold.jpeg")',
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }
                   : isClassic
                   ? {
                       backgroundImage:
-                        'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("/classicerawallpaper.jpg")',
+                        'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("/wow/wow-classic-era/classic-era-gold.png")',
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }
                   : isPandaria
                   ? {
                       backgroundImage:
-                        'linear-gradient(rgba(0, 0, 0, 0.46), rgba(0, 0, 0, 0.46)), url("/pandariawallpaper.jpg")',
+                        'linear-gradient(rgba(0, 0, 0, 0.46), rgba(0, 0, 0, 0.46)), url("/wow/wow-pandaria/pandaria-gold.png")',
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }

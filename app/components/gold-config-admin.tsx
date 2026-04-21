@@ -169,7 +169,7 @@ export function GoldConfigAdmin() {
     if (gameId === "tbc-anniversary") {
       return {
         backgroundImage:
-          'linear-gradient(rgba(8, 18, 10, 0.78), rgba(8, 18, 10, 0.78)), url("/wallpapertbc.avif")',
+            'linear-gradient(rgba(8, 18, 10, 0.78), rgba(8, 18, 10, 0.78)), url("/wow/wow-tbc/tbc-wallpaper.avif")',
         backgroundSize: "cover",
         backgroundPosition: "center",
       };
@@ -178,7 +178,7 @@ export function GoldConfigAdmin() {
     if (gameId === "retail") {
       return {
         backgroundImage:
-          'linear-gradient(rgba(7, 16, 28, 0.78), rgba(7, 16, 28, 0.78)), url("/midnightwallpaper.jpeg")',
+            'linear-gradient(rgba(7, 16, 28, 0.78), rgba(7, 16, 28, 0.78)), url("/wow/wow-retail/midnight-wallpaper.png")',
         backgroundSize: "cover",
         backgroundPosition: "center",
       };

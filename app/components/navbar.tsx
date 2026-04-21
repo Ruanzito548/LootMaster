@@ -277,13 +277,13 @@ export function Navbar() {
                   style={{
                     backgroundImage:
                       game.id === "tbc-anniversary"
-                        ? "url('/wowtbc.jpg')"
+                        ? "url('/wow/wow-tbc/tbc-wallpaper.avif')"
                         : game.id === "retail"
-                        ? "url('/midnightwallpaper.jpeg')"
+                        ? "url('/wow/wow-retail/midnight-wallpaper.png')"
                         : game.id === "classic-era"
-                        ? "url('/classicerawallpaper.jpg')"
+                        ? "url('/wow/wow-classic-era/classic-era-wallpaper.avif')"
                         : game.id === "mist-of-pandaria"
-                        ? "url('/pandariawallpaper.jpg')"
+                        ? "url('/wow/wow-pandaria/pandaria-wallpaper.jpeg')"
                         : undefined,
                     backgroundSize: "cover",
                     backgroundPosition: "center",

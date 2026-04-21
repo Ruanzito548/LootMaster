@@ -21,11 +21,11 @@ function inPriceRange(price: number, range: PriceFilter): boolean {
 
 function getAccountBackgroundImage(account: AccountListing): string | null {
   if (account.race === "Orc" && account.className === "Warrior") {
-    return "/race-classe/orc-male-warrior.png";
+    return "/wow/race-classe/orc-male-warrior.png";
   }
 
   if (account.race === "Blood Elf" && account.className === "Paladin") {
-    return "/race-classe/belf-male-paladin.png";
+    return "/wow/race-classe/belf-male-paladin.png";
   }
 
   return null;

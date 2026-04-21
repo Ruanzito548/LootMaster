@@ -62,28 +62,28 @@ export function HotGames() {
               game.id === "tbc-anniversary"
                 ? {
                     backgroundImage:
-                      "linear-gradient(rgba(255,191,68,0.14),rgba(14,57,112,0.28)), url('/wowtbc.jpg')",
+                      "linear-gradient(rgba(255,191,68,0.14),rgba(14,57,112,0.28)), url('/wow/wow-tbc/tbc-wallpaper.avif')",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }
                 : game.id === "retail"
                 ? {
                     backgroundImage:
-                      "linear-gradient(rgba(255,191,68,0.14),rgba(14,57,112,0.28)), url('/midnightwallpaper.jpeg')",
+                      "linear-gradient(rgba(255,191,68,0.14),rgba(14,57,112,0.28)), url('/wow/wow-retail/midnight-wallpaper.png')",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }
                 : game.id === "classic-era"
                 ? {
                     backgroundImage:
-                      "linear-gradient(rgba(255,191,68,0.14),rgba(70,44,12,0.3)), url('/classicerawallpaper.jpg')",
+                      "linear-gradient(rgba(255,191,68,0.14),rgba(70,44,12,0.3)), url('/wow/wow-classic-era/classic-era-wallpaper.avif')",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }
                 : game.id === "mist-of-pandaria"
                 ? {
                     backgroundImage:
-                      "linear-gradient(rgba(164,255,220,0.14),rgba(8,42,30,0.34)), url('/pandariawallpaper.jpg')",
+                      "linear-gradient(rgba(164,255,220,0.14),rgba(8,42,30,0.34)), url('/wow/wow-pandaria/pandaria-wallpaper.jpeg')",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }
