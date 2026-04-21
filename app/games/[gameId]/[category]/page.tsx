@@ -37,9 +37,11 @@ export default async function ServerSelectionPage(
             Back to categories
           </Link>
 
-          <span className="loot-badge-blue inline-flex w-fit rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.24em]">
-            {game.tag} / {selectedCategory.title}
-          </span>
+          {category !== "accounts" ? (
+            <span className="loot-badge-blue inline-flex w-fit rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.24em]">
+              {game.tag} / {selectedCategory.title}
+            </span>
+          ) : null}
 
           <div className="space-y-4">
             <h1 className={`font-throne text-6xl leading-none sm:text-7xl ${isTbc ? "tbc-title" : "loot-title"}`}>
