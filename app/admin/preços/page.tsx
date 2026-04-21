@@ -9,12 +9,12 @@ const games = [
   {
     id: "albion",
     title: "Albion Online",
-    description: "Area reservada para configuracoes de precos do Albion.",
+    description: "Area reservada para configuracoes de jogos do Albion.",
   },
   {
     id: "runescape",
     title: "Runescape",
-    description: "Area reservada para configuracoes de precos do Runescape.",
+    description: "Area reservada para configuracoes de jogos do Runescape.",
   },
 ];
 
@@ -24,7 +24,7 @@ export default function PrecosPage() {
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin</p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Precos</h1>
+          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Jogos</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
             Escolha o jogo que deseja editar.
           </p>

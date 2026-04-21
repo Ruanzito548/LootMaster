@@ -37,9 +37,9 @@ export default function AdminPage() {
             <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">
               Section 02
             </p>
-            <h2 className="loot-title mt-4 text-3xl font-black">Precos</h2>
+            <h2 className="loot-title mt-4 text-3xl font-black">Jogos</h2>
             <p className="loot-muted mt-4 text-base leading-8">
-              Escolha o jogo e o tipo de servico para editar os precos.
+              Escolha o jogo e o tipo de servico para editar configuracoes.
             </p>
           </Link>
 

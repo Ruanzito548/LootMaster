@@ -4,6 +4,7 @@ import Link from "next/link";
 import { startTransition, useEffect, useMemo, useState } from "react";
 
 import {
+  type AccountListing,
   accountClassOptions,
   accountGenderOptions,
   accountRaceOptions,
@@ -16,14 +17,20 @@ import { firebaseEnabled } from "../../lib/firebase";
 import {
   addAccountToMarket,
   clearAccountsMarket,
+  deleteAccountFromMarket,
   subscribeToAccountsMarket,
   type NewAccountInput,
 } from "../../lib/accounts-market";
 
 type AccountsMarketAdminProps = {
-  gameId: string;
-  gameTitle: string;
+  defaultWowGameId?: string;
 };
+
+const wowGameOptions = [
+  { id: "tbc-anniversary", title: "World of Warcraft TBC Anniversary", shortTitle: "TBC" },
+  { id: "classic-era", title: "World of Warcraft Classic Era", shortTitle: "Classic" },
+  { id: "retail", title: "World of Warcraft Midnight", shortTitle: "Retail" },
+] as const;
 
 type FormState = {
   title: string;
@@ -55,8 +62,11 @@ function defaultForm(serverId: string): FormState {
   };
 }
 
-export function AccountsMarketAdmin({ gameId, gameTitle }: AccountsMarketAdminProps) {
-  const servers = useMemo(() => getServersByGameId(gameId), [gameId]);
+export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: AccountsMarketAdminProps) {
+  const [selectedWowGameId, setSelectedWowGameId] = useState(defaultWowGameId);
+  const selectedWowGame =
+    wowGameOptions.find((game) => game.id === selectedWowGameId) ?? wowGameOptions[0];
+  const servers = useMemo(() => getServersByGameId(selectedWowGameId), [selectedWowGameId]);
   const defaultServerId = servers[0]?.id ?? "";
 
   const [showForm, setShowForm] = useState(false);
@@ -65,22 +75,28 @@ export function AccountsMarketAdmin({ gameId, gameTitle }: AccountsMarketAdminPr
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [marketCount, setMarketCount] = useState(0);
+  const [marketItems, setMarketItems] = useState<AccountListing[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(() => defaultForm(defaultServerId));
 
   useEffect(() => {
-    setForm(defaultForm(defaultServerId));
-  }, [defaultServerId]);
+    const fallbackServerId = defaultServerId || `${selectedWowGameId}-global`;
+    setForm(defaultForm(fallbackServerId));
+  }, [defaultServerId, selectedWowGameId]);
 
   useEffect(
     () =>
-      subscribeToAccountsMarket(gameId, (items) => {
-        startTransition(() => setMarketCount(items.length));
+      subscribeToAccountsMarket(selectedWowGameId, (items) => {
+        startTransition(() => {
+          setMarketCount(items.length);
+          setMarketItems(items);
+        });
       }),
-    [gameId]
+    [selectedWowGameId]
   );
 
   const serverName =
-    servers.find((server) => server.id === form.serverId)?.name ?? "Unknown server";
+    servers.find((server) => server.id === form.serverId)?.name ?? `${selectedWowGame.shortTitle} Global`;
 
   const onChange = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setSavedMessage(null);
@@ -99,7 +115,7 @@ export function AccountsMarketAdmin({ gameId, gameTitle }: AccountsMarketAdminPr
       return;
     }
 
-    if (form.serverId === "") {
+    if (servers.length > 0 && form.serverId === "") {
       setErrorMessage("Selecione um servidor.");
       return;
     }
@@ -115,9 +131,9 @@ export function AccountsMarketAdmin({ gameId, gameTitle }: AccountsMarketAdminPr
         .filter(Boolean);
 
       const payload: NewAccountInput = {
-        gameId,
+        gameId: selectedWowGameId,
         title: form.title.trim(),
-        serverId: form.serverId,
+        serverId: form.serverId || `${selectedWowGameId}-global`,
         serverName,
         faction: form.faction,
         gender: form.gender,
@@ -131,7 +147,7 @@ export function AccountsMarketAdmin({ gameId, gameTitle }: AccountsMarketAdminPr
       };
 
       await addAccountToMarket(payload);
-      setForm(defaultForm(form.serverId));
+      setForm(defaultForm(payload.serverId));
       setSavedMessage("Conta adicionada ao market com sucesso.");
       setShowForm(false);
     } catch (error) {
@@ -147,7 +163,7 @@ export function AccountsMarketAdmin({ gameId, gameTitle }: AccountsMarketAdminPr
       return;
     }
 
-    const confirmed = window.confirm("Excluir todas as contas desse game do market?");
+    const confirmed = window.confirm(`Excluir todas as contas de ${selectedWowGame.shortTitle} do market?`);
     if (!confirmed) return;
 
     setClearing(true);
@@ -155,7 +171,7 @@ export function AccountsMarketAdmin({ gameId, gameTitle }: AccountsMarketAdminPr
     setErrorMessage(null);
 
     try {
-      await clearAccountsMarket(gameId);
+      await clearAccountsMarket(selectedWowGameId);
       setSavedMessage("Market limpo com sucesso.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Nao foi possivel limpar.");
@@ -164,12 +180,35 @@ export function AccountsMarketAdmin({ gameId, gameTitle }: AccountsMarketAdminPr
     }
   };
 
+  const removeOne = async (accountId: string, title: string) => {
+    if (!firebaseEnabled) {
+      setErrorMessage("Firebase nao configurado.");
+      return;
+    }
+
+    const confirmed = window.confirm(`Excluir a conta \"${title}\" do market?`);
+    if (!confirmed) return;
+
+    setDeletingId(accountId);
+    setSavedMessage(null);
+    setErrorMessage(null);
+
+    try {
+      await deleteAccountFromMarket(accountId);
+      setSavedMessage("Conta removida do market.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Nao foi possivel excluir.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin / Games / Accounts</p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">{gameTitle} accounts</h1>
+          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">{selectedWowGame.title} accounts</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
             Cadastre contas para venda no market e gerencie os anuncios ativos.
           </p>
@@ -186,6 +225,18 @@ export function AccountsMarketAdmin({ gameId, gameTitle }: AccountsMarketAdminPr
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">Market status</p>
+              <label className="mt-3 grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
+                WOW version
+                <select
+                  value={selectedWowGameId}
+                  onChange={(event) => setSelectedWowGameId(event.target.value)}
+                  className="loot-select w-full max-w-[20rem] px-4 py-3 text-sm font-semibold"
+                >
+                  {wowGameOptions.map((game) => (
+                    <option key={game.id} value={game.id}>{game.title}</option>
+                  ))}
+                </select>
+              </label>
               <p className="mt-3 text-sm text-[#cdb991]">Contas ativas no market: {marketCount}</p>
             </div>
 
@@ -303,20 +354,31 @@ export function AccountsMarketAdmin({ gameId, gameTitle }: AccountsMarketAdminPr
               </div>
 
               <div className="grid gap-4">
-                <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-                  Server
-                  <select
-                    value={form.serverId}
-                    onChange={(event) => onChange("serverId", event.target.value)}
-                    className="loot-select px-4 py-3 text-sm font-semibold"
-                  >
-                    {servers.map((server) => (
-                      <option key={server.id} value={server.id}>
-                        {server.name} ({server.region})
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {servers.length > 0 ? (
+                  <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
+                    Server
+                    <select
+                      value={form.serverId}
+                      onChange={(event) => onChange("serverId", event.target.value)}
+                      className="loot-select px-4 py-3 text-sm font-semibold"
+                    >
+                      {servers.map((server) => (
+                        <option key={server.id} value={server.id}>
+                          {server.name} ({server.region})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
+                    Server
+                    <input
+                      value={`${selectedWowGame.shortTitle} Global`}
+                      disabled
+                      className="loot-input cursor-not-allowed px-4 py-3 text-sm font-semibold opacity-80"
+                    />
+                  </label>
+                )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
@@ -364,6 +426,44 @@ export function AccountsMarketAdmin({ gameId, gameTitle }: AccountsMarketAdminPr
 
           {savedMessage ? <p className="mt-5 text-sm font-semibold text-emerald-500">{savedMessage}</p> : null}
           {errorMessage ? <p className="mt-5 text-sm font-semibold text-rose-500">{errorMessage}</p> : null}
+
+          <div className="mt-8 border-t border-[#ffd76a]/10 pt-6">
+            <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">Contas no market</p>
+
+            {marketItems.length > 0 ? (
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {marketItems.map((item) => (
+                  <article
+                    key={item.id}
+                    className="rounded-[1rem] border border-[#ffd76a]/10 bg-white/4 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="loot-title text-xl font-black">{item.title}</h3>
+                        <p className="mt-1 text-xs text-[#a89a7b]">
+                          {item.serverName} / {item.faction} / {item.race} {item.className}
+                        </p>
+                        <p className="mt-1 text-xs text-[#7d8597]">
+                          Lv {item.level} • ${item.price} • {item.gender}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => void removeOne(item.id, item.title)}
+                        disabled={deletingId === item.id}
+                        className="loot-secondary-button rounded-full px-4 py-2 text-xs font-semibold disabled:cursor-not-allowed"
+                      >
+                        {deletingId === item.id ? "Excluindo..." : "Excluir"}
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-[#7d8597]">Nenhuma conta cadastrada no market.</p>
+            )}
+          </div>
         </section>
 
         <div className="mt-8">

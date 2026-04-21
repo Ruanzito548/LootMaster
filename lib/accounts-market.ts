@@ -122,3 +122,11 @@ export async function clearAccountsMarket(gameId: string): Promise<void> {
   const snap = await getDocs(q);
   await Promise.all(snap.docs.map((row) => deleteDoc(doc(accountsCol, row.id))));
 }
+
+export async function deleteAccountFromMarket(accountId: string): Promise<void> {
+  if (!accountsCol) {
+    throw new Error("Firebase nao configurado.");
+  }
+
+  await deleteDoc(doc(accountsCol, accountId));
+}

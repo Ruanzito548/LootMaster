@@ -9,12 +9,12 @@ const sections = [
   {
     id: "accounts",
     title: "Accounts",
-    description: "Area para gerenciamento de precos de contas.",
+    description: "Area para gerenciamento de contas do jogo.",
   },
   {
     id: "boosts",
     title: "Boosts",
-    description: "Area para gerenciamento de precos de boosts.",
+    description: "Area para gerenciamento de boosts do jogo.",
   },
 ];
 
@@ -23,10 +23,10 @@ export default function WowPrecosPage() {
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
-          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin / Precos</p>
+          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin / Jogos</p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">World of Warcraft</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Escolha qual area de preco deseja configurar.
+            Escolha qual area de jogo deseja configurar.
           </p>
         </div>
 
