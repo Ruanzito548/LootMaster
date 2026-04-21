@@ -143,29 +143,27 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
           {filteredListings.map((account) => (
             <article
               key={account.id}
-              className={`overflow-hidden rounded-[1.25rem] border ${isTbc ? "border-[#99ff99]/20 bg-[#102417]/35" : "border-[#ffd76a]/12 bg-white/4"}`}
-            >
-              <div
-                className="h-48 w-full"
-                style={(() => {
-                  const image = getAccountBackgroundImage(account);
-                  if (!image) {
-                    return {
-                      backgroundImage: isTbc
-                        ? "linear-gradient(rgba(11, 28, 18, 0.88), rgba(11, 28, 18, 0.88))"
-                        : "linear-gradient(rgba(6, 18, 29, 0.82), rgba(6, 18, 29, 0.82))",
-                    };
-                  }
+              className={`overflow-hidden rounded-[1.25rem] border ${isTbc ? "border-[#99ff99]/20" : "border-[#ffd76a]/12"}`}
+              style={(() => {
+                const image = getAccountBackgroundImage(account);
 
+                if (!image) {
                   return {
-                    backgroundImage: `linear-gradient(rgba(7, 16, 10, 0.62), rgba(7, 16, 10, 0.62)), url(${image})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
+                    backgroundImage: isTbc
+                      ? "linear-gradient(rgba(11, 28, 18, 0.92), rgba(11, 28, 18, 0.92))"
+                      : "linear-gradient(rgba(6, 18, 29, 0.88), rgba(6, 18, 29, 0.88))",
                   };
-                })()}
-              />
+                }
 
-              <div className="p-5">
+                return {
+                  backgroundImage: `linear-gradient(rgba(6, 12, 9, 0.45), rgba(6, 12, 9, 0.78)), url(${image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                };
+              })()}
+            >
+              <div className="flex min-h-[30rem] flex-col justify-end p-5">
+                <div className={`rounded-[1rem] border p-4 backdrop-blur-sm ${isTbc ? "border-[#99ff99]/24 bg-[#0b1c12]/70" : "border-[#ffd76a]/15 bg-black/45"}`}>
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className={`text-2xl font-black ${isTbc ? "tbc-title" : "loot-title"}`}>{account.title}</h3>
@@ -202,6 +200,7 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
                       {highlight}
                     </span>
                   ))}
+                </div>
                 </div>
               </div>
             </article>
