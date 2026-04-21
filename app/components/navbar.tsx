@@ -250,6 +250,10 @@ export function Navbar() {
                         ? "url('/wowtbc.jpg')"
                         : game.id === "retail"
                         ? "url('/midnightwallpaper.jpeg')"
+                        : game.id === "classic-era"
+                        ? "url('/classicerawallpaper.jpg')"
+                        : game.id === "mist-of-pandaria"
+                        ? "url('/pandariawallpaper.jpg')"
                         : undefined,
                     backgroundSize: "cover",
                     backgroundPosition: "center",

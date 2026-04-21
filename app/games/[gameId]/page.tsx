@@ -8,13 +8,15 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
   const game = getGameById(gameId);
   const isTbc = game?.id === "tbc-anniversary";
   const isMidnight = game?.id === "retail";
+  const isClassic = game?.id === "classic-era";
+  const isPandaria = game?.id === "mist-of-pandaria";
 
   if (!game) {
     notFound();
   }
 
   return (
-    <div className={isTbc ? "loot-shell tbc-shell" : isMidnight ? "loot-shell midnight-shell" : "loot-shell"}>
+    <div className={isTbc ? "loot-shell tbc-shell" : isMidnight ? "loot-shell midnight-shell" : isClassic ? "loot-shell classic-shell" : isPandaria ? "loot-shell pandaria-shell" : "loot-shell"}>
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="flex flex-col gap-4">
           <Link

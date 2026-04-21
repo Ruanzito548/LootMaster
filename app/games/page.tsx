@@ -20,6 +20,24 @@ function getGameCardStyle(gameId: string) {
     };
   }
 
+  if (gameId === "classic-era") {
+    return {
+      backgroundImage:
+        "linear-gradient(rgba(36,24,12,0.62),rgba(20,13,8,0.76)), url('/classicerawallpaper.jpg')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    };
+  }
+
+  if (gameId === "mist-of-pandaria") {
+    return {
+      backgroundImage:
+        "linear-gradient(rgba(8,30,24,0.62),rgba(4,15,11,0.76)), url('/pandariawallpaper.jpg')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    };
+  }
+
   return {
     backgroundImage:
       "linear-gradient(180deg, rgba(18, 44, 84, 0.78), rgba(5, 12, 24, 0.9))",

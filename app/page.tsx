@@ -219,6 +219,20 @@ export default function Home() {
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
+                    : game.id === "classic-era"
+                    ? {
+                        backgroundImage:
+                          "linear-gradient(rgba(30,21,12,0.78),rgba(30,21,12,0.78)), url('/classicerawallpaper.jpg')",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : game.id === "mist-of-pandaria"
+                    ? {
+                        backgroundImage:
+                          "linear-gradient(rgba(8,28,22,0.78),rgba(8,28,22,0.78)), url('/pandariawallpaper.jpg')",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
                     : undefined
                 }
               >

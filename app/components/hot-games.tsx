@@ -73,6 +73,20 @@ export function HotGames() {
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }
+                : game.id === "classic-era"
+                ? {
+                    backgroundImage:
+                      "linear-gradient(rgba(255,191,68,0.14),rgba(70,44,12,0.3)), url('/classicerawallpaper.jpg')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }
+                : game.id === "mist-of-pandaria"
+                ? {
+                    backgroundImage:
+                      "linear-gradient(rgba(164,255,220,0.14),rgba(8,42,30,0.34)), url('/pandariawallpaper.jpg')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }
                 : {
                     backgroundImage:
                       "linear-gradient(180deg,rgba(255,191,68,0.09),rgba(14,57,112,0.16))",
