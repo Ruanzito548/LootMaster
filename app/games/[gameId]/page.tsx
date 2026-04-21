@@ -139,7 +139,17 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                     : isBoostCard
                     ? {
                         backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/global-imagens/boost.png")',
+                          `linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("${
+                            isTbc
+                              ? "/wow/wow-tbc/tbc-boost.png"
+                              : isMidnight
+                              ? "/wow/wow-retail/midnight-boost.png"
+                              : isClassic
+                              ? "/wow/wow-classic-era/classic-era-boost.png"
+                              : isPandaria
+                              ? "/wow/wow-pandaria/pandaria-boost.png"
+                              : "/wow/global-imagens/boost.png"
+                          }")`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
