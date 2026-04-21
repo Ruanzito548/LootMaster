@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 
-import { getAccountsByGameId, type AccountListing } from "../data/accounts";
+import type { AccountListing } from "../data/accounts";
+import { subscribeToAccountsMarket } from "../../lib/accounts-market";
 
 type AccountsMarketProps = {
   gameId: string;
@@ -32,7 +33,15 @@ function getAccountBackgroundImage(account: AccountListing): string | null {
 
 export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
   const isTbc = gameId === "tbc-anniversary";
-  const listings = useMemo(() => getAccountsByGameId(gameId), [gameId]);
+  const [listings, setListings] = useState<AccountListing[]>([]);
+
+  useEffect(
+    () =>
+      subscribeToAccountsMarket(gameId, (nextListings) => {
+        startTransition(() => setListings(nextListings));
+      }),
+    [gameId]
+  );
 
   const [serverFilter, setServerFilter] = useState("all");
   const [raceFilter, setRaceFilter] = useState("all");
@@ -188,6 +197,21 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
                   <div className={`rounded-xl border px-3 py-2 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : "border-[#ffd76a]/10 bg-black/20"}`}>
                     <p className={isTbc ? "text-[#8ccda0]" : "text-[#7d8597]"}>Price</p>
                     <p className={`font-semibold ${isTbc ? "text-[#e6ffe9]" : "text-[#f8eed4]"}`}>${account.price}</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                  <div className={`rounded-xl border px-3 py-2 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : "border-[#ffd76a]/10 bg-black/20"}`}>
+                    <p className={isTbc ? "text-[#8ccda0]" : "text-[#7d8597]"}>Gender</p>
+                    <p className={`font-semibold ${isTbc ? "text-[#e6ffe9]" : "text-[#f8eed4]"}`}>{account.gender}</p>
+                  </div>
+                  <div className={`rounded-xl border px-3 py-2 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : "border-[#ffd76a]/10 bg-black/20"}`}>
+                    <p className={isTbc ? "text-[#8ccda0]" : "text-[#7d8597]"}>Prof 1</p>
+                    <p className={`font-semibold ${isTbc ? "text-[#e6ffe9]" : "text-[#f8eed4]"}`}>{account.professionOne}</p>
+                  </div>
+                  <div className={`rounded-xl border px-3 py-2 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : "border-[#ffd76a]/10 bg-black/20"}`}>
+                    <p className={isTbc ? "text-[#8ccda0]" : "text-[#7d8597]"}>Prof 2</p>
+                    <p className={`font-semibold ${isTbc ? "text-[#e6ffe9]" : "text-[#f8eed4]"}`}>{account.professionTwo}</p>
                   </div>
                 </div>
 
