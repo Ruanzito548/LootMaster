@@ -10,6 +10,8 @@ export function getFriendlyAuthError(code: string, fallback: string) {
       return "Firebase service is temporarily unavailable. Please try again.";
     case "auth/operation-not-allowed":
       return "Google sign-in is disabled in Firebase. Enable it in Firebase Console > Authentication > Sign-in method > Google.";
+    case "auth/unauthorized-domain":
+      return "This domain is not authorized for Google sign-in. Add it in Firebase Console > Authentication > Settings > Authorized domains.";
     case "auth/popup-closed-by-user":
       return "Google sign-in popup was closed before completing login.";
     case "auth/popup-blocked":
