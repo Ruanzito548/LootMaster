@@ -1,19 +1,11 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: "ThroneOfShadows";
-  src: url("/fonts/ThroneOfShadows.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   --background: #07111f;
   --foreground: #f8eed4;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "ThroneOfShadows", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Code", "Consolas", monospace;
   --loot-ink: #09111d;
   --loot-brown: #10233f;
@@ -38,7 +30,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "ThroneOfShadows", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   background-image:
     radial-gradient(circle at top, rgba(247, 186, 44, 0.14), transparent 30%),
     radial-gradient(circle at 22% 26%, rgba(45, 178, 255, 0.14), transparent 24%),
@@ -47,8 +39,8 @@ body {
 }
 
 .font-throne {
-  font-family: "ThroneOfShadows", "Times New Roman", serif;
-  letter-spacing: 0.04em;
+  font-family: inherit;
+  letter-spacing: normal;
 }
 
 .loot-panel {
