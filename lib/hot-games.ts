@@ -6,7 +6,7 @@ import {
 } from "firebase/firestore";
 
 import { defaultHotGameIds } from "../app/data/games";
-import { db, firebaseEnabled } from "./firebase";
+import { auth, db, firebaseEnabled } from "./firebase";
 
 const hotGamesRef =
   db && firebaseEnabled ? doc(db, "app-config", "homepage") : null;
@@ -50,6 +50,12 @@ export async function saveHotGames(hotGameIds: string[]) {
   if (!hotGamesRef) {
     throw new Error("Firebase nao configurado.");
   }
+
+  if (!auth?.currentUser) {
+    throw new Error("Voce precisa estar logado para salvar os hots.");
+  }
+
+  await auth.currentUser.getIdToken();
 
   await setDoc(
     hotGamesRef,

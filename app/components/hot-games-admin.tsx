@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { onAuthStateChanged } from "firebase/auth";
 import { startTransition, useEffect, useState } from "react";
 
 import { saveHotGames, subscribeToHotGames } from "../../lib/hot-games";
-import { firebaseEnabled } from "../../lib/firebase";
+import { auth, firebaseEnabled } from "../../lib/firebase";
 import { defaultHotGameIds, games } from "../data/games";
 
 export function HotGamesAdmin() {
@@ -12,6 +13,7 @@ export function HotGamesAdmin() {
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [saved, setSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser));
   const activeIds = selectedIds ?? storedIds;
 
   useEffect(
@@ -23,6 +25,17 @@ export function HotGamesAdmin() {
       }),
     []
   );
+
+  useEffect(() => {
+    if (!auth) {
+      setIsAuthenticated(false);
+      return () => undefined;
+    }
+
+    return onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(Boolean(user));
+    });
+  }, []);
 
   const toggleGame = (gameId: string) => {
     setSaved(false);
@@ -132,13 +145,19 @@ export function HotGamesAdmin() {
               <button
                 type="button"
                 onClick={() => void saveSelection()}
-                disabled={!firebaseEnabled}
+                disabled={!firebaseEnabled || !isAuthenticated}
                 className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200"
               >
                 Salvar
               </button>
             </div>
           </div>
+
+          {!isAuthenticated ? (
+            <p className="mt-4 text-sm font-semibold text-amber-200">
+              Faca login com Google antes de salvar os hots.
+            </p>
+          ) : null}
 
           {saved ? (
             <p className="mt-4 text-sm font-semibold text-emerald-700">
