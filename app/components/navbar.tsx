@@ -135,6 +135,23 @@ export function Navbar() {
 
           <div className="flex items-center gap-3">
             <Link
+              href="/login"
+              className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors ${
+                isTbc
+                  ? "border-[#a8ff9f]/28 bg-[#1a3a20]/55 text-[#e4ffe0] hover:bg-[#204a25]"
+                  : isMidnight
+                  ? "border-[#4dc6ff]/28 bg-[#0d2f55]/60 text-[#e4f6ff] hover:bg-[#15467a]"
+                  : isClassic
+                  ? "border-[#f1c686]/32 bg-[#4e311a]/55 text-[#ffeed5] hover:bg-[#5f3d22]"
+                  : isPandaria
+                  ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
+                  : "border-[#ffd76a]/28 bg-[#ffd76a]/12 text-[#fff1be] hover:bg-[#ffd76a]/20"
+              }`}
+            >
+              Login/Cadastro
+            </Link>
+
+            <Link
               href="/games"
               className={`loot-gold-button rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-105 ${
                 isTbc ? "tbc-gold-button" : isMidnight ? "midnight-gold-button" : isClassic ? "classic-gold-button" : isPandaria ? "pandaria-gold-button" : ""

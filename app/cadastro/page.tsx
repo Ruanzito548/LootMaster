@@ -11,13 +11,11 @@ import { auth, db, firebaseEnabled } from "../../lib/firebase";
 import { getFriendlyAuthError } from "../../lib/auth-errors";
 
 type FormState = {
-  fullName: string;
-  game: string;
+  username: string;
 };
 
 const defaultForm: FormState = {
-  fullName: "",
-  game: "",
+  username: "",
 };
 
 function normalizeRef(value: string | null | undefined) {
@@ -61,8 +59,8 @@ function CadastroContent() {
       return;
     }
 
-    if (form.fullName.trim() === "") {
-      setErrorMessage("Please enter your full name before continuing with Google.");
+    if (form.username.trim() === "") {
+      setErrorMessage("Please enter your username before continuing with Google.");
       return;
     }
 
@@ -75,7 +73,7 @@ function CadastroContent() {
       const credentials = await signInWithPopup(auth, provider);
 
       const googleEmail = credentials.user.email?.trim().toLowerCase() ?? "";
-      const fullName = form.fullName.trim() || credentials.user.displayName?.trim() || "";
+      const username = form.username.trim() || credentials.user.displayName?.trim() || "";
 
       if (googleEmail === "") {
         setErrorMessage("Your Google account did not provide an email. Try another account.");
@@ -83,17 +81,16 @@ function CadastroContent() {
         return;
       }
 
-      if (fullName === "") {
-        setErrorMessage("Could not resolve your full name. Please type your full name and try again.");
+      if (username === "") {
+        setErrorMessage("Could not resolve your username. Please type your username and try again.");
         setSaving(false);
         return;
       }
 
       await setDoc(doc(db, "users", credentials.user.uid), {
         uid: credentials.user.uid,
-        fullName,
+        username,
         email: googleEmail,
-        game: form.game.trim(),
         authProvider: "google",
         assignedAgentId,
         createdAt: serverTimestamp(),
@@ -103,9 +100,8 @@ function CadastroContent() {
 
       await addDoc(collection(db, "agent-signups"), {
         uid: credentials.user.uid,
-        fullName,
+        username,
         email: googleEmail,
-        game: form.game.trim(),
         referralFromLink,
         assignedAgentId,
         sourcePath: typeof window !== "undefined" ? window.location.pathname : "/cadastro",
@@ -145,12 +141,12 @@ function CadastroContent() {
         <section className="loot-panel mt-8 rounded-[1.75rem] p-8">
           <div className="grid gap-5">
             <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-              Full name
+              Username
               <input
-                value={form.fullName}
-                onChange={(event) => onChange("fullName", event.target.value)}
+                value={form.username}
+                onChange={(event) => onChange("username", event.target.value)}
                 className="loot-input px-4 py-3 text-sm font-semibold"
-                placeholder="Your full name"
+                placeholder="Your username"
               />
             </label>
 
@@ -160,16 +156,6 @@ function CadastroContent() {
                 value="Google Sign-In"
                 disabled
                 className="loot-input cursor-not-allowed px-4 py-3 text-sm font-semibold opacity-80"
-              />
-            </label>
-
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-              Game of interest
-              <input
-                value={form.game}
-                onChange={(event) => onChange("game", event.target.value)}
-                className="loot-input px-4 py-3 text-sm font-semibold"
-                placeholder="E.g.: TBC Anniversary"
               />
             </label>
 
