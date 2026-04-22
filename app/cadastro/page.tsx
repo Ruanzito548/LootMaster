@@ -71,6 +71,7 @@ function CadastroContent() {
     try {
       const provider = new GoogleAuthProvider();
       const credentials = await signInWithPopup(auth, provider);
+      await credentials.user.getIdToken();
 
       const googleEmail = credentials.user.email?.trim().toLowerCase() ?? "";
       const username = form.username.trim() || credentials.user.displayName?.trim() || "";
@@ -116,7 +117,7 @@ function CadastroContent() {
       setForm(defaultForm);
     } catch (error) {
       if (error instanceof FirebaseError) {
-        setErrorMessage(getFriendlyAuthError(error.code, "Could not complete registration."));
+        setErrorMessage(getFriendlyAuthError(error.code, `Could not complete registration (${error.code}).`));
       } else {
         setErrorMessage(error instanceof Error ? error.message : "Could not complete registration.");
       }

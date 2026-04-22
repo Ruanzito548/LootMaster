@@ -1,5 +1,13 @@
 export function getFriendlyAuthError(code: string, fallback: string) {
   switch (code) {
+    case "permission-denied":
+      return "Firestore denied this write. Publish the latest firestore.rules and try again.";
+    case "unauthenticated":
+      return "Your session is not authenticated yet. Try again in a few seconds.";
+    case "failed-precondition":
+      return "Firestore is not ready for this project. Enable Cloud Firestore in Firebase Console.";
+    case "unavailable":
+      return "Firebase service is temporarily unavailable. Please try again.";
     case "auth/operation-not-allowed":
       return "Google sign-in is disabled in Firebase. Enable it in Firebase Console > Authentication > Sign-in method > Google.";
     case "auth/popup-closed-by-user":
