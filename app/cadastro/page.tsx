@@ -3,19 +3,24 @@
 import Link from "next/link";
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { addDoc, collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
 
-import { db, firebaseEnabled } from "../../lib/firebase";
+import { auth, db, firebaseEnabled } from "../../lib/firebase";
 
 type FormState = {
   fullName: string;
   email: string;
+  password: string;
+  confirmPassword: string;
   game: string;
 };
 
 const defaultForm: FormState = {
   fullName: "",
   email: "",
+  password: "",
+  confirmPassword: "",
   game: "",
 };
 
@@ -55,7 +60,7 @@ function CadastroContent() {
   };
 
   const submit = async () => {
-    if (!firebaseEnabled || !db) {
+    if (!firebaseEnabled || !db || !auth) {
       setErrorMessage("Firebase is not configured. Please try again later.");
       return;
     }
@@ -70,14 +75,45 @@ function CadastroContent() {
       return;
     }
 
+    if (form.password.trim() === "") {
+      setErrorMessage("Please enter a password.");
+      return;
+    }
+
+    if (form.password.length < 6) {
+      setErrorMessage("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setErrorMessage("Password confirmation does not match.");
+      return;
+    }
+
     setSaving(true);
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
+      const credentials = await createUserWithEmailAndPassword(
+        auth,
+        form.email.trim().toLowerCase(),
+        form.password
+      );
+
+      await setDoc(doc(db, "users", credentials.user.uid), {
+        uid: credentials.user.uid,
+        fullName: form.fullName.trim(),
+        email: form.email.trim().toLowerCase(),
+        game: form.game.trim(),
+        assignedAgentId,
+        createdAt: serverTimestamp(),
+      });
+
       const referrer = typeof document !== "undefined" ? document.referrer : "";
 
       await addDoc(collection(db, "agent-signups"), {
+        uid: credentials.user.uid,
         fullName: form.fullName.trim(),
         email: form.email.trim().toLowerCase(),
         game: form.game.trim(),
@@ -136,6 +172,30 @@ function CadastroContent() {
               />
             </label>
 
+            <div className="grid gap-5 md:grid-cols-2">
+              <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
+                Password
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={(event) => onChange("password", event.target.value)}
+                  className="loot-input px-4 py-3 text-sm font-semibold"
+                  placeholder="At least 6 characters"
+                />
+              </label>
+
+              <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
+                Confirm password
+                <input
+                  type="password"
+                  value={form.confirmPassword}
+                  onChange={(event) => onChange("confirmPassword", event.target.value)}
+                  className="loot-input px-4 py-3 text-sm font-semibold"
+                  placeholder="Type your password again"
+                />
+              </label>
+            </div>
+
             <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
               Game of interest
               <input
@@ -161,9 +221,14 @@ function CadastroContent() {
         </section>
 
         <div className="mt-8">
-          <Link href="/" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
+          <div className="flex flex-wrap gap-3">
+            <Link href="/" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
             Back to home
-          </Link>
+            </Link>
+            <Link href="/login" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
+              I already have an account
+            </Link>
+          </div>
         </div>
       </main>
     </div>

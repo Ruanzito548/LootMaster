@@ -11,6 +11,7 @@ import { defaultHotGameIds, games } from "../data/games";
 const links = [
   { href: "/", label: "Home" },
   { href: "/games", label: "Jogos" },
+  { href: "/login", label: "Login" },
   { href: "/coins", label: "LM Coins" },
   { href: "/rewards", label: "Brindes" },
   { href: "/profile", label: "Perfil" },
