@@ -3,30 +3,16 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 import { auth, firebaseEnabled } from "../../lib/firebase";
-
-type LoginForm = {
-  email: string;
-  password: string;
-};
-
-const defaultForm: LoginForm = {
-  email: "",
-  password: "",
-};
+import { getFriendlyAuthError } from "../../lib/auth-errors";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [form, setForm] = useState<LoginForm>(defaultForm);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const onChange = <K extends keyof LoginForm>(key: K, value: LoginForm[K]) => {
-    setErrorMessage(null);
-    setForm((current) => ({ ...current, [key]: value }));
-  };
 
   const submit = async () => {
     if (!firebaseEnabled || !auth) {
@@ -34,28 +20,19 @@ export default function LoginPage() {
       return;
     }
 
-    if (form.email.trim() === "") {
-      setErrorMessage("Please enter your email.");
-      return;
-    }
-
-    if (form.password.trim() === "") {
-      setErrorMessage("Please enter your password.");
-      return;
-    }
-
     setLoading(true);
     setErrorMessage(null);
 
     try {
-      await signInWithEmailAndPassword(
-        auth,
-        form.email.trim().toLowerCase(),
-        form.password
-      );
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
       router.push("/profile");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not sign in.");
+      if (error instanceof FirebaseError) {
+        setErrorMessage(getFriendlyAuthError(error.code, "Could not sign in."));
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : "Could not sign in.");
+      }
     } finally {
       setLoading(false);
     }
@@ -68,33 +45,15 @@ export default function LoginPage() {
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Login</p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Access your account</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Sign in with your email and password to continue.
+            Sign in with Google to continue.
           </p>
         </div>
 
         <section className="loot-panel mt-8 rounded-[1.75rem] p-8">
           <div className="grid gap-5">
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-              Email
-              <input
-                type="email"
-                value={form.email}
-                onChange={(event) => onChange("email", event.target.value)}
-                className="loot-input px-4 py-3 text-sm font-semibold"
-                placeholder="you@email.com"
-              />
-            </label>
-
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-              Password
-              <input
-                type="password"
-                value={form.password}
-                onChange={(event) => onChange("password", event.target.value)}
-                className="loot-input px-4 py-3 text-sm font-semibold"
-                placeholder="Your password"
-              />
-            </label>
+            <p className="loot-muted text-sm">
+              Your session will be created using your Google account.
+            </p>
 
             <button
               type="button"
@@ -102,7 +61,7 @@ export default function LoginPage() {
               disabled={loading}
               className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Connecting Google..." : "Continue with Google"}
             </button>
 
             {errorMessage ? <p className="text-sm font-semibold text-rose-500">{errorMessage}</p> : null}

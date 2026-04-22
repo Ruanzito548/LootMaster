@@ -3,24 +3,20 @@
 import Link from "next/link";
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { addDoc, collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
 
 import { auth, db, firebaseEnabled } from "../../lib/firebase";
+import { getFriendlyAuthError } from "../../lib/auth-errors";
 
 type FormState = {
   fullName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
   game: string;
 };
 
 const defaultForm: FormState = {
   fullName: "",
-  email: "",
-  password: "",
-  confirmPassword: "",
   game: "",
 };
 
@@ -66,27 +62,7 @@ function CadastroContent() {
     }
 
     if (form.fullName.trim() === "") {
-      setErrorMessage("Please enter your full name.");
-      return;
-    }
-
-    if (form.email.trim() === "") {
-      setErrorMessage("Please enter your email.");
-      return;
-    }
-
-    if (form.password.trim() === "") {
-      setErrorMessage("Please enter a password.");
-      return;
-    }
-
-    if (form.password.length < 6) {
-      setErrorMessage("Password must be at least 6 characters.");
-      return;
-    }
-
-    if (form.password !== form.confirmPassword) {
-      setErrorMessage("Password confirmation does not match.");
+      setErrorMessage("Please enter your full name before continuing with Google.");
       return;
     }
 
@@ -95,27 +71,40 @@ function CadastroContent() {
     setSuccessMessage(null);
 
     try {
-      const credentials = await createUserWithEmailAndPassword(
-        auth,
-        form.email.trim().toLowerCase(),
-        form.password
-      );
+      const provider = new GoogleAuthProvider();
+      const credentials = await signInWithPopup(auth, provider);
+
+      const googleEmail = credentials.user.email?.trim().toLowerCase() ?? "";
+      const fullName = form.fullName.trim() || credentials.user.displayName?.trim() || "";
+
+      if (googleEmail === "") {
+        setErrorMessage("Your Google account did not provide an email. Try another account.");
+        setSaving(false);
+        return;
+      }
+
+      if (fullName === "") {
+        setErrorMessage("Could not resolve your full name. Please type your full name and try again.");
+        setSaving(false);
+        return;
+      }
 
       await setDoc(doc(db, "users", credentials.user.uid), {
         uid: credentials.user.uid,
-        fullName: form.fullName.trim(),
-        email: form.email.trim().toLowerCase(),
+        fullName,
+        email: googleEmail,
         game: form.game.trim(),
+        authProvider: "google",
         assignedAgentId,
         createdAt: serverTimestamp(),
-      });
+      }, { merge: true });
 
       const referrer = typeof document !== "undefined" ? document.referrer : "";
 
       await addDoc(collection(db, "agent-signups"), {
         uid: credentials.user.uid,
-        fullName: form.fullName.trim(),
-        email: form.email.trim().toLowerCase(),
+        fullName,
+        email: googleEmail,
         game: form.game.trim(),
         referralFromLink,
         assignedAgentId,
@@ -126,11 +115,15 @@ function CadastroContent() {
         createdAt: serverTimestamp(),
       });
 
-      setSuccessMessage("Registration completed successfully.");
+      setSuccessMessage("Registration completed successfully using Google.");
 
       setForm(defaultForm);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not complete registration.");
+      if (error instanceof FirebaseError) {
+        setErrorMessage(getFriendlyAuthError(error.code, "Could not complete registration."));
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : "Could not complete registration.");
+      }
     } finally {
       setSaving(false);
     }
@@ -145,7 +138,7 @@ function CadastroContent() {
             Create your account
           </h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Complete the form below to register your account.
+            Complete the form and continue with Google to create your account.
           </p>
         </div>
 
@@ -162,39 +155,13 @@ function CadastroContent() {
             </label>
 
             <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-              Email
+              Login method
               <input
-                type="email"
-                value={form.email}
-                onChange={(event) => onChange("email", event.target.value)}
-                className="loot-input px-4 py-3 text-sm font-semibold"
-                placeholder="you@email.com"
+                value="Google Sign-In"
+                disabled
+                className="loot-input cursor-not-allowed px-4 py-3 text-sm font-semibold opacity-80"
               />
             </label>
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-                Password
-                <input
-                  type="password"
-                  value={form.password}
-                  onChange={(event) => onChange("password", event.target.value)}
-                  className="loot-input px-4 py-3 text-sm font-semibold"
-                  placeholder="At least 6 characters"
-                />
-              </label>
-
-              <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-                Confirm password
-                <input
-                  type="password"
-                  value={form.confirmPassword}
-                  onChange={(event) => onChange("confirmPassword", event.target.value)}
-                  className="loot-input px-4 py-3 text-sm font-semibold"
-                  placeholder="Type your password again"
-                />
-              </label>
-            </div>
 
             <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
               Game of interest
@@ -212,7 +179,7 @@ function CadastroContent() {
               disabled={saving}
               className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
             >
-              {saving ? "Completing registration..." : "Complete registration"}
+              {saving ? "Connecting Google..." : "Continue with Google"}
             </button>
 
             {successMessage ? <p className="text-sm font-semibold text-emerald-500">{successMessage}</p> : null}
