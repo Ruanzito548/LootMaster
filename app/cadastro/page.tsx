@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
@@ -41,7 +41,7 @@ function getReferralFromQuery(params: URLSearchParams) {
   return normalizeRef(found);
 }
 
-export default function CadastroPage() {
+function CadastroContent() {
   const params = useSearchParams();
   const referralFromLink = useMemo(() => getReferralFromQuery(params), [params]);
 
@@ -222,5 +222,25 @@ export default function CadastroPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+function CadastroFallback() {
+  return (
+    <div className="loot-shell">
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
+        <section className="loot-panel rounded-[1.75rem] p-8">
+          <p className="loot-muted text-sm">Carregando cadastro...</p>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+export default function CadastroPage() {
+  return (
+    <Suspense fallback={<CadastroFallback />}>
+      <CadastroContent />
+    </Suspense>
   );
 }
