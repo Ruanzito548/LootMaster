@@ -17,7 +17,19 @@ type SessionState = {
 };
 
 type EditableProfileFields = Partial<
-  Pick<UserProfile, "username" | "photoURL" | "coverURL" | "lootCoins" | "tickets" | "keys" | "inventory" | "transactions">
+  Pick<
+    UserProfile,
+    | "username"
+    | "photoURL"
+    | "coverURL"
+    | "lootCoins"
+    | "tickets"
+    | "keys"
+    | "inventory"
+    | "transactions"
+    | "inventorySlots"
+    | "vipInventory"
+  >
 >;
 
 const initialState: SessionState = {
