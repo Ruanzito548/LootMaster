@@ -4,17 +4,17 @@ const games = [
   {
     id: "wow",
     title: "World of Warcraft",
-    description: "Gerencie gold-settings, accounts e boosts do WOW.",
+    description: "Manage WOW gold settings, accounts, and boosts.",
   },
   {
     id: "albion",
     title: "Albion Online",
-    description: "Area reservada para configuracoes de jogos do Albion.",
+    description: "Reserved area for Albion game settings.",
   },
   {
     id: "runescape",
     title: "Runescape",
-    description: "Area reservada para configuracoes de jogos do Runescape.",
+    description: "Reserved area for Runescape game settings.",
   },
 ];
 
@@ -24,9 +24,9 @@ export default function GamesPage() {
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin</p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Jogos</h1>
+          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Games</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Escolha o jogo que deseja editar.
+            Choose which game you want to edit.
           </p>
         </div>
 

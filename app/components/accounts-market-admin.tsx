@@ -106,17 +106,17 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
 
   const submit = async () => {
     if (!firebaseEnabled) {
-      setErrorMessage("Firebase nao configurado.");
+      setErrorMessage("Firebase not configured.");
       return;
     }
 
     if (form.title.trim() === "") {
-      setErrorMessage("Informe um titulo para a conta.");
+      setErrorMessage("Enter a title for the account.");
       return;
     }
 
     if (servers.length > 0 && form.serverId === "") {
-      setErrorMessage("Selecione um servidor.");
+      setErrorMessage("Select a server.");
       return;
     }
 
@@ -148,10 +148,10 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
 
       await addAccountToMarket(payload);
       setForm(defaultForm(payload.serverId));
-      setSavedMessage("Conta adicionada ao market com sucesso.");
+      setSavedMessage("Account successfully added to the market.");
       setShowForm(false);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Nao foi possivel salvar.");
+      setErrorMessage(error instanceof Error ? error.message : "Could not save.");
     } finally {
       setSaving(false);
     }
@@ -159,11 +159,11 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
 
   const clearAll = async () => {
     if (!firebaseEnabled) {
-      setErrorMessage("Firebase nao configurado.");
+      setErrorMessage("Firebase not configured.");
       return;
     }
 
-    const confirmed = window.confirm(`Excluir todas as contas de ${selectedWowGame.shortTitle} do market?`);
+    const confirmed = window.confirm(`Delete all ${selectedWowGame.shortTitle} accounts from the market?`);
     if (!confirmed) return;
 
     setClearing(true);
@@ -172,9 +172,9 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
 
     try {
       await clearAccountsMarket(selectedWowGameId);
-      setSavedMessage("Market limpo com sucesso.");
+      setSavedMessage("Market cleared successfully.");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Nao foi possivel limpar.");
+      setErrorMessage(error instanceof Error ? error.message : "Could not clear.");
     } finally {
       setClearing(false);
     }
@@ -182,11 +182,11 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
 
   const removeOne = async (accountId: string, title: string) => {
     if (!firebaseEnabled) {
-      setErrorMessage("Firebase nao configurado.");
+      setErrorMessage("Firebase not configured.");
       return;
     }
 
-    const confirmed = window.confirm(`Excluir a conta \"${title}\" do market?`);
+    const confirmed = window.confirm(`Delete account \"${title}\" from the market?`);
     if (!confirmed) return;
 
     setDeletingId(accountId);
@@ -195,9 +195,9 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
 
     try {
       await deleteAccountFromMarket(accountId);
-      setSavedMessage("Conta removida do market.");
+      setSavedMessage("Account removed from the market.");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Nao foi possivel excluir.");
+      setErrorMessage(error instanceof Error ? error.message : "Could not delete.");
     } finally {
       setDeletingId(null);
     }
@@ -210,7 +210,7 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin / Games / Accounts</p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">{selectedWowGame.title} accounts</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Cadastre contas para venda no market e gerencie os anuncios ativos.
+            Register accounts for sale and manage active listings.
           </p>
         </div>
 
@@ -237,7 +237,7 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
                   ))}
                 </select>
               </label>
-              <p className="mt-3 text-sm text-[#cdb991]">Contas ativas no market: {marketCount}</p>
+              <p className="mt-3 text-sm text-[#cdb991]">Active accounts in market: {marketCount}</p>
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -246,7 +246,7 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
                 onClick={() => setShowForm((v) => !v)}
                 className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold"
               >
-                {showForm ? "Fechar formulario" : "Adicionar conta ao market"}
+                {showForm ? "Close form" : "Add account to market"}
               </button>
 
               <button
@@ -255,7 +255,7 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
                 disabled={clearing}
                 className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
               >
-                {clearing ? "Limpando..." : "Excluir tudo do market"}
+                {clearing ? "Clearing..." : "Delete all from market"}
               </button>
             </div>
           </div>
@@ -264,12 +264,12 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
             <div className="mt-8 grid gap-5 lg:grid-cols-2">
               <div className="grid gap-4">
                 <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-                  Titulo
+                  Title
                   <input
                     value={form.title}
                     onChange={(event) => onChange("title", event.target.value)}
                     className="loot-input px-4 py-3 text-sm font-semibold"
-                    placeholder="Ex.: Orc Fury Warrior PvP"
+                    placeholder="Ex: Orc Fury Warrior PvP"
                   />
                 </label>
 
@@ -382,7 +382,7 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-                    Profissao 1
+                    Profession 1
                     <input
                       value={form.professionOne}
                       onChange={(event) => onChange("professionOne", event.target.value)}
@@ -392,7 +392,7 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
                   </label>
 
                   <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-                    Profissao 2
+                    Profession 2
                     <input
                       value={form.professionTwo}
                       onChange={(event) => onChange("professionTwo", event.target.value)}
@@ -403,12 +403,12 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
                 </div>
 
                 <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-                  Extras (montaria, rank arena, attunes...)
+                  Extras (mount, arena rating, attunes...)
                   <textarea
                     value={form.extras}
                     onChange={(event) => onChange("extras", event.target.value)}
                     className="loot-input min-h-[10rem] px-4 py-3 text-sm font-semibold"
-                    placeholder="Uma linha por item ou separado por virgula"
+                    placeholder="One item per line or separated by commas"
                   />
                 </label>
 
@@ -418,7 +418,7 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
                   disabled={saving}
                   className="loot-gold-button w-full rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
                 >
-                  {saving ? "Salvando..." : "Salvar conta no market"}
+                  {saving ? "Saving..." : "Save account to market"}
                 </button>
               </div>
             </div>
@@ -428,7 +428,7 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
           {errorMessage ? <p className="mt-5 text-sm font-semibold text-rose-500">{errorMessage}</p> : null}
 
           <div className="mt-8 border-t border-[#ffd76a]/10 pt-6">
-            <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">Contas no market</p>
+            <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">Accounts in market</p>
 
             {marketItems.length > 0 ? (
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
@@ -454,14 +454,14 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
                         disabled={deletingId === item.id}
                         className="loot-secondary-button rounded-full px-4 py-2 text-xs font-semibold disabled:cursor-not-allowed"
                       >
-                        {deletingId === item.id ? "Excluindo..." : "Excluir"}
+                        {deletingId === item.id ? "Deleting..." : "Delete"}
                       </button>
                     </div>
                   </article>
                 ))}
               </div>
             ) : (
-              <p className="mt-4 text-sm text-[#7d8597]">Nenhuma conta cadastrada no market.</p>
+              <p className="mt-4 text-sm text-[#7d8597]">No accounts registered in market.</p>
             )}
           </div>
         </section>

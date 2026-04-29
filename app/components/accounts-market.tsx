@@ -237,7 +237,7 @@ export function AccountsMarket({ gameId, gameTitle }: AccountsMarketProps) {
         </div>
       ) : (
         <div className={`mt-6 rounded-[1.25rem] border p-5 ${isTbc ? "border-[#99ff99]/20 bg-[#0b1c12]/70" : isClassic ? "border-[#f1c686]/20 bg-[#25190f]/70" : isPandaria ? "border-[#8df0c8]/20 bg-[#0d2a1f]/70" : "border-[#ffd76a]/12 bg-black/20"}`}>
-          <p className={`text-sm font-semibold ${isTbc ? "text-[#d2f5c2]" : isClassic ? "text-[#ffe7c6]" : isPandaria ? "text-[#ddfff1]" : "text-[#f8eed4]"}`}>Nenhuma conta encontrada com esse filtro.</p>
+          <p className={`text-sm font-semibold ${isTbc ? "text-[#d2f5c2]" : isClassic ? "text-[#ffe7c6]" : isPandaria ? "text-[#ddfff1]" : "text-[#f8eed4]"}`}>No accounts found with this filter.</p>
         </div>
       )}
     </section>

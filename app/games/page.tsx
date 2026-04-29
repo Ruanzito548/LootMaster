@@ -53,10 +53,10 @@ export default function GamesIndexPage() {
             Games Hub
           </p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">
-            Escolha o game e continue sua compra
+            Choose your game and continue your purchase
           </h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Cada entrada abre sua vitrine dedicada com gold, boosts e contas.
+            Each entry opens a dedicated storefront with gold, boosts, and accounts.
           </p>
         </div>
 
@@ -81,7 +81,7 @@ export default function GamesIndexPage() {
                     {game.tag}
                   </span>
                   <span className="rounded-full border border-[#84d5ff]/25 bg-[#0d3f7a]/40 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#d8f4ff]">
-                    Abrir
+                    Open
                   </span>
                 </div>
               </div>
@@ -94,13 +94,13 @@ export default function GamesIndexPage() {
             href="/"
             className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
           >
-            Voltar para home
+            Back to home
           </Link>
           <Link
             href="/coins"
             className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
           >
-            Ver LM Coins
+            View LM Coins
           </Link>
         </div>
       </main>

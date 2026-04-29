@@ -6,13 +6,13 @@ export default function RewardsPage() {
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
-            Brindes
+            Rewards
           </p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">
-            Resgate seus prêmios
+            Claim your rewards
           </h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Explore a roleta, baús e recompensas especiais para sua conta.
+            Explore roulette, chests, and special rewards for your account.
           </p>
         </div>
 
@@ -21,10 +21,10 @@ export default function RewardsPage() {
             href="/rewards/roulette"
             className="loot-panel rounded-[1.75rem] p-8 transition-colors hover:border-[#4dc6ff]/20 hover:bg-white/4"
           >
-            <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#ffc94d]">Roleta</p>
-            <h2 className="loot-title mt-4 text-3xl font-black">Gire para ganhar</h2>
+            <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#ffc94d]">Roulette</p>
+            <h2 className="loot-title mt-4 text-3xl font-black">Spin to win</h2>
             <p className="loot-muted mt-4 text-base leading-7">
-              Use seus tickets para tentar a sorte e ganhar itens raros.
+              Use your tickets to test your luck and win rare items.
             </p>
           </Link>
 
@@ -32,10 +32,10 @@ export default function RewardsPage() {
             href="/rewards/chests"
             className="loot-panel rounded-[1.75rem] p-8 transition-colors hover:border-[#4dc6ff]/20 hover:bg-white/4"
           >
-            <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#8dd0ff]">Baús</p>
-            <h2 className="loot-title mt-4 text-3xl font-black">Abra baús</h2>
+            <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#8dd0ff]">Chests</p>
+            <h2 className="loot-title mt-4 text-3xl font-black">Open chests</h2>
             <p className="loot-muted mt-4 text-base leading-7">
-              Escolha um baú e desbloqueie prêmios instantâneos e bônus exclusivos.
+              Choose a chest and unlock instant rewards and exclusive bonuses.
             </p>
           </Link>
         </section>
@@ -45,7 +45,7 @@ export default function RewardsPage() {
             href="/"
             className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors"
           >
-            Voltar para home
+            Back to home
           </Link>
         </div>
       </main>

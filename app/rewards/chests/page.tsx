@@ -6,15 +6,15 @@ import { useState } from "react";
 const chests = [
   {
     id: "common",
-    title: "Baú Comum",
-    description: "Recompensas pequenas, itens úteis e tickets extras.",
-    rewards: ["+100 coins", "+1 ticket", "Item comum"],
+    title: "Common Chest",
+    description: "Small rewards, useful items, and extra tickets.",
+    rewards: ["+100 coins", "+1 ticket", "Common item"],
   },
   {
     id: "legendary",
-    title: "Baú Lendário",
-    description: "Recompensas maiores, chaves raras e coins extras.",
-    rewards: ["+500 coins", "+2 tickets", "Chave lendária"],
+    title: "Legendary Chest",
+    description: "Bigger rewards, rare keys, and extra coins.",
+    rewards: ["+500 coins", "+2 tickets", "Legendary key"],
   },
 ];
 
@@ -40,13 +40,13 @@ export default function RewardsChestsPage() {
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
-            Baús
+            Chests
           </p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">
-            Abra seus baús
+            Open your chests
           </h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Escolha entre baús comuns e lendários para ganhar itens, coins e tickets.
+            Choose between common and legendary chests to win items, coins, and tickets.
           </p>
         </div>
 
@@ -59,7 +59,7 @@ export default function RewardsChestsPage() {
                   <p className="loot-muted mt-4 text-base leading-7">{chest.description}</p>
                 </div>
                 <span className="loot-badge-blue rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]">
-                  Teste
+                  Test
                 </span>
               </div>
 
@@ -69,17 +69,17 @@ export default function RewardsChestsPage() {
                   onClick={() => openChest(chest.id, chest.rewards)}
                   className="loot-gold-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors"
                 >
-                  Abrir baú
+                  Open chest
                 </button>
 
                 {opened[chest.id] ? (
                   <div className="rounded-[1.5rem] border border-[#fff1be]/10 bg-[#06121d]/80 p-5 text-sm">
-                    <p className="loot-title text-xl font-black">Recompensa obtida</p>
+                    <p className="loot-title text-xl font-black">Reward obtained</p>
                     <p className="loot-muted mt-3">{opened[chest.id]}</p>
                   </div>
                 ) : (
                   <div className="rounded-[1.5rem] border border-[#fff1be]/10 bg-[#06121d]/80 p-5 text-sm text-[#cdb991]">
-                    Abra o baú para ver o resultado.
+                    Open the chest to see the result.
                   </div>
                 )}
               </div>
@@ -89,10 +89,10 @@ export default function RewardsChestsPage() {
 
         <div className="mt-12 flex flex-wrap gap-3">
           <Link href="/rewards" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
-            Voltar para brindes
+            Back to rewards
           </Link>
           <Link href="/profile/inventory" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
-            Ver inventário
+            View inventory
           </Link>
         </div>
       </main>

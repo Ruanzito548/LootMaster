@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 const wheelOptions = [
-  { label: "Baú dourado", description: "Recompensa rara e valiosa.", color: "bg-[#f7ba2c]/15" },
-  { label: "+500 coins", description: "Saldo instantâneo para usar no marketplace.", color: "bg-[#4dc6ff]/15" },
-  { label: "+2 tickets", description: "Mais chances de girar novamente.", color: "bg-[#8dd0ff]/15" },
-  { label: "+1 chave", description: "Chave para abrir um baú especial.", color: "bg-[#ffffff]/10" },
-  { label: "Baú comum", description: "Recompensa básica para testar o sistema.", color: "bg-[#0f2a4e]/40" },
+  { label: "Golden chest", description: "Rare and valuable reward.", color: "bg-[#f7ba2c]/15" },
+  { label: "+500 coins", description: "Instant balance to use in the marketplace.", color: "bg-[#4dc6ff]/15" },
+  { label: "+2 tickets", description: "More chances to spin again.", color: "bg-[#8dd0ff]/15" },
+  { label: "+1 key", description: "Key to open a special chest.", color: "bg-[#ffffff]/10" },
+  { label: "Common chest", description: "Basic reward to test the system.", color: "bg-[#0f2a4e]/40" },
 ];
 
 function getRandomResult() {
@@ -25,7 +25,7 @@ export default function RewardsRoulettePage() {
   const [spinning, setSpinning] = useState(false);
 
   const wheelText = useMemo(
-    () => (result ? `${result.label} — ${result.description}` : "Clique em girar para ver o resultado."),
+    () => (result ? `${result.label} — ${result.description}` : "Click spin to see your result."),
     [result]
   );
 
@@ -45,20 +45,20 @@ export default function RewardsRoulettePage() {
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d]">
-            Roleta
+            Roulette
           </p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">
-            Tente a sorte
+            Try your luck
           </h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Use seus tickets para girar a roleta e ganhar prêmios de inventário.
+            Use your tickets to spin the wheel and win inventory rewards.
           </p>
         </div>
 
         <section className="loot-panel mt-8 rounded-[2rem] p-8">
           <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
             <div className="rounded-[1.75rem] border border-[#fff1be]/10 bg-[#06121d]/80 p-6">
-              <h2 className="loot-title text-2xl font-black">Resultado atual</h2>
+              <h2 className="loot-title text-2xl font-black">Current result</h2>
               <p className="loot-muted mt-4 text-sm leading-7">{wheelText}</p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <button
@@ -67,14 +67,14 @@ export default function RewardsRoulettePage() {
                   disabled={spinning}
                   className="loot-gold-button inline-flex rounded-full px-6 py-3 text-sm font-semibold transition-colors disabled:opacity-60"
                 >
-                  {spinning ? "Girando..." : "Girar agora"}
+                  {spinning ? "Spinning..." : "Spin now"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setResult(null)}
                   className="loot-secondary-button inline-flex rounded-full px-6 py-3 text-sm font-semibold transition-colors"
                 >
-                  Resetar resultado
+                  Reset result
                 </button>
               </div>
             </div>
@@ -95,10 +95,10 @@ export default function RewardsRoulettePage() {
 
         <div className="mt-12 flex flex-wrap gap-3">
           <Link href="/rewards" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
-            Voltar para brindes
+            Back to rewards
           </Link>
           <Link href="/profile/inventory" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
-            Ver inventário
+            View inventory
           </Link>
         </div>
       </main>

@@ -4,10 +4,10 @@ export default function WowBoostsPage() {
   return (
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
-        <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin / Jogos / WOW</p>
+        <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin / Games / WOW</p>
         <h1 className="loot-title mt-4 text-4xl font-black leading-tight sm:text-5xl">Boosts</h1>
         <p className="loot-muted mt-4 max-w-2xl text-base leading-8">
-          Pagina pronta para configuracoes de preco de boosts.
+          Page ready for boost pricing configuration.
         </p>
 
         <div className="mt-8">

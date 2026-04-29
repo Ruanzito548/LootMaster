@@ -39,7 +39,7 @@ export function Footer() {
             <p className={`text-sm ${
               isTbc ? "text-[#b8e6b8]" : isClassic ? "text-[#e7c79d]" : isPandaria ? "text-[#b2ecd7]" : "text-[#cdb991]"
             }`}>
-              Seu marketplace com vibe de tesouro para ouro, contas e servicos do
+              Your treasure-themed marketplace for gold, accounts, and services in
               World of Warcraft.
             </p>
           </div>
@@ -48,7 +48,7 @@ export function Footer() {
             <h3 className={`text-xs font-bold uppercase tracking-[0.26em] ${
               isTbc ? "text-[#a8ff9f]" : isClassic ? "text-[#f5c982]" : isPandaria ? "text-[#95f3cf]" : "text-[#ffc94d]"
             }`}>
-              Navegação
+              Navigation
             </h3>
             <nav className="flex flex-col gap-2 text-sm">
               <Link href="/" className={`transition-colors ${
@@ -59,7 +59,7 @@ export function Footer() {
               <Link href="/games" className={`transition-colors ${
                 isTbc ? "text-[#b8e6b8] hover:text-[#d4ffcc]" : "text-[#cdb991] hover:text-[#8dd0ff]"
               }`}>
-                Jogos
+                Games
               </Link>
               <Link href="/coins" className={`transition-colors ${
                 isTbc ? "text-[#b8e6b8] hover:text-[#d4ffcc]" : "text-[#cdb991] hover:text-[#8dd0ff]"
@@ -69,12 +69,12 @@ export function Footer() {
               <Link href="/rewards" className={`transition-colors ${
                 isTbc ? "text-[#b8e6b8] hover:text-[#d4ffcc]" : "text-[#cdb991] hover:text-[#8dd0ff]"
               }`}>
-                Brindes
+                Rewards
               </Link>
               <Link href="/profile" className={`transition-colors ${
                 isTbc ? "text-[#b8e6b8] hover:text-[#d4ffcc]" : "text-[#cdb991] hover:text-[#8dd0ff]"
               }`}>
-                Perfil
+                Profile
               </Link>
             </nav>
           </div>
@@ -83,7 +83,7 @@ export function Footer() {
             <h3 className={`text-xs font-bold uppercase tracking-[0.26em] ${
               isTbc ? "text-[#a8ff9f]" : isClassic ? "text-[#f5c982]" : isPandaria ? "text-[#95f3cf]" : "text-[#ffc94d]"
             }`}>
-              Suporte
+              Support
             </h3>
             <nav className="flex flex-col gap-2 text-sm">
               <a
@@ -92,7 +92,7 @@ export function Footer() {
                   isTbc ? "text-[#b8e6b8] hover:text-[#d4ffcc]" : isClassic ? "text-[#e7c79d] hover:text-[#ffe6c4]" : isPandaria ? "text-[#b2ecd7] hover:text-[#e5fff5]" : "text-[#cdb991] hover:text-[#8dd0ff]"
                 }`}
               >
-                Contato
+                Contact
               </a>
               <a
                 href="#faq"
@@ -108,7 +108,7 @@ export function Footer() {
                   isTbc ? "text-[#b8e6b8] hover:text-[#d4ffcc]" : "text-[#cdb991] hover:text-[#8dd0ff]"
                 }`}
               >
-                Termos
+                Terms
               </a>
             </nav>
           </div>
@@ -117,7 +117,7 @@ export function Footer() {
             <h3 className={`text-xs font-bold uppercase tracking-[0.26em] ${
               isTbc ? "text-[#a8ff9f]" : isClassic ? "text-[#f5c982]" : isPandaria ? "text-[#95f3cf]" : "text-[#ffc94d]"
             }`}>
-              Comunidade
+              Community
             </h3>
             <div className="flex gap-3">
               <a
@@ -159,12 +159,12 @@ export function Footer() {
         <div className={`flex flex-col items-center justify-between gap-4 text-xs md:flex-row md:gap-0 ${
           isTbc ? "text-[#b8e6b8]" : isClassic ? "text-[#d0ab7f]" : isPandaria ? "text-[#9ed7c3]" : "text-[#9c8765]"
         }`}>
-          <p>&copy; {currentYear} Loot Master. Todos os direitos reservados.</p>
+          <p>&copy; {currentYear} Loot Master. All rights reserved.</p>
           <div className="flex gap-6">
             <a href="#privacy" className={`transition-colors ${
               isTbc ? "hover:text-[#d4ffcc]" : isClassic ? "hover:text-[#ffe6c4]" : isPandaria ? "hover:text-[#e5fff5]" : "hover:text-[#dbcaa7]"
             }`}>
-              Privacidade
+              Privacy
             </a>
             <a href="#cookies" className={`transition-colors ${
               isTbc ? "hover:text-[#d4ffcc]" : isClassic ? "hover:text-[#ffe6c4]" : isPandaria ? "hover:text-[#e5fff5]" : "hover:text-[#dbcaa7]"

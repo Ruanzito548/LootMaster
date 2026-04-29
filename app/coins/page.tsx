@@ -9,36 +9,36 @@ export default function CoinsPage() {
             LM Coins
           </p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">
-            Seu saldo Gold
+            Your Gold balance
           </h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Gerencie seu saldo de coins e veja as ações rápidas disponíveis para você.
+            Manage your coin balance and see the quick actions available to you.
           </p>
         </div>
 
         <section className="mt-8 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
           <article className="loot-panel rounded-[1.75rem] p-8">
-            <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#ffc94d]">Saldo atual</p>
+            <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#ffc94d]">Current balance</p>
             <h2 className="loot-title mt-4 text-6xl font-black text-[#ffcf57]">2.480</h2>
             <p className="loot-muted mt-4 text-base leading-7">
-              Coins prontos para usar em compras, upgrades e resgate de brindes.
+              Coins ready to spend on purchases, upgrades, and reward redemptions.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <button className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold">
-                Comprar coins
+                Buy coins
               </button>
               <button className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold">
-                Resgatar ticket
+                Redeem ticket
               </button>
             </div>
           </article>
 
           <aside className="loot-panel rounded-[1.75rem] p-8">
-            <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#8dd0ff]">Dicas</p>
+            <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#8dd0ff]">Tips</p>
             <ul className="mt-5 space-y-4 text-sm text-[#cdb991]">
-              <li>• Use coins para desbloquear ofertas de gold com desconto.</li>
-              <li>• Converta tickets em giros na roleta para prêmios extras.</li>
-              <li>• Guarde chaves para abrir baús lendários.</li>
+              <li>• Use coins to unlock discounted gold offers.</li>
+              <li>• Convert tickets into roulette spins for extra rewards.</li>
+              <li>• Save keys to open legendary chests.</li>
             </ul>
           </aside>
         </section>
@@ -48,13 +48,13 @@ export default function CoinsPage() {
             href="/"
             className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
           >
-            Voltar para home
+            Back to home
           </Link>
           <Link
             href="/profile/inventory"
             className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
           >
-            Ver inventário
+            View inventory
           </Link>
         </div>
       </main>

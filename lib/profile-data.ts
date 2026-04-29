@@ -9,14 +9,14 @@ export type InventoryItem = {
   category: string;
   description: string;
   quantity: number;
-  rarity: "comum" | "raro" | "epico";
+  rarity: "common" | "rare" | "epic";
 };
 
 export type ProfileTransaction = {
   id: string;
   title: string;
-  type: "compra" | "venda";
-  status: "Concluido" | "Pendente";
+  type: "purchase" | "sale";
+  status: "Completed" | "Pending";
   value: string;
   createdAtLabel: string;
 };
@@ -37,54 +37,54 @@ export type UserProfile = {
 const defaultInventory: InventoryItem[] = [
   {
     id: "inv-iron-sword",
-    name: "Espada de Ferro",
-    category: "Equipamento",
-    description: "Item colecionavel pronto para transferencia.",
+    name: "Iron Sword",
+    category: "Equipment",
+    description: "Collectible item ready for transfer.",
     quantity: 1,
-    rarity: "comum",
+    rarity: "common",
   },
   {
     id: "inv-dragon-skin",
-    name: "Pele de Dragao",
-    category: "Cosmetico",
-    description: "Aparencia especial para o personagem.",
+    name: "Dragon Skin",
+    category: "Cosmetic",
+    description: "Special appearance for your character.",
     quantity: 1,
-    rarity: "raro",
+    rarity: "rare",
   },
   {
     id: "inv-speed-potion",
-    name: "Pocao de Velocidade",
-    category: "Consumivel",
-    description: "Ativavel para entregas instantaneas.",
+    name: "Speed Potion",
+    category: "Consumable",
+    description: "Can be activated for instant deliveries.",
     quantity: 3,
-    rarity: "epico",
+    rarity: "epic",
   },
 ];
 
 const defaultTransactions: ProfileTransaction[] = [
   {
     id: "tx-1",
-    title: "Compra de 5.000 gold",
-    type: "compra",
-    status: "Concluido",
+    title: "Purchase of 5,000 gold",
+    type: "purchase",
+    status: "Completed",
     value: "R$ 179,00",
-    createdAtLabel: "Hoje",
+    createdAtLabel: "Today",
   },
   {
     id: "tx-2",
-    title: "Venda de conta Retail",
-    type: "venda",
-    status: "Pendente",
+    title: "Retail account sale",
+    type: "sale",
+    status: "Pending",
     value: "R$ 420,00",
-    createdAtLabel: "Ontem",
+    createdAtLabel: "Yesterday",
   },
   {
     id: "tx-3",
-    title: "Compra de boost M+",
-    type: "compra",
-    status: "Concluido",
+    title: "M+ boost purchase",
+    type: "purchase",
+    status: "Completed",
     value: "R$ 89,00",
-    createdAtLabel: "2 dias atras",
+    createdAtLabel: "2 days ago",
   },
 ];
 
@@ -112,7 +112,7 @@ function isInventoryItem(value: unknown): value is InventoryItem {
     typeof parsed.category === "string" &&
     typeof parsed.description === "string" &&
     typeof parsed.quantity === "number" &&
-    (parsed.rarity === "comum" || parsed.rarity === "raro" || parsed.rarity === "epico")
+    (parsed.rarity === "common" || parsed.rarity === "rare" || parsed.rarity === "epic")
   );
 }
 
@@ -126,8 +126,8 @@ function isTransaction(value: unknown): value is ProfileTransaction {
   return (
     typeof parsed.id === "string" &&
     typeof parsed.title === "string" &&
-    (parsed.type === "compra" || parsed.type === "venda") &&
-    (parsed.status === "Concluido" || parsed.status === "Pendente") &&
+    (parsed.type === "purchase" || parsed.type === "sale") &&
+    (parsed.status === "Completed" || parsed.status === "Pending") &&
     typeof parsed.value === "string" &&
     typeof parsed.createdAtLabel === "string"
   );
@@ -136,7 +136,7 @@ function isTransaction(value: unknown): value is ProfileTransaction {
 function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" | "photoURL">): UserProfile {
   return {
     uid: user.uid,
-    username: user.displayName?.trim() || "Aventureiro",
+    username: user.displayName?.trim() || "Adventurer",
     email: user.email?.trim().toLowerCase() || "",
     photoURL: user.photoURL || defaultPhotoURL,
     coverURL: defaultCoverURL,

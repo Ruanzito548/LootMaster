@@ -12,9 +12,9 @@ import { defaultHotGameIds, games } from "../data/games";
 
 const links = [
   { href: "/", label: "Home" },
-  { href: "/games", label: "Jogos" },
+  { href: "/games", label: "Games" },
   { href: "/coins", label: "LM Coins" },
-  { href: "/rewards", label: "Brindes" },
+  { href: "/rewards", label: "Rewards" },
 ];
 
 function isLinkActive(pathname: string | null, href: string) {
@@ -93,7 +93,7 @@ export function Navbar() {
                   ? "border-[#8df0c8]/28 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
                   : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
               }`}
-              aria-label="Abrir menu lateral"
+              aria-label="Open side menu"
             >
               <span className="flex h-5 w-5 flex-col items-center justify-center gap-1">
                 <span className={`h-0.5 w-4 rounded-full ${
@@ -169,7 +169,7 @@ export function Navbar() {
                       : "border-[#ffd76a]/28 bg-[#ffd76a]/12 text-[#fff1be] hover:bg-[#ffd76a]/20"
                   }`}
                 >
-                  Meu Perfil
+                  My Profile
                 </Link>
 
                 <button
@@ -187,7 +187,7 @@ export function Navbar() {
                       : "border-[#84d5ff]/20 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
                   }`}
                 >
-                  Deslogar
+                  Sign Out
                 </button>
               </>
             ) : (
@@ -205,7 +205,7 @@ export function Navbar() {
                     : "border-[#ffd76a]/28 bg-[#ffd76a]/12 text-[#fff1be] hover:bg-[#ffd76a]/20"
                 }`}
               >
-                Login/Cadastro
+                Login/Sign Up
               </Link>
             )}
 
@@ -274,7 +274,7 @@ export function Navbar() {
               <h2 className={`font-throne mt-3 text-4xl ${
                 isTbc ? "text-[#d4ffcc]" : isMidnight ? "text-[#b8e0ff]" : "text-[#ffc94d]"
               }`}>
-                Escolha seu jogo
+                Choose your game
               </h2>
             </div>
 
@@ -289,7 +289,7 @@ export function Navbar() {
                   : "border-[#ffd76a]/14 bg-[#fff1be]/8 hover:bg-[#fff1be]/12 hover:border-[#ffd76a]/20"
               }`}
             >
-              Fechar
+              Close
             </button>
           </div>
 

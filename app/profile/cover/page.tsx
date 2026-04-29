@@ -19,7 +19,7 @@ export default function ProfileCoverPage() {
   const save = async () => {
     setSaving(true);
     const ok = await saveProfile({ photoURL: resolvedPhoto, coverURL: resolvedCover });
-    setFeedback(ok ? "Aparencia salva com sucesso." : "Falha ao salvar aparencia.");
+    setFeedback(ok ? "Appearance saved successfully." : "Failed to save appearance.");
     setSaving(false);
   };
 
@@ -28,10 +28,10 @@ export default function ProfileCoverPage() {
       <div className="loot-shell">
         <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
           <section className="loot-panel rounded-[2rem] p-8">
-            <h1 className="loot-title text-3xl font-black">Acesse sua conta</h1>
-            <p className="loot-muted mt-3 text-sm">Faca login para editar capa e foto de perfil.</p>
+            <h1 className="loot-title text-3xl font-black">Access your account</h1>
+            <p className="loot-muted mt-3 text-sm">Log in to edit your cover and profile photo.</p>
             <Link href="/login" className="loot-gold-button mt-6 inline-flex rounded-full px-5 py-3 text-sm font-semibold">
-              Ir para login
+              Go to login
             </Link>
           </section>
         </main>
@@ -43,10 +43,10 @@ export default function ProfileCoverPage() {
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
-          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">Aparencia</p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Foto de capa e perfil</h1>
+          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">Appearance</p>
+          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Cover and profile photo</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Defina os links de imagem para deixar seu perfil com a identidade que voce quiser.
+            Set image URLs to customize your profile identity.
           </p>
         </div>
 
@@ -62,7 +62,7 @@ export default function ProfileCoverPage() {
 
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
               <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-                URL do avatar
+                Avatar URL
                 <input
                   value={resolvedPhoto}
                   onChange={(event) => setPhotoURL(event.target.value)}
@@ -71,7 +71,7 @@ export default function ProfileCoverPage() {
                 />
               </label>
               <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-                URL da capa
+                Cover URL
                 <input
                   value={resolvedCover}
                   onChange={(event) => setCoverURL(event.target.value)}
@@ -88,7 +88,7 @@ export default function ProfileCoverPage() {
                 disabled={saving}
                 className="loot-gold-button inline-flex rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
               >
-                {saving ? "Salvando..." : "Salvar aparencia"}
+                {saving ? "Saving..." : "Save appearance"}
               </button>
               {feedback ? <p className="self-center text-sm font-semibold text-[#8dd0ff]">{feedback}</p> : null}
             </div>
@@ -97,10 +97,10 @@ export default function ProfileCoverPage() {
 
         <div className="mt-12 flex flex-wrap gap-3">
           <Link href="/profile" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
-            Voltar para perfil
+            Back to profile
           </Link>
           <Link href="/profile/inventory" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
-            Ver inventario
+            View inventory
           </Link>
         </div>
       </main>
