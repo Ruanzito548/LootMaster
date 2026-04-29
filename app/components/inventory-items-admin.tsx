@@ -12,6 +12,7 @@ import {
   wowRarities,
   type WowRarity,
 } from "../../lib/inventory-items";
+import { grantRuanzitoTicketPack } from "../../lib/profile-admin";
 
 type ItemForm = {
   name: string;
@@ -32,6 +33,7 @@ export function InventoryItemsAdmin() {
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser));
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [grantingPack, setGrantingPack] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [itemsCount, setItemsCount] = useState(0);
@@ -112,6 +114,31 @@ export function InventoryItemsAdmin() {
       setErrorMessage(error instanceof Error ? error.message : "Could not reset catalog.");
     } finally {
       setResetting(false);
+    }
+  };
+
+  const grantRuanzitoPack = async () => {
+    if (!firebaseEnabled) {
+      setErrorMessage("Firebase not configured.");
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setErrorMessage("Sign in before editing profile inventory.");
+      return;
+    }
+
+    setGrantingPack(true);
+    setSavedMessage(null);
+    setErrorMessage(null);
+
+    try {
+      await grantRuanzitoTicketPack();
+      setSavedMessage("3 tickets were added to ruanzito548@gmail.com inventory (common, rare, epic).");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not update ruanzito profile inventory.");
+    } finally {
+      setGrantingPack(false);
     }
   };
 
@@ -201,6 +228,17 @@ export function InventoryItemsAdmin() {
               className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
             >
               {resetting ? "Resetting catalog..." : "Remove all and create 3 ticket items"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void grantRuanzitoPack()}
+              disabled={grantingPack}
+              className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+            >
+              {grantingPack
+                ? "Granting tickets to ruanzito..."
+                : "Create 3 tickets for ruanzito548@gmail.com"}
             </button>
           </div>
 

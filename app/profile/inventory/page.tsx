@@ -18,6 +18,17 @@ const wowRarityColor: Record<string, string> = {
   heirloom: "text-[#00ccff]",
 };
 
+const wowRarityBorder: Record<string, string> = {
+  poor: "border-[#9d9d9d]/70",
+  common: "border-[#ffffff]/65",
+  uncommon: "border-[#1eff00]/75",
+  rare: "border-[#0070dd]/75",
+  epic: "border-[#a335ee]/75",
+  legendary: "border-[#ff8000]/80",
+  artifact: "border-[#e6cc80]/80",
+  heirloom: "border-[#00ccff]/80",
+};
+
 const totalSlots = 15;
 const baseSlots = 9;
 
@@ -122,14 +133,15 @@ export default function InventoryPage() {
             {Array.from({ length: totalSlots }).map((_, index) => {
               const item = visibleItems[index];
               const isLocked = index >= unlockedSlots;
+              const rarityBorder = item ? wowRarityBorder[item.rarity] || "border-[#d6d6d6]/25" : "border-[#d6d6d6]/25";
 
               return (
                 <div
                   key={`slot-${index}`}
-                  className={`group relative aspect-square overflow-visible rounded-md border p-1 ${
+                  className={`group relative aspect-square overflow-visible rounded-md border p-1 transition-colors ${
                     isLocked
                       ? "border-[#772e2e] bg-[#2a1010]/80"
-                      : "border-[#d6d6d6]/25 bg-[#0f1a27]/90"
+                      : `${rarityBorder} bg-[#0f1a27]/90`
                   }`}
                   title={isLocked ? "Locked slot" : undefined}
                 >
