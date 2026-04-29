@@ -5,10 +5,11 @@ import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FirebaseError } from "firebase/app";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { addDoc, collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
 import { auth, db, firebaseEnabled } from "../../lib/firebase";
 import { getFriendlyAuthError } from "../../lib/auth-errors";
+import { ensureUserProfileDoc } from "../../lib/profile-data";
 
 type FormState = {
   username: string;
@@ -88,14 +89,11 @@ function CadastroContent() {
         return;
       }
 
-      await setDoc(doc(db, "users", credentials.user.uid), {
-        uid: credentials.user.uid,
+      await ensureUserProfileDoc(credentials.user, {
         username,
         email: googleEmail,
-        authProvider: "google",
         assignedAgentId,
-        createdAt: serverTimestamp(),
-      }, { merge: true });
+      });
 
       const referrer = typeof document !== "undefined" ? document.referrer : "";
 

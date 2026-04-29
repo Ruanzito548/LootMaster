@@ -13,7 +13,7 @@ export function HotGamesAdmin() {
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
   const [saved, setSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser));
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser) && firebaseEnabled);
   const activeIds = selectedIds ?? storedIds;
 
   useEffect(
@@ -28,7 +28,6 @@ export function HotGamesAdmin() {
 
   useEffect(() => {
     if (!auth) {
-      setIsAuthenticated(false);
       return () => undefined;
     }
 
