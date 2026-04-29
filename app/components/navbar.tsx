@@ -13,10 +13,8 @@ import { defaultHotGameIds, games } from "../data/games";
 const links = [
   { href: "/", label: "Home" },
   { href: "/games", label: "Jogos" },
-  { href: "/login", label: "Login" },
   { href: "/coins", label: "LM Coins" },
   { href: "/rewards", label: "Brindes" },
-  { href: "/profile", label: "Perfil" },
 ];
 
 function isLinkActive(pathname: string | null, href: string) {
@@ -210,15 +208,6 @@ export function Navbar() {
                 Login/Cadastro
               </Link>
             )}
-
-            <Link
-              href="/games"
-              className={`loot-gold-button rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-105 ${
-                isTbc ? "tbc-gold-button" : isMidnight ? "midnight-gold-button" : isClassic ? "classic-gold-button" : isPandaria ? "pandaria-gold-button" : ""
-              }`}
-            >
-              Explorar
-            </Link>
 
             <Link
               href="/admin/games"
