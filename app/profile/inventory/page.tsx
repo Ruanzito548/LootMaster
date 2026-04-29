@@ -29,6 +29,28 @@ const wowRarityBorder: Record<string, string> = {
   heirloom: "border-[#00ccff]/80",
 };
 
+const wowRarityHoverBackground: Record<string, string> = {
+  poor: "group-hover:bg-[#9d9d9d]/20",
+  common: "group-hover:bg-[#d8dde8]/22",
+  uncommon: "group-hover:bg-[#1eff00]/18",
+  rare: "group-hover:bg-[#0070dd]/18",
+  epic: "group-hover:bg-[#a335ee]/20",
+  legendary: "group-hover:bg-[#ff8000]/22",
+  artifact: "group-hover:bg-[#e6cc80]/22",
+  heirloom: "group-hover:bg-[#00ccff]/20",
+};
+
+const wowRarityHoverGlow: Record<string, string> = {
+  poor: "group-hover:shadow-[0_0_22px_rgba(157,157,157,0.45)]",
+  common: "group-hover:shadow-[0_0_22px_rgba(232,237,246,0.45)]",
+  uncommon: "group-hover:shadow-[0_0_24px_rgba(30,255,0,0.45)]",
+  rare: "group-hover:shadow-[0_0_24px_rgba(0,112,221,0.5)]",
+  epic: "group-hover:shadow-[0_0_26px_rgba(163,53,238,0.5)]",
+  legendary: "group-hover:shadow-[0_0_28px_rgba(255,128,0,0.5)]",
+  artifact: "group-hover:shadow-[0_0_28px_rgba(230,204,128,0.55)]",
+  heirloom: "group-hover:shadow-[0_0_26px_rgba(0,204,255,0.5)]",
+};
+
 const totalSlots = 15;
 const baseSlots = 9;
 
@@ -134,29 +156,33 @@ export default function InventoryPage() {
               const item = visibleItems[index];
               const isLocked = index >= unlockedSlots;
               const rarityBorder = item ? wowRarityBorder[item.rarity] || "border-[#d6d6d6]/25" : "border-[#d6d6d6]/25";
+              const rarityHoverBg = item ? wowRarityHoverBackground[item.rarity] || "" : "";
+              const rarityHoverGlow = item ? wowRarityHoverGlow[item.rarity] || "" : "";
 
               return (
                 <div
                   key={`slot-${index}`}
-                  className={`group relative aspect-square overflow-visible rounded-md border p-1 transition-colors ${
+                  className={`group relative aspect-square overflow-visible rounded-md border p-1 transition-all duration-300 ${
                     isLocked
                       ? "border-[#772e2e] bg-[#2a1010]/80"
-                      : `${rarityBorder} bg-[#0f1a27]/90`
+                      : `${rarityBorder} ${rarityHoverBg} bg-[#0f1a27]/90 hover:-translate-y-1 hover:scale-[1.035]`
                   }`}
                   title={isLocked ? "Locked slot" : undefined}
                 >
                   {item && !isLocked ? (
                     <>
-                      <div className="relative h-full w-full rounded-sm bg-[#101826]">
+                      <div
+                        className={`relative h-full w-full rounded-sm bg-[#101826] transition-all duration-300 group-hover:brightness-110 ${rarityHoverGlow}`}
+                      >
                         <Image
                           src={item.iconPath}
                           alt={item.name}
                           fill
                           sizes="96px"
-                          className="object-cover"
+                          className="object-cover transition-transform duration-300 group-hover:scale-110"
                         />
                       </div>
-                      <div className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded bg-[#05070b]/95 px-2 py-1 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap">
+                      <div className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded border border-[#ffffff1f] bg-[#05070b]/95 px-2 py-1 text-xs font-bold opacity-0 shadow-lg transition-all duration-200 group-hover:-translate-y-0.5 group-hover:opacity-100 whitespace-nowrap">
                         <span className={wowRarityColor[item.rarity] || "text-white"}>{item.name}</span>
                       </div>
                     </>
