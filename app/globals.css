@@ -78,6 +78,43 @@ body {
   filter: brightness(1.04);
 }
 
+/* ── Inventory slot arcade hover ───────────────────────────────────── */
+@keyframes inv-slot-pop {
+  0%   { transform: translateY(0px)   scale(1);    }
+  40%  { transform: translateY(-8px)  scale(1.14); }
+  68%  { transform: translateY(-2px)  scale(1.01); }
+  100% { transform: translateY(-4px)  scale(1.04); }
+}
+
+.inv-slot-has-item {
+  transform: translateY(0) scale(1);
+  transition: transform 0.28s ease, box-shadow 0.3s ease;
+}
+
+.inv-slot-has-item:hover {
+  transform: translateY(-4px) scale(1.04);
+  animation: inv-slot-pop 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Radial glow overlay — mix-blend-mode overlay so the icon gets colorized */
+.inv-radial-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  border-radius: 2px;
+}
+
+.inv-radial-poor     { background: radial-gradient(circle at center, rgba(157,157,157,0.72) 0%, transparent 68%); }
+.inv-radial-common   { background: radial-gradient(circle at center, rgba(220,225,240,0.65) 0%, transparent 68%); }
+.inv-radial-uncommon { background: radial-gradient(circle at center, rgba(30,255,0,0.68)    0%, transparent 68%); }
+.inv-radial-rare     { background: radial-gradient(circle at center, rgba(0,112,221,0.72)   0%, transparent 68%); }
+.inv-radial-epic     { background: radial-gradient(circle at center, rgba(163,53,238,0.75)  0%, transparent 68%); }
+.inv-radial-legendary{ background: radial-gradient(circle at center, rgba(255,128,0,0.78)   0%, transparent 68%); }
+.inv-radial-artifact { background: radial-gradient(circle at center, rgba(230,204,128,0.75) 0%, transparent 68%); }
+.inv-radial-heirloom { background: radial-gradient(circle at center, rgba(0,204,255,0.72)   0%, transparent 68%); }
+/* ─────────────────────────────────────────────────────────────────── */
+
 .loot-secondary-button {
   background: linear-gradient(180deg, rgba(255, 241, 190, 0.08), rgba(45, 178, 255, 0.08));
   border: 1px solid rgba(255, 214, 117, 0.16);

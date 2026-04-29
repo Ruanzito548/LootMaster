@@ -162,17 +162,17 @@ export default function InventoryPage() {
               return (
                 <div
                   key={`slot-${index}`}
-                  className={`group relative aspect-square overflow-visible rounded-md border p-1 transition-all duration-300 ${
+                  className={`group relative aspect-square overflow-visible rounded-md border p-1 transition-colors duration-300 ${
                     isLocked
                       ? "border-[#772e2e] bg-[#2a1010]/80"
-                      : `${rarityBorder} ${rarityHoverBg} bg-[#0f1a27]/90 hover:-translate-y-1 hover:scale-[1.035]`
+                      : `${rarityBorder} ${rarityHoverBg} bg-[#0f1a27]/90 ${item ? "inv-slot-has-item" : ""}`
                   }`}
                   title={isLocked ? "Locked slot" : undefined}
                 >
                   {item && !isLocked ? (
                     <>
                       <div
-                        className={`relative h-full w-full rounded-sm bg-[#101826] transition-all duration-300 group-hover:brightness-110 ${rarityHoverGlow}`}
+                        className={`relative h-full w-full rounded-sm bg-[#101826] transition-all duration-300 group-hover:brightness-115 ${rarityHoverGlow}`}
                       >
                         <Image
                           src={item.iconPath}
@@ -180,6 +180,10 @@ export default function InventoryPage() {
                           fill
                           sizes="96px"
                           className="object-cover transition-transform duration-300 group-hover:scale-110"
+                        />
+                        <span
+                          aria-hidden
+                          className={`inv-radial-overlay inv-radial-${item.rarity} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
                         />
                       </div>
                       <div className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded border border-[#ffffff1f] bg-[#05070b]/95 px-2 py-1 text-xs font-bold opacity-0 shadow-lg transition-all duration-200 group-hover:-translate-y-0.5 group-hover:opacity-100 whitespace-nowrap">
