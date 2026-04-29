@@ -9,7 +9,16 @@ export type InventoryItem = {
   category: string;
   description: string;
   quantity: number;
-  rarity: "common" | "rare" | "epic";
+  rarity:
+    | "poor"
+    | "common"
+    | "uncommon"
+    | "rare"
+    | "epic"
+    | "legendary"
+    | "artifact"
+    | "heirloom";
+  iconPath?: string;
 };
 
 export type ProfileTransaction = {
@@ -32,6 +41,8 @@ export type UserProfile = {
   keys: number;
   inventory: InventoryItem[];
   transactions: ProfileTransaction[];
+  inventorySlots: number;
+  vipInventory: boolean;
 };
 
 const defaultInventory: InventoryItem[] = [
@@ -42,6 +53,7 @@ const defaultInventory: InventoryItem[] = [
     description: "Collectible item ready for transfer.",
     quantity: 1,
     rarity: "common",
+    iconPath: "/itens/general/iron-sword.png",
   },
   {
     id: "inv-dragon-skin",
@@ -50,14 +62,16 @@ const defaultInventory: InventoryItem[] = [
     description: "Special appearance for your character.",
     quantity: 1,
     rarity: "rare",
+    iconPath: "/itens/general/dragon-skin.png",
   },
   {
-    id: "inv-speed-potion",
-    name: "Speed Potion",
-    category: "Consumable",
-    description: "Can be activated for instant deliveries.",
-    quantity: 3,
-    rarity: "epic",
+    id: "inv-uncommon-test",
+    name: "Forest Totem",
+    category: "General",
+    description: "Uncommon test item for inventory hover and rarity color.",
+    quantity: 1,
+    rarity: "uncommon",
+    iconPath: "/itens/general/uncommon-test.png",
   },
 ];
 
@@ -112,7 +126,14 @@ function isInventoryItem(value: unknown): value is InventoryItem {
     typeof parsed.category === "string" &&
     typeof parsed.description === "string" &&
     typeof parsed.quantity === "number" &&
-    (parsed.rarity === "common" || parsed.rarity === "rare" || parsed.rarity === "epic")
+    (parsed.rarity === "poor" ||
+      parsed.rarity === "common" ||
+      parsed.rarity === "uncommon" ||
+      parsed.rarity === "rare" ||
+      parsed.rarity === "epic" ||
+      parsed.rarity === "legendary" ||
+      parsed.rarity === "artifact" ||
+      parsed.rarity === "heirloom")
   );
 }
 
@@ -145,6 +166,8 @@ function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" |
     keys: 4,
     inventory: defaultInventory,
     transactions: defaultTransactions,
+    inventorySlots: 9,
+    vipInventory: false,
   };
 }
 
@@ -168,6 +191,8 @@ function mapUserProfile(uid: string, source: Record<string, unknown>): UserProfi
     keys: getNumber(source.keys, fallback.keys),
     inventory: inventory.length > 0 ? inventory : fallback.inventory,
     transactions: transactions.length > 0 ? transactions : fallback.transactions,
+    inventorySlots: getNumber(source.inventorySlots, fallback.inventorySlots),
+    vipInventory: source.vipInventory === true,
   };
 }
 

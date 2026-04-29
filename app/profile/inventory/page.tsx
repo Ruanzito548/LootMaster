@@ -1,17 +1,55 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 
 import { useProfileSession } from "../use-profile-session";
+import { subscribeToInventoryItems, type InventoryCatalogItem } from "../../../lib/inventory-items";
 
-const rarityClass: Record<string, string> = {
-  common: "text-[#f8eed4]",
-  rare: "text-[#8dd0ff]",
-  epic: "text-[#d8a7ff]",
+const wowRarityColor: Record<string, string> = {
+  poor: "text-[#9d9d9d]",
+  common: "text-[#ffffff]",
+  uncommon: "text-[#1eff00]",
+  rare: "text-[#0070dd]",
+  epic: "text-[#a335ee]",
+  legendary: "text-[#ff8000]",
+  artifact: "text-[#e6cc80]",
+  heirloom: "text-[#00ccff]",
 };
 
+const totalSlots = 15;
+const baseSlots = 9;
+
 export default function InventoryPage() {
-  const { status, profile } = useProfileSession();
+  const { status, profile, saveProfile } = useProfileSession();
+  const [catalogItems, setCatalogItems] = useState<InventoryCatalogItem[]>([]);
+  const [expanding, setExpanding] = useState(false);
+
+  useEffect(() => subscribeToInventoryItems(setCatalogItems), []);
+
+  const isVip = profile?.vipInventory === true;
+  const unlockedSlots = isVip ? totalSlots : Math.max(baseSlots, profile?.inventorySlots ?? baseSlots);
+
+  const visibleItems = useMemo(() => {
+    if (catalogItems.length > 0) {
+      return catalogItems;
+    }
+
+    return profile?.inventory.map((item) => ({
+      id: item.id,
+      name: item.name,
+      rarity: item.rarity,
+      iconPath: item.iconPath || "/itens/general/unknown.png",
+      gameId: "general",
+    })) ?? [];
+  }, [catalogItems, profile?.inventory]);
+
+  const upgradeToVip = async () => {
+    setExpanding(true);
+    await saveProfile({ vipInventory: true, inventorySlots: totalSlots });
+    setExpanding(false);
+  };
 
   if (status === "loading") {
     return (
@@ -46,9 +84,9 @@ export default function InventoryPage() {
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">Inventory</p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Your Gold Resources</h1>
+          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Minecraft-style Inventory</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Loot Coins balance, tickets, keys, and items linked to your account.
+            3x3 base grid. Unlock extra slots if you are VIP.
           </p>
         </div>
 
@@ -73,21 +111,72 @@ export default function InventoryPage() {
         </section>
 
         <section className="loot-panel mt-8 rounded-[2rem] p-8">
-          <h2 className="loot-title text-3xl font-black">Inventory items</h2>
-          <ul className="mt-6 space-y-4 text-sm text-[#cdb991]">
-            {profile.inventory.map((item) => (
-              <li key={item.id} className="rounded-2xl border border-[#fff1be]/10 bg-[#06121d]/80 p-4">
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <strong>{item.name}</strong>
-                  <span className={`text-xs uppercase tracking-[0.16em] ${rarityClass[item.rarity] || "text-[#f8eed4]"}`}>
-                    {item.rarity} • x{item.quantity}
-                  </span>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="loot-title text-3xl font-black">Item grid</h2>
+            <p className="loot-muted text-sm">
+              Slots unlocked: <span className="font-black text-[#ffcf57]">{unlockedSlots}</span> / {totalSlots}
+            </p>
+          </div>
+
+          <div className="mt-6 grid grid-cols-3 gap-3 sm:max-w-[21rem]">
+            {Array.from({ length: totalSlots }).map((_, index) => {
+              const item = visibleItems[index];
+              const isLocked = index >= unlockedSlots;
+
+              return (
+                <div
+                  key={`slot-${index}`}
+                  className={`group relative aspect-square overflow-hidden rounded-md border p-1 ${
+                    isLocked
+                      ? "border-[#772e2e] bg-[#2a1010]/80"
+                      : "border-[#d6d6d6]/25 bg-[#0f1a27]/90"
+                  }`}
+                  title={isLocked ? "Locked slot" : undefined}
+                >
+                  {item && !isLocked ? (
+                    <>
+                      <div className="relative h-full w-full rounded-sm bg-[#101826]">
+                        <Image
+                          src={item.iconPath}
+                          alt={item.name}
+                          fill
+                          sizes="96px"
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="pointer-events-none absolute -top-10 left-1/2 z-20 -translate-x-1/2 rounded bg-[#05070b]/95 px-2 py-1 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100">
+                        <span className={wowRarityColor[item.rarity] || "text-white"}>{item.name}</span>
+                      </div>
+                    </>
+                  ) : isLocked ? (
+                    <div className="flex h-full items-center justify-center text-[10px] font-bold uppercase tracking-[0.16em] text-[#ff9b9b]">
+                      VIP
+                    </div>
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-[10px] font-bold uppercase tracking-[0.16em] text-[#7a8498]">
+                      Empty
+                    </div>
+                  )}
                 </div>
-                <p className="loot-muted mt-2 text-xs">{item.category}</p>
-                <p className="mt-1 text-sm">{item.description}</p>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
+
+          {!isVip ? (
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <p className="loot-muted text-sm">Upgrade to VIP to unlock extra slots (up to 15).</p>
+              <button
+                type="button"
+                onClick={() => void upgradeToVip()}
+                disabled={expanding}
+                className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+              >
+                {expanding ? "Unlocking..." : "Unlock VIP slots"}
+              </button>
+            </div>
+          ) : (
+            <p className="mt-6 text-sm font-semibold text-emerald-400">VIP slots unlocked.</p>
+          )}
         </section>
 
         <div className="mt-12 flex flex-wrap gap-3">
