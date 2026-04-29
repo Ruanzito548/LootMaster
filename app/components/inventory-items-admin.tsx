@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 
@@ -178,15 +179,31 @@ export function InventoryItemsAdmin() {
               </select>
             </label>
 
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-              Item icon path
-              <input
-                value={form.iconPath}
-                onChange={(event) => setForm((current) => ({ ...current, iconPath: event.target.value }))}
-                className="loot-input px-4 py-3 text-sm font-semibold"
-                placeholder="/itens/general/uncommon-test.png"
-              />
-            </label>
+            <div className="grid gap-2">
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">Item icon path</span>
+              <div className="flex items-center gap-3">
+                <div className="relative size-14 shrink-0 overflow-hidden rounded-md border border-[#ffffff18] bg-[#101826]">
+                  {form.iconPath.trim() ? (
+                    <Image
+                      src={form.iconPath.trim()}
+                      alt="Icon preview"
+                      fill
+                      sizes="56px"
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <span className="flex h-full items-center justify-center text-[9px] font-bold uppercase tracking-[0.1em] text-[#7a8498]">No img</span>
+                  )}
+                </div>
+                <input
+                  value={form.iconPath}
+                  onChange={(event) => setForm((current) => ({ ...current, iconPath: event.target.value }))}
+                  className="loot-input flex-1 px-4 py-3 text-sm font-semibold"
+                  placeholder="/itens/general/uncommon-test.png"
+                />
+              </div>
+            </div>
 
             <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
               Item game scope
