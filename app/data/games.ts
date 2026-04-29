@@ -37,7 +37,7 @@ export const games: Game[] = [
     shortTitle: "Midnight",
     tag: "Live",
     description:
-      "Versao principal para jogadores que querem compra rapida, entrega recorrente e maior volume de gold.",
+      "Main version for players who want fast purchases, recurring delivery, and higher gold volume.",
   },
   {
     id: "classic-era",
@@ -45,7 +45,7 @@ export const games: Game[] = [
     shortTitle: "Classic Era",
     tag: "Classic",
     description:
-      "Fluxo dedicado para realms permanentes, com identidade mais old school e foco em estabilidade.",
+      "Dedicated flow for permanent realms, with a more old-school identity and focus on stability.",
   },
   {
     id: "tbc-anniversary",
@@ -53,7 +53,7 @@ export const games: Game[] = [
     shortTitle: "TBC Anniversary",
     tag: "Progression",
     description:
-      "Camada separada para jogadores da experiencia Burning Crusade com selecao posterior de servidor.",
+      "Separate layer for Burning Crusade players with later server selection.",
   },
   {
     id: "mist-of-pandaria",
@@ -61,7 +61,7 @@ export const games: Game[] = [
     shortTitle: "Mist of Pandaria",
     tag: "Pandaria",
     description:
-      "Entrada pronta para a fase Pandaria, mantendo a navegacao consistente para o restante do funil.",
+      "Entry prepared for the Pandaria phase, keeping navigation consistent for the rest of the funnel.",
   },
 ];
 

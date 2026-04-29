@@ -37,8 +37,8 @@ function parseEntry(data: Record<string, unknown>): GoldConfigEntry {
 }
 
 /**
- * Escuta toda a coleção gold-config.
- * Cada documento tem ID igual à chave de escopo:
+ * Listens to the full gold-config collection.
+ * Each document ID matches a scope key:
  *   "tbc-anniversary"
  *   "tbc-anniversary|nightslayer-us"
  *   "tbc-anniversary|nightslayer-us|Horde"
@@ -66,10 +66,10 @@ export function subscribeToGoldConfig(
   );
 }
 
-/** Salva (ou sobrescreve) a configuração de um escopo específico. */
+/** Saves (or overwrites) the configuration for a specific scope. */
 export async function saveGoldConfigEntry(key: string, entry: GoldConfigEntry): Promise<void> {
   if (!goldConfigCol) {
-    throw new Error("Firebase nao configurado.");
+    throw new Error("Firebase not configured.");
   }
   await setDoc(doc(goldConfigCol, key), {
     pricePerThousand: entry.pricePerThousand,
@@ -80,10 +80,10 @@ export async function saveGoldConfigEntry(key: string, entry: GoldConfigEntry): 
   });
 }
 
-/** Remove a configuração de um escopo específico (volta ao fallback). */
+/** Removes the configuration for a specific scope (falls back to inherited values). */
 export async function deleteGoldConfigEntry(key: string): Promise<void> {
   if (!goldConfigCol) {
-    throw new Error("Firebase nao configurado.");
+    throw new Error("Firebase not configured.");
   }
   await deleteDoc(doc(goldConfigCol, key));
 }

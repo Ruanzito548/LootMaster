@@ -48,11 +48,11 @@ export function subscribeToHotGames(
 
 export async function saveHotGames(hotGameIds: string[]) {
   if (!hotGamesRef) {
-    throw new Error("Firebase nao configurado.");
+    throw new Error("Firebase not configured.");
   }
 
   if (!auth?.currentUser) {
-    throw new Error("Voce precisa estar logado para salvar os hots.");
+    throw new Error("You must be logged in to save highlighted games.");
   }
 
   await auth.currentUser.getIdToken();

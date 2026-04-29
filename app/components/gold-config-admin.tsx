@@ -99,7 +99,7 @@ export function GoldConfigAdmin() {
       setSaved(true);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Nao foi possivel salvar."
+        error instanceof Error ? error.message : "Could not save."
       );
     } finally {
       setSaving(false);
@@ -116,7 +116,7 @@ export function GoldConfigAdmin() {
       setDraftEntry(null);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Nao foi possivel remover."
+        error instanceof Error ? error.message : "Could not remove."
       );
     } finally {
       setSaving(false);
@@ -216,7 +216,7 @@ export function GoldConfigAdmin() {
             Gold settings
           </h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Configure o preco e quantidade minima de gold por jogo, servidor e faccao. Cada combinacao e salva separadamente no Firebase.
+            Configure gold price and minimum amount by game, server, and faction. Each combination is saved separately in Firebase.
           </p>
         </div>
 
@@ -236,7 +236,7 @@ export function GoldConfigAdmin() {
             Preview Dashboard
           </p>
           <h2 className="loot-title mt-4 text-2xl font-black">
-            Configuracao por jogo / servidor / faccao
+            Configuration by game / server / faction
           </h2>
 
           <div className="mt-6 grid gap-5 xl:grid-cols-2">
@@ -265,12 +265,12 @@ export function GoldConfigAdmin() {
 
                       {row.config ? (
                         <div className="mt-3 grid gap-1 text-sm text-[#d8f4ff]">
-                          <p>Preco: <span className="font-semibold">${row.config.pricePerThousand}</span></p>
+                          <p>Price: <span className="font-semibold">${row.config.pricePerThousand}</span></p>
                           <p>Min: <span className="font-semibold">{row.config.minGold.toLocaleString()}</span></p>
                           <p>Max: <span className="font-semibold">{row.config.maxGold.toLocaleString()}</span></p>
                         </div>
                       ) : (
-                        <p className="mt-3 text-sm font-semibold text-rose-300">Nao configurado</p>
+                        <p className="mt-3 text-sm font-semibold text-rose-300">Not configured</p>
                       )}
                     </div>
                   ))}
@@ -284,10 +284,10 @@ export function GoldConfigAdmin() {
           <div className="loot-panel rounded-[2rem] p-8">
             <div className="grid gap-6">
 
-              {/* Jogo — obrigatorio */}
+              {/* Game - required */}
               <div>
                 <label htmlFor="game-select" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                  Jogo
+                  Game
                 </label>
                 <select
                   id="game-select"
@@ -299,7 +299,7 @@ export function GoldConfigAdmin() {
                   }}
                   className="loot-select mt-3 px-4 py-3 text-sm font-semibold"
                 >
-                  <option value="">— Selecione um jogo —</option>
+                  <option value="">- Select a game -</option>
                   {games.map((game) => (
                     <option key={game.id} value={game.id}>
                       {game.title}
@@ -308,10 +308,10 @@ export function GoldConfigAdmin() {
                 </select>
               </div>
 
-              {/* Servidor */}
+              {/* Server */}
               <div>
                 <label htmlFor="server-select" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                  Servidor
+                  Server
                 </label>
                 <select
                   id="server-select"
@@ -326,7 +326,7 @@ export function GoldConfigAdmin() {
                   className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
                 >
                   <option value="">
-                    {servers.length === 0 ? "Nenhum servidor cadastrado" : "Selecione um servidor"}
+                    {servers.length === 0 ? "No servers registered" : "Select a server"}
                   </option>
                   {servers.map((server) => (
                     <option key={server.id} value={server.id}>
@@ -336,10 +336,10 @@ export function GoldConfigAdmin() {
                 </select>
               </div>
 
-              {/* Faccao — obrigatoria quando houver servidor selecionado */}
+              {/* Faction - required when a server is selected */}
               <div>
                 <label htmlFor="faction-select" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                  Faccao
+                  Faction
                 </label>
                 <select
                   id="faction-select"
@@ -349,7 +349,7 @@ export function GoldConfigAdmin() {
                   className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
                 >
                   {!selectedServerId ? (
-                    <option value="">Selecione um servidor primeiro</option>
+                    <option value="">Select a server first</option>
                   ) : null}
                   {factions.map((faction) => (
                     <option key={faction} value={faction}>
@@ -359,12 +359,12 @@ export function GoldConfigAdmin() {
                 </select>
               </div>
 
-              {/* Campos de preco/minimo — so aparecem com escopo pronto */}
+              {/* Price/minimum fields - shown only when scope is ready */}
               {scopeReady ? (
                 <>
                   <div>
                     <label htmlFor="price-per-thousand" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                      Valor por 1.000 gold
+                      Value per 1,000 gold
                     </label>
                     <input
                       id="price-per-thousand"
@@ -378,13 +378,13 @@ export function GoldConfigAdmin() {
                       className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
                     />
                     <p className="mt-2 text-sm text-[#7d8597]">
-                      Exemplo: 20 para cobrar $20 a cada 1.000 gold.
+                      Example: 20 to charge $20 per 1,000 gold.
                     </p>
                   </div>
 
                   <div>
                     <label htmlFor="min-gold" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                      Quantidade minima de compra
+                      Minimum purchase amount
                     </label>
                     <input
                       id="min-gold"
@@ -401,7 +401,7 @@ export function GoldConfigAdmin() {
 
                   <div>
                     <label htmlFor="max-gold" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                      Quantidade maxima de compra
+                      Maximum purchase amount
                     </label>
                     <input
                       id="max-gold"
@@ -419,8 +419,8 @@ export function GoldConfigAdmin() {
               ) : (
                 <p className="text-sm text-[#7d8597]">
                   {selectedGameId === ""
-                    ? "Selecione um jogo para editar a configuracao."
-                    : "Selecione um servidor para editar a configuracao."
+                    ? "Select a game to edit the configuration."
+                    : "Select a server to edit the configuration."
                   }
                 </p>
               )}
@@ -431,13 +431,13 @@ export function GoldConfigAdmin() {
                 <div className="flex flex-col gap-1">
                   {currentKey && (
                     <p className="font-mono text-xs text-[#7d8597]">
-                      chave: <span className="text-[#ffd76a]">{currentKey}</span>
+                      key: <span className="text-[#ffd76a]">{currentKey}</span>
                     </p>
                   )}
                   {hasSavedOverride ? (
-                    <p className="text-xs font-semibold text-emerald-500">Config propria salva no Firebase</p>
+                    <p className="text-xs font-semibold text-emerald-500">Own configuration saved in Firebase</p>
                   ) : (
-                    <p className="text-xs text-[#7d8597]">Usando heranca (sem config propria para este escopo)</p>
+                    <p className="text-xs text-[#7d8597]">Using inheritance (no own configuration for this scope)</p>
                   )}
                 </div>
 
@@ -449,7 +449,7 @@ export function GoldConfigAdmin() {
                       disabled={saving}
                       className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed"
                     >
-                      Remover config
+                      Remove config
                     </button>
                   )}
                   <button
@@ -458,7 +458,7 @@ export function GoldConfigAdmin() {
                     disabled={!canSave}
                     className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200"
                   >
-                    {saving ? "Salvando..." : "Salvar"}
+                    {saving ? "Saving..." : "Save"}
                   </button>
                 </div>
               </div>
@@ -466,7 +466,7 @@ export function GoldConfigAdmin() {
 
             {saved ? (
               <p className="mt-4 text-sm font-semibold text-emerald-500">
-                Configuracao salva com sucesso.
+                Configuration saved successfully.
               </p>
             ) : null}
 
@@ -491,3 +491,4 @@ export function GoldConfigAdmin() {
     </div>
   );
 }
+

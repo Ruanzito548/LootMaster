@@ -59,7 +59,7 @@ export function HotGamesAdmin() {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Nao foi possivel salvar no Firebase."
+          : "Could not save in Firebase."
       );
     }
   };
@@ -147,14 +147,14 @@ export function HotGamesAdmin() {
                 disabled={!firebaseEnabled || !isAuthenticated}
                 className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200"
               >
-                Salvar
+                Save
               </button>
             </div>
           </div>
 
           {!isAuthenticated ? (
             <p className="mt-4 text-sm font-semibold text-amber-200">
-              Faca login com Google antes de salvar os hots.
+              Sign in with Google before saving highlights.
             </p>
           ) : null}
 
@@ -191,3 +191,4 @@ export function HotGamesAdmin() {
     </div>
   );
 }
+

@@ -5,7 +5,7 @@ export type GoldConfigEntry = {
   goldStep: number;
 };
 
-/** Mapa de chave → configuração. Chave: "gameId", "gameId|serverId" ou "gameId|serverId|faction". */
+/** Key-to-configuration map. Key: "gameId", "gameId|serverId" or "gameId|serverId|faction". */
 export type GoldConfig = Record<string, GoldConfigEntry>;
 
 export const defaultGoldConfigEntry: GoldConfigEntry = {

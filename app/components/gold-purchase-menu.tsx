@@ -60,8 +60,8 @@ export function GoldPurchaseMenu({
     email.trim() !== "";
   const price = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
   const selectionModeLabel = hasServerOptions
-    ? "Jogo -> Servidor -> Faccao"
-    : "Jogo";
+    ? "Game -> Server -> Faction"
+    : "Game";
 
   return (
     <aside className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : isMidnight ? "midnight-panel" : isClassic ? "classic-panel" : isPandaria ? "pandaria-panel" : ""}`}>
@@ -80,7 +80,7 @@ export function GoldPurchaseMenu({
           <p className="loot-title mt-2 text-lg font-black">{gameTitle}</p>
           <p className="loot-muted mt-1 text-sm">{categoryTitle}</p>
           <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-[#d8f4ff]">
-            Modo: {selectionModeLabel}
+            Mode: {selectionModeLabel}
           </p>
         </div>
 

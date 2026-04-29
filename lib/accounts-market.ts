@@ -102,7 +102,7 @@ export function subscribeToAccountsMarket(
 
 export async function addAccountToMarket(input: NewAccountInput): Promise<string> {
   if (!accountsCol) {
-    throw new Error("Firebase nao configurado.");
+    throw new Error("Firebase not configured.");
   }
 
   const ref = await addDoc(accountsCol, {
@@ -115,7 +115,7 @@ export async function addAccountToMarket(input: NewAccountInput): Promise<string
 
 export async function clearAccountsMarket(gameId: string): Promise<void> {
   if (!accountsCol) {
-    throw new Error("Firebase nao configurado.");
+    throw new Error("Firebase not configured.");
   }
 
   const q = query(accountsCol, where("gameId", "==", gameId));
@@ -125,7 +125,7 @@ export async function clearAccountsMarket(gameId: string): Promise<void> {
 
 export async function deleteAccountFromMarket(accountId: string): Promise<void> {
   if (!accountsCol) {
-    throw new Error("Firebase nao configurado.");
+    throw new Error("Firebase not configured.");
   }
 
   await deleteDoc(doc(accountsCol, accountId));

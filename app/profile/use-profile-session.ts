@@ -24,7 +24,7 @@ const initialState: SessionState = {
   status: !firebaseEnabled || !auth ? "unauthenticated" : "loading",
   user: null,
   profile: null,
-  error: !firebaseEnabled || !auth ? "Firebase nao configurado." : null,
+  error: !firebaseEnabled || !auth ? "Firebase not configured." : null,
 };
 
 export function useProfileSession() {
@@ -64,7 +64,7 @@ export function useProfileSession() {
             status: "authenticated",
             user: nextUser,
             profile: null,
-            error: error instanceof Error ? error.message : "Nao foi possivel carregar seu perfil.",
+            error: error instanceof Error ? error.message : "Could not load your profile.",
           });
         }
       })();
