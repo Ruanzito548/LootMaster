@@ -5,7 +5,13 @@ import { useEffect, useState } from "react";
 
 import { games } from "../data/games";
 import { auth, firebaseEnabled } from "../../lib/firebase";
-import { createInventoryItem, subscribeToInventoryItems, wowRarities, type WowRarity } from "../../lib/inventory-items";
+import {
+  createInventoryItem,
+  resetInventoryItemsToDefaultTickets,
+  subscribeToInventoryItems,
+  wowRarities,
+  type WowRarity,
+} from "../../lib/inventory-items";
 
 type ItemForm = {
   name: string;
@@ -15,9 +21,9 @@ type ItemForm = {
 };
 
 const defaultForm: ItemForm = {
-  name: "Forest Totem",
+  name: "Explorer Ticket",
   rarity: "uncommon",
-  iconPath: "/itens/general/uncommon-test.png",
+  iconPath: "/itens/general/ticket.png",
   gameId: "general",
 };
 
@@ -25,6 +31,7 @@ export function InventoryItemsAdmin() {
   const [form, setForm] = useState<ItemForm>(defaultForm);
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser));
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [itemsCount, setItemsCount] = useState(0);
@@ -83,15 +90,38 @@ export function InventoryItemsAdmin() {
     }
   };
 
+  const seedTickets = async () => {
+    if (!firebaseEnabled) {
+      setErrorMessage("Firebase not configured.");
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setErrorMessage("Sign in before creating items.");
+      return;
+    }
+
+    setResetting(true);
+    setSavedMessage(null);
+    setErrorMessage(null);
+
+    try {
+      await resetInventoryItemsToDefaultTickets();
+      setSavedMessage("Catalog reset with 3 ticket items (common, uncommon, epic).");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not reset catalog.");
+    } finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin / Games / WOW</p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Inventory Items</h1>
-          <p className="loot-muted max-w-2xl text-base leading-8">
-            Create inventory items used by the Minecraft-style 3x3 grid.
-          </p>
+          <p className="loot-muted max-w-2xl text-base leading-8">Create inventory items used by the Minecraft-style 3x3 grid.</p>
         </div>
 
         <section className="loot-panel mt-8 rounded-[2rem] p-8">
@@ -161,7 +191,16 @@ export function InventoryItemsAdmin() {
               onClick={() => setForm(defaultForm)}
               className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold"
             >
-              Reset to uncommon test item
+              Reset form to ticket item
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void seedTickets()}
+              disabled={resetting}
+              className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+            >
+              {resetting ? "Resetting catalog..." : "Remove all and create 3 ticket items"}
             </button>
           </div>
 

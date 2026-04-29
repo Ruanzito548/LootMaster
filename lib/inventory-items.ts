@@ -1,4 +1,4 @@
-import { addDoc, collection, onSnapshot, query, type Unsubscribe } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, type Unsubscribe } from "firebase/firestore";
 
 import { db, firebaseEnabled } from "./firebase";
 
@@ -75,4 +75,36 @@ export async function createInventoryItem(input: InventoryCatalogInput): Promise
   });
 
   return ref.id;
+}
+
+export async function resetInventoryItemsToDefaultTickets(): Promise<void> {
+  if (!inventoryItemsCol) {
+    throw new Error("Firebase not configured.");
+  }
+
+  const snapshot = await getDocs(query(inventoryItemsCol));
+  await Promise.all(snapshot.docs.map((row) => deleteDoc(doc(inventoryItemsCol, row.id))));
+
+  const defaults: InventoryCatalogInput[] = [
+    {
+      name: "Traveler Ticket",
+      rarity: "common",
+      iconPath: "/itens/general/ticket.png",
+      gameId: "general",
+    },
+    {
+      name: "Explorer Ticket",
+      rarity: "uncommon",
+      iconPath: "/itens/general/ticket.png",
+      gameId: "general",
+    },
+    {
+      name: "Champion Ticket",
+      rarity: "epic",
+      iconPath: "/itens/general/ticket.png",
+      gameId: "general",
+    },
+  ];
+
+  await Promise.all(defaults.map((item) => addDoc(inventoryItemsCol, { ...item, createdAt: new Date().toISOString() })));
 }

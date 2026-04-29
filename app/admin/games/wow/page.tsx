@@ -16,11 +16,6 @@ const sections = [
     title: "Boosts",
     description: "Area for managing game boosts.",
   },
-  {
-    id: "items",
-    title: "Inventory Items",
-    description: "Create item name, WoW rarity, icon path, and game scope.",
-  },
 ];
 
 export default function WowGamesPage() {

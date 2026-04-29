@@ -126,7 +126,7 @@ export default function InventoryPage() {
               return (
                 <div
                   key={`slot-${index}`}
-                  className={`group relative aspect-square overflow-hidden rounded-md border p-1 ${
+                  className={`group relative aspect-square overflow-visible rounded-md border p-1 ${
                     isLocked
                       ? "border-[#772e2e] bg-[#2a1010]/80"
                       : "border-[#d6d6d6]/25 bg-[#0f1a27]/90"
@@ -144,7 +144,7 @@ export default function InventoryPage() {
                           className="object-cover"
                         />
                       </div>
-                      <div className="pointer-events-none absolute -top-10 left-1/2 z-20 -translate-x-1/2 rounded bg-[#05070b]/95 px-2 py-1 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded bg-[#05070b]/95 px-2 py-1 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap">
                         <span className={wowRarityColor[item.rarity] || "text-white"}>{item.name}</span>
                       </div>
                     </>
