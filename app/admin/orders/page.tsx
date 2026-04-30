@@ -3,6 +3,12 @@ import Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
 
+type SearchParams = {
+  status?: string;
+  payment?: string;
+  q?: string;
+};
+
 function formatMoney(amountInCents: number | null, currency: string | null) {
   if (typeof amountInCents !== "number" || !currency) {
     return "--";
@@ -57,7 +63,8 @@ function getOrderBadge(
   };
 }
 
-export default async function AdminOrdersPage() {
+export default async function AdminOrdersPage(props: { searchParams?: Promise<SearchParams> }) {
+  const searchParams = props.searchParams ? await props.searchParams : {};
   const secretKey = process.env.STRIPE_SECRET_KEY;
   let sessions: Stripe.Checkout.Session[] = [];
   let loadError: string | null = null;
@@ -75,6 +82,30 @@ export default async function AdminOrdersPage() {
       loadError = error instanceof Error ? error.message : "Could not load Stripe orders.";
     }
   }
+
+  const activeStatus = (searchParams.status || "all").toLowerCase();
+  const activePayment = (searchParams.payment || "all").toLowerCase();
+  const activeQuery = (searchParams.q || "").trim().toLowerCase();
+
+  const filteredSessions = sessions.filter((session) => {
+    const badge = getOrderBadge(session.payment_status, session.status);
+    const payment = (session.metadata?.paymentMethod || "").toLowerCase();
+    const haystack = [
+      session.id,
+      session.customer_email || "",
+      session.metadata?.nickname || "",
+      session.metadata?.gameTitle || "",
+      session.metadata?.categoryTitle || "",
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    const statusOk = activeStatus === "all" || badge.label.toLowerCase() === activeStatus;
+    const paymentOk = activePayment === "all" || payment === activePayment;
+    const searchOk = activeQuery === "" || haystack.includes(activeQuery);
+
+    return statusOk && paymentOk && searchOk;
+  });
 
   return (
     <div className="loot-shell">
@@ -95,9 +126,57 @@ export default async function AdminOrdersPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="loot-muted text-sm font-semibold">Stripe checkout sessions</p>
             <span className="rounded-full border border-[#ffffff14] bg-[#0a1626]/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#b6c6df]">
-              {sessions.length} loaded
+              {filteredSessions.length} shown / {sessions.length} loaded
             </span>
           </div>
+
+          <form className="mt-5 grid gap-3 rounded-2xl border border-[#ffffff14] bg-[#0a1524]/70 p-4 lg:grid-cols-[1fr_auto_auto_auto]">
+            <input
+              type="text"
+              name="q"
+              defaultValue={searchParams.q || ""}
+              placeholder="Search by player, email, game or session id"
+              className="loot-input px-4 py-3 text-sm font-semibold"
+            />
+
+            <select
+              name="status"
+              defaultValue={activeStatus}
+              className="loot-select px-4 py-3 text-sm font-semibold"
+            >
+              <option value="all">All status</option>
+              <option value="paid">Paid</option>
+              <option value="pending">Pending</option>
+              <option value="expired">Expired</option>
+              <option value="unpaid">Unpaid</option>
+            </select>
+
+            <select
+              name="payment"
+              defaultValue={activePayment}
+              className="loot-select px-4 py-3 text-sm font-semibold"
+            >
+              <option value="all">All methods</option>
+              <option value="pix">Pix</option>
+              <option value="card">Card</option>
+              <option value="balance">LM Coins</option>
+            </select>
+
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                className="loot-gold-button rounded-full px-4 py-3 text-xs font-bold uppercase tracking-[0.14em]"
+              >
+                Apply
+              </button>
+              <Link
+                href="/admin/orders"
+                className="loot-secondary-button rounded-full px-4 py-3 text-xs font-bold uppercase tracking-[0.14em]"
+              >
+                Clear
+              </Link>
+            </div>
+          </form>
 
           {loadError ? (
             <p className="mt-4 rounded-xl border border-[#ff6060]/35 bg-[#270e0e]/70 px-4 py-3 text-sm font-semibold text-[#ffb0b0]">
@@ -105,15 +184,15 @@ export default async function AdminOrdersPage() {
             </p>
           ) : null}
 
-          {!loadError && sessions.length === 0 ? (
+          {!loadError && filteredSessions.length === 0 ? (
             <p className="mt-4 text-sm font-semibold text-[#9fb4d3]">
-              No orders found yet.
+              No orders match your filters.
             </p>
           ) : null}
 
-          {!loadError && sessions.length > 0 ? (
-            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {sessions.map((session) => {
+          {!loadError && filteredSessions.length > 0 ? (
+            <div className="mt-6 space-y-3">
+              {filteredSessions.map((session) => {
                 const badge = getOrderBadge(session.payment_status, session.status);
                 const gameTitle = session.metadata?.gameTitle || "--";
                 const categoryTitle = session.metadata?.categoryTitle || "--";
@@ -123,48 +202,50 @@ export default async function AdminOrdersPage() {
                 return (
                   <article
                     key={session.id}
-                    className="rounded-2xl border border-[#ffffff14] bg-[linear-gradient(180deg,rgba(18,33,53,0.88),rgba(8,16,29,0.95))] p-5 shadow-[0_20px_40px_rgba(2,8,18,0.36)]"
+                    className="rounded-2xl border border-[#ffffff14] bg-[linear-gradient(180deg,rgba(18,33,53,0.88),rgba(8,16,29,0.95))] p-4 shadow-[0_18px_30px_rgba(2,8,18,0.32)]"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="grid items-center gap-3 lg:grid-cols-[140px_1.1fr_1fr_1fr_1fr_130px_170px]">
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#9cb3d5]">Order</p>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9cb3d5]">Status</p>
+                        <span className={`mt-1 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${badge.classes}`}>
+                          {badge.label}
+                        </span>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9cb3d5]">Session</p>
                         <p className="mt-1 text-sm font-semibold text-[#d4e5ff]" title={session.id}>
                           {compactId(session.id)}
                         </p>
                       </div>
-                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${badge.classes}`}>
-                        {badge.label}
-                      </span>
-                    </div>
 
-                    <div className="mt-4 space-y-3 text-sm">
-                      <div className="rounded-xl border border-[#ffffff10] bg-[#0d1b30]/70 px-3 py-2">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#90a7c8]">Player</p>
-                        <p className="mt-1 font-semibold text-[#e2edff] break-words">{nickname}</p>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9cb3d5]">Player</p>
+                        <p className="mt-1 text-sm font-semibold text-[#e2edff] break-words">{nickname}</p>
                         <p className="text-xs text-[#92a9ca] break-words">{session.customer_email || "--"}</p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="rounded-xl border border-[#ffffff10] bg-[#0d1b30]/60 px-3 py-2">
-                          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#90a7c8]">Game</p>
-                          <p className="mt-1 font-semibold text-[#e2edff]">{gameTitle}</p>
-                          <p className="text-xs text-[#92a9ca]">{categoryTitle}</p>
-                        </div>
-                        <div className="rounded-xl border border-[#ffffff10] bg-[#0d1b30]/60 px-3 py-2">
-                          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#90a7c8]">Payment</p>
-                          <p className="mt-1 font-semibold uppercase text-[#e2edff]">{paymentMethod}</p>
-                          <p className="text-xs text-[#92a9ca]">{session.metadata?.server || "--"} / {session.metadata?.faction || "--"}</p>
-                        </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9cb3d5]">Game</p>
+                        <p className="mt-1 text-sm font-semibold text-[#e2edff]">{gameTitle}</p>
+                        <p className="text-xs text-[#92a9ca]">{categoryTitle}</p>
                       </div>
 
-                      <div className="flex items-center justify-between rounded-xl border border-[#ffffff10] bg-[#0c1728]/75 px-3 py-2">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#90a7c8]">Total</p>
-                        <p className="text-base font-black text-[#ffcf57]">{formatMoney(session.amount_total, session.currency)}</p>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9cb3d5]">Payment</p>
+                        <p className="mt-1 text-sm font-semibold uppercase text-[#e2edff]">{paymentMethod}</p>
+                        <p className="text-xs text-[#92a9ca]">{session.metadata?.server || "--"} / {session.metadata?.faction || "--"}</p>
                       </div>
 
-                      <p className="text-xs font-semibold uppercase tracking-[0.13em] text-[#8ea3c0]">
-                        {formatDate(session.created)}
-                      </p>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9cb3d5]">Total</p>
+                        <p className="mt-1 text-sm font-black text-[#ffcf57]">{formatMoney(session.amount_total, session.currency)}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9cb3d5]">Created</p>
+                        <p className="mt-1 text-xs font-semibold text-[#8ea3c0]">{formatDate(session.created)}</p>
+                      </div>
                     </div>
                   </article>
                 );
