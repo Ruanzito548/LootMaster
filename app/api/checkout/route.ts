@@ -1,16 +1,19 @@
 import Stripe from "stripe";
 
 type CheckoutBody = {
+  gameId: string;
   gameTitle: string;
   categoryTitle: string;
   goldAmount: number;
   pricePerThousand: number;
   paymentMethod: "pix" | "card" | "balance";
   nickname: string;
+  serverId: string;
   server: string;
   faction: string;
   deliveryMethod: string;
   email: string;
+  hasServerOptions: boolean;
 };
 
 function computeFinalAmount(price: number, paymentMethod: string): number {
@@ -36,20 +39,27 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const {
+    gameId,
     gameTitle,
     categoryTitle,
     goldAmount,
     pricePerThousand,
     paymentMethod,
     nickname,
+    serverId,
     server,
     faction,
     deliveryMethod,
     email,
+    hasServerOptions,
   } = body;
 
-  if (!gameTitle || !goldAmount || !pricePerThousand || !email) {
+  if (!gameId || !gameTitle || !categoryTitle || !goldAmount || !pricePerThousand || !email || !nickname || !deliveryMethod) {
     return Response.json({ error: "Missing required fields." }, { status: 422 });
+  }
+
+  if (hasServerOptions && (!serverId || !server || !faction)) {
+    return Response.json({ error: "Server and faction are required for this game." }, { status: 422 });
   }
 
   const basePrice = (goldAmount / 1000) * pricePerThousand;
@@ -65,20 +75,30 @@ export async function POST(request: Request): Promise<Response> {
     paymentMethod === "pix" ? ["pix"] : ["card"]
   ) as Stripe.Checkout.SessionCreateParams["payment_method_types"];
 
+  const metadata = {
+    gameId,
+    gameTitle,
+    categoryTitle,
+    goldAmount: String(goldAmount),
+    pricePerThousand: String(pricePerThousand),
+    finalAmountCents: String(unitAmount),
+    serverId,
+    server,
+    faction,
+    deliveryMethod,
+    nickname,
+    paymentMethod,
+    hasServerOptions: String(hasServerOptions),
+  };
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: paymentMethodTypes,
       customer_email: email,
-      metadata: {
-        gameTitle,
-        categoryTitle,
-        goldAmount: String(goldAmount),
-        server,
-        faction,
-        deliveryMethod,
-        nickname,
-        paymentMethod,
+      metadata,
+      payment_intent_data: {
+        metadata,
       },
       line_items: [
         {
@@ -98,14 +118,7 @@ export async function POST(request: Request): Promise<Response> {
                 .filter(Boolean)
                 .join(" | "),
               metadata: {
-                gameTitle,
-                categoryTitle,
-                goldAmount: String(goldAmount),
-                server,
-                faction,
-                deliveryMethod,
-                nickname,
-                paymentMethod,
+                ...metadata,
               },
             },
           },

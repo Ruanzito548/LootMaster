@@ -119,16 +119,19 @@ export function GoldPurchaseMenu({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          gameId,
           gameTitle,
           categoryTitle,
           goldAmount: safeGoldAmount,
           pricePerThousand: goldConfig.pricePerThousand,
           paymentMethod,
           nickname: nickname.trim(),
+          serverId: selectedServerId,
           server: selectedServer?.name ?? "",
           faction: selectedFaction,
           deliveryMethod,
           email: email.trim(),
+          hasServerOptions,
         }),
       });
 
