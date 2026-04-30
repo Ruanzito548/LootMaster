@@ -210,7 +210,7 @@ export function Navbar() {
             )}
 
             <Link
-              href="/admin/games"
+              href="/admin"
               className={`hidden rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors xl:inline-flex ${
                 isTbc
                   ? "border-[#a8ff9f]/25 bg-[#1a3a20]/45 text-[#e0ffe0] hover:bg-[#204a25]"
