@@ -13,6 +13,41 @@ type GoldPurchaseMenuProps = {
   servers: GameServer[];
 };
 
+type PaymentMethod = "pix" | "card" | "balance";
+
+const paymentMethods: Array<{
+  id: PaymentMethod;
+  title: string;
+  description: string;
+  accent: string;
+}> = [
+  {
+    id: "pix",
+    title: "Pix",
+    description: "Instant confirmation with 5% discount.",
+    accent: "text-[#7fffd4]",
+  },
+  {
+    id: "card",
+    title: "Credit card",
+    description: "Fast approval with parcel-friendly checkout.",
+    accent: "text-[#8dd0ff]",
+  },
+  {
+    id: "balance",
+    title: "LM Coins",
+    description: "Use your internal balance with zero gateway fee.",
+    accent: "text-[#ffcf57]",
+  },
+];
+
+function formatBRL(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+}
+
 export function GoldPurchaseMenu({
   gameId,
   gameTitle,
@@ -30,6 +65,7 @@ export function GoldPurchaseMenu({
   const [nickname, setNickname] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("Face to face");
   const [email, setEmail] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const hasServerOptions = servers.length > 0;
 
   useEffect(
@@ -57,11 +93,16 @@ export function GoldPurchaseMenu({
     detailsUnlocked &&
     nickname.trim() !== "" &&
     deliveryMethod.trim() !== "" &&
-    email.trim() !== "";
+    email.trim() !== "" &&
+    paymentMethod.trim() !== "";
   const price = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
+  const paymentAdjustment =
+    paymentMethod === "pix" ? price * -0.05 : paymentMethod === "card" ? price * 0.04 : 0;
+  const finalPrice = Math.max(0, price + paymentAdjustment);
   const selectionModeLabel = hasServerOptions
     ? "Game -> Server -> Faction"
     : "Game";
+  const selectedPayment = paymentMethods.find((method) => method.id === paymentMethod) ?? paymentMethods[0];
 
   return (
     <aside className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : isMidnight ? "midnight-panel" : isClassic ? "classic-panel" : isPandaria ? "pandaria-panel" : ""}`}>
@@ -252,6 +293,75 @@ export function GoldPurchaseMenu({
           ) : null}
         </div>
 
+        <div className={!detailsUnlocked ? "opacity-40" : ""}>
+          <p
+            className={`text-xs font-bold uppercase tracking-[0.18em] ${
+              detailsUnlocked ? "text-[#a89a7b]" : "text-[#5e6470]"
+            }`}
+          >
+            Payment method
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            {paymentMethods.map((method) => (
+              <button
+                key={method.id}
+                type="button"
+                disabled={!detailsUnlocked}
+                onClick={() => setPaymentMethod(method.id)}
+                className={`rounded-[1.1rem] border px-4 py-4 text-left transition-all ${
+                  paymentMethod === method.id
+                    ? "border-[#ffd76a]/40 bg-[#14273f] shadow-[0_16px_32px_rgba(5,10,20,0.22)]"
+                    : "border-[#ffffff12] bg-[#0b1320]/70 hover:border-[#84d5ff]/24 hover:bg-[#101b2c]"
+                } disabled:cursor-not-allowed`}
+              >
+                <p className={`text-sm font-black ${method.accent}`}>{method.title}</p>
+                <p className="mt-2 text-xs leading-6 text-[#a7b6cb]">{method.description}</p>
+              </button>
+            ))}
+          </div>
+
+          {detailsUnlocked ? (
+            <div className="mt-4 rounded-[1rem] border border-[#ffffff12] bg-[#08111f]/80 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9dd3ff]">Checkout summary</p>
+                  <p className="mt-2 text-sm text-[#d9eaff]">
+                    {selectedPayment.title} selected for {gameTitle} / {categoryTitle}.
+                  </p>
+                </div>
+                <span className={`rounded-full border border-[#ffffff12] px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${selectedPayment.accent}`}>
+                  {selectedPayment.title}
+                </span>
+              </div>
+
+              <div className="mt-4 space-y-2 text-sm text-[#c7d7eb]">
+                <div className="flex items-center justify-between gap-3">
+                  <span>Base price</span>
+                  <span className="font-semibold">{formatBRL(price)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span>{paymentMethod === "pix" ? "Pix discount" : paymentMethod === "card" ? "Gateway fee" : "Balance adjustment"}</span>
+                  <span className={`font-semibold ${paymentAdjustment <= 0 ? "text-[#89f0be]" : "text-[#ffd5a3]"}`}>
+                    {paymentAdjustment === 0 ? formatBRL(0) : `${paymentAdjustment > 0 ? "+" : "-"}${formatBRL(Math.abs(paymentAdjustment))}`}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-t border-[#ffffff12] pt-3 text-base">
+                  <span className="font-bold text-[#f4e8c8]">Total</span>
+                  <span className="text-lg font-black text-[#ffcf57]">{formatBRL(finalPrice)}</span>
+                </div>
+              </div>
+
+              <p className="mt-4 text-xs leading-6 text-[#94a7c3]">
+                {paymentMethod === "pix"
+                  ? "Pix orders are prioritized and can be confirmed instantly after payment."
+                  : paymentMethod === "card"
+                  ? "Card checkout can support installments once the gateway is connected."
+                  : "LM Coins uses your internal wallet before any external payment is required."}
+              </p>
+            </div>
+          ) : null}
+        </div>
+
         <div className="grid gap-4">
           <div>
             <label
@@ -339,7 +449,11 @@ export function GoldPurchaseMenu({
           disabled={!formReady}
           className={`${isTbc ? "tbc-gold-button" : isMidnight ? "midnight-gold-button" : isClassic ? "classic-gold-button" : isPandaria ? "pandaria-gold-button" : "loot-gold-button"} w-full rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200`}
         >
-          Continue
+          {paymentMethod === "pix"
+            ? `Continue to Pix - ${formatBRL(finalPrice)}`
+            : paymentMethod === "card"
+            ? `Continue to card - ${formatBRL(finalPrice)}`
+            : `Pay with LM Coins - ${formatBRL(finalPrice)}`}
         </button>
       </div>
     </aside>
