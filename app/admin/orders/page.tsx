@@ -18,6 +18,14 @@ function formatDate(unixSeconds: number) {
   return new Date(unixSeconds * 1000).toLocaleString("pt-BR");
 }
 
+function compactId(id: string) {
+  if (id.length <= 18) {
+    return id;
+  }
+
+  return `${id.slice(0, 10)}...${id.slice(-6)}`;
+}
+
 function getOrderBadge(
   paymentStatus: Stripe.Checkout.Session["payment_status"],
   checkoutStatus: Stripe.Checkout.Session["status"],
@@ -104,60 +112,63 @@ export default async function AdminOrdersPage() {
           ) : null}
 
           {!loadError && sessions.length > 0 ? (
-            <div className="mt-6 overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-[#ffffff14] text-xs uppercase tracking-[0.12em] text-[#9cb3d5]">
-                    <th className="px-3 py-3">Status</th>
-                    <th className="px-3 py-3">Session</th>
-                    <th className="px-3 py-3">Player / Email</th>
-                    <th className="px-3 py-3">Game</th>
-                    <th className="px-3 py-3">Payment</th>
-                    <th className="px-3 py-3">Total</th>
-                    <th className="px-3 py-3">Created</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sessions.map((session) => {
-                    const badge = getOrderBadge(session.payment_status, session.status);
-                    const gameTitle = session.metadata?.gameTitle || "--";
-                    const categoryTitle = session.metadata?.categoryTitle || "--";
-                    const nickname = session.metadata?.nickname || "--";
-                    const paymentMethod = session.metadata?.paymentMethod || "--";
+            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {sessions.map((session) => {
+                const badge = getOrderBadge(session.payment_status, session.status);
+                const gameTitle = session.metadata?.gameTitle || "--";
+                const categoryTitle = session.metadata?.categoryTitle || "--";
+                const nickname = session.metadata?.nickname || "--";
+                const paymentMethod = session.metadata?.paymentMethod || "--";
 
-                    return (
-                      <tr key={session.id} className="border-b border-[#ffffff0f] align-top text-[#dce8fa]">
-                        <td className="px-3 py-3">
-                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold uppercase tracking-[0.12em] ${badge.classes}`}>
-                            {badge.label}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3">
-                          <p className="font-semibold text-[#c9dcf8]">{session.id}</p>
-                        </td>
-                        <td className="px-3 py-3">
-                          <p className="font-semibold">{nickname}</p>
-                          <p className="text-xs text-[#90a7c8]">{session.customer_email || "--"}</p>
-                        </td>
-                        <td className="px-3 py-3">
-                          <p className="font-semibold">{gameTitle}</p>
-                          <p className="text-xs text-[#90a7c8]">{categoryTitle}</p>
-                        </td>
-                        <td className="px-3 py-3">
-                          <p className="font-semibold uppercase">{paymentMethod}</p>
-                          <p className="text-xs text-[#90a7c8]">{session.metadata?.server || "--"} / {session.metadata?.faction || "--"}</p>
-                        </td>
-                        <td className="px-3 py-3 font-semibold text-[#ffcf57]">
-                          {formatMoney(session.amount_total, session.currency)}
-                        </td>
-                        <td className="px-3 py-3 text-xs text-[#9ab0cd]">
-                          {formatDate(session.created)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                return (
+                  <article
+                    key={session.id}
+                    className="rounded-2xl border border-[#ffffff14] bg-[linear-gradient(180deg,rgba(18,33,53,0.88),rgba(8,16,29,0.95))] p-5 shadow-[0_20px_40px_rgba(2,8,18,0.36)]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#9cb3d5]">Order</p>
+                        <p className="mt-1 text-sm font-semibold text-[#d4e5ff]" title={session.id}>
+                          {compactId(session.id)}
+                        </p>
+                      </div>
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${badge.classes}`}>
+                        {badge.label}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 space-y-3 text-sm">
+                      <div className="rounded-xl border border-[#ffffff10] bg-[#0d1b30]/70 px-3 py-2">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#90a7c8]">Player</p>
+                        <p className="mt-1 font-semibold text-[#e2edff] break-words">{nickname}</p>
+                        <p className="text-xs text-[#92a9ca] break-words">{session.customer_email || "--"}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="rounded-xl border border-[#ffffff10] bg-[#0d1b30]/60 px-3 py-2">
+                          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#90a7c8]">Game</p>
+                          <p className="mt-1 font-semibold text-[#e2edff]">{gameTitle}</p>
+                          <p className="text-xs text-[#92a9ca]">{categoryTitle}</p>
+                        </div>
+                        <div className="rounded-xl border border-[#ffffff10] bg-[#0d1b30]/60 px-3 py-2">
+                          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#90a7c8]">Payment</p>
+                          <p className="mt-1 font-semibold uppercase text-[#e2edff]">{paymentMethod}</p>
+                          <p className="text-xs text-[#92a9ca]">{session.metadata?.server || "--"} / {session.metadata?.faction || "--"}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between rounded-xl border border-[#ffffff10] bg-[#0c1728]/75 px-3 py-2">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#90a7c8]">Total</p>
+                        <p className="text-base font-black text-[#ffcf57]">{formatMoney(session.amount_total, session.currency)}</p>
+                      </div>
+
+                      <p className="text-xs font-semibold uppercase tracking-[0.13em] text-[#8ea3c0]">
+                        {formatDate(session.created)}
+                      </p>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           ) : null}
         </section>
