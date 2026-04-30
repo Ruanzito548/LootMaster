@@ -16,7 +16,7 @@ export default function AdminPage() {
           </p>
         </div>
 
-        <section className="mt-8 grid gap-5 lg:grid-cols-4">
+        <section className="mt-8 grid gap-5 lg:grid-cols-5">
           <Link
             href="/admin/manage-hots"
             className="loot-panel rounded-[1.75rem] p-8 transition-colors hover:border-[#4dc6ff]/20 hover:bg-white/4"
@@ -64,6 +64,17 @@ export default function AdminPage() {
             <h2 className="loot-title mt-4 text-3xl font-black">Inventory Items</h2>
             <p className="loot-muted mt-4 text-base leading-8">
               Create item name, WoW rarity, and ticket icon path for inventory slots.
+            </p>
+          </Link>
+
+          <Link
+            href="/admin/orders"
+            className="loot-panel rounded-[1.75rem] p-8 transition-colors hover:border-[#4dc6ff]/20 hover:bg-white/4"
+          >
+            <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">Section 05</p>
+            <h2 className="loot-title mt-4 text-3xl font-black">Orders</h2>
+            <p className="loot-muted mt-4 text-base leading-8">
+              Manage Stripe payments and follow order processing status.
             </p>
           </Link>
         </section>

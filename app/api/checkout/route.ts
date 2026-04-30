@@ -70,6 +70,16 @@ export async function POST(request: Request): Promise<Response> {
       mode: "payment",
       payment_method_types: paymentMethodTypes,
       customer_email: email,
+      metadata: {
+        gameTitle,
+        categoryTitle,
+        goldAmount: String(goldAmount),
+        server,
+        faction,
+        deliveryMethod,
+        nickname,
+        paymentMethod,
+      },
       line_items: [
         {
           price_data: {
