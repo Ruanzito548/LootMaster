@@ -66,6 +66,8 @@ export function GoldPurchaseMenu({
   const [deliveryMethod, setDeliveryMethod] = useState("Face to face");
   const [email, setEmail] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const hasServerOptions = servers.length > 0;
 
   useEffect(
@@ -103,6 +105,47 @@ export function GoldPurchaseMenu({
     ? "Game -> Server -> Faction"
     : "Game";
   const selectedPayment = paymentMethods.find((method) => method.id === paymentMethod) ?? paymentMethods[0];
+
+  const startCheckout = async () => {
+    if (!formReady || checkoutLoading) {
+      return;
+    }
+
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameTitle,
+          categoryTitle,
+          goldAmount: safeGoldAmount,
+          pricePerThousand: goldConfig.pricePerThousand,
+          paymentMethod,
+          nickname: nickname.trim(),
+          server: selectedServer?.name ?? "",
+          faction: selectedFaction,
+          deliveryMethod,
+          email: email.trim(),
+        }),
+      });
+
+      const data = (await response.json()) as { url?: string; error?: string };
+
+      if (!response.ok || !data.url) {
+        setCheckoutError(data.error ?? "Could not start checkout. Try again.");
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch {
+      setCheckoutError("Network error. Check your connection and try again.");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   return (
     <aside className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : isMidnight ? "midnight-panel" : isClassic ? "classic-panel" : isPandaria ? "pandaria-panel" : ""}`}>
@@ -444,16 +487,25 @@ export function GoldPurchaseMenu({
           </div>
         </div>
 
+        {checkoutError ? (
+          <p className="rounded-xl border border-[#ff6060]/30 bg-[#1e0a0a]/70 px-4 py-3 text-sm font-semibold text-[#ff9898]">
+            {checkoutError}
+          </p>
+        ) : null}
+
         <button
           type="button"
-          disabled={!formReady}
+          disabled={!formReady || checkoutLoading}
+          onClick={() => void startCheckout()}
           className={`${isTbc ? "tbc-gold-button" : isMidnight ? "midnight-gold-button" : isClassic ? "classic-gold-button" : isPandaria ? "pandaria-gold-button" : "loot-gold-button"} w-full rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200`}
         >
-          {paymentMethod === "pix"
-            ? `Continue to Pix - ${formatBRL(finalPrice)}`
+          {checkoutLoading
+            ? "Redirecting to checkout..."
+            : paymentMethod === "pix"
+            ? `Pay with Pix — ${formatBRL(finalPrice)}`
             : paymentMethod === "card"
-            ? `Continue to card - ${formatBRL(finalPrice)}`
-            : `Pay with LM Coins - ${formatBRL(finalPrice)}`}
+            ? `Pay with card — ${formatBRL(finalPrice)}`
+            : `Pay with LM Coins — ${formatBRL(finalPrice)}`}
         </button>
       </div>
     </aside>
