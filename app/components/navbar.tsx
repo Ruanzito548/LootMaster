@@ -203,6 +203,9 @@ export function Navbar() {
                     : isPandaria
                     ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
                     : "border-[#f7ba2c]/28 bg-[#f7ba2c]/12 text-[#1a0a00] hover:bg-[#f7ba2c]/20"
+                }`}
+              >
+                Login/Sign Up
               </Link>
             )}
 
