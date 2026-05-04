@@ -21,10 +21,10 @@ export default function Home() {
             </span>
 
             <div className="space-y-4">
-              <h1 className="font-throne max-w-4xl text-5xl leading-none text-[#ffcf57] drop-shadow-[0_6px_24px_rgba(247,186,44,0.28)] sm:text-6xl">
+              <h1 className="font-throne max-w-4xl text-5xl leading-none text-[#ee2222] drop-shadow-[0_6px_24px_rgba(200,20,20,0.35)] sm:text-6xl">
                 Gold, crystals and power-up vibes for every game run.
               </h1>
-              <p className="max-w-3xl text-lg leading-8 text-[#dbcaa7]">
+              <p className="max-w-3xl text-lg leading-8 text-[#cc4444]">
                 Loot Master brings the same energy as the logo: enchanted treasure,
                 bright rewards and a premium fantasy storefront for accounts,
                 boosts and in-game currency.
@@ -55,7 +55,7 @@ export default function Home() {
               </Link>
               <Link
                 href="#how-it-works"
-                className="loot-blue-button rounded-full px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-[#5a0000]"
+                className="loot-blue-button rounded-full px-6 py-3 text-center text-sm font-semibold transition-all duration-200 hover:scale-[1.02]"
               >
                 See how it works
               </Link>
@@ -68,18 +68,18 @@ export default function Home() {
             <div className="absolute right-[-1rem] top-10 h-28 w-28 rotate-12 rounded-[2rem] border border-[#cc2222]/25 bg-[linear-gradient(180deg,rgba(220,60,60,0.3),rgba(100,5,5,0.15))] animate-crystal-float" />
             <div className="space-y-5 relative">
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-[0.3em] text-[#ffc94d]/85">
+                <span className="text-xs uppercase tracking-[0.3em] text-[#f7ba2c]/85">
                   Treasure Vault
                 </span>
-                <span className="rounded-full border border-[#fff1be]/15 bg-[#fff1be]/10 px-3 py-1 text-xs text-[#ffcf57]">
+                <span className="rounded-full border border-[#f7ba2c]/25 bg-[#f7ba2c]/10 px-3 py-1 text-xs text-[#f7ba2c]">
                   Live
                 </span>
               </div>
 
               <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-                <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,222,124,0.18),rgba(180,20,20,0.08))] p-5 ring-1 ring-[#fff1be]/10">
-                  <p className="text-sm text-[#dbcaa7]">What players can buy</p>
-                  <p className="mt-2 text-3xl text-[#ffcf57]">
+                <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(180,10,10,0.15),rgba(0,0,0,0.4))] p-5 ring-1 ring-[#ee2222]/15">
+                  <p className="text-sm text-[#cc4444]">What players can buy</p>
+                  <p className="mt-2 text-3xl text-[#ee2222]">
                     Accounts, boosts and gold
                   </p>
                 </div>
@@ -104,7 +104,7 @@ export default function Home() {
                     className={`rounded-2xl border px-4 py-5 text-center text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
                       index === 0
                         ? "border-[#fff1be]/35 bg-[linear-gradient(180deg,rgba(247,186,44,0.24),rgba(204,122,21,0.18))] text-[#fff1be]"
-                        : "border-[#cc2222]/20 bg-[#2a0000]/35 text-[#ffaaaa]"
+                        : "border-[#ee2222]/20 bg-[#0a0000]/60 text-[#ee4444]"
                     }`}
                   >
                     {item}
@@ -125,7 +125,7 @@ export default function Home() {
                     <p className="text-xs uppercase tracking-[0.22em] text-[#b6a17b]">
                       {metric.label}
                     </p>
-                    <p className="mt-2 text-2xl font-black text-[#ffcf57]">
+                    <p className="mt-2 text-2xl font-black text-[#ee2222]">
                       {metric.value}
                     </p>
                   </div>
@@ -140,13 +140,13 @@ export default function Home() {
           className="grid gap-5 py-6 lg:grid-cols-[0.9fr_1.1fr]"
         >
           <div className="loot-panel rounded-[1.8rem] p-6">
-            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#cc3333]">
+            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ee2222]">
               Flow
             </p>
-            <h2 className="mt-4 text-3xl font-black leading-tight text-[#ffcf57]">
+            <h2 className="mt-4 text-3xl font-black leading-tight text-[#ee2222]">
               From glowing loot to checkout in a few clicks.
             </h2>
-            <p className="mt-4 max-w-xl text-base leading-8 text-[#dbcaa7]">
+            <p className="mt-4 max-w-xl text-base leading-8 text-[#cc4444]">
               The homepage now feels closer to the brand art, while still guiding
               players from discovery into the right game, category and order path.
             </p>
@@ -174,8 +174,8 @@ export default function Home() {
                 key={step.title}
                 className="loot-panel rounded-[1.6rem] p-5"
               >
-                <h3 className="text-xl font-black text-[#ffc94d]">{step.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[#dbcaa7]">
+                <h3 className="text-xl font-black text-[#ee2222]">{step.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-[#cc4444]">
                   {step.description}
                 </p>
               </article>
@@ -186,14 +186,14 @@ export default function Home() {
         <section id="games" className="py-10">
           <div className="flex flex-col gap-3 pb-8 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#cc3333]">
+              <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ee2222]">
                 Games
               </p>
-              <h2 className="mt-3 text-4xl font-black leading-tight text-[#ffcf57]">
+              <h2 className="mt-3 text-4xl font-black leading-tight text-[#ee2222]">
                 Choose where the order starts.
               </h2>
             </div>
-            <p className="max-w-2xl text-sm leading-7 text-[#cdb991]">
+            <p className="max-w-2xl text-sm leading-7 text-[#993333]">
               Every card leads into the same route structure already live in the
               marketplace flow.
             </p>
@@ -238,19 +238,19 @@ export default function Home() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <span className="inline-flex rounded-full border border-[#cc2222]/25 bg-[#3a0000]/40 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#ffaaaa]">
+                    <span className="inline-flex rounded-full border border-[#ee2222]/25 bg-[#0a0000]/60 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#ee4444]">
                       {game.tag}
                     </span>
-                    <h3 className="mt-4 text-3xl font-black leading-tight text-[#ffc94d]">
+                    <h3 className="mt-4 text-3xl font-black leading-tight text-[#ee2222]">
                       {game.title}
                     </h3>
                   </div>
-                  <span className="rounded-full border border-[#fff1be]/12 bg-[#fff1be]/8 px-3 py-1 text-xs font-semibold text-[#e4d0a7]">
+                  <span className="rounded-full border border-[#ee2222]/15 bg-[#0a0000]/40 px-3 py-1 text-xs font-semibold text-[#cc4444]">
                     {game.shortTitle}
                   </span>
                 </div>
 
-                <p className="mt-5 text-sm leading-7 text-[#dbcaa7]">
+                <p className="mt-5 text-sm leading-7 text-[#cc4444]">
                   {game.description}
                 </p>
 
@@ -258,7 +258,7 @@ export default function Home() {
                   {serviceCategories.map((category) => (
                     <span
                       key={`${game.id}-${category.id}`}
-                      className="rounded-full border border-[#cc2222]/18 bg-[#2a0000]/40 px-3 py-1 text-xs font-semibold text-[#ffaaaa]"
+                      className="rounded-full border border-[#ee2222]/18 bg-[#0a0000]/50 px-3 py-1 text-xs font-semibold text-[#ee4444]"
                     >
                       {category.title}
                     </span>
@@ -280,22 +280,22 @@ export default function Home() {
 
         <section className="py-8">
           <div className="loot-panel rounded-[2rem] p-8">
-            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d]">
+            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#f7ba2c]">
               Ready
             </p>
             <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h2 className="text-4xl font-black leading-tight text-[#ffcf57]">
+                <h2 className="text-4xl font-black leading-tight text-[#ee2222]">
                   Send players from highlight to checkout path faster.
                 </h2>
-                <p className="mt-4 max-w-2xl text-base leading-8 text-[#dbcaa7]">
+                <p className="mt-4 max-w-2xl text-base leading-8 text-[#cc4444]">
                   Highlights surface hot games, the homepage explains the offer,
                   and the game grid now lands users directly inside the funnel.
                 </p>
               </div>
               <Link
                 href="#hots"
-                className="loot-blue-button inline-flex rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#5a0000]"
+                className="loot-blue-button inline-flex rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200 hover:scale-[1.02]"
               >
                 Review highlights
               </Link>

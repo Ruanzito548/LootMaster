@@ -75,7 +75,7 @@ export function Navbar() {
           ? "border-[#f1c686]/22 bg-[#1c130b]/88"
           : isPandaria
           ? "border-[#8df0c8]/24 bg-[#071c16]/88"
-          : "border-[#ffd76a]/10 bg-[#08111f]/84"
+          : "border-[#ee2222]/22 bg-[#000000]/92"
       }`}>
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
           <div className="flex items-center gap-4">
@@ -91,19 +91,19 @@ export function Navbar() {
                   ? "border-[#e9b775]/28 bg-[#4e311a]/55 text-[#ffe8c9] hover:bg-[#5f3d22]"
                   : isPandaria
                   ? "border-[#8df0c8]/28 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
-                  : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
+                  : "border-[#ee2222]/20 bg-[#0a0000]/55 text-[#ee4444] hover:bg-[#150000]"
               }`}
               aria-label="Open side menu"
             >
               <span className="flex h-5 w-5 flex-col items-center justify-center gap-1">
                 <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : "bg-[#4dc6ff]"
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : "bg-[#ee2222]"
                 }`} />
                 <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : "bg-[#4dc6ff]"
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : "bg-[#ee2222]"
                 }`} />
                 <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : "bg-[#4dc6ff]"
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : "bg-[#ee2222]"
                 }`} />
               </span>
               <span className="hidden sm:inline">Menu</span>
@@ -144,7 +144,7 @@ export function Navbar() {
                     ? "border-transparent text-[#e8c79e] hover:text-[#ffe6c4]"
                     : isPandaria
                     ? "border-transparent text-[#b9eddc] hover:text-[#e5fff5]"
-                    : "border-transparent text-[#dbcaa7] hover:text-[#fff1be]"
+                    : "border-transparent text-[#ee4444] hover:text-[#ff2222]"
                 }`}
               >
                 {link.label}
@@ -166,10 +166,7 @@ export function Navbar() {
                       ? "border-[#f1c686]/32 bg-[#4e311a]/55 text-[#ffeed5] hover:bg-[#5f3d22]"
                       : isPandaria
                       ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
-                      : "border-[#ffd76a]/28 bg-[#ffd76a]/12 text-[#fff1be] hover:bg-[#ffd76a]/20"
-                  }`}
-                >
-                  My Profile
+                      : "border-[#f7ba2c]/28 bg-[#f7ba2c]/12 text-[#1a0a00] hover:bg-[#f7ba2c]/20"
                 </Link>
 
                 <button
@@ -184,10 +181,7 @@ export function Navbar() {
                       ? "border-[#f1c686]/25 bg-[#3d2614]/55 text-[#ffeed5] hover:bg-[#4a2f19]"
                       : isPandaria
                       ? "border-[#8df0c8]/25 bg-[#103e31]/55 text-[#e7fff6] hover:bg-[#155341]"
-                      : "border-[#84d5ff]/20 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
-                  }`}
-                >
-                  Sign Out
+                      : "border-[#f7ba2c]/22 bg-[#0a0000]/55 text-[#f7ba2c] hover:bg-[#f7ba2c]/12"
                 </button>
               </>
             ) : (
@@ -202,10 +196,7 @@ export function Navbar() {
                     ? "border-[#f1c686]/32 bg-[#4e311a]/55 text-[#ffeed5] hover:bg-[#5f3d22]"
                     : isPandaria
                     ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
-                    : "border-[#ffd76a]/28 bg-[#ffd76a]/12 text-[#fff1be] hover:bg-[#ffd76a]/20"
-                }`}
-              >
-                Login/Sign Up
+                    : "border-[#f7ba2c]/28 bg-[#f7ba2c]/12 text-[#1a0a00] hover:bg-[#f7ba2c]/20"
               </Link>
             )}
 
@@ -220,10 +211,7 @@ export function Navbar() {
                   ? "border-[#e9b775]/25 bg-[#4e311a]/45 text-[#ffe8c9] hover:bg-[#5f3d22]"
                   : isPandaria
                   ? "border-[#8df0c8]/25 bg-[#185641]/45 text-[#e7fff6] hover:bg-[#226f54]"
-                  : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
-              }`}
-            >
-              Admin
+                  : "border-[#ee2222]/18 bg-[#0a0000]/45 text-[#ee4444] hover:bg-[#150000]"
             </Link>
           </div>
         </div>
@@ -247,7 +235,7 @@ export function Navbar() {
               ? "bg-[#120c06]/80"
               : isPandaria
               ? "bg-[#03110d]/80"
-              : "bg-[#050b14]/78"
+              : "bg-[#000000]/82"
           } ${isOpen ? "opacity-100" : "opacity-0"}`}
         />
 
@@ -261,18 +249,18 @@ export function Navbar() {
               ? "border-[#e9b775]/18 bg-[linear-gradient(180deg,#4a2e18_0%,#1b120a_100%)]"
               : isPandaria
               ? "border-[#8df0c8]/18 bg-[linear-gradient(180deg,#1b5f49_0%,#092118_100%)]"
-              : "border-[#ffd76a]/12 bg-[linear-gradient(180deg,#0f2240_0%,#07101d_100%)]"
+              : "border-[#ee2222]/18 bg-[linear-gradient(180deg,#150000_0%,#000000_100%)]"
           } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
           <div className="flex items-center justify-between border-b pb-5">
             <div>
               <p className={`text-sm font-bold uppercase tracking-[0.28em] ${
-                isTbc ? "text-[#a8ff9f]" : isMidnight ? "text-[#7fd4ff]" : "text-[#8dd0ff]"
+                isTbc ? "text-[#a8ff9f]" : isMidnight ? "text-[#7fd4ff]" : "text-[#ee2222]"
               }`}>
                 Games
               </p>
               <h2 className={`font-throne mt-3 text-4xl ${
-                isTbc ? "text-[#d4ffcc]" : isMidnight ? "text-[#b8e0ff]" : "text-[#ffc94d]"
+                isTbc ? "text-[#d4ffcc]" : isMidnight ? "text-[#b8e0ff]" : "text-[#ee2222]"
               }`}>
                 Choose your game
               </h2>
@@ -286,7 +274,7 @@ export function Navbar() {
                   ? "border-[#a8ff9f]/20 bg-[#a8ff9f]/10 hover:bg-[#a8ff9f]/15 hover:border-[#a8ff9f]/25"
                   : isMidnight
                   ? "border-[#4dc6ff]/20 bg-[#4dc6ff]/10 hover:bg-[#4dc6ff]/16 hover:border-[#4dc6ff]/30"
-                  : "border-[#ffd76a]/14 bg-[#fff1be]/8 hover:bg-[#fff1be]/12 hover:border-[#ffd76a]/20"
+                    : "border-[#f7ba2c]/18 bg-[#f7ba2c]/8 hover:bg-[#f7ba2c]/12 hover:border-[#f7ba2c]/28"
               }`}
             >
               Close
@@ -294,7 +282,7 @@ export function Navbar() {
           </div>
 
           <div className={`mt-6 flex items-center justify-between text-xs font-bold uppercase tracking-[0.26em] ${
-            isTbc ? "text-[#b8e6b8]" : isMidnight ? "text-[#a8d0ff]" : "text-[#b39a74]"
+            isTbc ? "text-[#b8e6b8]" : isMidnight ? "text-[#a8d0ff]" : "text-[#883333]"
           }`}>
             <span>Available</span>
             <span>{orderedGames.length}</span>
@@ -312,12 +300,12 @@ export function Navbar() {
                       ? "border-[#a8ff9f]/30 bg-[#a8ff9f]/12 text-[#e4ffe0]"
                       : isMidnight
                       ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/12 text-[#e4f6ff]"
-                      : "border-[#ffd76a]/24 bg-[#ffd76a]/10 text-[#fff1be]"
+                      : "border-[#f7ba2c]/22 bg-[#f7ba2c]/8 text-[#1a0a00]"
                     : isTbc
                     ? "border-[#a8ff9f]/12 text-[#b8e6b8] hover:border-[#a8ff9f]/24"
                     : isMidnight
                     ? "border-[#4dc6ff]/14 text-[#a8d8ff] hover:border-[#4dc6ff]/28"
-                    : "border-[#ffd76a]/10 text-[#dbcaa7] hover:border-[#ffd76a]/20"
+                    : "border-[#ee2222]/12 text-[#ee4444] hover:border-[#ee2222]/24"
                 }`}
               >
                 {link.label}
@@ -339,7 +327,7 @@ export function Navbar() {
                       ? "border-[#a8ff9f]/15 hover:border-[#a8ff9f]/30 hover:shadow-[0_0_20px_rgba(168,255,159,0.15)]"
                       : isMidnight
                       ? "border-[#4dc6ff]/18 hover:border-[#4dc6ff]/35 hover:shadow-[0_0_20px_rgba(77,198,255,0.2)]"
-                      : "border-[#ffd76a]/10 hover:border-[#4dc6ff]/25 hover:shadow-[0_0_20px_rgba(77,198,255,0.15)]"
+                      : "border-[#f7ba2c]/24 hover:border-[#ee2222]/35 hover:shadow-[0_0_20px_rgba(200,20,20,0.2)]"
                   }`}
                   style={{
                     backgroundImage:
@@ -374,13 +362,13 @@ export function Navbar() {
                           ? "text-[#d4ffcc] group-hover:text-[#e8ffeb]"
                           : isMidnight
                           ? "text-[#c7e7ff] group-hover:text-[#f0f9ff]"
-                          : "text-[#ffc94d] group-hover:text-[#ffeb3b]"
+                          : "text-[#ee2222] group-hover:text-[#ff4444]"
                       }`}>
                         {game.title}
                       </p>
                     </div>
                     <p className={`mt-1 text-xs ${
-                      isTbc ? "text-[#a8d0a8]" : isMidnight ? "text-[#9dc4ea]" : "text-[#c5d4e0]"
+                      isTbc ? "text-[#a8d0a8]" : isMidnight ? "text-[#9dc4ea]" : "text-[#993333]"
                     }`}>
                       {game.shortTitle}
                     </p>
@@ -390,7 +378,7 @@ export function Navbar() {
                       ? "border-[#a8ff9f]/30 bg-[#a8ff9f]/20 text-[#e0ffe0] group-hover:border-[#a8ff9f]/50 group-hover:shadow-[0_0_12px_rgba(168,255,159,0.3)]"
                       : isMidnight
                       ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/18 text-[#dff3ff] group-hover:border-[#7fd4ff]/55 group-hover:shadow-[0_0_12px_rgba(77,198,255,0.35)]"
-                      : "border-[#4dc6ff]/25 bg-[#4dc6ff]/15 text-[#d0e8ff] group-hover:border-[#4dc6ff]/50 group-hover:shadow-[0_0_12px_rgba(77,198,255,0.3)]"
+                      : "border-[#f7ba2c]/28 bg-[#f7ba2c]/14 text-[#1a0a00] group-hover:border-[#f7ba2c]/50 group-hover:shadow-[0_0_12px_rgba(247,186,44,0.3)]"
                   }`}>
                     {game.tag}
                   </span>
