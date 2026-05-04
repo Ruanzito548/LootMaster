@@ -167,6 +167,9 @@ export function Navbar() {
                       : isPandaria
                       ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
                       : "border-[#f7ba2c]/28 bg-[#f7ba2c]/12 text-[#1a0a00] hover:bg-[#f7ba2c]/20"
+                  }`}
+                >
+                  My Profile
                 </Link>
 
                 <button
@@ -182,6 +185,9 @@ export function Navbar() {
                       : isPandaria
                       ? "border-[#8df0c8]/25 bg-[#103e31]/55 text-[#e7fff6] hover:bg-[#155341]"
                       : "border-[#f7ba2c]/22 bg-[#0a0000]/55 text-[#f7ba2c] hover:bg-[#f7ba2c]/12"
+                  }`}
+                >
+                  Sign Out
                 </button>
               </>
             ) : (
