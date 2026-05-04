@@ -9,24 +9,24 @@
 }
 
 :root {
-  --background: #07111f;
+  --background: #0a0000;
   --foreground: #f8eed4;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: "ThroneOfShadows", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Code", "Consolas", monospace;
-  --loot-ink: #09111d;
-  --loot-brown: #10233f;
-  --loot-panel: rgba(8, 20, 38, 0.78);
+  --loot-ink: #080000;
+  --loot-brown: #1a0000;
+  --loot-panel: rgba(20, 3, 3, 0.78);
   --loot-gold: #f7ba2c;
   --loot-gold-soft: #ffd76a;
-  --loot-blue: #2db2ff;
-  --loot-blue-deep: #0e4b9d;
+  --loot-blue: #cc2222;
+  --loot-blue-deep: #7a0000;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #07111f;
+    --background: #0a0000;
     --foreground: #f8eed4;
   }
 }
@@ -40,10 +40,10 @@ body {
   color: var(--foreground);
   font-family: "ThroneOfShadows", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   background-image:
-    radial-gradient(circle at top, rgba(247, 186, 44, 0.14), transparent 30%),
-    radial-gradient(circle at 22% 26%, rgba(45, 178, 255, 0.14), transparent 24%),
-    radial-gradient(circle at 78% 14%, rgba(255, 215, 106, 0.1), transparent 18%),
-    linear-gradient(180deg, #0e1a2d 0%, #09111d 48%, #050b14 100%);
+    radial-gradient(circle at top, rgba(247, 186, 44, 0.12), transparent 28%),
+    radial-gradient(circle at 22% 26%, rgba(180, 20, 20, 0.18), transparent 24%),
+    radial-gradient(circle at 78% 14%, rgba(200, 30, 30, 0.12), transparent 18%),
+    linear-gradient(180deg, #1a0000 0%, #0f0000 48%, #050000 100%);
 }
 
 .font-throne {
@@ -53,12 +53,12 @@ body {
 
 .loot-panel {
   background:
-    linear-gradient(180deg, rgba(22, 53, 102, 0.82), rgba(7, 16, 31, 0.92)),
+    linear-gradient(180deg, rgba(80, 10, 10, 0.82), rgba(20, 3, 3, 0.92)),
     var(--loot-panel);
   border: 1px solid rgba(255, 214, 117, 0.18);
   box-shadow:
     inset 0 1px 0 rgba(255, 236, 185, 0.1),
-    0 24px 70px rgba(3, 10, 20, 0.42);
+    0 24px 70px rgba(10, 0, 0, 0.42);
 }
 
 .loot-shell {
@@ -116,14 +116,14 @@ body {
 /* ─────────────────────────────────────────────────────────────────── */
 
 .loot-secondary-button {
-  background: linear-gradient(180deg, rgba(255, 241, 190, 0.08), rgba(45, 178, 255, 0.08));
+  background: linear-gradient(180deg, rgba(255, 241, 190, 0.08), rgba(180, 20, 20, 0.1));
   border: 1px solid rgba(255, 214, 117, 0.16);
   color: #f8eed4;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .loot-secondary-button:hover {
-  background: linear-gradient(180deg, rgba(255, 241, 190, 0.12), rgba(45, 178, 255, 0.12));
+  background: linear-gradient(180deg, rgba(255, 241, 190, 0.12), rgba(180, 20, 20, 0.16));
 }
 
 .tbc-shell {
@@ -347,9 +347,9 @@ body {
 }
 
 .loot-blue-button {
-  background: linear-gradient(180deg, rgba(75, 188, 255, 0.26), rgba(11, 66, 143, 0.8));
-  border: 1px solid rgba(132, 213, 255, 0.22);
-  box-shadow: inset 0 1px 0 rgba(190, 238, 255, 0.12);
+  background: linear-gradient(180deg, rgba(220, 50, 50, 0.36), rgba(100, 5, 5, 0.85));
+  border: 1px solid rgba(220, 80, 80, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 180, 180, 0.12);
 }
 
 .loot-input,
