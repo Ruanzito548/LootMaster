@@ -233,7 +233,6 @@ export function AdminOrderApplicantsClient({ summary }: Props) {
                         onClick={() => void selectSupplier(application)}
                         disabled={
                           !isAuthenticated ||
-                          !application.supplierDiscordUserId ||
                           submittingId === application.applicationId ||
                           isSelected
                         }

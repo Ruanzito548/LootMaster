@@ -4,7 +4,7 @@ type RequestBody = {
   orderId: string;
   supplierName: string;
   supplierDiscordHandle: string;
-  supplierDiscordUserId: string;
+  supplierDiscordUserId?: string;
   gameTitle: string;
   categoryTitle: string;
   goldAmount: number;
@@ -23,7 +23,7 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  if (!body.orderId || !body.supplierName || !body.supplierDiscordUserId) {
+  if (!body.orderId || !body.supplierName) {
     return Response.json({ error: "Missing required fields." }, { status: 422 });
   }
 

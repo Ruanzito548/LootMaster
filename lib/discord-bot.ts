@@ -1,7 +1,7 @@
 type CreatePrivateSupplierThreadInput = {
   orderId: string;
   supplierName: string;
-  supplierDiscordUserId: string;
+  supplierDiscordUserId?: string;
   supplierDiscordHandle: string;
   gameTitle: string;
   categoryTitle: string;
@@ -83,10 +83,12 @@ export async function createPrivateSupplierThread(
 
   const thread = (await createResponse.json()) as DiscordThreadResponse;
 
-  await discordRequest(`/channels/${thread.id}/thread-members/${input.supplierDiscordUserId}`, {
-    method: "PUT",
-    body: JSON.stringify({}),
-  });
+  if (input.supplierDiscordUserId?.trim()) {
+    await discordRequest(`/channels/${thread.id}/thread-members/${input.supplierDiscordUserId.trim()}`, {
+      method: "PUT",
+      body: JSON.stringify({}),
+    });
+  }
 
   const introLines = [
     `Supplier selected: ${input.supplierName}${input.supplierDiscordHandle ? ` (${input.supplierDiscordHandle})` : ""}`,
@@ -97,6 +99,9 @@ export async function createPrivateSupplierThread(
     `Faction: ${input.faction}`,
     `Character: ${input.nickname}`,
     `Order Total: ${input.totalLabel}`,
+    input.supplierDiscordUserId?.trim()
+      ? `Supplier Discord User ID: ${input.supplierDiscordUserId.trim()}`
+      : "Supplier Discord User ID not provided. Share the thread link manually with the supplier.",
     "Use this private thread to collect the supplier payout details and complete internal coordination.",
   ];
 

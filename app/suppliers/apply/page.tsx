@@ -23,8 +23,6 @@ function SupplierOrderApplyContent() {
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [discordHandle, setDiscordHandle] = useState("");
-  const [discordUserId, setDiscordUserId] = useState("");
 
   const order = useMemo(
     () => ({
@@ -52,11 +50,6 @@ function SupplierOrderApplyContent() {
       return;
     }
 
-    if (!discordUserId.trim()) {
-      setErrorMessage("Please provide your Discord User ID before applying.");
-      return;
-    }
-
     setSaving(true);
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -81,8 +74,8 @@ function SupplierOrderApplyContent() {
         uid: credentials.user.uid,
         supplierName: credentials.user.displayName?.trim() || "Supplier",
         supplierEmail: credentials.user.email?.trim().toLowerCase() || "",
-        supplierDiscordHandle: discordHandle.trim(),
-        supplierDiscordUserId: discordUserId.trim(),
+        supplierDiscordHandle: "",
+        supplierDiscordUserId: "",
         gameTitle: order.gameTitle,
         categoryTitle: order.categoryTitle,
         goldAmount: Number(order.goldAmount) || 0,
@@ -159,28 +152,9 @@ function SupplierOrderApplyContent() {
 
           <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="grid flex-1 gap-4">
-              <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-                Discord Handle
-                <input
-                  value={discordHandle}
-                  onChange={(event) => setDiscordHandle(event.target.value)}
-                  className="loot-input px-4 py-3 text-sm font-semibold"
-                  placeholder="example: suppliername or suppliername#1234"
-                />
-              </label>
-
-              <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-                Discord User ID
-                <input
-                  value={discordUserId}
-                  onChange={(event) => setDiscordUserId(event.target.value)}
-                  className="loot-input px-4 py-3 text-sm font-semibold"
-                  placeholder="Enable Developer Mode in Discord and copy your User ID"
-                />
-              </label>
-
               <p className="loot-muted text-sm leading-7">
-                By applying, you are registering your interest in fulfilling this paid order. Your Discord User ID is required so the system can open a private payout thread with you if you are selected.
+                By applying, you are registering your interest in fulfilling this paid order.
+                The admin team will review your application in the Orders panel.
               </p>
             </div>
 
