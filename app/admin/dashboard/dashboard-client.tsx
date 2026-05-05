@@ -44,36 +44,36 @@ function getRangeStartMs(range: RangeValue): number | null {
   if (range === "all") return null;
   const days = Number(range);
   return Date.now() - days * 24 * 60 * 60 * 1000;
-}
+      <section className="rounded-[1.6rem] border border-green-900 bg-green-950/20 p-5">
 
-export function DashboardClient({ orders, loadError }: DashboardClientProps) {
+          <label className="space-y-1 text-xs font-bold uppercase tracking-[0.14em] text-green-600">
   const [range, setRange] = useState<RangeValue>("30");
-  const [statusFilter, setStatusFilter] = useState("all");
+            <select className="mt-1 block w-full rounded-xl border border-green-800 bg-black px-3 py-2 text-sm text-green-300 outline-none focus:border-green-600" value={range} onChange={(event) => setRange(event.target.value as RangeValue)}>
   const [gameFilter, setGameFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
 
   const statusOptions = useMemo(() => {
     const unique = new Set(orders.map((order) => order.statusLabel));
     return ["all", ...Array.from(unique)];
-  }, [orders]);
+          <label className="space-y-1 text-xs font-bold uppercase tracking-[0.14em] text-green-600">
 
-  const gameOptions = useMemo(() => {
+            <select className="mt-1 block w-full rounded-xl border border-green-800 bg-black px-3 py-2 text-sm text-green-300 outline-none focus:border-green-600" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
     const unique = new Set(orders.map((order) => order.gameTitle));
     return ["all", ...Array.from(unique)];
   }, [orders]);
 
   const paymentOptions = useMemo(() => {
-    const unique = new Set(orders.map((order) => order.paymentMethod));
+          <label className="space-y-1 text-xs font-bold uppercase tracking-[0.14em] text-green-600">
     return ["all", ...Array.from(unique)];
-  }, [orders]);
+            <select className="mt-1 block w-full rounded-xl border border-green-800 bg-black px-3 py-2 text-sm text-green-300 outline-none focus:border-green-600" value={gameFilter} onChange={(event) => setGameFilter(event.target.value)}>
 
   const filteredOrders = useMemo(() => {
     const rangeStart = getRangeStartMs(range);
 
     return orders.filter((order) => {
-      const createdMs = order.createdUnix * 1000;
+          <label className="space-y-1 text-xs font-bold uppercase tracking-[0.14em] text-green-600">
       if (rangeStart && createdMs < rangeStart) return false;
-      if (statusFilter !== "all" && order.statusLabel !== statusFilter) return false;
+            <select className="mt-1 block w-full rounded-xl border border-green-800 bg-black px-3 py-2 text-sm text-green-300 outline-none focus:border-green-600" value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value)}>
       if (gameFilter !== "all" && order.gameTitle !== gameFilter) return false;
       if (paymentFilter !== "all" && order.paymentMethod !== paymentFilter) return false;
       return true;
@@ -83,41 +83,41 @@ export function DashboardClient({ orders, loadError }: DashboardClientProps) {
   const currency = filteredOrders[0]?.currency || orders[0]?.currency || "brl";
 
   const totalRevenue = filteredOrders.reduce((acc, order) => acc + order.amountTotal, 0);
-  const totalOrders = filteredOrders.length;
-  const paidOrders = filteredOrders.filter((order) => order.statusLabel === "Pago").length;
+        <section className="rounded-[1.6rem] border border-green-900 bg-green-950/20 p-6">
+          <p className="text-sm font-semibold text-red-400">{loadError}</p>
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
-  const revenueByDay = useMemo(() => {
-    const grouped = new Map<string, number>();
+        <section className="rounded-[1.6rem] border border-green-900 bg-green-950/20 p-6">
+          <p className="text-sm font-semibold text-green-600">Nenhum pedido encontrado para os filtros selecionados.</p>
 
     for (const order of filteredOrders) {
       const date = new Date(order.createdUnix * 1000);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       grouped.set(key, (grouped.get(key) || 0) + order.amountTotal);
-    }
-
-    const points = Array.from(grouped.entries())
+            <article className="rounded-[1.2rem] border border-green-900 bg-green-950/20 p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-green-600">Faturamento</p>
+              <p className="mt-2 text-3xl font-black text-green-300">{formatMoney(totalRevenue, currency)}</p>
       .sort(([a], [b]) => (a < b ? -1 : 1))
-      .slice(-14)
-      .map(([dayKey, value]) => ({
-        dayKey,
+            <article className="rounded-[1.2rem] border border-green-900 bg-green-950/20 p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-green-600">Pedidos</p>
+              <p className="mt-2 text-3xl font-black text-green-400">{totalOrders}</p>
         label: formatDateLabel(new Date(`${dayKey}T00:00:00`).getTime() / 1000),
-        value,
-      }));
-
+            <article className="rounded-[1.2rem] border border-green-900 bg-green-950/20 p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-green-600">Pagos</p>
+              <p className="mt-2 text-3xl font-black text-green-300">{paidOrders}</p>
     const maxValue = Math.max(...points.map((point) => point.value), 1);
-    return { points, maxValue };
-  }, [filteredOrders]);
-
+            <article className="rounded-[1.2rem] border border-green-900 bg-green-950/20 p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-green-600">Ticket medio</p>
+              <p className="mt-2 text-3xl font-black text-green-400">{formatMoney(avgTicket, currency)}</p>
   const statusBreakdown = useMemo(() => {
     const grouped = new Map<string, number>();
 
     for (const order of filteredOrders) {
       grouped.set(order.statusLabel, (grouped.get(order.statusLabel) || 0) + 1);
-    }
+            <article className="rounded-[1.4rem] border border-green-900 bg-green-950/20 p-5 xl:col-span-2">
 
-    const rows = Array.from(grouped.entries())
-      .map(([label, count]) => ({
+                <h2 className="text-xl font-black text-green-300">Faturamento por dia</h2>
+                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Ultimos {revenueByDay.points.length} pontos</p>
         label,
         count,
         pct: totalOrders > 0 ? Math.round((count / totalOrders) * 100) : 0,
@@ -126,29 +126,29 @@ export function DashboardClient({ orders, loadError }: DashboardClientProps) {
 
     return rows;
   }, [filteredOrders, totalOrders]);
-
+                          className="w-full rounded-t-md bg-[linear-gradient(180deg,#86efac_0%,#4ade80_52%,#16a34a_100%)]"
   const gameRevenue = useMemo(() => {
     const grouped = new Map<string, number>();
 
     for (const order of filteredOrders) {
-      grouped.set(order.gameTitle, (grouped.get(order.gameTitle) || 0) + order.amountTotal);
+                      <span className="text-[10px] text-green-600">{point.label}</span>
     }
 
     return Array.from(grouped.entries())
       .map(([game, value]) => ({ game, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 6);
-  }, [filteredOrders]);
-
+            <article className="rounded-[1.4rem] border border-green-900 bg-green-950/20 p-5">
+              <h2 className="text-xl font-black text-green-300">Status</h2>
   const topGameMax = Math.max(...gameRevenue.map((item) => item.value), 1);
 
   const recentOrders = useMemo(
     () => [...filteredOrders].sort((a, b) => b.createdUnix - a.createdUnix).slice(0, 8),
-    [filteredOrders],
-  );
+                      <span className="font-semibold text-green-300">{row.label}</span>
+                      <span className="text-green-600">{row.count} ({row.pct}%)</span>
 
-  return (
-    <div className="space-y-6">
+                    <div className="h-2 rounded-full bg-green-950">
+                      <div className="h-2 rounded-full bg-[linear-gradient(90deg,#4ade80,#86efac)]" style={{ width: `${Math.max(4, row.pct)}%` }} />
       <section className="loot-panel rounded-[1.6rem] p-5">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label className="space-y-1 text-xs font-bold uppercase tracking-[0.14em] text-[#8aa1c3]">
@@ -158,19 +158,19 @@ export function DashboardClient({ orders, loadError }: DashboardClientProps) {
               value={range}
               onChange={(event) => setRange(event.target.value as RangeValue)}
             >
-              <option value="7">Ultimos 7 dias</option>
-              <option value="30">Ultimos 30 dias</option>
+            <article className="rounded-[1.4rem] border border-green-900 bg-green-950/20 p-5">
+              <h2 className="text-xl font-black text-green-300">Top jogos por valor</h2>
               <option value="90">Ultimos 90 dias</option>
               <option value="all">Todo periodo</option>
             </select>
           </label>
 
           <label className="space-y-1 text-xs font-bold uppercase tracking-[0.14em] text-[#8aa1c3]">
-            Status
-            <select
+                        <span className="font-semibold text-green-300">{item.game}</span>
+                        <span className="text-green-600">{formatMoney(item.value, currency)}</span>
               className="loot-select rounded-xl px-3 py-2 text-sm"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
+                      <div className="h-2 rounded-full bg-green-950">
+                        <div className="h-2 rounded-full bg-[linear-gradient(90deg,#4ade80,#86efac)]" style={{ width: `${widthPct}%` }} />
             >
               {statusOptions.map((option) => (
                 <option key={option} value={option}>
@@ -178,16 +178,16 @@ export function DashboardClient({ orders, loadError }: DashboardClientProps) {
                 </option>
               ))}
             </select>
-          </label>
-
+            <article className="rounded-[1.4rem] border border-green-900 bg-green-950/20 p-5">
+              <h2 className="text-xl font-black text-green-300">Pedidos recentes</h2>
           <label className="space-y-1 text-xs font-bold uppercase tracking-[0.14em] text-[#8aa1c3]">
             Jogo
-            <select
+                  <div key={order.id} className="flex items-center justify-between rounded-xl border border-green-900 bg-green-950/30 px-3 py-2">
               className="loot-select rounded-xl px-3 py-2 text-sm"
-              value={gameFilter}
-              onChange={(event) => setGameFilter(event.target.value)}
+                      <p className="text-sm font-semibold text-green-300">{order.gameTitle}</p>
+                      <p className="text-xs text-green-600">{order.nickname} · {formatDateTime(order.createdUnix)}</p>
             >
-              {gameOptions.map((option) => (
+                    <p className="text-sm font-black text-green-300">{formatMoney(order.amountTotal, currency)}</p>
                 <option key={option} value={option}>
                   {option === "all" ? "Todos" : option}
                 </option>

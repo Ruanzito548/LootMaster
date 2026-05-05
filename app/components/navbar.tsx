@@ -32,7 +32,7 @@ export function Navbar() {
   const isMidnight = pathname?.includes("retail");
   const isClassic = pathname?.includes("classic-era");
   const isPandaria = pathname?.includes("mist-of-pandaria");
-  const isOrders = pathname?.startsWith("/admin/orders");
+  const isAdmin = pathname?.startsWith("/admin");
 
   useEffect(() => subscribeToHotGames(setHotIds), []);
 
@@ -76,7 +76,7 @@ export function Navbar() {
           ? "border-[#f1c686]/22 bg-[#1c130b]/88"
           : isPandaria
           ? "border-[#8df0c8]/24 bg-[#071c16]/88"
-          : isOrders
+          : isAdmin
           ? "border-[#4ade80]/20 bg-black/90"
           : "border-[#ffd76a]/10 bg-[#08111f]/84"
       }`}>
@@ -94,7 +94,7 @@ export function Navbar() {
                   ? "border-[#e9b775]/28 bg-[#4e311a]/55 text-[#ffe8c9] hover:bg-[#5f3d22]"
                   : isPandaria
                   ? "border-[#8df0c8]/28 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
-                  : isOrders
+                  : isAdmin
                   ? "border-[#4ade80]/25 bg-[#052e16]/60 text-[#86efac] hover:bg-[#052e16]"
                   : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
               }`}
@@ -102,13 +102,13 @@ export function Navbar() {
             >
               <span className="flex h-5 w-5 flex-col items-center justify-center gap-1">
                 <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : isOrders ? "bg-[#4ade80]" : "bg-[#4dc6ff]"
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : isAdmin ? "bg-[#4ade80]" : "bg-[#4dc6ff]"
                 }`} />
                 <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : isOrders ? "bg-[#4ade80]" : "bg-[#4dc6ff]"
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : isAdmin ? "bg-[#4ade80]" : "bg-[#4dc6ff]"
                 }`} />
                 <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : isOrders ? "bg-[#4ade80]" : "bg-[#4dc6ff]"
+                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : isAdmin ? "bg-[#4ade80]" : "bg-[#4dc6ff]"
                 }`} />
               </span>
               <span className="hidden sm:inline">Menu</span>
@@ -140,7 +140,7 @@ export function Navbar() {
                       ? "border-[#f1c686]/35 bg-[#f1c686]/14 text-[#ffeed5]"
                       : isPandaria
                       ? "border-[#8df0c8]/35 bg-[#8df0c8]/14 text-[#e7fff6]"
-                      : isOrders
+                      : isAdmin
                       ? "border-[#4ade80]/35 bg-[#4ade80]/12 text-[#86efac]"
                       : "border-[#ffd76a]/28 bg-[#ffd76a]/10 text-[#fff1be]"
                     : isTbc
@@ -151,7 +151,7 @@ export function Navbar() {
                     ? "border-transparent text-[#e8c79e] hover:text-[#ffe6c4]"
                     : isPandaria
                     ? "border-transparent text-[#b9eddc] hover:text-[#e5fff5]"
-                    : isOrders
+                    : isAdmin
                     ? "border-transparent text-[#4ade80] hover:text-[#86efac]"
                     : "border-transparent text-[#dbcaa7] hover:text-[#fff1be]"
                 }`}
@@ -175,7 +175,7 @@ export function Navbar() {
                       ? "border-[#f1c686]/32 bg-[#4e311a]/55 text-[#ffeed5] hover:bg-[#5f3d22]"
                       : isPandaria
                       ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
-                      : isOrders
+                      : isAdmin
                       ? "border-[#4ade80]/28 bg-[#052e16]/60 text-[#86efac] hover:bg-[#052e16]"
                       : "border-[#ffd76a]/28 bg-[#ffd76a]/12 text-[#fff1be] hover:bg-[#ffd76a]/20"
                   }`}
@@ -195,7 +195,7 @@ export function Navbar() {
                       ? "border-[#f1c686]/25 bg-[#3d2614]/55 text-[#ffeed5] hover:bg-[#4a2f19]"
                       : isPandaria
                       ? "border-[#8df0c8]/25 bg-[#103e31]/55 text-[#e7fff6] hover:bg-[#155341]"
-                      : isOrders
+                      : isAdmin
                       ? "border-[#4ade80]/22 bg-[#052e16]/55 text-[#86efac] hover:bg-[#052e16]"
                       : "border-[#84d5ff]/20 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
                   }`}
@@ -215,7 +215,7 @@ export function Navbar() {
                     ? "border-[#f1c686]/32 bg-[#4e311a]/55 text-[#ffeed5] hover:bg-[#5f3d22]"
                     : isPandaria
                     ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
-                    : isOrders
+                    : isAdmin
                     ? "border-[#4ade80]/28 bg-[#052e16]/60 text-[#86efac] hover:bg-[#052e16]"
                     : "border-[#ffd76a]/28 bg-[#ffd76a]/12 text-[#fff1be] hover:bg-[#ffd76a]/20"
                 }`}
@@ -235,7 +235,7 @@ export function Navbar() {
                   ? "border-[#e9b775]/25 bg-[#4e311a]/45 text-[#ffe8c9] hover:bg-[#5f3d22]"
                   : isPandaria
                   ? "border-[#8df0c8]/25 bg-[#185641]/45 text-[#e7fff6] hover:bg-[#226f54]"
-                  : isOrders
+                  : isAdmin
                   ? "border-[#4ade80]/22 bg-[#052e16]/50 text-[#4ade80] hover:bg-[#052e16]"
                   : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
               }`}
@@ -284,12 +284,12 @@ export function Navbar() {
           <div className="flex items-center justify-between border-b pb-5">
             <div>
               <p className={`text-sm font-bold uppercase tracking-[0.28em] ${
-                isTbc ? "text-[#a8ff9f]" : isMidnight ? "text-[#7fd4ff]" : isOrders ? "text-[#4ade80]" : "text-[#8dd0ff]"
+                isTbc ? "text-[#a8ff9f]" : isMidnight ? "text-[#7fd4ff]" : isAdmin ? "text-[#4ade80]" : "text-[#8dd0ff]"
               }`}>
                 Games
               </p>
               <h2 className={`font-throne mt-3 text-4xl ${
-                isTbc ? "text-[#d4ffcc]" : isMidnight ? "text-[#b8e0ff]" : isOrders ? "text-[#86efac]" : "text-[#ffc94d]"
+                isTbc ? "text-[#d4ffcc]" : isMidnight ? "text-[#b8e0ff]" : isAdmin ? "text-[#86efac]" : "text-[#ffc94d]"
               }`}>
                 Choose your game
               </h2>
@@ -303,7 +303,7 @@ export function Navbar() {
                   ? "border-[#a8ff9f]/20 bg-[#a8ff9f]/10 hover:bg-[#a8ff9f]/15 hover:border-[#a8ff9f]/25"
                   : isMidnight
                   ? "border-[#4dc6ff]/20 bg-[#4dc6ff]/10 hover:bg-[#4dc6ff]/16 hover:border-[#4dc6ff]/30"
-                  : isOrders
+                  : isAdmin
                   ? "border-[#4ade80]/20 bg-[#4ade80]/8 hover:bg-[#4ade80]/12 hover:border-[#4ade80]/30"
                   : "border-[#ffd76a]/14 bg-[#fff1be]/8 hover:bg-[#fff1be]/12 hover:border-[#ffd76a]/20"
               }`}
@@ -313,7 +313,7 @@ export function Navbar() {
           </div>
 
           <div className={`mt-6 flex items-center justify-between text-xs font-bold uppercase tracking-[0.26em] ${
-            isTbc ? "text-[#b8e6b8]" : isMidnight ? "text-[#a8d0ff]" : isOrders ? "text-[#22c55e]" : "text-[#b39a74]"
+            isTbc ? "text-[#b8e6b8]" : isMidnight ? "text-[#a8d0ff]" : isAdmin ? "text-[#22c55e]" : "text-[#b39a74]"
           }`}>
             <span>Available</span>
             <span>{orderedGames.length}</span>
@@ -331,14 +331,14 @@ export function Navbar() {
                       ? "border-[#a8ff9f]/30 bg-[#a8ff9f]/12 text-[#e4ffe0]"
                       : isMidnight
                       ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/12 text-[#e4f6ff]"
-                      : isOrders
+                      : isAdmin
                       ? "border-[#4ade80]/30 bg-[#4ade80]/12 text-[#86efac]"
                       : "border-[#ffd76a]/24 bg-[#ffd76a]/10 text-[#fff1be]"
                     : isTbc
                     ? "border-[#a8ff9f]/12 text-[#b8e6b8] hover:border-[#a8ff9f]/24"
                     : isMidnight
                     ? "border-[#4dc6ff]/14 text-[#a8d8ff] hover:border-[#4dc6ff]/28"
-                    : isOrders
+                    : isAdmin
                     ? "border-[#4ade80]/12 text-[#4ade80] hover:border-[#4ade80]/28"
                     : "border-[#ffd76a]/10 text-[#dbcaa7] hover:border-[#ffd76a]/20"
                 }`}
@@ -362,7 +362,7 @@ export function Navbar() {
                       ? "border-[#a8ff9f]/15 hover:border-[#a8ff9f]/30 hover:shadow-[0_0_20px_rgba(168,255,159,0.15)]"
                       : isMidnight
                       ? "border-[#4dc6ff]/18 hover:border-[#4dc6ff]/35 hover:shadow-[0_0_20px_rgba(77,198,255,0.2)]"
-                      : isOrders
+                      : isAdmin
                       ? "border-[#4ade80]/18 hover:border-[#4ade80]/35 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]"
                       : "border-[#ffd76a]/10 hover:border-[#4dc6ff]/25 hover:shadow-[0_0_20px_rgba(77,198,255,0.15)]"
                   }`}
@@ -389,7 +389,7 @@ export function Navbar() {
                             ? "border-[#a8ff9f]/30 bg-[#a8ff9f]/15 text-[#d4ffcc]"
                             : isMidnight
                             ? "border-[#4dc6ff]/28 bg-[#4dc6ff]/14 text-[#dff3ff]"
-                            : isOrders
+                            : isAdmin
                             ? "border-[#4ade80]/28 bg-[#4ade80]/14 text-[#86efac]"
                             : "border-[#ffd76a]/24 bg-[#f7ba2c]/14 text-[#ffc94d]"
                         }`}>
@@ -401,7 +401,7 @@ export function Navbar() {
                           ? "text-[#d4ffcc] group-hover:text-[#e8ffeb]"
                           : isMidnight
                           ? "text-[#c7e7ff] group-hover:text-[#f0f9ff]"
-                          : isOrders
+                          : isAdmin
                           ? "text-[#4ade80] group-hover:text-[#86efac]"
                           : "text-[#ffc94d] group-hover:text-[#ffeb3b]"
                       }`}>
@@ -409,7 +409,7 @@ export function Navbar() {
                       </p>
                     </div>
                     <p className={`mt-1 text-xs ${
-                      isTbc ? "text-[#a8d0a8]" : isMidnight ? "text-[#9dc4ea]" : isOrders ? "text-[#22c55e]" : "text-[#c5d4e0]"
+                      isTbc ? "text-[#a8d0a8]" : isMidnight ? "text-[#9dc4ea]" : isAdmin ? "text-[#22c55e]" : "text-[#c5d4e0]"
                     }`}>
                       {game.shortTitle}
                     </p>
@@ -419,7 +419,7 @@ export function Navbar() {
                       ? "border-[#a8ff9f]/30 bg-[#a8ff9f]/20 text-[#e0ffe0] group-hover:border-[#a8ff9f]/50 group-hover:shadow-[0_0_12px_rgba(168,255,159,0.3)]"
                       : isMidnight
                       ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/18 text-[#dff3ff] group-hover:border-[#7fd4ff]/55 group-hover:shadow-[0_0_12px_rgba(77,198,255,0.35)]"
-                      : isOrders
+                      : isAdmin
                       ? "border-[#4ade80]/28 bg-[#4ade80]/14 text-[#86efac] group-hover:border-[#4ade80]/55 group-hover:shadow-[0_0_12px_rgba(74,222,128,0.3)]"
                       : "border-[#4dc6ff]/25 bg-[#4dc6ff]/15 text-[#d0e8ff] group-hover:border-[#4dc6ff]/50 group-hover:shadow-[0_0_12px_rgba(77,198,255,0.3)]"
                   }`}>

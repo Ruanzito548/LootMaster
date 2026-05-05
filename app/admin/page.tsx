@@ -35,33 +35,33 @@ const adminSections = [
 
 export default function AdminPage() {
   return (
-    <div className="loot-shell">
+    <div className="min-h-screen bg-black text-green-400">
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
-          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#9dd4ff]">
+          <p className="text-sm font-bold uppercase tracking-[0.28em] text-green-600">
             Admin
           </p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
+          <h1 className="text-4xl font-black leading-tight text-green-300 sm:text-5xl lg:text-6xl">
             Control Center
           </h1>
-          <p className="loot-muted max-w-3xl text-base leading-8">
+          <p className="max-w-3xl text-base leading-8 text-green-600">
             Centralize catalog management, highlighted games, and checkout operations in one place.
             Pick a section below to continue.
           </p>
         </div>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
-          <article className="loot-panel rounded-2xl border border-[#84d5ff]/16 p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9cb3d5]">Active modules</p>
-            <p className="mt-2 text-3xl font-black text-[#e7f2ff]">5</p>
+          <article className="rounded-2xl border border-green-900 bg-green-950/20 p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Active modules</p>
+            <p className="mt-2 text-3xl font-black text-green-300">5</p>
           </article>
-          <article className="loot-panel rounded-2xl border border-[#ffd76a]/16 p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9cb3d5]">Commerce</p>
-            <p className="mt-2 text-3xl font-black text-[#ffcf57]">Stripe Online</p>
+          <article className="rounded-2xl border border-green-900 bg-green-950/20 p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Commerce</p>
+            <p className="mt-2 text-3xl font-black text-green-300">Stripe Online</p>
           </article>
-          <article className="loot-panel rounded-2xl border border-[#1eff00]/16 p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9cb3d5]">Inventory tools</p>
-            <p className="mt-2 text-3xl font-black text-[#b6ff9e]">Ready</p>
+          <article className="rounded-2xl border border-green-900 bg-green-950/20 p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Inventory tools</p>
+            <p className="mt-2 text-3xl font-black text-green-400">Ready</p>
           </article>
         </section>
 
@@ -70,14 +70,14 @@ export default function AdminPage() {
             <Link
               key={section.id}
               href={section.href}
-              className="loot-panel rounded-[1.75rem] border border-[#ffffff12] p-7 transition-all hover:-translate-y-0.5 hover:border-[#4dc6ff]/30 hover:bg-white/5"
+              className="rounded-[1.75rem] border border-green-900 bg-green-950/20 p-7 transition-all hover:-translate-y-0.5 hover:border-green-700/50 hover:bg-green-950/40"
             >
-              <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em] text-[#8dcfff]">
+              <p className="text-sm font-bold uppercase tracking-[0.24em] text-green-600">
                 Section {section.id}
               </p>
-              <h2 className="loot-title mt-3 text-3xl font-black">{section.title}</h2>
-              <p className="loot-muted mt-3 text-base leading-8">{section.description}</p>
-              <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-[#9cb3d5]">Open section</p>
+              <h2 className="mt-3 text-3xl font-black text-green-300">{section.title}</h2>
+              <p className="mt-3 text-base leading-8 text-green-600">{section.description}</p>
+              <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-green-500">Open section</p>
             </Link>
           ))}
         </section>
@@ -85,7 +85,7 @@ export default function AdminPage() {
         <div className="mt-8">
           <Link
             href="/"
-            className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors"
+            className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950"
           >
             Back to home
           </Link>

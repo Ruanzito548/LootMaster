@@ -144,34 +144,34 @@ export function InventoryItemsAdmin() {
   };
 
   return (
-    <div className="loot-shell">
+    <div className="min-h-screen bg-black text-green-400">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
-          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin / Games / WOW</p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Inventory Items</h1>
-          <p className="loot-muted max-w-2xl text-base leading-8">Create inventory items used by the Minecraft-style 3x3 grid.</p>
+          <p className="text-sm font-bold uppercase tracking-[0.28em] text-green-600">Admin / Games / WOW</p>
+          <h1 className="text-4xl font-black leading-tight text-green-300 sm:text-5xl">Inventory Items</h1>
+          <p className="max-w-2xl text-base leading-8 text-green-600">Create inventory items used by the Minecraft-style 3x3 grid.</p>
         </div>
 
-        <section className="loot-panel mt-8 rounded-[2rem] p-8">
-          <p className="loot-muted text-sm">Registered items: {itemsCount}</p>
+        <section className="mt-8 rounded-[2rem] border border-green-900 bg-green-950/20 p-8">
+          <p className="text-sm text-green-600">Registered items: {itemsCount}</p>
 
           <div className="mt-6 grid gap-4">
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
+            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-green-600">
               Item name
               <input
                 value={form.name}
                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                className="loot-input px-4 py-3 text-sm font-semibold"
+                className="rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none placeholder:text-green-800 focus:border-green-600"
                 placeholder="Example: Forest Totem"
               />
             </label>
 
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
+            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-green-600">
               Item rarity (WoW)
               <select
                 value={form.rarity}
                 onChange={(event) => setForm((current) => ({ ...current, rarity: event.target.value as WowRarity }))}
-                className="loot-select px-4 py-3 text-sm font-semibold"
+                className="rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600"
               >
                 {wowRarities.map((rarity) => (
                   <option key={rarity} value={rarity}>{rarity}</option>
@@ -180,9 +180,9 @@ export function InventoryItemsAdmin() {
             </label>
 
             <div className="grid gap-2">
-              <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">Item icon path</span>
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">Item icon path</span>
               <div className="flex items-center gap-3">
-                <div className="relative size-14 shrink-0 overflow-hidden rounded-md border border-[#ffffff18] bg-[#101826]">
+                <div className="relative size-14 shrink-0 overflow-hidden rounded-md border border-green-900 bg-green-950">
                   {form.iconPath.trim() ? (
                     <Image
                       src={form.iconPath.trim()}
@@ -193,24 +193,24 @@ export function InventoryItemsAdmin() {
                       unoptimized
                     />
                   ) : (
-                    <span className="flex h-full items-center justify-center text-[9px] font-bold uppercase tracking-[0.1em] text-[#7a8498]">No img</span>
+                    <span className="flex h-full items-center justify-center text-[9px] font-bold uppercase tracking-[0.1em] text-green-800">No img</span>
                   )}
                 </div>
                 <input
                   value={form.iconPath}
                   onChange={(event) => setForm((current) => ({ ...current, iconPath: event.target.value }))}
-                  className="loot-input flex-1 px-4 py-3 text-sm font-semibold"
+                  className="flex-1 rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none placeholder:text-green-800 focus:border-green-600"
                   placeholder="/itens/general/uncommon-test.png"
                 />
               </div>
             </div>
 
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
+            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-green-600">
               Item game scope
               <select
                 value={form.gameId}
                 onChange={(event) => setForm((current) => ({ ...current, gameId: event.target.value }))}
-                className="loot-select px-4 py-3 text-sm font-semibold"
+                className="rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600"
               >
                 <option value="general">General</option>
                 {games.map((game) => (
@@ -225,7 +225,7 @@ export function InventoryItemsAdmin() {
               type="button"
               onClick={() => void saveItem()}
               disabled={saving}
-              className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+              className="rounded-md border border-green-600 bg-green-950 px-5 py-3 text-sm font-semibold text-green-300 transition hover:bg-green-900 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {saving ? "Saving item..." : "Save item"}
             </button>
@@ -233,7 +233,7 @@ export function InventoryItemsAdmin() {
             <button
               type="button"
               onClick={() => setForm(defaultForm)}
-              className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold"
+              className="rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950"
             >
               Reset form to ticket item
             </button>
@@ -242,7 +242,7 @@ export function InventoryItemsAdmin() {
               type="button"
               onClick={() => void seedTickets()}
               disabled={resetting}
-              className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+              className="rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {resetting ? "Resetting catalog..." : "Remove all and create 3 ticket items"}
             </button>
@@ -251,7 +251,7 @@ export function InventoryItemsAdmin() {
               type="button"
               onClick={() => void grantRuanzitoPack()}
               disabled={grantingPack}
-              className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+              className="rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {grantingPack
                 ? "Granting tickets to ruanzito..."

@@ -206,16 +206,16 @@ export function GoldConfigAdmin() {
   };
 
   return (
-    <div className="loot-shell">
+    <div className="min-h-screen bg-black text-green-400">
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
-          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">
+          <p className="text-sm font-bold uppercase tracking-[0.28em] text-green-600">
             Admin
           </p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">
+          <h1 className="text-4xl font-black leading-tight text-green-300 sm:text-5xl">
             Gold settings
           </h1>
-          <p className="loot-muted max-w-2xl text-base leading-8">
+          <p className="max-w-2xl text-base leading-8 text-green-600">
             Configure gold price and minimum amount by game, server, and faction. Each combination is saved separately in Firebase.
           </p>
         </div>
@@ -232,10 +232,10 @@ export function GoldConfigAdmin() {
         ) : null}
 
         <section className="mt-8">
-          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em]">
+          <p className="text-sm font-bold uppercase tracking-[0.24em] text-green-600">
             Preview Dashboard
           </p>
-          <h2 className="loot-title mt-4 text-2xl font-black">
+          <h2 className="mt-4 text-2xl font-black text-green-300">
             Configuration by game / server / faction
           </h2>
 
@@ -243,28 +243,28 @@ export function GoldConfigAdmin() {
             {dashboardByGame.map((gameBlock) => (
               <article
                 key={gameBlock.gameId}
-                className="rounded-[1.4rem] border border-[#ffd76a]/10 bg-white/4 p-6"
+                className="rounded-[1.4rem] border border-green-900 bg-green-950/20 p-6"
                 style={gameDashboardStyle(gameBlock.gameId)}
               >
-                <h3 className="loot-title text-xl font-black">{gameBlock.gameTitle}</h3>
+                <h3 className="text-xl font-black text-green-300">{gameBlock.gameTitle}</h3>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   {gameBlock.rows.map((row) => (
                     <div
                       key={row.key}
-                      className="rounded-[1rem] border border-[#ffd76a]/10 bg-black/25 p-4"
+                      className="rounded-[1rem] border border-green-900 bg-black/40 p-4"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-[#f8eed4]">
+                        <p className="text-sm font-semibold text-green-300">
                           {row.server} / {row.faction}
                         </p>
-                        <span className="font-mono text-[10px] text-[#9fb0c7]">
+                        <span className="font-mono text-[10px] text-green-700">
                           {row.key}
                         </span>
                       </div>
 
                       {row.config ? (
-                        <div className="mt-3 grid gap-1 text-sm text-[#d8f4ff]">
+                        <div className="mt-3 grid gap-1 text-sm text-green-400">
                           <p>Price: <span className="font-semibold">${row.config.pricePerThousand}</span></p>
                           <p>Min: <span className="font-semibold">{row.config.minGold.toLocaleString()}</span></p>
                           <p>Max: <span className="font-semibold">{row.config.maxGold.toLocaleString()}</span></p>
@@ -281,12 +281,12 @@ export function GoldConfigAdmin() {
         </section>
 
         <section className="mt-8">
-          <div className="loot-panel rounded-[2rem] p-8">
+          <div className="rounded-[2rem] border border-green-900 bg-green-950/20 p-8">
             <div className="grid gap-6">
 
               {/* Game - required */}
               <div>
-                <label htmlFor="game-select" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
+                <label htmlFor="game-select" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
                   Game
                 </label>
                 <select
@@ -297,7 +297,7 @@ export function GoldConfigAdmin() {
                     setSelectedServerId("");
                     setSelectedFaction("");
                   }}
-                  className="loot-select mt-3 px-4 py-3 text-sm font-semibold"
+                  className="mt-3 w-full rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600"
                 >
                   <option value="">- Select a game -</option>
                   {games.map((game) => (
@@ -310,7 +310,7 @@ export function GoldConfigAdmin() {
 
               {/* Server */}
               <div>
-                <label htmlFor="server-select" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
+                <label htmlFor="server-select" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
                   Server
                 </label>
                 <select
@@ -323,7 +323,7 @@ export function GoldConfigAdmin() {
                     setSelectedServerId(nextServerId);
                     setSelectedFaction(nextServer?.factions?.[0] ?? "");
                   }}
-                  className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+                  className="mt-3 w-full rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <option value="">
                     {servers.length === 0 ? "No servers registered" : "Select a server"}
@@ -338,7 +338,7 @@ export function GoldConfigAdmin() {
 
               {/* Faction - required when a server is selected */}
               <div>
-                <label htmlFor="faction-select" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
+                <label htmlFor="faction-select" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
                   Faction
                 </label>
                 <select
@@ -346,7 +346,7 @@ export function GoldConfigAdmin() {
                   value={selectedFaction}
                   disabled={!selectedServerId}
                   onChange={(event) => setSelectedFaction(event.target.value)}
-                  className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+                  className="mt-3 w-full rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {!selectedServerId ? (
                     <option value="">Select a server first</option>
@@ -363,7 +363,7 @@ export function GoldConfigAdmin() {
               {scopeReady ? (
                 <>
                   <div>
-                    <label htmlFor="price-per-thousand" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
+                    <label htmlFor="price-per-thousand" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
                       Value per 1,000 gold
                     </label>
                     <input
@@ -375,15 +375,15 @@ export function GoldConfigAdmin() {
                       onChange={(event) =>
                         updateDraft({ pricePerThousand: Number(event.target.value) })
                       }
-                      className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
+                      className="mt-3 w-full rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600"
                     />
-                    <p className="mt-2 text-sm text-[#7d8597]">
+                    <p className="mt-2 text-sm text-green-700">
                       Example: 20 to charge $20 per 1,000 gold.
                     </p>
                   </div>
 
                   <div>
-                    <label htmlFor="min-gold" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
+                    <label htmlFor="min-gold" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
                       Minimum purchase amount
                     </label>
                     <input
@@ -395,12 +395,12 @@ export function GoldConfigAdmin() {
                       onChange={(event) =>
                         updateDraft({ minGold: Number(event.target.value) })
                       }
-                      className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
+                      className="mt-3 w-full rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="max-gold" className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
+                    <label htmlFor="max-gold" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
                       Maximum purchase amount
                     </label>
                     <input
@@ -412,12 +412,12 @@ export function GoldConfigAdmin() {
                       onChange={(event) =>
                         updateDraft({ maxGold: Number(event.target.value) })
                       }
-                      className="loot-input mt-3 px-4 py-3 text-sm font-semibold"
+                      className="mt-3 w-full rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600"
                     />
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-[#7d8597]">
+                <p className="text-sm text-green-700">
                   {selectedGameId === ""
                     ? "Select a game to edit the configuration."
                     : "Select a server to edit the configuration."
@@ -427,17 +427,17 @@ export function GoldConfigAdmin() {
             </div>
 
             {scopeReady ? (
-              <div className="mt-8 flex flex-col gap-4 border-t border-[#ffd76a]/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-8 flex flex-col gap-4 border-t border-green-900 pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-1">
                   {currentKey && (
-                    <p className="font-mono text-xs text-[#7d8597]">
-                      key: <span className="text-[#ffd76a]">{currentKey}</span>
+                    <p className="font-mono text-xs text-green-700">
+                      key: <span className="text-green-400">{currentKey}</span>
                     </p>
                   )}
                   {hasSavedOverride ? (
                     <p className="text-xs font-semibold text-emerald-500">Own configuration saved in Firebase</p>
                   ) : (
-                    <p className="text-xs text-[#7d8597]">Using inheritance (no own configuration for this scope)</p>
+                    <p className="text-xs text-green-700">Using inheritance (no own configuration for this scope)</p>
                   )}
                 </div>
 
@@ -447,7 +447,7 @@ export function GoldConfigAdmin() {
                       type="button"
                       onClick={() => void resetCurrent()}
                       disabled={saving}
-                      className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed"
+                      className="rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Remove config
                     </button>
@@ -456,7 +456,7 @@ export function GoldConfigAdmin() {
                     type="button"
                     onClick={() => void saveConfig()}
                     disabled={!canSave}
-                    className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200"
+                    className="rounded-md border border-green-600 bg-green-950 px-5 py-3 text-sm font-semibold text-green-300 transition hover:bg-green-900 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {saving ? "Saving..." : "Save"}
                   </button>
@@ -480,10 +480,10 @@ export function GoldConfigAdmin() {
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/admin" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
+          <Link href="/admin" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
             Back to admin
           </Link>
-          <Link href="/" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
+          <Link href="/" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
             Back to home
           </Link>
         </div>

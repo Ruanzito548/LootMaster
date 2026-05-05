@@ -47,12 +47,12 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div className="loot-shell">
+    <div className="min-h-screen bg-black text-green-400">
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
-          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin</p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Dashboard</h1>
-          <p className="loot-muted max-w-2xl text-base leading-8">
+          <p className="text-sm font-bold uppercase tracking-[0.28em] text-green-600">Admin</p>
+          <h1 className="text-4xl font-black leading-tight text-green-300 sm:text-5xl">Dashboard</h1>
+          <p className="max-w-2xl text-base leading-8 text-green-600">
             Visualize os valores de pedidos com filtros por periodo, status, jogo e pagamento.
           </p>
         </div>
@@ -64,13 +64,13 @@ export default async function DashboardPage() {
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
             href="/admin/orders"
-            className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
+            className="inline-flex rounded-md border border-green-600 bg-green-950 px-5 py-3 text-sm font-semibold text-green-300 transition hover:bg-green-900"
           >
             Ver pedidos
           </Link>
           <Link
             href="/admin"
-            className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
+            className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950"
           >
             Voltar ao admin
           </Link>

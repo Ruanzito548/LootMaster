@@ -2,16 +2,16 @@ import Link from "next/link";
 
 export default function RunescapeGamesPage() {
   return (
-    <div className="loot-shell">
+    <div className="min-h-screen bg-black text-green-400">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
-        <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin / Games</p>
-        <h1 className="loot-title mt-4 text-4xl font-black leading-tight sm:text-5xl">Runescape</h1>
-        <p className="loot-muted mt-4 max-w-2xl text-base leading-8">
+        <p className="text-sm font-bold uppercase tracking-[0.28em] text-green-600">Admin / Games</p>
+        <h1 className="mt-4 text-4xl font-black leading-tight text-green-300 sm:text-5xl">Runescape</h1>
+        <p className="mt-4 max-w-2xl text-base leading-8 text-green-600">
           Structure created. Add Runescape game categories and settings here.
         </p>
 
         <div className="mt-8">
-          <Link href="/admin/games" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
+          <Link href="/admin/games" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
             Back to games
           </Link>
         </div>
