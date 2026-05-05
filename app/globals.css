@@ -9,25 +9,24 @@
 }
 
 :root {
-  --background: #07111f;
-  --foreground: #f8eed4;
+  --background: #04070d;
+  --foreground: #f5f9ff;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: "ThroneOfShadows", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Code", "Consolas", monospace;
-  --loot-ink: #09111d;
-  --loot-brown: #10233f;
-  --loot-panel: rgba(8, 20, 38, 0.78);
-  --loot-gold: #f7ba2c;
-  --loot-gold-soft: #ffd76a;
-  --loot-blue: #2db2ff;
-  --loot-blue-deep: #0e4b9d;
+  --loot-ink: #070b12;
+  --loot-panel: rgba(7, 13, 22, 0.84);
+  --loot-gold: #7de9ff;
+  --loot-gold-soft: #b7f4ff;
+  --loot-blue: #20d3ff;
+  --loot-blue-deep: #0b7aa0;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #07111f;
-    --foreground: #f8eed4;
+    --background: #04070d;
+    --foreground: #f5f9ff;
   }
 }
 
@@ -40,10 +39,30 @@ body {
   color: var(--foreground);
   font-family: "ThroneOfShadows", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   background-image:
-    radial-gradient(circle at top, rgba(247, 186, 44, 0.14), transparent 30%),
-    radial-gradient(circle at 22% 26%, rgba(45, 178, 255, 0.14), transparent 24%),
-    radial-gradient(circle at 78% 14%, rgba(255, 215, 106, 0.1), transparent 18%),
-    linear-gradient(180deg, #0e1a2d 0%, #09111d 48%, #050b14 100%);
+    radial-gradient(circle at 15% -10%, rgba(47, 203, 255, 0.2), transparent 30%),
+    radial-gradient(circle at 85% 0%, rgba(75, 225, 164, 0.14), transparent 28%),
+    radial-gradient(circle at 50% 110%, rgba(32, 92, 255, 0.12), transparent 30%),
+    linear-gradient(180deg, #070d17 0%, #040912 52%, #03060d 100%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(73, 216, 255, 0.3);
+  color: #f7fcff;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(80, 214, 255, 0.45), rgba(31, 141, 255, 0.45));
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(4, 8, 15, 0.75);
 }
 
 .font-throne {
@@ -53,29 +72,34 @@ body {
 
 .loot-panel {
   background:
-    linear-gradient(180deg, rgba(22, 53, 102, 0.82), rgba(7, 16, 31, 0.92)),
+    linear-gradient(180deg, rgba(16, 34, 62, 0.92), rgba(6, 14, 27, 0.95)),
     var(--loot-panel);
-  border: 1px solid rgba(255, 214, 117, 0.18);
+  border: 1px solid rgba(117, 228, 255, 0.2);
+  backdrop-filter: blur(7px);
   box-shadow:
-    inset 0 1px 0 rgba(255, 236, 185, 0.1),
-    0 24px 70px rgba(3, 10, 20, 0.42);
+    inset 0 1px 0 rgba(182, 241, 255, 0.12),
+    inset 0 -1px 0 rgba(17, 53, 109, 0.35),
+    0 20px 55px rgba(3, 10, 22, 0.45);
 }
 
 .loot-shell {
   min-height: 100vh;
-  color: white;
+  color: #f5f9ff;
 }
 
 .loot-gold-button {
-  background: linear-gradient(180deg, #ffe27c 0%, #f7ba2c 52%, #cc7a15 100%);
-  color: #2a1204;
+  border: 1px solid rgba(126, 234, 255, 0.42);
+  background: linear-gradient(180deg, #84efff 0%, #39d4ff 52%, #1f86e6 100%);
+  color: #021624;
   box-shadow:
-    inset 0 1px 0 rgba(255, 251, 225, 0.9),
-    0 18px 36px rgba(247, 186, 44, 0.28);
+    inset 0 1px 0 rgba(242, 253, 255, 0.8),
+    0 14px 36px rgba(52, 162, 255, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .loot-gold-button:hover {
-  filter: brightness(1.04);
+  filter: brightness(1.05);
+  transform: translateY(-1px);
 }
 
 /* ── Inventory slot arcade hover ───────────────────────────────────── */
@@ -116,14 +140,16 @@ body {
 /* ─────────────────────────────────────────────────────────────────── */
 
 .loot-secondary-button {
-  background: linear-gradient(180deg, rgba(255, 241, 190, 0.08), rgba(45, 178, 255, 0.08));
-  border: 1px solid rgba(255, 214, 117, 0.16);
-  color: #f8eed4;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, rgba(111, 223, 255, 0.14), rgba(32, 98, 196, 0.2));
+  border: 1px solid rgba(122, 226, 255, 0.24);
+  color: #dff6ff;
+  box-shadow: inset 0 1px 0 rgba(231, 249, 255, 0.12);
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .loot-secondary-button:hover {
-  background: linear-gradient(180deg, rgba(255, 241, 190, 0.12), rgba(45, 178, 255, 0.12));
+  background: linear-gradient(180deg, rgba(124, 230, 255, 0.2), rgba(42, 112, 214, 0.26));
+  border-color: rgba(167, 238, 255, 0.4);
 }
 
 .tbc-shell {
@@ -357,56 +383,56 @@ body {
 .loot-textarea {
   width: 100%;
   border-radius: 1rem;
-  border: 1px solid rgba(255, 214, 117, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  color: #f8eed4;
+  border: 1px solid rgba(119, 220, 255, 0.18);
+  background: rgba(8, 18, 30, 0.8);
+  color: #e7f6ff;
   outline: none;
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .loot-input::placeholder,
 .loot-textarea::placeholder {
-  color: #8b96ab;
+  color: #6f92af;
 }
 
 .loot-input:focus,
 .loot-select:focus,
 .loot-textarea:focus {
-  border-color: rgba(77, 198, 255, 0.4);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(109, 231, 255, 0.52);
+  background: rgba(10, 22, 38, 0.94);
 }
 
 .loot-select option {
-  background: #09111d;
-  color: #f8eed4;
+  background: #08111d;
+  color: #e7f6ff;
 }
 
 .loot-muted {
-  color: #cdb991;
+  color: #a3bed1;
 }
 
 .loot-label {
-  color: #a89a7b;
+  color: #8eafc7;
 }
 
 .loot-kicker {
-  color: #ffc94d;
+  color: #73dfff;
 }
 
 .loot-title {
-  color: #ffcf57;
+  color: #d7f3ff;
 }
 
 .loot-badge {
-  border: 1px solid rgba(255, 214, 117, 0.18);
-  background: rgba(247, 186, 44, 0.12);
-  color: #ffc94d;
+  border: 1px solid rgba(128, 228, 255, 0.28);
+  background: rgba(41, 120, 224, 0.18);
+  color: #b5ebff;
 }
 
 .loot-badge-blue {
-  border: 1px solid rgba(132, 213, 255, 0.2);
-  background: rgba(13, 63, 122, 0.36);
-  color: #d8f4ff;
+  border: 1px solid rgba(140, 229, 255, 0.32);
+  background: rgba(24, 84, 180, 0.36);
+  color: #e5f8ff;
 }
 
 .loot-orb {
