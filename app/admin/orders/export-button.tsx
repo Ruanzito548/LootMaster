@@ -65,7 +65,7 @@ export default function OrdersExportButton({ orders }: { orders: OrderRow[] }) {
   return (
     <button
       onClick={handleExport}
-      className="loot-gold-button rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.14em]"
+      className="rounded-md border border-green-700 bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wide text-green-400 transition hover:bg-green-950"
     >
       Exportar planilha
     </button>

@@ -21,12 +21,12 @@ function getStatus(
   checkoutStatus: Stripe.Checkout.Session["status"],
 ): { label: string; classes: string } {
   if (paymentStatus === "paid")
-    return { label: "Pago", classes: "text-[#a8ff94]" };
+    return { label: "Pago", classes: "text-green-400" };
   if (checkoutStatus === "expired")
-    return { label: "Expirado", classes: "text-[#ffabab]" };
+    return { label: "Expirado", classes: "text-red-400" };
   if (checkoutStatus === "open")
-    return { label: "Pendente", classes: "text-[#ffe39f]" };
-  return { label: "Não pago", classes: "text-[#cdeeff]" };
+    return { label: "Pendente", classes: "text-yellow-400" };
+  return { label: "Não pago", classes: "text-green-600" };
 }
 
 export default async function AdminOrdersPage() {
@@ -63,25 +63,28 @@ export default async function AdminOrdersPage() {
   }));
 
   return (
-    <div className="loot-shell">
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
+    <div
+      className="min-h-screen bg-black text-green-400"
+      style={{ fontFamily: '"Segoe UI", "Helvetica Neue", Arial, sans-serif' }}
+    >
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Admin</p>
-            <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Pedidos</h1>
+            <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin</p>
+            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Pedidos</h1>
           </div>
           <OrdersExportButton orders={rows} />
         </div>
 
-        <section className="loot-panel mt-8 overflow-x-auto rounded-[2rem] p-0">
+        <section className="mt-6 overflow-x-auto rounded-xl border border-green-900 bg-black">
           {loadError ? (
-            <p className="px-6 py-4 text-sm font-semibold text-[#ffb0b0]">{loadError}</p>
+            <p className="px-5 py-4 text-sm font-medium text-red-400">{loadError}</p>
           ) : sessions.length === 0 ? (
-            <p className="px-6 py-4 text-sm font-semibold text-[#9fb4d3]">Nenhum pedido encontrado.</p>
+            <p className="px-5 py-4 text-sm text-green-600">Nenhum pedido encontrado.</p>
           ) : (
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-[#ffffff14] text-[10px] font-bold uppercase tracking-[0.14em] text-[#7a99bf]">
+                <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
                   <th className="px-4 py-3">Data</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Nickname</th>
@@ -97,30 +100,30 @@ export default async function AdminOrdersPage() {
                 {rows.map((row, i) => (
                   <tr
                     key={row.id}
-                    className={`border-b border-[#ffffff08] transition-colors hover:bg-[#ffffff06] ${i % 2 === 0 ? "" : "bg-[#ffffff03]"}`}
+                    className={`border-b border-green-950 transition-colors hover:bg-green-950/40 ${
+                      i % 2 === 0 ? "" : "bg-green-950/20"
+                    }`}
                   >
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-[#8ea3c0]">{row.created}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-green-600">{row.created}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs font-bold ${getStatus(sessions[i].payment_status, sessions[i].status).classes}`}>
+                      <span className={`text-xs font-semibold ${getStatus(sessions[i].payment_status, sessions[i].status).classes}`}>
                         {row.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-semibold text-[#e2edff]">{row.nickname}</td>
-                    <td className="px-4 py-3 text-xs text-[#92a9ca]">{row.email}</td>
-                    <td className="px-4 py-3 text-[#d4e5ff]">
+                    <td className="px-4 py-3 font-medium text-green-300">{row.nickname}</td>
+                    <td className="px-4 py-3 text-xs text-green-500">{row.email}</td>
+                    <td className="px-4 py-3 text-green-400">
                       {row.gameTitle}
-                      {row.categoryTitle !== "--" && (
-                        <span className="ml-1 text-xs text-[#7a99bf]">/ {row.categoryTitle}</span>
-                      )}
+                      {row.categoryTitle !== "--" && <span className="ml-1 text-xs text-green-600">/ {row.categoryTitle}</span>}
                     </td>
-                    <td className="px-4 py-3 text-[#d4e5ff]">{row.goldAmount}</td>
-                    <td className="px-4 py-3 text-xs text-[#92a9ca]">
+                    <td className="px-4 py-3 text-green-400">{row.goldAmount}</td>
+                    <td className="px-4 py-3 text-xs text-green-500">
                       {row.server !== "--" ? row.server : ""}
                       {row.faction !== "--" ? ` / ${row.faction}` : ""}
                       {row.server === "--" && row.faction === "--" ? "--" : ""}
                     </td>
-                    <td className="px-4 py-3 text-xs font-semibold uppercase text-[#e2edff]">{row.paymentMethod}</td>
-                    <td className="px-4 py-3 font-black text-[#ffcf57]">{row.total}</td>
+                    <td className="px-4 py-3 text-xs font-medium uppercase text-green-400">{row.paymentMethod}</td>
+                    <td className="px-4 py-3 font-semibold text-green-300">{row.total}</td>
                   </tr>
                 ))}
               </tbody>
@@ -128,8 +131,11 @@ export default async function AdminOrdersPage() {
           )}
         </section>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/admin" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold">
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            href="/admin"
+            className="inline-flex items-center rounded-md border border-green-800 px-4 py-2 text-sm font-medium text-green-400 transition hover:bg-green-950"
+          >
             Voltar ao admin
           </Link>
         </div>
