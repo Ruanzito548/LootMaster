@@ -12,229 +12,219 @@ const marketSignals = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen text-white">
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 pb-20 pt-10 lg:px-8">
-        <section className="relative overflow-hidden rounded-[2.2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(11,25,46,0.88)_0%,rgba(6,15,28,0.94)_55%,rgba(8,42,38,0.9)_100%)] p-7 shadow-[0_30px_80px_rgba(0,0,0,0.35)] sm:p-10">
-          <div className="pointer-events-none absolute -left-16 -top-16 h-52 w-52 rounded-full bg-cyan-300/15 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-14 right-0 h-56 w-56 rounded-full bg-emerald-300/10 blur-3xl" />
+    <div className="min-h-screen text-white bg-[#030712]">
+      
+      {/* BACKGROUND GLOBAL */}
+      <div className="fixed inset-0 -z-10 
+        bg-[radial-gradient(circle_at_20%_20%,rgba(0,255,255,0.08),transparent_40%),
+             radial-gradient(circle_at_80%_80%,rgba(0,255,150,0.08),transparent_40%)]" />
 
-          <div className="relative grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 pb-20 pt-10 lg:px-8">
+
+        {/* HERO */}
+        <section className="relative overflow-hidden rounded-[2.2rem] border border-white/10 bg-gradient-to-br from-[#071428] via-[#050d1c] to-[#062a26] p-8 sm:p-12 shadow-[0_40px_120px_rgba(0,0,0,0.6)]">
+
+          <div className="absolute -top-24 -left-24 w-72 h-72 bg-cyan-400/20 blur-[120px]" />
+          <div className="absolute bottom-0 right-0 w-72 h-72 bg-emerald-400/10 blur-[120px]" />
+
+          <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr] items-center">
+
+            {/* LEFT */}
             <div className="space-y-6">
-              <p className="inline-flex w-fit rounded-full border border-cyan-200/20 bg-cyan-300/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.25em] text-cyan-100">
-                Marketplace OS
+
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 text-xs rounded-full bg-cyan-400/10 border border-cyan-300/20 uppercase tracking-widest">
+                  Marketplace OS
+                </span>
+                <span className="text-xs text-green-300">
+                  ● 2,134 orders today
+                </span>
+              </div>
+
+              <h1 className="text-6xl sm:text-7xl font-black leading-[0.9] bg-gradient-to-r from-white to-cyan-300 bg-clip-text text-transparent">
+                Buy gold.<br />
+                Skip the grind.
+              </h1>
+
+              <p className="text-lg text-[#9abdd6] max-w-xl">
+                Fast checkout. Multiple games. One unified system.
               </p>
 
-              <div className="space-y-4">
-                <h1 className="font-throne text-5xl leading-[0.95] text-[#def4ff] sm:text-6xl">
-                  Trade smarter.
-                  <br />
-                  Enter the realm loaded.
-                </h1>
-                <p className="max-w-2xl text-base leading-8 text-[#a9c8de] sm:text-lg">
-                  A complete storefront for gold, boosts and accounts with direct routing to each game flow.
-                  Pick your title, choose your category and jump to checkout in a few clicks.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
+              <div className="flex gap-4 flex-wrap">
                 <Link
                   href="#game-grid"
-                  className="loot-gold-button inline-flex rounded-full px-6 py-3 text-sm font-semibold"
+                  className="bg-cyan-400 hover:bg-cyan-300 text-black font-bold px-7 py-4 rounded-full transition hover:scale-105 shadow-[0_0_30px_rgba(34,211,238,0.5)]"
                 >
-                  Start shopping
+                  Buy Gold Now
                 </Link>
+
                 <Link
                   href="#service-lanes"
-                  className="loot-secondary-button inline-flex rounded-full px-6 py-3 text-sm font-semibold"
+                  className="border border-white/20 px-6 py-4 rounded-full hover:bg-white/5 transition"
                 >
-                  Explore service lanes
+                  Browse Services
                 </Link>
               </div>
 
-              <div className="grid gap-3 pt-2 sm:grid-cols-3">
+              <div className="grid gap-3 pt-4 sm:grid-cols-3">
                 {marketSignals.map((item) => (
-                  <article
+                  <div
                     key={item.label}
-                    className="rounded-2xl border border-white/12 bg-black/20 px-4 py-4"
+                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-3"
                   >
-                    <p className="text-xs uppercase tracking-[0.22em] text-[#7fb6d5]">{item.label}</p>
-                    <p className="mt-2 text-2xl font-black text-[#def4ff]">{item.value}</p>
-                  </article>
+                    <p className="text-xs text-[#7fb6d5] uppercase">{item.label}</p>
+                    <p className="text-2xl font-black">{item.value}</p>
+                  </div>
                 ))}
               </div>
             </div>
 
+            {/* RIGHT CARD */}
             <div className="relative">
-              <div className="absolute inset-0 rounded-[2rem] bg-cyan-400/10 blur-2xl" />
-              <div className="relative rounded-[2rem] border border-cyan-100/15 bg-[linear-gradient(180deg,rgba(14,35,66,0.8),rgba(5,14,27,0.9))] p-6">
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-100/85">Live Control</p>
-                <h2 className="mt-3 text-2xl font-black text-[#def4ff]">One funnel, many worlds</h2>
-                <p className="mt-3 text-sm leading-7 text-[#97bad4]">
-                  Open any game card and continue with the same checkout logic across categories.
-                </p>
+              <div className="absolute inset-0 bg-cyan-400/10 blur-2xl rounded-[2rem]" />
 
-                <div className="mt-6 overflow-hidden rounded-2xl border border-cyan-100/10 bg-black/30 p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs uppercase tracking-[0.2em] text-[#7fb6d5]">Core paths</p>
-                    <p className="rounded-full border border-cyan-100/20 bg-cyan-300/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-100">
-                      Ready
-                    </p>
-                  </div>
+              <div className="relative rounded-[2rem] border border-white/10 bg-black/30 p-6 backdrop-blur">
 
-                  <div className="mt-4 space-y-2">
-                    {serviceCategories.map((category) => (
-                      <div
-                        key={category.id}
-                        className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2"
-                      >
-                        <p className="text-sm font-semibold text-[#def4ff]">{category.title}</p>
-                        <p className="text-xs uppercase tracking-[0.18em] text-[#8fbad6]">{category.id}</p>
-                      </div>
-                    ))}
-                  </div>
+                <p className="text-xs uppercase text-cyan-300">Live System</p>
+                <h2 className="text-2xl font-black mt-2">One funnel, many worlds</h2>
+
+                <div className="mt-6 space-y-2">
+                  {serviceCategories.map((category) => (
+                    <div
+                      key={category.id}
+                      className="flex justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10"
+                    >
+                      <span>{category.title}</span>
+                      <span className="text-xs text-cyan-300">{category.id}</span>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="mt-6 flex items-center justify-center">
+                <div className="mt-6 flex justify-center">
                   <Image
                     src="/lootmasterlogo.png"
                     alt="Loot Master"
-                    width={300}
-                    height={300}
-                    priority
-                    className="h-auto w-52 drop-shadow-[0_20px_44px_rgba(52,173,255,0.35)]"
+                    width={220}
+                    height={220}
+                    className="drop-shadow-[0_0_30px_rgba(34,211,238,0.4)]"
                   />
                 </div>
               </div>
             </div>
+
           </div>
         </section>
 
         <HotGames />
 
+        {/* SERVICE LANES */}
         <section id="service-lanes" className="space-y-6">
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#7bdfff]">Service Lanes</p>
-            <h2 className="text-4xl font-black text-[#def4ff]">Choose your trading intent</h2>
+
+          <div>
+            <p className="text-xs text-cyan-300 uppercase">Service Lanes</p>
+            <h2 className="text-4xl font-black">Choose your intent</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             {serviceCategories.map((category) => (
-              <article
+              <div
                 key={category.id}
-                className="group rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(13,27,48,0.8),rgba(6,14,26,0.86))] p-5 transition hover:-translate-y-1 hover:border-cyan-200/30"
+                className="group rounded-[1.5rem] border border-white/10 p-5 transition hover:scale-[1.03] hover:border-cyan-300/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)]"
               >
-                <p className="text-xs uppercase tracking-[0.22em] text-[#7fb6d5]">{category.id}</p>
-                <h3 className="mt-3 text-2xl font-black text-[#def4ff]">{category.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[#9abdd6]">{category.description}</p>
-                <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/80 group-hover:text-cyan-100">
-                  Available in selected games
-                </p>
-              </article>
+                <p className="text-xs text-cyan-300">{category.id}</p>
+                <h3 className="text-2xl font-black mt-2">{category.title}</h3>
+                <p className="text-sm text-[#9abdd6] mt-3">{category.description}</p>
+              </div>
             ))}
           </div>
         </section>
 
+        {/* GAME GRID */}
         <section id="game-grid" className="space-y-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+
+          <div className="flex justify-between items-end flex-wrap gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#7bdfff]">Game Grid</p>
-              <h2 className="text-4xl font-black text-[#def4ff]">Open your game route</h2>
+              <p className="text-xs text-cyan-300 uppercase">Game Grid</p>
+              <h2 className="text-4xl font-black">Open your route</h2>
             </div>
-            <p className="max-w-xl text-sm leading-7 text-[#9abdd6]">
-              Every card below points directly to the live game route and keeps the same purchase funnel.
+
+            <p className="text-sm text-[#9abdd6] max-w-md">
+              Direct access to each game funnel with consistent checkout.
             </p>
           </div>
 
           <div className="grid gap-5 lg:grid-cols-2">
             {games.map((game) => (
-              <article
+              <div
                 key={game.id}
-                className="relative overflow-hidden rounded-[1.7rem] border border-white/12 bg-[linear-gradient(180deg,rgba(9,22,39,0.74),rgba(6,14,26,0.9))] p-6"
-                style={
-                  game.id === "tbc-anniversary"
-                    ? {
-                        backgroundImage:
-                          "linear-gradient(rgba(8,20,38,0.5),rgba(8,20,38,0.7)), url('/wow/wow-tbc/tbc-logo.jpg')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : game.id === "retail"
-                    ? {
-                        backgroundImage:
-                          "linear-gradient(rgba(8,20,38,0.5),rgba(8,20,38,0.7)), url('/wow/wow-retail/midinight-logo.jpeg')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : game.id === "classic-era"
-                    ? {
-                        backgroundImage:
-                          "linear-gradient(rgba(18,15,11,0.52),rgba(18,15,11,0.72)), url('/wow/wow-classic-era/classic-era-logo.jpg')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : game.id === "mist-of-pandaria"
-                    ? {
-                        backgroundImage:
-                          "linear-gradient(rgba(7,30,25,0.48),rgba(7,30,25,0.7)), url('/wow/wow-pandaria/pandaria-logo.jpg')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : undefined
-                }
+                className="group relative overflow-hidden rounded-[1.8rem] border border-white/10 p-6 transition-all duration-300 hover:scale-[1.02] hover:border-cyan-300/40 hover:shadow-[0_0_40px_rgba(34,211,238,0.25)]"
               >
-                <div className="absolute right-4 top-4 rounded-full border border-white/20 bg-black/30 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#d8f5ff]">
-                  {game.tag}
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
 
-                <div className="relative">
-                  <p className="text-xs uppercase tracking-[0.2em] text-[#9ed7f0]">{game.shortTitle}</p>
-                  <h3 className="mt-2 text-3xl font-black text-[#def4ff]">{game.title}</h3>
-                  <p className="mt-4 text-sm leading-7 text-[#d7e7f3]">{game.description}</p>
+                <div className="relative z-10">
+                  <p className="text-xs text-cyan-300">{game.shortTitle}</p>
+
+                  <h3 className="text-3xl font-black mt-2">
+                    {game.title}
+                  </h3>
+
+                  <p className="text-sm mt-3 text-[#cfe7f5]">
+                    {game.description}
+                  </p>
 
                   <div className="mt-6 flex flex-wrap gap-2">
                     {serviceCategories.map((category) => (
                       <span
-                        key={`${game.id}-${category.id}`}
-                        className="rounded-full border border-white/18 bg-black/30 px-3 py-1 text-xs font-semibold text-[#d5ebf8]"
+                        key={category.id}
+                        className="text-xs px-3 py-1 rounded-full bg-white/10 border border-white/10 group-hover:bg-cyan-400/20"
                       >
                         {category.title}
                       </span>
                     ))}
                   </div>
 
-                  <div className="mt-8">
-                    <Link
-                      href={`/games/${game.id}`}
-                      className="loot-gold-button inline-flex rounded-full px-5 py-3 text-sm font-semibold"
-                    >
-                      Enter {game.shortTitle}
-                    </Link>
-                  </div>
+                  <Link
+                    href={`/games/${game.id}`}
+                    className="mt-8 inline-block bg-cyan-400 text-black px-5 py-3 rounded-full font-semibold hover:bg-cyan-300"
+                  >
+                    Enter
+                  </Link>
                 </div>
-              </article>
+              </div>
             ))}
           </div>
         </section>
 
-        <section className="rounded-[1.8rem] border border-white/10 bg-[linear-gradient(100deg,rgba(7,24,42,0.86),rgba(7,34,30,0.84))] p-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        {/* CTA FINAL */}
+        <section className="rounded-[1.8rem] border border-white/10 p-8 bg-gradient-to-r from-[#071428] to-[#062a26]">
+
+          <div className="flex flex-col lg:flex-row justify-between gap-6 items-start lg:items-end">
+
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#7bdfff]">Ready To Deploy</p>
-              <h2 className="mt-3 text-4xl font-black text-[#def4ff]">Jump from homepage to checkout with less friction</h2>
-              <p className="mt-4 max-w-2xl text-base leading-8 text-[#9abdd6]">
-                This homepage is rebuilt from scratch with stronger hierarchy, clearer actions and direct links into every game route.
+              <p className="text-xs text-cyan-300 uppercase">Ready</p>
+              <h2 className="text-4xl font-black mt-2">
+                Go from homepage to checkout fast
+              </h2>
+              <p className="text-[#9abdd6] mt-3 max-w-xl">
+                Optimized funnel with minimal friction.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/games" className="loot-gold-button inline-flex rounded-full px-6 py-3 text-sm font-semibold">
-                Browse games
+
+            <div className="flex gap-3">
+              <Link href="/games"
+                className="bg-cyan-400 text-black px-6 py-3 rounded-full font-semibold hover:bg-cyan-300">
+                Browse Games
               </Link>
-              <Link href="/rewards" className="loot-secondary-button inline-flex rounded-full px-6 py-3 text-sm font-semibold">
-                Open rewards
+
+              <Link href="/rewards"
+                className="border border-white/20 px-6 py-3 rounded-full hover:bg-white/5">
+                Rewards
               </Link>
             </div>
+
           </div>
         </section>
+
       </main>
     </div>
   );
