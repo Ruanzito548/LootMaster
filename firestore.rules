@@ -3,48 +3,57 @@
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isPublicRead() {
+      return true;
+    }
+
     // USERS
     match /users/{userId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isSignedIn();
     }
 
     // NEWS
     match /news/{newsId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isSignedIn();
     }
 
     // APP CONFIG (homepage, hots)
     match /app-config/homepage {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read: if isPublicRead();
+      allow create, update, delete: if isSignedIn();
     }
 
     match /app-config/{configId} {
-      allow read, write: if request.auth != null;
+      allow read: if isPublicRead();
+      allow create, update, delete: if isSignedIn();
     }
 
     // GOLD CONFIG — um documento por escopo (gameId, gameId|serverId, gameId|serverId|faction)
     match /gold-config/{scopeKey} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read: if isPublicRead();
+      allow create, update, delete: if isSignedIn();
     }
 
     // ACCOUNTS MARKET — listagens de contas para venda
     match /accounts-market/{accountId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read: if isPublicRead();
+      allow create, update, delete: if isSignedIn();
     }
 
     // AGENT SIGNUPS — cadastro publico com atribuicao de agente
     match /agent-signups/{signupId} {
-      allow create: if true;
-      allow read, update, delete: if request.auth != null;
+      allow create: if isPublicRead();
+      allow read, update, delete: if isSignedIn();
     }
 
     // INVENTORY ITEMS — catalog used by profile inventory grid
     match /inventory-items/{itemId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read: if isPublicRead();
+      allow create, update, delete: if isSignedIn();
     }
 
   }

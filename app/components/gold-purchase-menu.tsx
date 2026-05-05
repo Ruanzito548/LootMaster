@@ -69,6 +69,7 @@ export function GoldPurchaseMenu({
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const hasServerOptions = servers.length > 0;
+  const requiresFaction = hasServerOptions && gameId !== "retail";
 
   useEffect(
     () =>
@@ -84,7 +85,7 @@ export function GoldPurchaseMenu({
 
   const selectedServer = servers.find((server) => server.id === selectedServerId);
   const serverSelected = !hasServerOptions || selectedServerId !== "";
-  const factionSelected = !hasServerOptions || selectedFaction !== "";
+  const factionSelected = !requiresFaction || selectedFaction !== "";
   const goldUnlocked = serverSelected && factionSelected;
   const safeGoldAmount = Math.min(
     Math.max(goldAmount, goldConfig.minGold),
@@ -102,7 +103,9 @@ export function GoldPurchaseMenu({
     paymentMethod === "pix" ? price * -0.05 : paymentMethod === "card" ? price * 0.04 : 0;
   const finalPrice = Math.max(0, price + paymentAdjustment);
   const selectionModeLabel = hasServerOptions
-    ? "Game -> Server -> Faction"
+    ? requiresFaction
+      ? "Game -> Server -> Faction"
+      : "Game -> Region"
     : "Game";
   const selectedPayment = paymentMethods.find((method) => method.id === paymentMethod) ?? paymentMethods[0];
 
@@ -205,6 +208,7 @@ export function GoldPurchaseMenu({
           </select>
         </div>
 
+        {requiresFaction ? (
         <div className={!hasServerOptions || !serverSelected ? "opacity-40" : ""}>
           <p
             className={`text-xs font-bold uppercase tracking-[0.18em] ${
@@ -243,6 +247,7 @@ export function GoldPurchaseMenu({
             ))}
           </div>
         </div>
+        ) : null}
 
         <div className={!goldUnlocked ? "opacity-40" : ""}>
           <div className="flex items-center justify-between">
@@ -478,14 +483,16 @@ export function GoldPurchaseMenu({
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#d8f4ff]">
-                Selected server
+                {requiresFaction ? "Selected server" : "Selected region"}
               </p>
               <p className="loot-title mt-2 text-lg font-black">
-                {selectedServer?.name ?? "No server selected"}
+                {selectedServer?.name ?? (requiresFaction ? "No server selected" : "No region selected")}
               </p>
             </div>
             <span className={`${isTbc ? "tbc-badge" : isMidnight ? "midnight-badge" : isClassic ? "classic-badge" : isPandaria ? "pandaria-badge" : "loot-badge-blue"} rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]`}>
-              {selectedServer?.region ?? "--"} / {selectedFaction || "--"}
+              {requiresFaction
+                ? `${selectedServer?.region ?? "--"} / ${selectedFaction || "--"}`
+                : (selectedServer?.region ?? "--")}
             </span>
           </div>
         </div>

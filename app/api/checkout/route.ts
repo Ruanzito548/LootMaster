@@ -54,12 +54,31 @@ export async function POST(request: Request): Promise<Response> {
     hasServerOptions,
   } = body;
 
-  if (!gameId || !gameTitle || !categoryTitle || !goldAmount || !pricePerThousand || !email || !nickname || !deliveryMethod) {
-    return Response.json({ error: "Missing required fields." }, { status: 422 });
+  const requiresFaction = hasServerOptions && gameId !== "retail";
+  const missingFields = [
+    !gameId?.trim() ? "gameId" : null,
+    !gameTitle?.trim() ? "gameTitle" : null,
+    !categoryTitle?.trim() ? "categoryTitle" : null,
+    !Number.isFinite(goldAmount) || goldAmount <= 0 ? "goldAmount" : null,
+    !Number.isFinite(pricePerThousand) || pricePerThousand <= 0 ? "pricePerThousand" : null,
+    !email?.trim() ? "email" : null,
+    !nickname?.trim() ? "nickname" : null,
+    !deliveryMethod?.trim() ? "deliveryMethod" : null,
+  ].filter(Boolean);
+
+  if (missingFields.length > 0) {
+    return Response.json(
+      { error: `Missing required fields: ${missingFields.join(", ")}.` },
+      { status: 422 },
+    );
   }
 
-  if (hasServerOptions && (!serverId || !server || !faction)) {
-    return Response.json({ error: "Server and faction are required for this game." }, { status: 422 });
+  if (hasServerOptions && (!serverId?.trim() || !server?.trim())) {
+    return Response.json({ error: "Server is required for this game." }, { status: 422 });
+  }
+
+  if (requiresFaction && !faction?.trim()) {
+    return Response.json({ error: "Faction is required for this game." }, { status: 422 });
   }
 
   const basePrice = (goldAmount / 1000) * pricePerThousand;

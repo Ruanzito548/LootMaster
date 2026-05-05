@@ -13,7 +13,7 @@ import {
   type GoldConfig,
   type GoldConfigEntry,
 } from "../app/data/gold-config";
-import { db, firebaseEnabled } from "./firebase";
+import { auth, db, firebaseEnabled } from "./firebase";
 
 const goldConfigCol =
   db && firebaseEnabled ? collection(db, "gold-config") : null;
@@ -71,6 +71,13 @@ export async function saveGoldConfigEntry(key: string, entry: GoldConfigEntry): 
   if (!goldConfigCol) {
     throw new Error("Firebase not configured.");
   }
+
+  if (!auth?.currentUser) {
+    throw new Error("You must be logged in to save gold settings.");
+  }
+
+  await auth.currentUser.getIdToken();
+
   await setDoc(doc(goldConfigCol, key), {
     pricePerThousand: entry.pricePerThousand,
     minGold: entry.minGold,
@@ -85,6 +92,13 @@ export async function deleteGoldConfigEntry(key: string): Promise<void> {
   if (!goldConfigCol) {
     throw new Error("Firebase not configured.");
   }
+
+  if (!auth?.currentUser) {
+    throw new Error("You must be logged in to remove gold settings.");
+  }
+
+  await auth.currentUser.getIdToken();
+
   await deleteDoc(doc(goldConfigCol, key));
 }
 

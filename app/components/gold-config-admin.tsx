@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { onAuthStateChanged } from "firebase/auth";
 import { startTransition, useEffect, useState } from "react";
 
 import {
@@ -12,7 +13,7 @@ import {
   type GoldConfigEntry,
 } from "../data/gold-config";
 import { games, getServersByGameId } from "../data/games";
-import { firebaseEnabled } from "../../lib/firebase";
+import { auth, firebaseEnabled } from "../../lib/firebase";
 import {
   deleteGoldConfigEntry,
   saveGoldConfigEntry,
@@ -25,6 +26,7 @@ export function GoldConfigAdmin() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser) && firebaseEnabled);
 
   const [selectedGameId, setSelectedGameId] = useState<string>("");
   const [selectedServerId, setSelectedServerId] = useState<string>("");
@@ -33,11 +35,19 @@ export function GoldConfigAdmin() {
   const selectedGame = games.find((g) => g.id === selectedGameId);
   const servers = selectedGameId ? getServersByGameId(selectedGameId) : [];
   const requiresServerSelection = servers.length > 0;
+  const requiresFactionSelection = requiresServerSelection && selectedGameId !== "retail";
   const scopeReady = selectedGameId !== "" && (!requiresServerSelection || selectedServerId !== "");
   const selectedServer = servers.find((s) => s.id === selectedServerId);
-  const factions = selectedServer?.factions ?? ["Horde", "Alliance"];
+  const factions = requiresFactionSelection
+    ? selectedServer?.factions ?? ["Horde", "Alliance"]
+    : [];
 
   useEffect(() => {
+    if (!requiresFactionSelection) {
+      setSelectedFaction("");
+      return;
+    }
+
     if (!selectedServerId) {
       setSelectedFaction("");
       return;
@@ -54,14 +64,33 @@ export function GoldConfigAdmin() {
         ? current
         : availableFactions[0]
     );
-  }, [selectedServerId, selectedServer]);
+  }, [requiresFactionSelection, selectedServerId, selectedServer]);
+
+  useEffect(() => {
+    if (!auth) {
+      return () => undefined;
+    }
+
+    return onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(Boolean(user));
+    });
+  }, []);
 
   const currentKey = selectedGameId
-    ? buildGoldKey(selectedGameId, selectedServerId || undefined, selectedFaction || undefined)
+    ? buildGoldKey(
+        selectedGameId,
+        selectedServerId || undefined,
+        requiresFactionSelection ? selectedFaction || undefined : undefined,
+      )
     : "";
 
   const savedEntry = selectedGameId
-    ? getGoldConfigFor(savedConfig, selectedGameId, selectedServerId || undefined, selectedFaction || undefined)
+    ? getGoldConfigFor(
+        savedConfig,
+        selectedGameId,
+        selectedServerId || undefined,
+        requiresFactionSelection ? selectedFaction || undefined : undefined,
+      )
     : defaultGoldConfigEntry;
 
   const activeEntry = draftEntry ?? savedEntry;
@@ -125,9 +154,10 @@ export function GoldConfigAdmin() {
 
   const canSave =
     firebaseEnabled &&
+    isAuthenticated &&
     !saving &&
     scopeReady &&
-    (!requiresServerSelection || selectedFaction !== "");
+    (!requiresFactionSelection || selectedFaction !== "");
 
   const dashboardByGame = games.map((game) => {
     const gameServers = getServersByGameId(game.id);
@@ -151,17 +181,28 @@ export function GoldConfigAdmin() {
     return {
       gameId: game.id,
       gameTitle: game.title,
-      rows: gameServers.flatMap((server) =>
-        (server.factions.length > 0 ? server.factions : ["-"]).map((faction) => {
-          const key = buildGoldKey(game.id, server.id, faction === "-" ? undefined : faction);
-          return {
-            key,
-            server: server.name,
-            faction,
-            config: savedConfig[key],
-          };
-        })
-      ),
+      rows:
+        game.id === "retail"
+          ? gameServers.map((server) => {
+              const key = buildGoldKey(game.id, server.id);
+              return {
+                key,
+                server: server.name,
+                faction: "-",
+                config: savedConfig[key],
+              };
+            })
+          : gameServers.flatMap((server) =>
+              (server.factions.length > 0 ? server.factions : ["-"]).map((faction) => {
+                const key = buildGoldKey(game.id, server.id, faction === "-" ? undefined : faction);
+                return {
+                  key,
+                  server: server.name,
+                  faction,
+                  config: savedConfig[key],
+                };
+              })
+            ),
     };
   });
 
@@ -256,7 +297,7 @@ export function GoldConfigAdmin() {
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-sm font-semibold text-green-300">
-                          {row.server} / {row.faction}
+                          {row.faction === "-" ? row.server : `${row.server} / ${row.faction}`}
                         </p>
                         <span className="font-mono text-[10px] text-green-700">
                           {row.key}
@@ -311,22 +352,24 @@ export function GoldConfigAdmin() {
               {/* Server */}
               <div>
                 <label htmlFor="server-select" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
-                  Server
+                  {requiresFactionSelection ? "Server" : "Region"}
                 </label>
                 <select
                   id="server-select"
                   value={selectedServerId}
                   disabled={!selectedGameId || servers.length === 0}
                   onChange={(event) => {
-                    const nextServerId = event.target.value;
-                    const nextServer = servers.find((server) => server.id === nextServerId);
-                    setSelectedServerId(nextServerId);
-                    setSelectedFaction(nextServer?.factions?.[0] ?? "");
+                    setSelectedServerId(event.target.value);
+                    setSelectedFaction("");
                   }}
                   className="mt-3 w-full rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <option value="">
-                    {servers.length === 0 ? "No servers registered" : "Select a server"}
+                    {servers.length === 0
+                      ? "No servers registered"
+                      : requiresFactionSelection
+                      ? "Select a server"
+                      : "Select a region"}
                   </option>
                   {servers.map((server) => (
                     <option key={server.id} value={server.id}>
@@ -336,7 +379,8 @@ export function GoldConfigAdmin() {
                 </select>
               </div>
 
-              {/* Faction - required when a server is selected */}
+              {/* Faction - required only for games that use server + faction scopes */}
+              {requiresFactionSelection ? (
               <div>
                 <label htmlFor="faction-select" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
                   Faction
@@ -358,6 +402,7 @@ export function GoldConfigAdmin() {
                   ))}
                 </select>
               </div>
+              ) : null}
 
               {/* Price/minimum fields - shown only when scope is ready */}
               {scopeReady ? (
@@ -420,7 +465,9 @@ export function GoldConfigAdmin() {
                 <p className="text-sm text-green-700">
                   {selectedGameId === ""
                     ? "Select a game to edit the configuration."
-                    : "Select a server to edit the configuration."
+                    : requiresFactionSelection
+                    ? "Select a server to edit the configuration."
+                    : "Select a region to edit the configuration."
                   }
                 </p>
               )}
@@ -462,6 +509,12 @@ export function GoldConfigAdmin() {
                   </button>
                 </div>
               </div>
+            ) : null}
+
+            {!isAuthenticated ? (
+              <p className="mt-4 text-sm font-semibold text-amber-200">
+                Sign in with Google before saving gold settings.
+              </p>
             ) : null}
 
             {saved ? (
