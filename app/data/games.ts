@@ -88,6 +88,55 @@ export const serviceCategories: ServiceCategory[] = [
   },
 ];
 
+export const retailServers: GameServer[] = [
+  {
+    id: "retail-us",
+    name: "US Servers",
+    region: "US",
+    factions: ["Horde", "Alliance"],
+    type: "Mixed",
+    total: 0,
+    sideA: { amount: 0, percent: 50 },
+    sideB: { amount: 0, percent: 50 },
+  },
+  {
+    id: "retail-eu",
+    name: "EU Servers",
+    region: "EU",
+    factions: ["Horde", "Alliance"],
+    type: "Mixed",
+    total: 0,
+    sideA: { amount: 0, percent: 50 },
+    sideB: { amount: 0, percent: 50 },
+  },
+];
+
+export const classicEraServers: GameServer[] = [
+  {
+    id: "whitemane",
+    name: "Whitemane",
+    region: "US",
+    factions: ["Horde", "Alliance"],
+    type: "PvP",
+    total: 0,
+    sideA: { amount: 0, percent: 50 },
+    sideB: { amount: 0, percent: 50 },
+  },
+];
+
+export const pandariaServers: GameServer[] = [
+  {
+    id: "faerlina",
+    name: "Faerlina",
+    region: "US",
+    factions: ["Horde", "Alliance"],
+    type: "PvP",
+    total: 0,
+    sideA: { amount: 0, percent: 50 },
+    sideB: { amount: 0, percent: 50 },
+  },
+];
+
 export const tbcAnniversaryServers: GameServer[] = [
   {
     id: "spineshatter-eu",
@@ -164,9 +213,9 @@ export function getServiceCategoryById(id: string) {
 }
 
 export function getServersByGameId(gameId: string) {
-  if (gameId === "tbc-anniversary") {
-    return tbcAnniversaryServers;
-  }
-
+  if (gameId === "tbc-anniversary") return tbcAnniversaryServers;
+  if (gameId === "retail") return retailServers;
+  if (gameId === "classic-era") return classicEraServers;
+  if (gameId === "mist-of-pandaria") return pandariaServers;
   return [];
 }

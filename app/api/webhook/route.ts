@@ -10,11 +10,14 @@ import { sendDiscordOrderNotification } from "@/lib/discord";
  *   STRIPE_WEBHOOK_SECRET          — Signing secret from the webhook endpoint in the Stripe dashboard
  *
  * Discord webhook URLs (one per game+category combination):
- *   DISCORD_WEBHOOK_WOW_TBC_GOLD   — WoW TBC Anniversary gold sales
- *   DISCORD_WEBHOOK_DEFAULT        — (optional) catch-all for unmatched orders
+ *   DISCORD_WEBHOOK_WOW_TBC_GOLD        — WoW TBC Anniversary gold sales
+ *   DISCORD_WEBHOOK_WOW_RETAIL_GOLD     — WoW Retail (Midnight) gold sales
+ *   DISCORD_WEBHOOK_WOW_CLASSIC_GOLD    — WoW Classic Era gold sales
+ *   DISCORD_WEBHOOK_WOW_PANDARIA_GOLD   — WoW Mist of Pandaria gold sales
+ *   DISCORD_WEBHOOK_DEFAULT             — (optional) catch-all for unmatched orders
  *
- * Register this endpoint in the Stripe dashboard (or Stripe CLI for local testing):
- *   stripe listen --forward-to localhost:3000/api/webhooks/stripe
+ * Register this endpoint in the Stripe dashboard:
+ *   https://lootmaster.vercel.app/api/webhook
  *
  * Events handled:
  *   checkout.session.completed  (payment_status === "paid")
@@ -22,14 +25,14 @@ import { sendDiscordOrderNotification } from "@/lib/discord";
 
 /**
  * Returns the correct Discord webhook URL for a given gameId + categoryId pair.
- * Add new entries here whenever a new channel is configured.
  */
 function resolveDiscordWebhookUrl(gameId: string, categoryId: string): string | null {
   const key = `${gameId}::${categoryId}`;
   const map: Record<string, string | undefined> = {
-    "tbc-anniversary::gold": process.env.DISCORD_WEBHOOK_WOW_TBC_GOLD,
-    // Add more mappings as needed, e.g.:
-    // "wow-retail::gold": process.env.DISCORD_WEBHOOK_WOW_RETAIL_GOLD,
+    "tbc-anniversary::gold":  process.env.DISCORD_WEBHOOK_WOW_TBC_GOLD,
+    "retail::gold":           process.env.DISCORD_WEBHOOK_WOW_RETAIL_GOLD,
+    "classic-era::gold":      process.env.DISCORD_WEBHOOK_WOW_CLASSIC_GOLD,
+    "mist-of-pandaria::gold": process.env.DISCORD_WEBHOOK_WOW_PANDARIA_GOLD,
   };
   return map[key] ?? process.env.DISCORD_WEBHOOK_DEFAULT ?? null;
 }
