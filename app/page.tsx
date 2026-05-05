@@ -1,201 +1,147 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 
 import { HotGames } from "./components/hot-games";
 import { games, serviceCategories } from "./data/games";
 
+const marketSignals = [
+  { label: "Supported games", value: String(games.length).padStart(2, "0") },
+  { label: "Service lanes", value: String(serviceCategories.length).padStart(2, "0") },
+  { label: "Fulfillment", value: "24/7" },
+];
+
 export default function Home() {
   return (
-    <div className="min-h-screen overflow-hidden text-white">
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-10 lg:px-8">
-        <HotGames />
+    <div className="min-h-screen text-white">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 pb-20 pt-10 lg:px-8">
+        <section className="relative overflow-hidden rounded-[2.2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(11,25,46,0.88)_0%,rgba(6,15,28,0.94)_55%,rgba(8,42,38,0.9)_100%)] p-7 shadow-[0_30px_80px_rgba(0,0,0,0.35)] sm:p-10">
+          <div className="pointer-events-none absolute -left-16 -top-16 h-52 w-52 rounded-full bg-cyan-300/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-14 right-0 h-56 w-56 rounded-full bg-emerald-300/10 blur-3xl" />
 
-        <section className="relative grid items-center gap-10 py-14 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="loot-orb animate-treasure-pulse left-[-6rem] top-8 h-36 w-36 bg-[#f7ba2c]/30" />
-          <div className="loot-orb animate-treasure-pulse right-8 top-16 h-24 w-24 bg-[#38bdf8]/35" />
-          <div className="loot-orb bottom-[-2rem] right-[-2rem] h-32 w-32 bg-[#60a5fa]/20" />
-
-          <div className="space-y-7">
-            <span className="inline-flex rounded-full border border-[#ffd76a]/20 bg-[#f7ba2c]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-[#ffc94d]">
-              Treasure Marketplace
-            </span>
-
-            <div className="space-y-4">
-              <h1 className="font-throne max-w-4xl text-5xl leading-none text-[#ffcf57] drop-shadow-[0_6px_24px_rgba(247,186,44,0.28)] sm:text-6xl">
-                Gold, crystals and power-up vibes for every game run.
-              </h1>
-              <p className="max-w-3xl text-lg leading-8 text-[#dbcaa7]">
-                Loot Master brings the same energy as the logo: enchanted treasure,
-                bright rewards and a premium fantasy storefront for accounts,
-                boosts and in-game currency.
+          <div className="relative grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-6">
+              <p className="inline-flex w-fit rounded-full border border-cyan-200/20 bg-cyan-300/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.25em] text-cyan-100">
+                Marketplace OS
               </p>
-            </div>
 
-            <div id="fluxo" className="flex flex-wrap gap-3">
-              {["Accounts", "Services", "Currency"].map((step, index) => (
-                <div
-                  key={step}
-                  className={`rounded-full border px-4 py-2 text-sm font-semibold ${
-                    index === 0
-                      ? "border-[#fff1be]/50 bg-[linear-gradient(180deg,#ffe27c_0%,#f7ba2c_65%,#cc7a15_100%)] text-[#311204]"
-                      : "border-[#83d3ff]/15 bg-[#0f2a4e]/35 text-[#c5e9ff]"
-                  }`}
-                >
-                  {step}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <Link
-                href="#games"
-                className="loot-gold-button rounded-full px-6 py-3 text-center text-sm font-semibold transition-all duration-200 hover:scale-[1.02]"
-              >
-                Explore games
-              </Link>
-              <Link
-                href="#how-it-works"
-                className="loot-blue-button rounded-full px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-[#123a72]"
-              >
-                See how it works
-              </Link>
-            </div>
-          </div>
-
-          <div className="loot-panel relative overflow-hidden rounded-[2rem] p-6">
-            <div className="absolute left-6 top-8 h-20 w-20 rounded-full bg-[#f7ba2c]/20 blur-2xl" />
-            <div className="absolute bottom-6 right-6 h-28 w-28 rounded-full bg-[#2db2ff]/20 blur-2xl" />
-            <div className="absolute right-[-1rem] top-10 h-28 w-28 rotate-12 rounded-[2rem] border border-[#84d5ff]/25 bg-[linear-gradient(180deg,rgba(95,208,255,0.35),rgba(22,76,167,0.15))] animate-crystal-float" />
-            <div className="space-y-5 relative">
-              <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-[0.3em] text-[#ffc94d]/85">
-                  Treasure Vault
-                </span>
-                <span className="rounded-full border border-[#fff1be]/15 bg-[#fff1be]/10 px-3 py-1 text-xs text-[#ffcf57]">
-                  Live
-                </span>
+              <div className="space-y-4">
+                <h1 className="font-throne text-5xl leading-[0.95] text-[#def4ff] sm:text-6xl">
+                  Trade smarter.
+                  <br />
+                  Enter the realm loaded.
+                </h1>
+                <p className="max-w-2xl text-base leading-8 text-[#a9c8de] sm:text-lg">
+                  A complete storefront for gold, boosts and accounts with direct routing to each game flow.
+                  Pick your title, choose your category and jump to checkout in a few clicks.
+                </p>
               </div>
 
-              <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-                <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,222,124,0.18),rgba(45,178,255,0.06))] p-5 ring-1 ring-[#fff1be]/10">
-                  <p className="text-sm text-[#dbcaa7]">What players can buy</p>
-                  <p className="mt-2 text-3xl text-[#ffcf57]">
-                    Accounts, boosts and gold
-                  </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="#game-grid"
+                  className="loot-gold-button inline-flex rounded-full px-6 py-3 text-sm font-semibold"
+                >
+                  Start shopping
+                </Link>
+                <Link
+                  href="#service-lanes"
+                  className="loot-secondary-button inline-flex rounded-full px-6 py-3 text-sm font-semibold"
+                >
+                  Explore service lanes
+                </Link>
+              </div>
+
+              <div className="grid gap-3 pt-2 sm:grid-cols-3">
+                {marketSignals.map((item) => (
+                  <article
+                    key={item.label}
+                    className="rounded-2xl border border-white/12 bg-black/20 px-4 py-4"
+                  >
+                    <p className="text-xs uppercase tracking-[0.22em] text-[#7fb6d5]">{item.label}</p>
+                    <p className="mt-2 text-2xl font-black text-[#def4ff]">{item.value}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 rounded-[2rem] bg-cyan-400/10 blur-2xl" />
+              <div className="relative rounded-[2rem] border border-cyan-100/15 bg-[linear-gradient(180deg,rgba(14,35,66,0.8),rgba(5,14,27,0.9))] p-6">
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-100/85">Live Control</p>
+                <h2 className="mt-3 text-2xl font-black text-[#def4ff]">One funnel, many worlds</h2>
+                <p className="mt-3 text-sm leading-7 text-[#97bad4]">
+                  Open any game card and continue with the same checkout logic across categories.
+                </p>
+
+                <div className="mt-6 overflow-hidden rounded-2xl border border-cyan-100/10 bg-black/30 p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#7fb6d5]">Core paths</p>
+                    <p className="rounded-full border border-cyan-100/20 bg-cyan-300/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-100">
+                      Ready
+                    </p>
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    {serviceCategories.map((category) => (
+                      <div
+                        key={category.id}
+                        className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                      >
+                        <p className="text-sm font-semibold text-[#def4ff]">{category.title}</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-[#8fbad6]">{category.id}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="relative mx-auto flex max-w-[20rem] items-center justify-center">
-                  <div className="absolute inset-0 rounded-full bg-[#f7ba2c]/15 blur-3xl" />
+                <div className="mt-6 flex items-center justify-center">
                   <Image
                     src="/lootmasterlogo.png"
-                    alt="Loot Master treasure logo"
-                    width={460}
-                    height={460}
+                    alt="Loot Master"
+                    width={300}
+                    height={300}
                     priority
-                    className="relative z-10 h-auto w-full drop-shadow-[0_18px_42px_rgba(247,186,44,0.24)]"
+                    className="h-auto w-52 drop-shadow-[0_20px_44px_rgba(52,173,255,0.35)]"
                   />
                 </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                {["Gold", "Boost", "Accounts"].map((item, index) => (
-                  <div
-                    key={item}
-                    className={`rounded-2xl border px-4 py-5 text-center text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
-                      index === 0
-                        ? "border-[#fff1be]/35 bg-[linear-gradient(180deg,rgba(247,186,44,0.24),rgba(204,122,21,0.18))] text-[#fff1be]"
-                        : "border-[#84d5ff]/12 bg-[#0c2647]/35 text-[#c5e9ff]"
-                    }`}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid gap-3 border-t border-white/10 pt-5 sm:grid-cols-3">
-                {[
-                  { label: "Games", value: games.length },
-                  { label: "Categories", value: serviceCategories.length },
-                  { label: "Highlights", value: "Live" },
-                ].map((metric) => (
-                  <div
-                    key={metric.label}
-                    className="rounded-2xl border border-[#fff1be]/10 bg-black/20 px-4 py-4"
-                  >
-                    <p className="text-xs uppercase tracking-[0.22em] text-[#b6a17b]">
-                      {metric.label}
-                    </p>
-                    <p className="mt-2 text-2xl font-black text-[#ffcf57]">
-                      {metric.value}
-                    </p>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
         </section>
 
-        <section
-          id="how-it-works"
-          className="grid gap-5 py-6 lg:grid-cols-[0.9fr_1.1fr]"
-        >
-          <div className="loot-panel rounded-[1.8rem] p-6">
-            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
-              Flow
-            </p>
-            <h2 className="mt-4 text-3xl font-black leading-tight text-[#ffcf57]">
-              From glowing loot to checkout in a few clicks.
-            </h2>
-            <p className="mt-4 max-w-xl text-base leading-8 text-[#dbcaa7]">
-              The homepage now feels closer to the brand art, while still guiding
-              players from discovery into the right game, category and order path.
-            </p>
+        <HotGames />
+
+        <section id="service-lanes" className="space-y-6">
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#7bdfff]">Service Lanes</p>
+            <h2 className="text-4xl font-black text-[#def4ff]">Choose your trading intent</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            {[
-              {
-                title: "1. Pick a game",
-                description:
-                  "Start from the homepage and open the title you want to shop for.",
-              },
-              {
-                title: "2. Choose a category",
-                description:
-                  "Browse gold, boosts or accounts depending on the service.",
-              },
-              {
-                title: "3. Continue to server",
-                description:
-                  "Move into the server selection flow and complete the order path.",
-              },
-            ].map((step) => (
+            {serviceCategories.map((category) => (
               <article
-                key={step.title}
-                className="loot-panel rounded-[1.6rem] p-5"
+                key={category.id}
+                className="group rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(13,27,48,0.8),rgba(6,14,26,0.86))] p-5 transition hover:-translate-y-1 hover:border-cyan-200/30"
               >
-                <h3 className="text-xl font-black text-[#ffc94d]">{step.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[#dbcaa7]">
-                  {step.description}
+                <p className="text-xs uppercase tracking-[0.22em] text-[#7fb6d5]">{category.id}</p>
+                <h3 className="mt-3 text-2xl font-black text-[#def4ff]">{category.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-[#9abdd6]">{category.description}</p>
+                <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/80 group-hover:text-cyan-100">
+                  Available in selected games
                 </p>
               </article>
             ))}
           </div>
         </section>
 
-        <section id="games" className="py-10">
-          <div className="flex flex-col gap-3 pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <section id="game-grid" className="space-y-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
-                Games
-              </p>
-              <h2 className="mt-3 text-4xl font-black leading-tight text-[#ffcf57]">
-                Choose where the order starts.
-              </h2>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#7bdfff]">Game Grid</p>
+              <h2 className="text-4xl font-black text-[#def4ff]">Open your game route</h2>
             </div>
-            <p className="max-w-2xl text-sm leading-7 text-[#cdb991]">
-              Every card leads into the same route structure already live in the
-              marketplace flow.
+            <p className="max-w-xl text-sm leading-7 text-[#9abdd6]">
+              Every card below points directly to the live game route and keeps the same purchase funnel.
             </p>
           </div>
 
@@ -203,101 +149,88 @@ export default function Home() {
             {games.map((game) => (
               <article
                 key={game.id}
-                className="loot-panel rounded-[1.75rem] p-6"
+                className="relative overflow-hidden rounded-[1.7rem] border border-white/12 bg-[linear-gradient(180deg,rgba(9,22,39,0.74),rgba(6,14,26,0.9))] p-6"
                 style={
                   game.id === "tbc-anniversary"
                     ? {
                         backgroundImage:
-                          "linear-gradient(rgba(7,11,26,0.46),rgba(7,11,26,0.56)), url('/wow/wow-tbc/tbc-logo.jpg')",
+                          "linear-gradient(rgba(8,20,38,0.5),rgba(8,20,38,0.7)), url('/wow/wow-tbc/tbc-logo.jpg')",
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : game.id === "retail"
                     ? {
                         backgroundImage:
-                          "linear-gradient(rgba(7,11,26,0.46),rgba(7,11,26,0.56)), url('/wow/wow-retail/midinight-logo.jpeg')",
+                          "linear-gradient(rgba(8,20,38,0.5),rgba(8,20,38,0.7)), url('/wow/wow-retail/midinight-logo.jpeg')",
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : game.id === "classic-era"
                     ? {
                         backgroundImage:
-                          "linear-gradient(rgba(30,21,12,0.46),rgba(30,21,12,0.56)), url('/wow/wow-classic-era/classic-era-logo.jpg')",
+                          "linear-gradient(rgba(18,15,11,0.52),rgba(18,15,11,0.72)), url('/wow/wow-classic-era/classic-era-logo.jpg')",
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : game.id === "mist-of-pandaria"
                     ? {
                         backgroundImage:
-                          "linear-gradient(rgba(8,28,22,0.46),rgba(8,28,22,0.56)), url('/wow/wow-pandaria/pandaria-logo.jpg')",
+                          "linear-gradient(rgba(7,30,25,0.48),rgba(7,30,25,0.7)), url('/wow/wow-pandaria/pandaria-logo.jpg')",
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }
                     : undefined
                 }
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <span className="inline-flex rounded-full border border-[#84d5ff]/20 bg-[#0d3f7a]/40 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#c7ecff]">
-                      {game.tag}
-                    </span>
-                    <h3 className="mt-4 text-3xl font-black leading-tight text-[#ffc94d]">
-                      {game.title}
-                    </h3>
+                <div className="absolute right-4 top-4 rounded-full border border-white/20 bg-black/30 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#d8f5ff]">
+                  {game.tag}
+                </div>
+
+                <div className="relative">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#9ed7f0]">{game.shortTitle}</p>
+                  <h3 className="mt-2 text-3xl font-black text-[#def4ff]">{game.title}</h3>
+                  <p className="mt-4 text-sm leading-7 text-[#d7e7f3]">{game.description}</p>
+
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    {serviceCategories.map((category) => (
+                      <span
+                        key={`${game.id}-${category.id}`}
+                        className="rounded-full border border-white/18 bg-black/30 px-3 py-1 text-xs font-semibold text-[#d5ebf8]"
+                      >
+                        {category.title}
+                      </span>
+                    ))}
                   </div>
-                  <span className="rounded-full border border-[#fff1be]/12 bg-[#fff1be]/8 px-3 py-1 text-xs font-semibold text-[#e4d0a7]">
-                    {game.shortTitle}
-                  </span>
-                </div>
 
-                <p className="mt-5 text-sm leading-7 text-[#dbcaa7]">
-                  {game.description}
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {serviceCategories.map((category) => (
-                    <span
-                      key={`${game.id}-${category.id}`}
-                      className="rounded-full border border-[#84d5ff]/15 bg-[#0f2745]/40 px-3 py-1 text-xs font-semibold text-[#c7ecff]"
+                  <div className="mt-8">
+                    <Link
+                      href={`/games/${game.id}`}
+                      className="loot-gold-button inline-flex rounded-full px-5 py-3 text-sm font-semibold"
                     >
-                      {category.title}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-8">
-                  <Link
-                    href={`/games/${game.id}`}
-                    className="loot-gold-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-all duration-200 hover:scale-[1.02]"
-                  >
-                    Open {game.shortTitle}
-                  </Link>
+                      Enter {game.shortTitle}
+                    </Link>
+                  </div>
                 </div>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="py-8">
-          <div className="loot-panel rounded-[2rem] p-8">
-            <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#ffc94d]">
-              Ready
-            </p>
-            <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <h2 className="text-4xl font-black leading-tight text-[#ffcf57]">
-                  Send players from highlight to checkout path faster.
-                </h2>
-                <p className="mt-4 max-w-2xl text-base leading-8 text-[#dbcaa7]">
-                  Highlights surface hot games, the homepage explains the offer,
-                  and the game grid now lands users directly inside the funnel.
-                </p>
-              </div>
-              <Link
-                href="#hots"
-                className="loot-blue-button inline-flex rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#123a72]"
-              >
-                Review highlights
+        <section className="rounded-[1.8rem] border border-white/10 bg-[linear-gradient(100deg,rgba(7,24,42,0.86),rgba(7,34,30,0.84))] p-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#7bdfff]">Ready To Deploy</p>
+              <h2 className="mt-3 text-4xl font-black text-[#def4ff]">Jump from homepage to checkout with less friction</h2>
+              <p className="mt-4 max-w-2xl text-base leading-8 text-[#9abdd6]">
+                This homepage is rebuilt from scratch with stronger hierarchy, clearer actions and direct links into every game route.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/games" className="loot-gold-button inline-flex rounded-full px-6 py-3 text-sm font-semibold">
+                Browse games
+              </Link>
+              <Link href="/rewards" className="loot-secondary-button inline-flex rounded-full px-6 py-3 text-sm font-semibold">
+                Open rewards
               </Link>
             </div>
           </div>
