@@ -13,10 +13,23 @@ type DiscordEmbed = {
   timestamp?: string;
 };
 
+type DiscordButton = {
+  type: 2;
+  style: 5;
+  label: string;
+  url: string;
+};
+
+type DiscordActionRow = {
+  type: 1;
+  components: [DiscordButton];
+};
+
 type DiscordWebhookPayload = {
   username?: string;
   avatar_url?: string;
   embeds: DiscordEmbed[];
+  components?: DiscordActionRow[];
 };
 
 /**
@@ -29,6 +42,7 @@ type DiscordWebhookPayload = {
 export async function sendDiscordOrderNotification(
   webhookUrl: string | null | undefined,
   params: {
+    applyUrl: string;
     sessionId: string;
     gameTitle: string;
     categoryTitle: string;
@@ -54,33 +68,46 @@ export async function sendDiscordOrderNotification(
 
   const methodLabel: Record<string, string> = {
     pix: "Pix",
-    card: "Cartão de crédito",
-    balance: "Saldo LM",
+    card: "Credit Card",
+    balance: "LM Coins",
   };
 
   const fields: DiscordEmbedField[] = [
-    { name: "🎮 Jogo", value: params.gameTitle, inline: true },
-    { name: "📦 Categoria", value: params.categoryTitle, inline: true },
-    { name: "💰 Quantidade", value: `${Number(params.goldAmount).toLocaleString("pt-BR")} gold`, inline: true },
-    { name: "🖥️ Servidor", value: params.server || "—", inline: true },
-    { name: "⚔️ Facção", value: params.faction || "—", inline: true },
-    { name: "👤 Personagem", value: params.nickname, inline: true },
-    { name: "💳 Método de pagamento", value: methodLabel[params.paymentMethod] ?? params.paymentMethod, inline: true },
-    { name: "💵 Valor pago", value: amountBrl, inline: true },
-    { name: "📧 E-mail", value: params.email, inline: false },
-    { name: "🔑 Session ID", value: `\`${params.sessionId}\``, inline: false },
+    { name: "Game", value: params.gameTitle, inline: true },
+    { name: "Category", value: params.categoryTitle, inline: true },
+    { name: "Gold Amount", value: `${Number(params.goldAmount).toLocaleString("en-US")} gold`, inline: true },
+    { name: "Server", value: params.server || "-", inline: true },
+    { name: "Faction", value: params.faction || "-", inline: true },
+    { name: "Character", value: params.nickname, inline: true },
+    { name: "Payment Method", value: methodLabel[params.paymentMethod] ?? params.paymentMethod, inline: true },
+    { name: "Amount Paid", value: amountBrl, inline: true },
+    { name: "Customer Email", value: params.email, inline: false },
+    { name: "Session ID", value: `\`${params.sessionId}\``, inline: false },
   ];
 
   const payload: DiscordWebhookPayload = {
     username: "Loot Master",
     embeds: [
       {
-        title: "✅ Pagamento confirmado!",
-        description: `Uma nova ordem foi paga e aguarda entrega.`,
+        title: "Payment Confirmed",
+        description: "A new paid order is ready for supplier applications.",
         color: 0x39d4ff, // cyan matching the new site palette
         fields,
-        footer: { text: "Loot Master — Payment Gateway" },
+        footer: { text: "Loot Master - Payment Gateway" },
         timestamp: new Date().toISOString(),
+      },
+    ],
+    components: [
+      {
+        type: 1,
+        components: [
+          {
+            type: 2,
+            style: 5,
+            label: "Apply for Order",
+            url: params.applyUrl,
+          },
+        ],
       },
     ],
   };

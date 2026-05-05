@@ -13,7 +13,7 @@ function formatMoney(amountInCents: number | null, currency: string | null) {
 }
 
 function formatDate(unixSeconds: number) {
-  return new Date(unixSeconds * 1000).toLocaleString("pt-BR");
+  return new Date(unixSeconds * 1000).toLocaleString("en-US");
 }
 
 function getStatus(
@@ -21,12 +21,12 @@ function getStatus(
   checkoutStatus: Stripe.Checkout.Session["status"],
 ): { label: string; classes: string } {
   if (paymentStatus === "paid")
-    return { label: "Pago", classes: "text-green-400" };
+    return { label: "Paid", classes: "text-green-400" };
   if (checkoutStatus === "expired")
-    return { label: "Expirado", classes: "text-red-400" };
+    return { label: "Expired", classes: "text-red-400" };
   if (checkoutStatus === "open")
-    return { label: "Pendente", classes: "text-yellow-400" };
-  return { label: "Não pago", classes: "text-green-600" };
+    return { label: "Pending", classes: "text-yellow-400" };
+  return { label: "Unpaid", classes: "text-green-600" };
 }
 
 export default async function AdminOrdersPage() {
@@ -68,7 +68,7 @@ export default async function AdminOrdersPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin</p>
-            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Pedidos</h1>
+            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Orders</h1>
           </div>
           <OrdersExportButton orders={rows} />
         </div>
@@ -77,20 +77,21 @@ export default async function AdminOrdersPage() {
           {loadError ? (
             <p className="px-5 py-4 text-sm font-medium text-red-400">{loadError}</p>
           ) : sessions.length === 0 ? (
-            <p className="px-5 py-4 text-sm text-green-600">Nenhum pedido encontrado.</p>
+            <p className="px-5 py-4 text-sm text-green-600">No orders found.</p>
           ) : (
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
-                  <th className="px-4 py-3">Data</th>
+                  <th className="px-4 py-3">Date</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Nickname</th>
                   <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Jogo</th>
+                  <th className="px-4 py-3">Game</th>
                   <th className="px-4 py-3">Gold</th>
-                  <th className="px-4 py-3">Servidor</th>
-                  <th className="px-4 py-3">Pagamento</th>
+                  <th className="px-4 py-3">Server</th>
+                  <th className="px-4 py-3">Payment</th>
                   <th className="px-4 py-3">Total</th>
+                  <th className="px-4 py-3">Applicants</th>
                 </tr>
               </thead>
               <tbody>
@@ -121,6 +122,14 @@ export default async function AdminOrdersPage() {
                     </td>
                     <td className="px-4 py-3 text-xs font-medium uppercase text-green-400">{row.paymentMethod}</td>
                     <td className="px-4 py-3 font-semibold text-green-300">{row.total}</td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/orders/${row.id}`}
+                        className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-300 transition hover:bg-green-950"
+                      >
+                        View applicants
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -133,7 +142,7 @@ export default async function AdminOrdersPage() {
             href="/admin"
             className="inline-flex items-center rounded-md border border-green-800 px-4 py-2 text-sm font-medium text-green-400 transition hover:bg-green-950"
           >
-            Voltar ao admin
+            Back to admin
           </Link>
         </div>
       </main>

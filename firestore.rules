@@ -56,5 +56,17 @@ service cloud.firestore {
       allow create, update, delete: if isSignedIn();
     }
 
+    // ORDER APPLICATIONS — suppliers applying to fulfill paid orders
+    match /order-applications/{applicationId} {
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ORDER DISPATCHES — selected supplier and Discord thread details for each order
+    match /order-dispatches/{orderId} {
+      allow read, create, update, delete: if isSignedIn();
+    }
+
   }
 }
