@@ -14,7 +14,6 @@ type CreatePrivateSupplierThreadInput = {
 
 type SendOrderNotificationInput = {
   channelId: string | null | undefined;
-  applyUrl: string;
   sessionId: string;
   gameTitle: string;
   categoryTitle: string;
@@ -154,7 +153,7 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
       embeds: [
         {
           title: "Payment Confirmed",
-          description: `A new paid order is ready for supplier applications.\n\n[Candidatar-se para esta ordem](${input.applyUrl})`,
+          description: "A new paid order is ready for supplier applications. Click the button below to apply.",
           color: 0x39d4ff,
           fields,
           footer: { text: "Loot Master - Payment Gateway" },
@@ -167,9 +166,9 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
           components: [
             {
               type: 2,
-              style: 5,
+              style: 1,
               label: "Candidatar-se",
-              url: input.applyUrl,
+              custom_id: `apply_order:${input.sessionId}`,
             },
           ],
         },

@@ -108,33 +108,6 @@ async function resolveDiscordChannelId(gameId: string, categoryId: string): Prom
   }
 }
 
-function buildSupplierApplyUrl(params: {
-  sessionId: string;
-  gameTitle: string;
-  categoryTitle: string;
-  goldAmount: string;
-  server: string;
-  faction: string;
-  nickname: string;
-  finalAmountCents: string;
-  currency: string;
-}): string {
-  const baseUrl = process.env.APP_URL ?? "https://lootmaster.vercel.app";
-  const search = new URLSearchParams({
-    orderId: params.sessionId,
-    gameTitle: params.gameTitle,
-    categoryTitle: params.categoryTitle,
-    goldAmount: params.goldAmount,
-    server: params.server,
-    faction: params.faction,
-    nickname: params.nickname,
-    finalAmountCents: params.finalAmountCents,
-    currency: params.currency,
-  });
-
-  return `${baseUrl}/suppliers/apply?${search.toString()}`;
-}
-
 export async function POST(request: Request): Promise<Response> {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -172,22 +145,9 @@ export async function POST(request: Request): Promise<Response> {
         meta.gameId ?? "",
         meta.categoryId ?? meta.categoryTitle?.toLowerCase() ?? "",
       );
-      const applyUrl = buildSupplierApplyUrl({
-        sessionId: session.id,
-        gameTitle: meta.gameTitle ?? "-",
-        categoryTitle: meta.categoryTitle ?? "-",
-        goldAmount: meta.goldAmount ?? "0",
-        server: meta.server ?? "-",
-        faction: meta.faction ?? "-",
-        nickname: meta.nickname ?? "-",
-        finalAmountCents: meta.finalAmountCents ?? String(session.amount_total ?? 0),
-        currency: session.currency ?? "brl",
-      });
-
       try {
         await sendOrderNotificationViaBot({
           channelId: discordChannelId,
-          applyUrl,
           sessionId: session.id,
           gameTitle: meta.gameTitle ?? "—",
           categoryTitle: meta.categoryTitle ?? "—",
