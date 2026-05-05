@@ -13,23 +13,10 @@ type DiscordEmbed = {
   timestamp?: string;
 };
 
-type DiscordButton = {
-  type: 2;
-  style: 5;
-  label: string;
-  url: string;
-};
-
-type DiscordActionRow = {
-  type: 1;
-  components: [DiscordButton];
-};
-
 type DiscordWebhookPayload = {
   username?: string;
   avatar_url?: string;
   embeds: DiscordEmbed[];
-  components?: DiscordActionRow[];
 };
 
 /**
@@ -90,24 +77,11 @@ export async function sendDiscordOrderNotification(
     embeds: [
       {
         title: "Payment Confirmed",
-        description: "A new paid order is ready for supplier applications.",
+        description: `A new paid order is ready for supplier applications.\n\n[🔔 Apply for this Order](${params.applyUrl})`,
         color: 0x39d4ff, // cyan matching the new site palette
         fields,
         footer: { text: "Loot Master - Payment Gateway" },
         timestamp: new Date().toISOString(),
-      },
-    ],
-    components: [
-      {
-        type: 1,
-        components: [
-          {
-            type: 2,
-            style: 5,
-            label: "Apply for Order",
-            url: params.applyUrl,
-          },
-        ],
       },
     ],
   };
