@@ -68,5 +68,11 @@ service cloud.firestore {
       allow read, create, update, delete: if isSignedIn();
     }
 
+    // ORDER CHECKOUTS — paid Stripe sessions mirrored to Firestore via webhook (Admin SDK)
+    match /order-checkouts/{orderId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
   }
 }

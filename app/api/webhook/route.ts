@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 /**
  * Stripe webhook endpoint.
@@ -108,6 +109,38 @@ async function resolveDiscordChannelId(gameId: string, categoryId: string): Prom
   }
 }
 
+async function persistPaidOrder(session: Stripe.Checkout.Session): Promise<void> {
+  const meta = session.metadata ?? {};
+  const adminDb = getAdminDb();
+
+  await adminDb.collection("order-checkouts").doc(session.id).set(
+    {
+      orderId: session.id,
+      paymentStatus: session.payment_status ?? "unknown",
+      amountTotalCents: session.amount_total ?? 0,
+      currency: (session.currency ?? "brl").toLowerCase(),
+      customerEmail: session.customer_email ?? "",
+      gameId: meta.gameId ?? "",
+      gameTitle: meta.gameTitle ?? "",
+      categoryId: meta.categoryId ?? "",
+      categoryTitle: meta.categoryTitle ?? "",
+      goldAmount: Number(meta.goldAmount ?? 0) || 0,
+      pricePerThousand: Number(meta.pricePerThousand ?? 0) || 0,
+      finalAmountCents: Number(meta.finalAmountCents ?? session.amount_total ?? 0) || 0,
+      serverId: meta.serverId ?? "",
+      server: meta.server ?? "",
+      faction: meta.faction ?? "",
+      deliveryMethod: meta.deliveryMethod ?? "",
+      nickname: meta.nickname ?? "",
+      paymentMethod: meta.paymentMethod ?? "",
+      hasServerOptions: meta.hasServerOptions === "true",
+      stripeCreatedAt: typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : null,
+      updatedAt: new Date().toISOString(),
+    },
+    { merge: true },
+  );
+}
+
 export async function POST(request: Request): Promise<Response> {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -140,6 +173,12 @@ export async function POST(request: Request): Promise<Response> {
 
     // Only notify for fully paid sessions
     if (session.payment_status === "paid") {
+      try {
+        await persistPaidOrder(session);
+      } catch (err) {
+        console.error("[Stripe Webhook] Could not persist paid order to Firestore:", err);
+      }
+
       const meta = session.metadata ?? {};
       const discordChannelId = await resolveDiscordChannelId(
         meta.gameId ?? "",

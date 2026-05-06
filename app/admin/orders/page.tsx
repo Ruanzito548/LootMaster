@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Stripe from "stripe";
+import { getAdminDb } from "@/lib/firebase-admin";
 import OrdersExportButton, { type OrderRow } from "./export-button";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,13 @@ function formatMoney(amountInCents: number | null, currency: string | null) {
 
 function formatDate(unixSeconds: number) {
   return new Date(unixSeconds * 1000).toLocaleString("en-US");
+}
+
+function formatIsoDate(iso: string | null | undefined) {
+  if (!iso) return "--";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "--";
+  return date.toLocaleString("en-US");
 }
 
 function getStatus(
@@ -32,35 +40,87 @@ function getStatus(
 export default async function AdminOrdersPage() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   let sessions: Stripe.Checkout.Session[] = [];
+  let rows: OrderRow[] = [];
   let loadError: string | null = null;
 
-  if (!secretKey) {
-    loadError = "Stripe secret key not configured.";
-  } else {
+  try {
+    const adminDb = getAdminDb();
+    const snapshot = await adminDb
+      .collection("order-checkouts")
+      .orderBy("updatedAt", "desc")
+      .limit(200)
+      .get();
+
+    rows = snapshot.docs.map((docRow) => {
+      const data = docRow.data() as Record<string, unknown>;
+
+      return {
+        id: typeof data.orderId === "string" && data.orderId ? data.orderId : docRow.id,
+        created: formatIsoDate(typeof data.stripeCreatedAt === "string" ? data.stripeCreatedAt : null),
+        status: typeof data.paymentStatus === "string" && data.paymentStatus === "paid" ? "Paid" : "Unpaid",
+        nickname: typeof data.nickname === "string" && data.nickname ? data.nickname : "--",
+        email: typeof data.customerEmail === "string" && data.customerEmail ? data.customerEmail : "--",
+        gameTitle: typeof data.gameTitle === "string" && data.gameTitle ? data.gameTitle : "--",
+        categoryTitle: typeof data.categoryTitle === "string" && data.categoryTitle ? data.categoryTitle : "--",
+        goldAmount:
+          typeof data.goldAmount === "number"
+            ? `${data.goldAmount.toLocaleString("en-US")}`
+            : "--",
+        server: typeof data.server === "string" && data.server ? data.server : "--",
+        faction: typeof data.faction === "string" && data.faction ? data.faction : "--",
+        deliveryMethod: typeof data.deliveryMethod === "string" && data.deliveryMethod ? data.deliveryMethod : "--",
+        paymentMethod: typeof data.paymentMethod === "string" && data.paymentMethod ? data.paymentMethod : "--",
+        total: formatMoney(
+          typeof data.amountTotalCents === "number" ? data.amountTotalCents : null,
+          typeof data.currency === "string" ? data.currency : null,
+        ),
+      };
+    });
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : "Could not load Firestore orders.";
+  }
+
+  if (rows.length === 0 && !loadError) {
+    if (!secretKey) {
+      loadError = "Stripe secret key not configured and no Firestore order-checkouts found.";
+    } else {
+      try {
+        const stripe = new Stripe(secretKey);
+        const result = await stripe.checkout.sessions.list({ limit: 100 });
+        sessions = result.data;
+      } catch (error) {
+        loadError = error instanceof Error ? error.message : "Could not load Stripe orders.";
+      }
+    }
+  } else if (rows.length === 0 && loadError && secretKey) {
     try {
       const stripe = new Stripe(secretKey);
       const result = await stripe.checkout.sessions.list({ limit: 100 });
       sessions = result.data;
+      loadError = `${loadError} Showing Stripe fallback data.`;
     } catch (error) {
-      loadError = error instanceof Error ? error.message : "Could not load Stripe orders.";
+      const stripeMessage = error instanceof Error ? error.message : "Could not load Stripe orders.";
+      loadError = `${loadError} Also failed Stripe fallback: ${stripeMessage}`;
     }
   }
 
-  const rows: OrderRow[] = sessions.map((s) => ({
-    id: s.id,
-    created: formatDate(s.created),
-    status: getStatus(s.payment_status, s.status).label,
-    nickname: s.metadata?.nickname || "--",
-    email: s.customer_email || "--",
-    gameTitle: s.metadata?.gameTitle || "--",
-    categoryTitle: s.metadata?.categoryTitle || "--",
-    goldAmount: s.metadata?.goldAmount || "--",
-    server: s.metadata?.server || "--",
-    faction: s.metadata?.faction || "--",
-    deliveryMethod: s.metadata?.deliveryMethod || "--",
-    paymentMethod: s.metadata?.paymentMethod || "--",
-    total: formatMoney(s.amount_total, s.currency),
-  }));
+  if (rows.length === 0 && sessions.length > 0) {
+    rows = sessions.map((s) => ({
+      id: s.id,
+      created: formatDate(s.created),
+      status: getStatus(s.payment_status, s.status).label,
+      nickname: s.metadata?.nickname || "--",
+      email: s.customer_email || "--",
+      gameTitle: s.metadata?.gameTitle || "--",
+      categoryTitle: s.metadata?.categoryTitle || "--",
+      goldAmount: s.metadata?.goldAmount || "--",
+      server: s.metadata?.server || "--",
+      faction: s.metadata?.faction || "--",
+      deliveryMethod: s.metadata?.deliveryMethod || "--",
+      paymentMethod: s.metadata?.paymentMethod || "--",
+      total: formatMoney(s.amount_total, s.currency),
+    }));
+  }
 
   return (
     <div className="min-h-screen bg-black text-green-400">
@@ -76,7 +136,7 @@ export default async function AdminOrdersPage() {
         <section className="mt-6 overflow-x-auto rounded-xl border border-green-900 bg-black">
           {loadError ? (
             <p className="px-5 py-4 text-sm font-medium text-red-400">{loadError}</p>
-          ) : sessions.length === 0 ? (
+          ) : rows.length === 0 ? (
             <p className="px-5 py-4 text-sm text-green-600">No orders found.</p>
           ) : (
             <table className="w-full text-left text-sm">
@@ -104,7 +164,7 @@ export default async function AdminOrdersPage() {
                   >
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-green-600">{row.created}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs font-semibold ${getStatus(sessions[i].payment_status, sessions[i].status).classes}`}>
+                      <span className={`text-xs font-semibold ${row.status === "Paid" ? "text-green-400" : "text-yellow-400"}`}>
                         {row.status}
                       </span>
                     </td>

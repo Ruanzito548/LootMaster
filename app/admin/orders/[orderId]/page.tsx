@@ -53,24 +53,50 @@ export default async function AdminOrderApplicantsPage(
     status: string;
   }[] = [];
 
-  if (!secretKey) {
-    loadError = "Stripe secret key not configured.";
-  } else {
-    try {
-      const stripe = new Stripe(secretKey);
-      const session = await stripe.checkout.sessions.retrieve(orderId);
+  try {
+    const adminDb = getAdminDb();
+    const orderDoc = await adminDb.collection("order-checkouts").doc(orderId).get();
+
+    if (orderDoc.exists) {
+      const data = orderDoc.data() as Record<string, unknown>;
       summary = {
         orderId,
-        gameTitle: session.metadata?.gameTitle ?? "--",
-        categoryTitle: session.metadata?.categoryTitle ?? "--",
-        nickname: session.metadata?.nickname ?? "--",
-        goldAmount: Number(session.metadata?.goldAmount ?? 0),
-        server: session.metadata?.server ?? "-",
-        faction: session.metadata?.faction ?? "-",
-        totalLabel: formatMoney(session.amount_total, session.currency),
+        gameTitle: typeof data.gameTitle === "string" ? data.gameTitle : "--",
+        categoryTitle: typeof data.categoryTitle === "string" ? data.categoryTitle : "--",
+        nickname: typeof data.nickname === "string" ? data.nickname : "--",
+        goldAmount: typeof data.goldAmount === "number" ? data.goldAmount : 0,
+        server: typeof data.server === "string" ? data.server : "-",
+        faction: typeof data.faction === "string" ? data.faction : "-",
+        totalLabel: formatMoney(
+          typeof data.amountTotalCents === "number" ? data.amountTotalCents : null,
+          typeof data.currency === "string" ? data.currency : null,
+        ),
       };
-    } catch (error) {
-      loadError = error instanceof Error ? error.message : "Could not load order details.";
+    }
+  } catch (error) {
+    console.warn("[Admin Order Applicants] Could not load summary from Firestore order-checkouts:", error);
+  }
+
+  if (summary.gameTitle === "--") {
+    if (!secretKey) {
+      loadError = "Stripe secret key not configured and order was not found in Firestore order-checkouts.";
+    } else {
+      try {
+        const stripe = new Stripe(secretKey);
+        const session = await stripe.checkout.sessions.retrieve(orderId);
+        summary = {
+          orderId,
+          gameTitle: session.metadata?.gameTitle ?? "--",
+          categoryTitle: session.metadata?.categoryTitle ?? "--",
+          nickname: session.metadata?.nickname ?? "--",
+          goldAmount: Number(session.metadata?.goldAmount ?? 0),
+          server: session.metadata?.server ?? "-",
+          faction: session.metadata?.faction ?? "-",
+          totalLabel: formatMoney(session.amount_total, session.currency),
+        };
+      } catch (error) {
+        loadError = error instanceof Error ? error.message : "Could not load order details.";
+      }
     }
   }
 
