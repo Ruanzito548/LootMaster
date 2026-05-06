@@ -31,6 +31,10 @@ type DiscordThreadResponse = {
   id: string;
 };
 
+type DiscordCurrentUserResponse = {
+  id: string;
+};
+
 class DiscordApiError extends Error {
   status: number;
   path: string;
@@ -47,6 +51,27 @@ class DiscordApiError extends Error {
 
 function isDiscordApiError(error: unknown): error is DiscordApiError {
   return error instanceof DiscordApiError;
+}
+
+let cachedBotUserId: string | null = null;
+
+async function getBotUserId(): Promise<string> {
+  if (cachedBotUserId) {
+    return cachedBotUserId;
+  }
+
+  const response = await discordRequest("/users/@me", {
+    method: "GET",
+  });
+
+  const user = (await response.json()) as DiscordCurrentUserResponse;
+
+  if (!user.id) {
+    throw new Error("Could not resolve Discord bot user ID.");
+  }
+
+  cachedBotUserId = user.id;
+  return user.id;
 }
 
 async function sendSupplierIntroMessage(channelId: string, input: CreatePrivateSupplierThreadInput) {
@@ -128,9 +153,12 @@ export async function createPrivateSupplierThread(
     .replace(/[^a-z0-9-]/g, "-")
     .slice(0, 80);
 
+  const botUserId = await getBotUserId();
+
   // @everyone cannot see; supplier can see + send messages
   const permissionOverwrites: object[] = [
     { id: guildId, type: 0, deny: "1024" }, // deny VIEW_CHANNEL for @everyone
+    { id: botUserId, type: 1, allow: "3072" }, // allow bot VIEW_CHANNEL + SEND_MESSAGES
   ];
 
   if (input.supplierDiscordUserId?.trim()) {
