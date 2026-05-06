@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Stripe from "stripe";
 
+import { getAdminDb } from "@/lib/firebase-admin";
+
 import { AdminOrderApplicantsClient } from "./page-client";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +32,24 @@ export default async function AdminOrderApplicantsPage(
     totalLabel: "--",
   };
   let loadError: string | null = null;
+  let initialApplications: {
+    applicationId: string;
+    orderId: string;
+    uid: string;
+    supplierName: string;
+    supplierEmail: string;
+    supplierDiscordHandle: string;
+    supplierDiscordUserId: string;
+    gameTitle: string;
+    categoryTitle: string;
+    goldAmount: number;
+    server: string;
+    faction: string;
+    nickname: string;
+    finalAmountCents: number;
+    currency: string;
+    status: string;
+  }[] = [];
 
   if (!secretKey) {
     loadError = "Stripe secret key not configured.";
@@ -50,6 +70,38 @@ export default async function AdminOrderApplicantsPage(
     } catch (error) {
       loadError = error instanceof Error ? error.message : "Could not load order details.";
     }
+  }
+
+  try {
+    const adminDb = getAdminDb();
+    const snapshot = await adminDb
+      .collection("order-applications")
+      .where("orderId", "==", orderId)
+      .get();
+
+    initialApplications = snapshot.docs.map((row) => {
+      const data = row.data() as Record<string, unknown>;
+      return {
+        applicationId: typeof data.applicationId === "string" ? data.applicationId : row.id,
+        orderId: typeof data.orderId === "string" ? data.orderId : orderId,
+        uid: typeof data.uid === "string" ? data.uid : "",
+        supplierName: typeof data.supplierName === "string" ? data.supplierName : "Supplier",
+        supplierEmail: typeof data.supplierEmail === "string" ? data.supplierEmail : "",
+        supplierDiscordHandle: typeof data.supplierDiscordHandle === "string" ? data.supplierDiscordHandle : "",
+        supplierDiscordUserId: typeof data.supplierDiscordUserId === "string" ? data.supplierDiscordUserId : "",
+        gameTitle: typeof data.gameTitle === "string" ? data.gameTitle : "",
+        categoryTitle: typeof data.categoryTitle === "string" ? data.categoryTitle : "",
+        goldAmount: typeof data.goldAmount === "number" ? data.goldAmount : 0,
+        server: typeof data.server === "string" ? data.server : "-",
+        faction: typeof data.faction === "string" ? data.faction : "-",
+        nickname: typeof data.nickname === "string" ? data.nickname : "-",
+        finalAmountCents: typeof data.finalAmountCents === "number" ? data.finalAmountCents : 0,
+        currency: typeof data.currency === "string" ? data.currency : "brl",
+        status: typeof data.status === "string" ? data.status : "applied",
+      };
+    });
+  } catch (error) {
+    console.warn("[Admin Order Applicants] Could not pre-load applications from Admin SDK:", error);
   }
 
   return (
@@ -73,7 +125,7 @@ export default async function AdminOrderApplicantsPage(
         {loadError ? (
           <p className="mt-6 rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">{loadError}</p>
         ) : (
-          <AdminOrderApplicantsClient summary={summary} />
+          <AdminOrderApplicantsClient summary={summary} initialApplications={initialApplications} />
         )}
       </main>
     </div>

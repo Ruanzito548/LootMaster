@@ -26,10 +26,11 @@ type OrderSummary = {
 
 type Props = {
   summary: OrderSummary;
+  initialApplications: OrderApplication[];
 };
 
-export function AdminOrderApplicantsClient({ summary }: Props) {
-  const [applications, setApplications] = useState<OrderApplication[]>([]);
+export function AdminOrderApplicantsClient({ summary, initialApplications }: Props) {
+  const [applications, setApplications] = useState<OrderApplication[]>(initialApplications);
   const [dispatch, setDispatch] = useState<OrderDispatch | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser) && firebaseEnabled);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
@@ -47,14 +48,14 @@ export function AdminOrderApplicantsClient({ summary }: Props) {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setApplications([]);
+      setApplications(initialApplications);
       return () => undefined;
     }
 
     return subscribeToOrderApplications(summary.orderId, (next) => {
       startTransition(() => setApplications(next));
     });
-  }, [isAuthenticated, summary.orderId]);
+  }, [initialApplications, isAuthenticated, summary.orderId]);
 
   useEffect(() => {
     if (!isAuthenticated) {
