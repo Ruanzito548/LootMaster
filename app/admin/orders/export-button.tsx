@@ -14,7 +14,19 @@ export type OrderRow = {
   deliveryMethod: string;
   paymentMethod: string;
   total: string;
+  currency: string;
+  totalCents: number;
+  commissionPercent: number;
+  sellerAmountCents: number;
+  platformProfitCents: number;
 };
+
+function formatMoney(cents: number, currency: string): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+  }).format(cents / 100);
+}
 
 export default function OrdersExportButton({ orders }: { orders: OrderRow[] }) {
   function handleExport() {
@@ -28,6 +40,10 @@ export default function OrdersExportButton({ orders }: { orders: OrderRow[] }) {
       "Categoria",
       "Gold",
       "Servidor",
+      "Valor",
+      "Repasse",
+      "Lucro",
+      "Taxa",
       "Faction",
       "Entrega",
       "Pagamento",
@@ -45,6 +61,10 @@ export default function OrdersExportButton({ orders }: { orders: OrderRow[] }) {
         o.categoryTitle,
         o.goldAmount,
         o.server,
+        formatMoney(o.totalCents, o.currency),
+        formatMoney(o.sellerAmountCents, o.currency),
+        formatMoney(o.platformProfitCents, o.currency),
+        `${o.commissionPercent}%`,
         o.faction,
         o.deliveryMethod,
         o.paymentMethod,

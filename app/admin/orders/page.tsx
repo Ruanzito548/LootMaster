@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
 import CreateTestOrderButton from "./create-test-order-button";
 import OrdersExportButton, { type OrderRow } from "./export-button";
+import OrdersTable from "./orders-table";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,25 @@ function formatIsoDate(iso: string | null | undefined) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "--";
   return date.toLocaleString("en-US");
+}
+
+function clampPercent(value: number): number {
+  if (Number.isNaN(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 100) return 100;
+  return Math.round(value * 100) / 100;
+}
+
+function buildFinancials(totalCents: number, commissionPercentRaw: number) {
+  const commissionPercent = clampPercent(commissionPercentRaw);
+  const sellerAmountCents = Math.round(totalCents * (1 - commissionPercent / 100));
+  const platformProfitCents = totalCents - sellerAmountCents;
+
+  return {
+    commissionPercent,
+    sellerAmountCents,
+    platformProfitCents,
+  };
 }
 
 function getStatus(
@@ -66,13 +86,25 @@ export default async function AdminOrdersPage() {
 
     rows = snapshot.docs.map((docRow) => {
       const data = docRow.data() as Record<string, unknown>;
+      const orderId = typeof data.orderId === "string" && data.orderId ? data.orderId : docRow.id;
+      const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
+      const currency = typeof data.currency === "string" && data.currency ? data.currency : "brl";
+      const storedCommissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
+      const financials =
+        typeof data.sellerAmountCents === "number" && typeof data.platformProfitCents === "number"
+          ? {
+              commissionPercent: clampPercent(storedCommissionPercent),
+              sellerAmountCents: data.sellerAmountCents,
+              platformProfitCents: data.platformProfitCents,
+            }
+          : buildFinancials(totalCents, storedCommissionPercent);
 
       return {
-        id: typeof data.orderId === "string" && data.orderId ? data.orderId : docRow.id,
+        id: orderId,
         created: formatIsoDate(typeof data.stripeCreatedAt === "string" ? data.stripeCreatedAt : null),
         status:
           (typeof data.orderStatus === "string" && data.orderStatus === "completed") ||
-          completedOrderIds.has(typeof data.orderId === "string" && data.orderId ? data.orderId : docRow.id)
+          completedOrderIds.has(orderId)
             ? "Completed"
             : typeof data.paymentStatus === "string" && data.paymentStatus === "paid"
             ? "Paid"
@@ -89,10 +121,12 @@ export default async function AdminOrdersPage() {
         faction: typeof data.faction === "string" && data.faction ? data.faction : "--",
         deliveryMethod: typeof data.deliveryMethod === "string" && data.deliveryMethod ? data.deliveryMethod : "--",
         paymentMethod: typeof data.paymentMethod === "string" && data.paymentMethod ? data.paymentMethod : "--",
-        total: formatMoney(
-          typeof data.amountTotalCents === "number" ? data.amountTotalCents : null,
-          typeof data.currency === "string" ? data.currency : null,
-        ),
+        total: formatMoney(totalCents, currency),
+        currency,
+        totalCents,
+        commissionPercent: financials.commissionPercent,
+        sellerAmountCents: financials.sellerAmountCents,
+        platformProfitCents: financials.platformProfitCents,
       };
     });
   } catch (error) {
@@ -138,6 +172,11 @@ export default async function AdminOrdersPage() {
       deliveryMethod: s.metadata?.deliveryMethod || "--",
       paymentMethod: s.metadata?.paymentMethod || "--",
       total: formatMoney(s.amount_total, s.currency),
+      currency: s.currency ?? "brl",
+      totalCents: s.amount_total ?? 0,
+      commissionPercent: 15,
+      sellerAmountCents: Math.round((s.amount_total ?? 0) * 0.85),
+      platformProfitCents: (s.amount_total ?? 0) - Math.round((s.amount_total ?? 0) * 0.85),
     }));
   }
 
@@ -155,77 +194,17 @@ export default async function AdminOrdersPage() {
           </div>
         </div>
 
-        <section className="mt-6 overflow-x-auto rounded-xl border border-green-900 bg-black">
-          {loadError ? (
+        {loadError ? (
+          <section className="mt-6 overflow-x-auto rounded-xl border border-green-900 bg-black">
             <p className="px-5 py-4 text-sm font-medium text-red-400">{loadError}</p>
-          ) : rows.length === 0 ? (
+          </section>
+        ) : rows.length === 0 ? (
+          <section className="mt-6 overflow-x-auto rounded-xl border border-green-900 bg-black">
             <p className="px-5 py-4 text-sm text-green-600">No orders found.</p>
-          ) : (
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Nickname</th>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Game</th>
-                  <th className="px-4 py-3">Gold</th>
-                  <th className="px-4 py-3">Server</th>
-                  <th className="px-4 py-3">Payment</th>
-                  <th className="px-4 py-3">Total</th>
-                  <th className="px-4 py-3">Applicants</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, i) => (
-                  <tr
-                    key={row.id}
-                    className={`border-b border-green-950 transition-colors hover:bg-green-950/40 ${
-                      i % 2 === 0 ? "" : "bg-green-950/20"
-                    }`}
-                  >
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-green-600">{row.created}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-xs font-semibold ${
-                          row.status === "Completed"
-                            ? "text-blue-400"
-                            : row.status === "Paid"
-                            ? "text-green-400"
-                            : "text-yellow-400"
-                        }`}
-                      >
-                        {row.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 font-medium text-green-300">{row.nickname}</td>
-                    <td className="px-4 py-3 text-xs text-green-500">{row.email}</td>
-                    <td className="px-4 py-3 text-green-400">
-                      {row.gameTitle}
-                      {row.categoryTitle !== "--" && <span className="ml-1 text-xs text-green-600">/ {row.categoryTitle}</span>}
-                    </td>
-                    <td className="px-4 py-3 text-green-400">{row.goldAmount}</td>
-                    <td className="px-4 py-3 text-xs text-green-500">
-                      {row.server !== "--" ? row.server : ""}
-                      {row.faction !== "--" ? ` / ${row.faction}` : ""}
-                      {row.server === "--" && row.faction === "--" ? "--" : ""}
-                    </td>
-                    <td className="px-4 py-3 text-xs font-medium uppercase text-green-400">{row.paymentMethod}</td>
-                    <td className="px-4 py-3 font-semibold text-green-300">{row.total}</td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/orders/${row.id}`}
-                        className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-300 transition hover:bg-green-950"
-                      >
-                        View applicants
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
+          </section>
+        ) : (
+          <OrdersTable rows={rows} />
+        )}
 
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
