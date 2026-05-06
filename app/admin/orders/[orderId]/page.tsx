@@ -123,10 +123,12 @@ export default async function AdminOrderApplicantsPage(
         </div>
 
         {loadError ? (
-          <p className="mt-6 rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">{loadError}</p>
-        ) : (
-          <AdminOrderApplicantsClient summary={summary} initialApplications={initialApplications} />
-        )}
+          <p className="mt-6 rounded-xl border border-amber-900 bg-amber-950/20 px-5 py-4 text-sm font-medium text-amber-300">
+            {loadError} Showing applicants using the order ID from the URL.
+          </p>
+        ) : null}
+
+        <AdminOrderApplicantsClient summary={summary} initialApplications={initialApplications} />
       </main>
     </div>
   );
