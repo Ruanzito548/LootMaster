@@ -89,25 +89,41 @@ export async function createPrivateSupplierThread(
     });
   }
 
-  const introLines = [
-    `Supplier selected: ${input.supplierName}${input.supplierDiscordHandle ? ` (${input.supplierDiscordHandle})` : ""}`,
-    `Order ID: ${input.orderId}`,
-    `Order: ${input.gameTitle} / ${input.categoryTitle}`,
-    `Gold Amount: ${input.goldAmount.toLocaleString("en-US")} gold`,
-    `Server: ${input.server}`,
-    `Faction: ${input.faction}`,
-    `Character: ${input.nickname}`,
-    `Order Total: ${input.totalLabel}`,
-    input.supplierDiscordUserId?.trim()
-      ? `Supplier Discord User ID: ${input.supplierDiscordUserId.trim()}`
-      : "Supplier Discord User ID not provided. Share the thread link manually with the supplier.",
-    "Use this private thread to collect the supplier payout details and complete internal coordination.",
-  ];
+  const mentionPart = input.supplierDiscordUserId?.trim()
+    ? `<@${input.supplierDiscordUserId.trim()}>`
+    : null;
 
   await discordRequest(`/channels/${thread.id}/messages`, {
     method: "POST",
     body: JSON.stringify({
-      content: introLines.join("\n"),
+      content: mentionPart
+        ? `${mentionPart} você foi selecionado para este pedido!`
+        : "Novo pedido atribuído ao supplier.",
+      embeds: [
+        {
+          title: "📦 Pedido Atribuído",
+          color: 0x5865f2,
+          fields: [
+            { name: "🎮 Jogo", value: input.gameTitle || "-", inline: true },
+            { name: "📂 Categoria", value: input.categoryTitle || "-", inline: true },
+            { name: "💰 Gold", value: `${input.goldAmount.toLocaleString("en-US")} gold`, inline: true },
+            { name: "🌍 Servidor", value: input.server || "-", inline: true },
+            { name: "⚔️ Facção", value: input.faction || "-", inline: true },
+            { name: "👤 Personagem", value: input.nickname || "-", inline: true },
+            {
+              name: "🛒 Supplier",
+              value: `${input.supplierName}${input.supplierDiscordHandle ? ` (${input.supplierDiscordHandle})` : ""}`,
+              inline: false,
+            },
+            { name: "💵 Total", value: input.totalLabel || "-", inline: true },
+            { name: "🆔 Order ID", value: `\`${input.orderId}\``, inline: false },
+          ],
+          footer: {
+            text: "Use este canal privado para coordenar a entrega e o pagamento.",
+          },
+          timestamp: new Date().toISOString(),
+        },
+      ],
     }),
   });
 
