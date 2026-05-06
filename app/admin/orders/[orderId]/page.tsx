@@ -80,7 +80,7 @@ export default async function AdminOrderApplicantsPage(
           amountTotalCents,
           currency,
         ),
-        payoutLabel: formatMoney(sellerAmountCents, currency),
+        payoutLabel: formatMoney(sellerAmountCents, "usd"),
       };
     }
   } catch (error) {
@@ -105,7 +105,7 @@ export default async function AdminOrderApplicantsPage(
           totalLabel: formatMoney(session.amount_total, session.currency),
           payoutLabel: formatMoney(
             Math.round((session.amount_total ?? 0) * 0.85),
-            session.currency,
+            "usd",
           ),
         };
       } catch (error) {

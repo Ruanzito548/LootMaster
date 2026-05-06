@@ -81,7 +81,6 @@ export async function sendDiscordOrderNotification(
         color: 0x39d4ff, // cyan matching the new site palette
         fields,
         footer: { text: "Loot Master - Payment Gateway" },
-        timestamp: new Date().toISOString(),
       },
     ],
   };

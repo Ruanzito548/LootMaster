@@ -108,7 +108,6 @@ async function sendSupplierIntroMessage(channelId: string, input: CreatePrivateS
           footer: {
             text: "Use this private space to coordinate delivery and payout.",
           },
-          timestamp: new Date().toISOString(),
         },
       ],
     }),
@@ -270,16 +269,10 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
   }
 
   const supplierPayoutCents = Math.round(Number(input.finalAmountCents) * 0.85);
-  const supplierPayoutLabel = (supplierPayoutCents / 100).toLocaleString("pt-BR", {
+  const supplierPayoutLabel = (supplierPayoutCents / 100).toLocaleString("en-US", {
     style: "currency",
-    currency: (input.currency || "BRL").toUpperCase(),
+    currency: "USD",
   });
-
-  const methodLabel: Record<string, string> = {
-    pix: "Pix",
-    card: "Credit Card",
-    balance: "LM Coins",
-  };
 
   const fields = [
     { name: "Game", value: input.gameTitle || "-", inline: true },
@@ -287,7 +280,6 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
     { name: "Gold Amount", value: `${Number(input.goldAmount || "0").toLocaleString("en-US")} gold`, inline: true },
     { name: "Server", value: input.server || "-", inline: true },
     { name: "Faction", value: input.faction || "-", inline: true },
-    { name: "Payment Method", value: methodLabel[input.paymentMethod] ?? input.paymentMethod ?? "-", inline: true },
     { name: "Supplier Payout", value: supplierPayoutLabel, inline: true },
   ];
 
@@ -299,7 +291,6 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
           title: "🚀 NEW ORDER",
           color: 0x39d4ff,
           fields,
-          timestamp: new Date().toISOString(),
         },
       ],
       components: [

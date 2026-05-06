@@ -159,7 +159,7 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     await saveDiscordCandidate(orderId, user, payload.member);
-    return responseMessage("Candidatura enviada com sucesso. O admin ja pode te selecionar na ordem.");
+    return responseMessage("Application submitted successfully. The admin can now select you for this order.");
   } catch (error) {
     console.error("[Discord Interactions] Could not save candidate:", error);
     return responseMessage(getFriendlyApplyError(error));
