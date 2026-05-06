@@ -289,8 +289,6 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
     { name: "Faction", value: input.faction || "-", inline: true },
     { name: "Payment Method", value: methodLabel[input.paymentMethod] ?? input.paymentMethod ?? "-", inline: true },
     { name: "Supplier Payout", value: supplierPayoutLabel, inline: true },
-    { name: "Customer Email", value: input.email || "-", inline: false },
-    { name: "Session ID", value: `\`${input.sessionId}\``, inline: false },
   ];
 
   await discordRequest(`/channels/${input.channelId}/messages`, {
@@ -298,11 +296,9 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
     body: JSON.stringify({
       embeds: [
         {
-          title: "Payment Confirmed",
-          description: "A new paid order is ready for supplier applications. Click the button below to apply.",
+          title: "🚀 NEW ORDER",
           color: 0x39d4ff,
           fields,
-          footer: { text: "Loot Master - Payment Gateway" },
           timestamp: new Date().toISOString(),
         },
       ],
