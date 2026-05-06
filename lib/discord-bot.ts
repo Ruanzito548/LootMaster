@@ -31,76 +31,26 @@ type DiscordThreadResponse = {
   id: string;
 };
 
-async function discordRequest(path: string, init: RequestInit) {
-  const token = process.env.DISCORD_BOT_TOKEN;
+class DiscordApiError extends Error {
+  status: number;
+  path: string;
+  responseBody: string;
 
-  if (!token) {
-    throw new Error("DISCORD_BOT_TOKEN is not configured.");
+  constructor(path: string, status: number, responseBody: string) {
+    super(`Discord API request failed: ${status} (${path}) - ${responseBody}`);
+    this.name = "DiscordApiError";
+    this.status = status;
+    this.path = path;
+    this.responseBody = responseBody;
   }
-
-  const response = await fetch(`https://discord.com/api/v10${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bot ${token}`,
-      "Content-Type": "application/json",
-      ...(init.headers ?? {}),
-    },
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Discord API request failed: ${response.status} - ${text}`);
-  }
-
-  return response;
 }
 
-export async function createPrivateSupplierThread(
-  input: CreatePrivateSupplierThreadInput,
-): Promise<{ threadId: string; threadUrl: string }> {
-  const guildId = process.env.DISCORD_GUILD_ID;
-
-  if (!guildId) {
-    throw new Error("DISCORD_GUILD_ID is not configured.");
-  }
-
-  const channelName = `pedido-${input.orderId.slice(-8)}-${input.supplierName}`
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .slice(0, 80);
-
-  // @everyone cannot see; supplier can see + send messages
-  const permissionOverwrites: object[] = [
-    { id: guildId, type: 0, deny: "1024" }, // deny VIEW_CHANNEL for @everyone
-  ];
-
-  if (input.supplierDiscordUserId?.trim()) {
-    permissionOverwrites.push({
-      id: input.supplierDiscordUserId.trim(),
-      type: 1, // member
-      allow: "3072", // VIEW_CHANNEL + SEND_MESSAGES
-    });
-  }
-
-  const categoryId = process.env.DISCORD_SUPPLIER_CATEGORY_ID;
-
-  const createResponse = await discordRequest(`/guilds/${guildId}/channels`, {
-    method: "POST",
-    body: JSON.stringify({
-      name: channelName,
-      type: 0, // GUILD_TEXT
-      permission_overwrites: permissionOverwrites,
-      ...(categoryId ? { parent_id: categoryId } : {}),
-    }),
-  });
-
-  const channel = (await createResponse.json()) as { id: string };
-
+async function sendSupplierIntroMessage(channelId: string, input: CreatePrivateSupplierThreadInput) {
   const mentionPart = input.supplierDiscordUserId?.trim()
     ? `<@${input.supplierDiscordUserId.trim()}>`
     : null;
 
-  await discordRequest(`/channels/${channel.id}/messages`, {
+  await discordRequest(`/channels/${channelId}/messages`, {
     method: "POST",
     body: JSON.stringify({
       content: mentionPart
@@ -133,11 +83,122 @@ export async function createPrivateSupplierThread(
       ],
     }),
   });
+}
 
-  return {
-    threadId: channel.id,
-    threadUrl: `https://discord.com/channels/${guildId}/${channel.id}`,
-  };
+async function discordRequest(path: string, init: RequestInit) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+
+  if (!token) {
+    throw new Error("DISCORD_BOT_TOKEN is not configured.");
+  }
+
+  const response = await fetch(`https://discord.com/api/v10${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bot ${token}`,
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new DiscordApiError(path, response.status, text);
+  }
+
+  return response;
+}
+
+export async function createPrivateSupplierThread(
+  input: CreatePrivateSupplierThreadInput,
+): Promise<{ threadId: string; threadUrl: string }> {
+  const guildId = process.env.DISCORD_GUILD_ID;
+  const fallbackParentChannelId = process.env.DISCORD_SUPPLIER_THREAD_CHANNEL_ID;
+
+  if (!guildId) {
+    throw new Error("DISCORD_GUILD_ID is not configured.");
+  }
+
+  const channelName = `pedido-${input.orderId.slice(-8)}-${input.supplierName}`
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .slice(0, 80);
+
+  // @everyone cannot see; supplier can see + send messages
+  const permissionOverwrites: object[] = [
+    { id: guildId, type: 0, deny: "1024" }, // deny VIEW_CHANNEL for @everyone
+  ];
+
+  if (input.supplierDiscordUserId?.trim()) {
+    permissionOverwrites.push({
+      id: input.supplierDiscordUserId.trim(),
+      type: 1, // member
+      allow: "3072", // VIEW_CHANNEL + SEND_MESSAGES
+    });
+  }
+
+  const categoryId = process.env.DISCORD_SUPPLIER_CATEGORY_ID;
+
+  try {
+    const createResponse = await discordRequest(`/guilds/${guildId}/channels`, {
+      method: "POST",
+      body: JSON.stringify({
+        name: channelName,
+        type: 0, // GUILD_TEXT
+        permission_overwrites: permissionOverwrites,
+        ...(categoryId ? { parent_id: categoryId } : {}),
+      }),
+    });
+
+    const channel = (await createResponse.json()) as { id: string };
+    await sendSupplierIntroMessage(channel.id, input);
+
+    return {
+      threadId: channel.id,
+      threadUrl: `https://discord.com/channels/${guildId}/${channel.id}`,
+    };
+  } catch (error) {
+    const canFallbackToThread =
+      error instanceof DiscordApiError &&
+      error.status === 403 &&
+      Boolean(fallbackParentChannelId?.trim());
+
+    if (!canFallbackToThread) {
+      if (error instanceof DiscordApiError && error.status === 403) {
+        throw new Error(
+          "Discord retornou Missing Access ao criar canal privado. Verifique se o bot tem permissão Manage Channels e se DISCORD_GUILD_ID está correto.",
+        );
+      }
+
+      throw error;
+    }
+
+    const createThreadResponse = await discordRequest(`/channels/${fallbackParentChannelId?.trim()}/threads`, {
+      method: "POST",
+      body: JSON.stringify({
+        name: channelName,
+        auto_archive_duration: 1440,
+        type: 12,
+        invitable: false,
+      }),
+    });
+
+    const thread = (await createThreadResponse.json()) as DiscordThreadResponse;
+
+    if (input.supplierDiscordUserId?.trim()) {
+      await discordRequest(`/channels/${thread.id}/thread-members/${input.supplierDiscordUserId.trim()}`, {
+        method: "PUT",
+        body: JSON.stringify({}),
+      });
+    }
+
+    await sendSupplierIntroMessage(thread.id, input);
+
+    return {
+      threadId: thread.id,
+      threadUrl: `https://discord.com/channels/${guildId}/${thread.id}`,
+    };
+  }
 }
 
 export async function sendOrderNotificationViaBot(input: SendOrderNotificationInput): Promise<void> {
