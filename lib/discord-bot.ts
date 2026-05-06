@@ -54,29 +54,29 @@ async function sendSupplierIntroMessage(channelId: string, input: CreatePrivateS
     method: "POST",
     body: JSON.stringify({
       content: mentionPart
-        ? `${mentionPart} você foi selecionado para este pedido!`
-        : "Novo pedido atribuído ao supplier.",
+        ? `${mentionPart} you were selected for this order!`
+        : "A supplier has been assigned to this order.",
       embeds: [
         {
-          title: "📦 Pedido Atribuído",
+          title: "Assigned Order",
           color: 0x5865f2,
           fields: [
-            { name: "🎮 Jogo", value: input.gameTitle || "-", inline: true },
-            { name: "📂 Categoria", value: input.categoryTitle || "-", inline: true },
-            { name: "💰 Gold", value: `${input.goldAmount.toLocaleString("en-US")} gold`, inline: true },
-            { name: "🌍 Servidor", value: input.server || "-", inline: true },
-            { name: "⚔️ Facção", value: input.faction || "-", inline: true },
-            { name: "👤 Personagem", value: input.nickname || "-", inline: true },
+            { name: "Game", value: input.gameTitle || "-", inline: true },
+            { name: "Category", value: input.categoryTitle || "-", inline: true },
+            { name: "Gold", value: `${input.goldAmount.toLocaleString("en-US")} gold`, inline: true },
+            { name: "Server", value: input.server || "-", inline: true },
+            { name: "Faction", value: input.faction || "-", inline: true },
+            { name: "Character", value: input.nickname || "-", inline: true },
             {
-              name: "🛒 Supplier",
+              name: "Supplier",
               value: `${input.supplierName}${input.supplierDiscordHandle ? ` (${input.supplierDiscordHandle})` : ""}`,
               inline: false,
             },
-            { name: "💵 Total", value: input.totalLabel || "-", inline: true },
-            { name: "🆔 Order ID", value: `\`${input.orderId}\``, inline: false },
+            { name: "Total", value: input.totalLabel || "-", inline: true },
+            { name: "Order ID", value: `\`${input.orderId}\``, inline: false },
           ],
           footer: {
-            text: "Use este canal privado para coordenar a entrega e o pagamento.",
+            text: "Use this private space to coordinate delivery and payout.",
           },
           timestamp: new Date().toISOString(),
         },
@@ -139,6 +139,8 @@ export async function createPrivateSupplierThread(
 
   const categoryId = process.env.DISCORD_SUPPLIER_CATEGORY_ID;
 
+  let createdChannelId: string | null = null;
+
   try {
     const createResponse = await discordRequest(`/guilds/${guildId}/channels`, {
       method: "POST",
@@ -151,12 +153,7 @@ export async function createPrivateSupplierThread(
     });
 
     const channel = (await createResponse.json()) as { id: string };
-    await sendSupplierIntroMessage(channel.id, input);
-
-    return {
-      threadId: channel.id,
-      threadUrl: `https://discord.com/channels/${guildId}/${channel.id}`,
-    };
+    createdChannelId = channel.id;
   } catch (error) {
     const canFallbackToThread =
       error instanceof DiscordApiError &&
@@ -166,7 +163,7 @@ export async function createPrivateSupplierThread(
     if (!canFallbackToThread) {
       if (error instanceof DiscordApiError && error.status === 403) {
         throw new Error(
-          "Discord retornou Missing Access ao criar canal privado. Verifique se o bot tem permissão Manage Channels e se DISCORD_GUILD_ID está correto.",
+          "Discord returned Missing Access while creating the private channel. Verify the bot has Manage Channels permission and DISCORD_GUILD_ID is correct.",
         );
       }
 
@@ -199,6 +196,17 @@ export async function createPrivateSupplierThread(
       threadUrl: `https://discord.com/channels/${guildId}/${thread.id}`,
     };
   }
+
+  if (!createdChannelId) {
+    throw new Error("Could not resolve the created Discord channel.");
+  }
+
+  await sendSupplierIntroMessage(createdChannelId, input);
+
+  return {
+    threadId: createdChannelId,
+    threadUrl: `https://discord.com/channels/${guildId}/${createdChannelId}`,
+  };
 }
 
 export async function sendOrderNotificationViaBot(input: SendOrderNotificationInput): Promise<void> {
@@ -251,7 +259,7 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
             {
               type: 2,
               style: 1,
-              label: "Candidatar-se",
+              label: "Apply",
               custom_id: `apply_order:${input.sessionId}`,
             },
           ],

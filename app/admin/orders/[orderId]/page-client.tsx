@@ -3,7 +3,7 @@
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import Link from "next/link";
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 
 import { auth, db, firebaseEnabled } from "@/lib/firebase";
 import {
@@ -35,6 +35,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser) && firebaseEnabled);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const submitLockRef = useRef(false);
 
   useEffect(() => {
     if (!auth) {
@@ -77,11 +78,16 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
   }, [isAuthenticated, summary.orderId]);
 
   const selectSupplier = async (application: OrderApplication) => {
+    if (submitLockRef.current) {
+      return;
+    }
+
     if (!db || !auth?.currentUser) {
       setErrorMessage("Sign in with Google before selecting a supplier.");
       return;
     }
 
+    submitLockRef.current = true;
     setSubmittingId(application.applicationId);
     setErrorMessage(null);
 
@@ -127,6 +133,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not create the supplier Discord thread.");
     } finally {
+      submitLockRef.current = false;
       setSubmittingId(null);
     }
   };
