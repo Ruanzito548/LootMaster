@@ -148,10 +148,9 @@ export async function createPrivateSupplierThread(
     throw new Error("DISCORD_GUILD_ID is not configured.");
   }
 
-  const channelName = `pedido-${input.orderId.slice(-8)}-${input.supplierName}`
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .slice(0, 80);
+  const orderSuffix = input.orderId.slice(-8).toLowerCase();
+  const preferredName = `💵-order-${orderSuffix}`;
+  const safeChannelName = `order-${orderSuffix}`;
 
   const botUserId = await getBotUserId();
 
@@ -174,18 +173,40 @@ export async function createPrivateSupplierThread(
   let createdChannelId: string | null = null;
 
   try {
-    const createResponse = await discordRequest(`/guilds/${guildId}/channels`, {
-      method: "POST",
-      body: JSON.stringify({
-        name: channelName,
-        type: 0, // GUILD_TEXT
-        permission_overwrites: permissionOverwrites,
-        ...(categoryId ? { parent_id: categoryId } : {}),
-      }),
-    });
+    try {
+      const createResponse = await discordRequest(`/guilds/${guildId}/channels`, {
+        method: "POST",
+        body: JSON.stringify({
+          name: preferredName,
+          type: 0, // GUILD_TEXT
+          permission_overwrites: permissionOverwrites,
+          ...(categoryId ? { parent_id: categoryId } : {}),
+        }),
+      });
 
-    const channel = (await createResponse.json()) as { id: string };
-    createdChannelId = channel.id;
+      const channel = (await createResponse.json()) as { id: string };
+      createdChannelId = channel.id;
+    } catch (error) {
+      const isInvalidNameForGuildChannel =
+        error instanceof DiscordApiError && error.status === 400;
+
+      if (!isInvalidNameForGuildChannel) {
+        throw error;
+      }
+
+      const createResponse = await discordRequest(`/guilds/${guildId}/channels`, {
+        method: "POST",
+        body: JSON.stringify({
+          name: safeChannelName,
+          type: 0, // GUILD_TEXT
+          permission_overwrites: permissionOverwrites,
+          ...(categoryId ? { parent_id: categoryId } : {}),
+        }),
+      });
+
+      const channel = (await createResponse.json()) as { id: string };
+      createdChannelId = channel.id;
+    }
   } catch (error) {
     const canFallbackToThread =
       error instanceof DiscordApiError &&
@@ -205,7 +226,7 @@ export async function createPrivateSupplierThread(
     const createThreadResponse = await discordRequest(`/channels/${fallbackParentChannelId?.trim()}/threads`, {
       method: "POST",
       body: JSON.stringify({
-        name: channelName,
+        name: preferredName,
         auto_archive_duration: 1440,
         type: 12,
         invitable: false,
