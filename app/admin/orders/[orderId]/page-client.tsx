@@ -22,6 +22,7 @@ type OrderSummary = {
   server: string;
   faction: string;
   totalLabel: string;
+  payoutLabel: string;
 };
 
 type Props = {
@@ -101,13 +102,14 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
           supplierName: application.supplierName,
           supplierDiscordHandle: application.supplierDiscordHandle,
           supplierDiscordUserId: application.supplierDiscordUserId,
-          gameTitle: application.gameTitle,
-          categoryTitle: application.categoryTitle,
-          goldAmount: application.goldAmount,
-          server: application.server,
-          faction: application.faction,
-          nickname: application.nickname,
+          gameTitle: summary.gameTitle,
+          categoryTitle: summary.categoryTitle,
+          goldAmount: summary.goldAmount,
+          server: summary.server,
+          faction: summary.faction,
+          nickname: summary.nickname,
           totalLabel: summary.totalLabel,
+          payoutLabel: summary.payoutLabel,
         }),
       });
 
@@ -210,6 +212,10 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
           <div>
             <p className="text-xs uppercase tracking-wide text-green-700">Total</p>
             <p className="mt-1 text-sm font-semibold text-green-300">{summary.totalLabel}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-green-700">Supplier Payout</p>
+            <p className="mt-1 text-sm font-semibold text-green-300">{summary.payoutLabel}</p>
           </div>
         </div>
       </article>

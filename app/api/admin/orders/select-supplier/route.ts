@@ -12,6 +12,7 @@ type RequestBody = {
   faction: string;
   nickname: string;
   totalLabel: string;
+  payoutLabel: string;
 };
 
 export async function POST(request: Request): Promise<Response> {

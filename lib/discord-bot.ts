@@ -10,6 +10,7 @@ type CreatePrivateSupplierThreadInput = {
   faction: string;
   nickname: string;
   totalLabel: string;
+  payoutLabel: string;
 };
 
 type SendOrderNotificationInput = {
@@ -101,6 +102,7 @@ async function sendSupplierIntroMessage(channelId: string, input: CreatePrivateS
               value: `${input.supplierName}${input.supplierDiscordHandle ? ` (${input.supplierDiscordHandle})` : ""}`,
               inline: false,
             },
+            { name: "Supplier Payout", value: input.payoutLabel || "-", inline: true },
             { name: "Total", value: input.totalLabel || "-", inline: true },
             { name: "Order ID", value: `\`${input.orderId}\``, inline: false },
           ],
@@ -285,7 +287,6 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
     { name: "Gold Amount", value: `${Number(input.goldAmount || "0").toLocaleString("en-US")} gold`, inline: true },
     { name: "Server", value: input.server || "-", inline: true },
     { name: "Faction", value: input.faction || "-", inline: true },
-    { name: "Character", value: input.nickname || "-", inline: true },
     { name: "Payment Method", value: methodLabel[input.paymentMethod] ?? input.paymentMethod ?? "-", inline: true },
     { name: "Amount Paid", value: amountLabel, inline: true },
     { name: "Customer Email", value: input.email || "-", inline: false },

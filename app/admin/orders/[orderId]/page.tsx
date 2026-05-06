@@ -31,6 +31,7 @@ export default async function AdminOrderApplicantsPage(
     server: "-",
     faction: "-",
     totalLabel: "--",
+    payoutLabel: "--",
   };
   let loadError: string | null = null;
   let preloadError: string | null = null;
@@ -59,6 +60,14 @@ export default async function AdminOrderApplicantsPage(
 
     if (orderDoc.exists) {
       const data = orderDoc.data() as Record<string, unknown>;
+      const amountTotalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
+      const currency = typeof data.currency === "string" ? data.currency : "brl";
+      const commissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
+      const sellerAmountCents =
+        typeof data.sellerAmountCents === "number"
+          ? data.sellerAmountCents
+          : Math.round(amountTotalCents * (1 - commissionPercent / 100));
+
       summary = {
         orderId,
         gameTitle: typeof data.gameTitle === "string" ? data.gameTitle : "--",
@@ -68,9 +77,10 @@ export default async function AdminOrderApplicantsPage(
         server: typeof data.server === "string" ? data.server : "-",
         faction: typeof data.faction === "string" ? data.faction : "-",
         totalLabel: formatMoney(
-          typeof data.amountTotalCents === "number" ? data.amountTotalCents : null,
-          typeof data.currency === "string" ? data.currency : null,
+          amountTotalCents,
+          currency,
         ),
+        payoutLabel: formatMoney(sellerAmountCents, currency),
       };
     }
   } catch (error) {
@@ -93,6 +103,10 @@ export default async function AdminOrderApplicantsPage(
           server: session.metadata?.server ?? "-",
           faction: session.metadata?.faction ?? "-",
           totalLabel: formatMoney(session.amount_total, session.currency),
+          payoutLabel: formatMoney(
+            Math.round((session.amount_total ?? 0) * 0.85),
+            session.currency,
+          ),
         };
       } catch (error) {
         loadError = error instanceof Error ? error.message : "Could not load order details.";
