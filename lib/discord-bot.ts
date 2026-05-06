@@ -58,42 +58,49 @@ async function discordRequest(path: string, init: RequestInit) {
 export async function createPrivateSupplierThread(
   input: CreatePrivateSupplierThreadInput,
 ): Promise<{ threadId: string; threadUrl: string }> {
-  const parentChannelId = process.env.DISCORD_SUPPLIER_THREAD_CHANNEL_ID;
   const guildId = process.env.DISCORD_GUILD_ID;
 
-  if (!parentChannelId || !guildId) {
-    throw new Error("DISCORD_SUPPLIER_THREAD_CHANNEL_ID or DISCORD_GUILD_ID is not configured.");
+  if (!guildId) {
+    throw new Error("DISCORD_GUILD_ID is not configured.");
   }
 
-  const threadName = `order-${input.orderId.slice(-8)}-${input.supplierName}`
+  const channelName = `pedido-${input.orderId.slice(-8)}-${input.supplierName}`
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, "-")
     .slice(0, 80);
 
-  const createResponse = await discordRequest(`/channels/${parentChannelId}/threads`, {
+  // @everyone cannot see; supplier can see + send messages
+  const permissionOverwrites: object[] = [
+    { id: guildId, type: 0, deny: "1024" }, // deny VIEW_CHANNEL for @everyone
+  ];
+
+  if (input.supplierDiscordUserId?.trim()) {
+    permissionOverwrites.push({
+      id: input.supplierDiscordUserId.trim(),
+      type: 1, // member
+      allow: "3072", // VIEW_CHANNEL + SEND_MESSAGES
+    });
+  }
+
+  const categoryId = process.env.DISCORD_SUPPLIER_CATEGORY_ID;
+
+  const createResponse = await discordRequest(`/guilds/${guildId}/channels`, {
     method: "POST",
     body: JSON.stringify({
-      name: threadName,
-      auto_archive_duration: 1440,
-      type: 12,
-      invitable: false,
+      name: channelName,
+      type: 0, // GUILD_TEXT
+      permission_overwrites: permissionOverwrites,
+      ...(categoryId ? { parent_id: categoryId } : {}),
     }),
   });
 
-  const thread = (await createResponse.json()) as DiscordThreadResponse;
-
-  if (input.supplierDiscordUserId?.trim()) {
-    await discordRequest(`/channels/${thread.id}/thread-members/${input.supplierDiscordUserId.trim()}`, {
-      method: "PUT",
-      body: JSON.stringify({}),
-    });
-  }
+  const channel = (await createResponse.json()) as { id: string };
 
   const mentionPart = input.supplierDiscordUserId?.trim()
     ? `<@${input.supplierDiscordUserId.trim()}>`
     : null;
 
-  await discordRequest(`/channels/${thread.id}/messages`, {
+  await discordRequest(`/channels/${channel.id}/messages`, {
     method: "POST",
     body: JSON.stringify({
       content: mentionPart
@@ -128,8 +135,8 @@ export async function createPrivateSupplierThread(
   });
 
   return {
-    threadId: thread.id,
-    threadUrl: `https://discord.com/channels/${guildId}/${thread.id}`,
+    threadId: channel.id,
+    threadUrl: `https://discord.com/channels/${guildId}/${channel.id}`,
   };
 }
 
