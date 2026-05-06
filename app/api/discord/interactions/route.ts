@@ -78,15 +78,16 @@ function getFriendlyApplyError(error: unknown): string {
 }
 
 async function saveDiscordCandidate(orderId: string, user: DiscordInteractionUser, member?: DiscordInteractionMember) {
+  const normalizedOrderId = orderId.trim();
   const adminDb = getAdminDb();
   const displayName = member?.nick?.trim() || user.global_name?.trim() || user.username;
   const now = Date.now();
-  const applicationId = `${orderId}_${user.id}`;
+  const applicationId = `${normalizedOrderId}_${user.id}`;
 
   await adminDb.collection("order-applications").doc(applicationId).set(
     {
       applicationId,
-      orderId,
+      orderId: normalizedOrderId,
       uid: `discord:${user.id}`,
       supplierName: displayName,
       supplierEmail: "",

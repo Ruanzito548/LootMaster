@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Stripe from "stripe";
+import { FieldPath } from "firebase-admin/firestore";
 
 import { getAdminDb } from "@/lib/firebase-admin";
 
@@ -32,6 +33,7 @@ export default async function AdminOrderApplicantsPage(
     totalLabel: "--",
   };
   let loadError: string | null = null;
+  let preloadError: string | null = null;
   let initialApplications: {
     applicationId: string;
     orderId: string;
@@ -74,10 +76,18 @@ export default async function AdminOrderApplicantsPage(
 
   try {
     const adminDb = getAdminDb();
-    const snapshot = await adminDb
+    const exactSnapshot = await adminDb
       .collection("order-applications")
       .where("orderId", "==", orderId)
       .get();
+
+    const snapshot = exactSnapshot.empty
+      ? await adminDb
+          .collection("order-applications")
+          .where(FieldPath.documentId(), ">=", `${orderId}_`)
+          .where(FieldPath.documentId(), "<=", `${orderId}_\uf8ff`)
+          .get()
+      : exactSnapshot;
 
     initialApplications = snapshot.docs.map((row) => {
       const data = row.data() as Record<string, unknown>;
@@ -102,6 +112,7 @@ export default async function AdminOrderApplicantsPage(
     });
   } catch (error) {
     console.warn("[Admin Order Applicants] Could not pre-load applications from Admin SDK:", error);
+    preloadError = error instanceof Error ? error.message : "Unknown preload error.";
   }
 
   return (
@@ -125,6 +136,12 @@ export default async function AdminOrderApplicantsPage(
         {loadError ? (
           <p className="mt-6 rounded-xl border border-amber-900 bg-amber-950/20 px-5 py-4 text-sm font-medium text-amber-300">
             {loadError} Showing applicants using the order ID from the URL.
+          </p>
+        ) : null}
+
+        {preloadError ? (
+          <p className="mt-6 rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">
+            Could not load applicants from Firestore Admin SDK: {preloadError}
           </p>
         ) : null}
 
