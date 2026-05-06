@@ -42,9 +42,21 @@ export default async function AdminOrdersPage() {
   let sessions: Stripe.Checkout.Session[] = [];
   let rows: OrderRow[] = [];
   let loadError: string | null = null;
+  let completedOrderIds = new Set<string>();
 
   try {
     const adminDb = getAdminDb();
+    try {
+      const completedDispatches = await adminDb
+        .collection("order-dispatches")
+        .where("status", "==", "completed")
+        .get();
+
+      completedOrderIds = new Set(completedDispatches.docs.map((docRow) => docRow.id));
+    } catch (error) {
+      console.warn("[Admin Orders] Could not load completed dispatch statuses:", error);
+    }
+
     const snapshot = await adminDb
       .collection("order-checkouts")
       .orderBy("updatedAt", "desc")
@@ -57,7 +69,13 @@ export default async function AdminOrdersPage() {
       return {
         id: typeof data.orderId === "string" && data.orderId ? data.orderId : docRow.id,
         created: formatIsoDate(typeof data.stripeCreatedAt === "string" ? data.stripeCreatedAt : null),
-        status: typeof data.paymentStatus === "string" && data.paymentStatus === "paid" ? "Paid" : "Unpaid",
+        status:
+          (typeof data.orderStatus === "string" && data.orderStatus === "completed") ||
+          completedOrderIds.has(typeof data.orderId === "string" && data.orderId ? data.orderId : docRow.id)
+            ? "Completed"
+            : typeof data.paymentStatus === "string" && data.paymentStatus === "paid"
+            ? "Paid"
+            : "Unpaid",
         nickname: typeof data.nickname === "string" && data.nickname ? data.nickname : "--",
         email: typeof data.customerEmail === "string" && data.customerEmail ? data.customerEmail : "--",
         gameTitle: typeof data.gameTitle === "string" && data.gameTitle ? data.gameTitle : "--",
@@ -108,7 +126,7 @@ export default async function AdminOrdersPage() {
     rows = sessions.map((s) => ({
       id: s.id,
       created: formatDate(s.created),
-      status: getStatus(s.payment_status, s.status).label,
+      status: completedOrderIds.has(s.id) ? "Completed" : getStatus(s.payment_status, s.status).label,
       nickname: s.metadata?.nickname || "--",
       email: s.customer_email || "--",
       gameTitle: s.metadata?.gameTitle || "--",
@@ -164,7 +182,15 @@ export default async function AdminOrdersPage() {
                   >
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-green-600">{row.created}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs font-semibold ${row.status === "Paid" ? "text-green-400" : "text-yellow-400"}`}>
+                      <span
+                        className={`text-xs font-semibold ${
+                          row.status === "Completed"
+                            ? "text-blue-400"
+                            : row.status === "Paid"
+                            ? "text-green-400"
+                            : "text-yellow-400"
+                        }`}
+                      >
                         {row.status}
                       </span>
                     </td>

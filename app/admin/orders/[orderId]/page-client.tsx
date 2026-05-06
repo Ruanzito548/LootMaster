@@ -171,6 +171,13 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
         completedByUid: auth.currentUser.uid,
         updatedAt: serverTimestamp(),
       }, { merge: true });
+
+      await setDoc(doc(db, "order-checkouts", summary.orderId), {
+        orderStatus: "completed",
+        completedAt: serverTimestamp(),
+        completedByUid: auth.currentUser.uid,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not close supplier Discord channel.");
     } finally {
