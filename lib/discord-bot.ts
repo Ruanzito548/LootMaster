@@ -103,7 +103,6 @@ async function sendSupplierIntroMessage(channelId: string, input: CreatePrivateS
               inline: false,
             },
             { name: "Supplier Payout", value: input.payoutLabel || "-", inline: true },
-            { name: "Total", value: input.totalLabel || "-", inline: true },
             { name: "Order ID", value: `\`${input.orderId}\``, inline: false },
           ],
           footer: {
@@ -270,7 +269,8 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
     return;
   }
 
-  const amountLabel = (Number(input.finalAmountCents) / 100).toLocaleString("pt-BR", {
+  const supplierPayoutCents = Math.round(Number(input.finalAmountCents) * 0.85);
+  const supplierPayoutLabel = (supplierPayoutCents / 100).toLocaleString("pt-BR", {
     style: "currency",
     currency: (input.currency || "BRL").toUpperCase(),
   });
@@ -288,7 +288,7 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
     { name: "Server", value: input.server || "-", inline: true },
     { name: "Faction", value: input.faction || "-", inline: true },
     { name: "Payment Method", value: methodLabel[input.paymentMethod] ?? input.paymentMethod ?? "-", inline: true },
-    { name: "Amount Paid", value: amountLabel, inline: true },
+    { name: "Supplier Payout", value: supplierPayoutLabel, inline: true },
     { name: "Customer Email", value: input.email || "-", inline: false },
     { name: "Session ID", value: `\`${input.sessionId}\``, inline: false },
   ];
