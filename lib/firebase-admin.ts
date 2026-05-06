@@ -2,9 +2,17 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
 function getPrivateKey() {
-  const key = process.env.FIREBASE_PRIVATE_KEY;
-  if (!key) return null;
-  return key.replace(/\\n/g, "\n");
+  const raw = process.env.FIREBASE_PRIVATE_KEY;
+  if (!raw) return null;
+
+  const trimmed = raw.trim();
+  const unquoted =
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+      ? trimmed.slice(1, -1)
+      : trimmed;
+
+  return unquoted.replace(/\\n/g, "\n").replace(/\r/g, "");
 }
 
 function initFirebaseAdmin() {

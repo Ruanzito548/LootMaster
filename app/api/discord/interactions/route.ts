@@ -55,6 +55,28 @@ function responseMessage(content: string) {
   });
 }
 
+function getFriendlyApplyError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+
+  if (message.includes("FIREBASE_PROJECT_ID") || message.includes("FIREBASE_CLIENT_EMAIL") || message.includes("FIREBASE_PRIVATE_KEY")) {
+    return "Falha de configuracao no servidor (Firebase Admin env). Avise o admin para revisar FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL e FIREBASE_PRIVATE_KEY no Vercel.";
+  }
+
+  if (message.includes("private key")) {
+    return "Falha na chave privada do Firebase. Confira FIREBASE_PRIVATE_KEY no Vercel (formato com \\n).";
+  }
+
+  if (message.includes("The caller does not have permission") || message.includes("permission")) {
+    return "Servico sem permissao no Firestore. Verifique a Service Account usada no FIREBASE_CLIENT_EMAIL.";
+  }
+
+  if (message.includes("requested entity was not found") || message.includes("project")) {
+    return "Projeto Firebase nao encontrado. Confira FIREBASE_PROJECT_ID.";
+  }
+
+  return "Nao foi possivel registrar sua candidatura agora. Tente novamente.";
+}
+
 async function saveDiscordCandidate(orderId: string, user: DiscordInteractionUser, member?: DiscordInteractionMember) {
   const adminDb = getAdminDb();
   const displayName = member?.nick?.trim() || user.global_name?.trim() || user.username;
@@ -139,6 +161,6 @@ export async function POST(request: Request): Promise<Response> {
     return responseMessage("Candidatura enviada com sucesso. O admin ja pode te selecionar na ordem.");
   } catch (error) {
     console.error("[Discord Interactions] Could not save candidate:", error);
-    return responseMessage("Nao foi possivel registrar sua candidatura agora. Tente novamente.");
+    return responseMessage(getFriendlyApplyError(error));
   }
 }
