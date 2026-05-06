@@ -53,7 +53,15 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
     }
 
     return subscribeToOrderApplications(summary.orderId, (next) => {
-      startTransition(() => setApplications(next));
+      startTransition(() => {
+        // Keep server-preloaded applicants visible if realtime query returns empty.
+        if (next.length === 0 && initialApplications.length > 0) {
+          setApplications(initialApplications);
+          return;
+        }
+
+        setApplications(next);
+      });
     });
   }, [initialApplications, isAuthenticated, summary.orderId]);
 
