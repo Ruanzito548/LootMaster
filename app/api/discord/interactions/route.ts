@@ -1,16 +1,15 @@
-import { createPublicKey, verify } from "crypto";
-
+import { verifyKey } from "discord-interactions";
 import { FieldValue } from "firebase-admin/firestore";
 
 import { getAdminDb } from "@/lib/firebase-admin";
+
+export const runtime = "nodejs";
 
 const DISCORD_PING = 1;
 const DISCORD_COMPONENT = 3;
 const DISCORD_PONG_RESPONSE = 1;
 const DISCORD_MESSAGE_RESPONSE = 4;
 const DISCORD_EPHEMERAL_FLAG = 1 << 6;
-
-const PUBLIC_KEY_DER_PREFIX = "302a300506032b6570032100";
 
 type DiscordInteractionUser = {
   id: string;
@@ -41,25 +40,9 @@ function getDiscordPublicKey(): string {
   return key;
 }
 
-function isDiscordRequestValid(signature: string, timestamp: string, body: string): boolean {
-  const publicKeyHex = getDiscordPublicKey();
-  const publicKeyDer = Buffer.concat([
-    Buffer.from(PUBLIC_KEY_DER_PREFIX, "hex"),
-    Buffer.from(publicKeyHex, "hex"),
-  ]);
-
-  const keyObject = createPublicKey({
-    key: publicKeyDer,
-    format: "der",
-    type: "spki",
-  });
-
-  return verify(
-    null,
-    Buffer.from(timestamp + body, "utf8"),
-    keyObject,
-    Buffer.from(signature, "hex"),
-  );
+async function isDiscordRequestValid(signature: string, timestamp: string, body: string): Promise<boolean> {
+  const publicKey = getDiscordPublicKey();
+  return await verifyKey(body, signature, timestamp, publicKey);
 }
 
 function responseMessage(content: string) {
@@ -116,7 +99,7 @@ export async function POST(request: Request): Promise<Response> {
 
   let isValid = false;
   try {
-    isValid = isDiscordRequestValid(signature, timestamp, rawBody);
+    isValid = await isDiscordRequestValid(signature, timestamp, rawBody);
   } catch (error) {
     console.error("[Discord Interactions] Signature setup error:", error);
     return new Response("Invalid interaction setup.", { status: 500 });
