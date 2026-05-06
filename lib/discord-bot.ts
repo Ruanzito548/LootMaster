@@ -97,11 +97,6 @@ async function sendSupplierIntroMessage(channelId: string, input: CreatePrivateS
             { name: "Server", value: input.server || "-", inline: true },
             { name: "Faction", value: input.faction || "-", inline: true },
             { name: "Character", value: input.nickname || "-", inline: true },
-            {
-              name: "Supplier",
-              value: `${input.supplierName}${input.supplierDiscordHandle ? ` (${input.supplierDiscordHandle})` : ""}`,
-              inline: false,
-            },
             { name: "Supplier Payout", value: input.payoutLabel || "-", inline: true },
             { name: "Order ID", value: `\`${input.orderId}\``, inline: false },
           ],
