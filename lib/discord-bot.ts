@@ -45,6 +45,10 @@ class DiscordApiError extends Error {
   }
 }
 
+function isDiscordApiError(error: unknown): error is DiscordApiError {
+  return error instanceof DiscordApiError;
+}
+
 async function sendSupplierIntroMessage(channelId: string, input: CreatePrivateSupplierThreadInput) {
   const mentionPart = input.supplierDiscordUserId?.trim()
     ? `<@${input.supplierDiscordUserId.trim()}>`
@@ -267,4 +271,29 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
       ],
     }),
   });
+}
+
+export async function deleteSupplierChannel(channelId: string): Promise<void> {
+  const id = channelId.trim();
+
+  if (!id) {
+    throw new Error("Missing Discord channel ID.");
+  }
+
+  try {
+    await discordRequest(`/channels/${id}`, {
+      method: "DELETE",
+    });
+  } catch (error) {
+    if (isDiscordApiError(error) && error.status === 404) {
+      // Already deleted or not found: treat as completed action.
+      return;
+    }
+
+    if (isDiscordApiError(error) && error.status === 403) {
+      throw new Error("Discord returned Missing Access while deleting the supplier channel.");
+    }
+
+    throw error;
+  }
 }

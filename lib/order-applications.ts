@@ -30,6 +30,7 @@ export type OrderApplication = {
 
 export type OrderDispatch = {
   orderId: string;
+  status: string;
   selectedApplicationId: string;
   selectedSupplierName: string;
   selectedSupplierEmail: string;
@@ -113,6 +114,7 @@ export function subscribeToOrderDispatch(
       const data = snapshot.data() as Record<string, unknown>;
       onChange({
         orderId,
+        status: getString(data.status, "assigned"),
         selectedApplicationId: getString(data.selectedApplicationId),
         selectedSupplierName: getString(data.selectedSupplierName),
         selectedSupplierEmail: getString(data.selectedSupplierEmail),

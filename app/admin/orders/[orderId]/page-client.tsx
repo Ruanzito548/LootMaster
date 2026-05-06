@@ -34,6 +34,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
   const [dispatch, setDispatch] = useState<OrderDispatch | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser) && firebaseEnabled);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const submitLockRef = useRef(false);
 
@@ -119,6 +120,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
 
       await setDoc(doc(db, "order-dispatches", summary.orderId), {
         orderId: summary.orderId,
+        status: "assigned",
         selectedApplicationId: application.applicationId,
         selectedSupplierName: application.supplierName,
         selectedSupplierEmail: application.supplierEmail,
@@ -135,6 +137,44 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
     } finally {
       submitLockRef.current = false;
       setSubmittingId(null);
+    }
+  };
+
+  const completeDispatch = async () => {
+    if (!dispatch?.threadId || !db || !auth?.currentUser || isCompleting) {
+      return;
+    }
+
+    setIsCompleting(true);
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/admin/orders/complete-supplier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: summary.orderId,
+          threadId: dispatch.threadId,
+        }),
+      });
+
+      const data = (await response.json()) as { error?: string; ok?: boolean };
+
+      if (!response.ok || !data.ok) {
+        setErrorMessage(data.error ?? "Could not close supplier Discord channel.");
+        return;
+      }
+
+      await setDoc(doc(db, "order-dispatches", summary.orderId), {
+        status: "completed",
+        completedAt: serverTimestamp(),
+        completedByUid: auth.currentUser.uid,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not close supplier Discord channel.");
+    } finally {
+      setIsCompleting(false);
     }
   };
 
@@ -184,14 +224,31 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
               <p className="mt-1 text-sm text-emerald-200">
                 {dispatch.selectedSupplierDiscordHandle || "No Discord handle"} / {dispatch.selectedSupplierDiscordUserId}
               </p>
+              <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-emerald-400">
+                Status: {dispatch.status === "completed" ? "Completed" : "Assigned"}
+              </p>
             </div>
-            <Link
-              href={dispatch.threadUrl}
-              target="_blank"
-              className="inline-flex rounded-md border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-950/40"
-            >
-              Open Discord thread
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href={dispatch.threadUrl}
+                target="_blank"
+                className="inline-flex rounded-md border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-950/40"
+              >
+                Open Discord channel
+              </Link>
+              <button
+                type="button"
+                onClick={() => void completeDispatch()}
+                disabled={!isAuthenticated || dispatch.status === "completed" || isCompleting}
+                className="inline-flex rounded-md border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {dispatch.status === "completed"
+                  ? "Completed"
+                  : isCompleting
+                  ? "Completing..."
+                  : "Mark as completed"}
+              </button>
+            </div>
           </div>
         </article>
       ) : null}
@@ -249,6 +306,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
                         onClick={() => void selectSupplier(application)}
                         disabled={
                           !isAuthenticated ||
+                          dispatch?.status === "completed" ||
                           submittingId === application.applicationId ||
                           isSelected
                         }
