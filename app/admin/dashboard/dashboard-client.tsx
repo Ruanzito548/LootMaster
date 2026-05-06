@@ -85,7 +85,10 @@ export function DashboardClient({ orders, loadError }: DashboardClientProps) {
 
   const totalRevenue = filteredOrders.reduce((acc, order) => acc + order.amountTotal, 0);
   const totalOrders = filteredOrders.length;
-  const paidOrders = filteredOrders.filter((order) => order.statusLabel.toLowerCase() === "pago").length;
+  const paidOrders = filteredOrders.filter((order) => {
+    const label = order.statusLabel.toLowerCase();
+    return label === "paid" || label === "pago" || label === "completed" || label === "concluido";
+  }).length;
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
   const revenueByDay = useMemo(() => {
