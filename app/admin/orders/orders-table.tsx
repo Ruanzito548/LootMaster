@@ -68,27 +68,27 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
   }
 
   return (
-    <section className="mt-6 overflow-x-auto rounded-xl border border-green-900 bg-black">
+    <section className="mt-6 rounded-xl border border-green-900 bg-black">
       {errorMessage ? (
         <p className="border-b border-red-900 bg-red-950/20 px-5 py-3 text-sm font-medium text-red-400">{errorMessage}</p>
       ) : null}
 
-      <table className="w-full text-left text-sm">
+      <table className="w-full table-fixed text-left text-xs">
         <thead>
           <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
-            <th className="px-4 py-3">Date</th>
-            <th className="px-4 py-3">Status</th>
-            <th className="px-4 py-3">Nickname</th>
-            <th className="px-4 py-3">Email</th>
-            <th className="px-4 py-3">Game</th>
-            <th className="px-4 py-3">Gold</th>
-            <th className="px-4 py-3">Server</th>
-            <th className="px-4 py-3">Value</th>
-            <th className="px-4 py-3">Payout</th>
-            <th className="px-4 py-3">Profit</th>
-            <th className="px-4 py-3">Fee</th>
-            <th className="px-4 py-3">Payment</th>
-            <th className="px-4 py-3">Applicants</th>
+            <th className="px-2 py-2">Date</th>
+            <th className="px-2 py-2">Status</th>
+            <th className="px-2 py-2">Nickname</th>
+            <th className="px-2 py-2">Email</th>
+            <th className="px-2 py-2">Game</th>
+            <th className="px-2 py-2">Gold</th>
+            <th className="px-2 py-2">Server</th>
+            <th className="px-2 py-2">Value</th>
+            <th className="px-2 py-2">Payout</th>
+            <th className="px-2 py-2">Profit</th>
+            <th className="px-2 py-2">Fee</th>
+            <th className="px-2 py-2">Payment</th>
+            <th className="px-2 py-2">Applicants</th>
           </tr>
         </thead>
         <tbody>
@@ -103,8 +103,8 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                   i % 2 === 0 ? "" : "bg-green-950/20"
                 }`}
               >
-                <td className="whitespace-nowrap px-4 py-3 text-xs text-green-600">{row.created}</td>
-                <td className="px-4 py-3">
+                <td className="break-words px-2 py-2 text-[11px] text-green-600">{row.created}</td>
+                <td className="px-2 py-2">
                   <span
                     className={`text-xs font-semibold ${
                       row.status === "Completed"
@@ -117,24 +117,24 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                     {row.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 font-medium text-green-300">{row.nickname}</td>
-                <td className="px-4 py-3 text-xs text-green-500">{row.email}</td>
-                <td className="px-4 py-3 text-green-400">
+                <td className="break-words px-2 py-2 font-medium text-green-300">{row.nickname}</td>
+                <td className="break-all px-2 py-2 text-[11px] text-green-500">{row.email}</td>
+                <td className="break-words px-2 py-2 text-green-400">
                   {row.gameTitle}
                   {row.categoryTitle !== "--" ? <span className="ml-1 text-xs text-green-600">/ {row.categoryTitle}</span> : null}
                 </td>
-                <td className="px-4 py-3 text-green-400">{row.goldAmount}</td>
-                <td className="px-4 py-3 text-xs text-green-500">
+                <td className="px-2 py-2 text-green-400">{row.goldAmount}</td>
+                <td className="break-words px-2 py-2 text-[11px] text-green-500">
                   {row.server !== "--" ? row.server : ""}
                   {row.faction !== "--" ? ` / ${row.faction}` : ""}
                   {row.server === "--" && row.faction === "--" ? "--" : ""}
                 </td>
-                <td className="px-4 py-3 font-semibold text-green-300">{formatMoney(row.totalCents, row.currency)}</td>
-                <td className="px-4 py-3 text-amber-300">{formatMoney(row.sellerAmountCents, row.currency)}</td>
-                <td className="px-4 py-3 text-cyan-300">{formatMoney(row.platformProfitCents, row.currency)}</td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-2 font-semibold text-green-300">{formatMoney(row.totalCents, row.currency)}</td>
+                <td className="px-2 py-2 text-amber-300">{formatMoney(row.sellerAmountCents, row.currency)}</td>
+                <td className="px-2 py-2 text-cyan-300">{formatMoney(row.platformProfitCents, row.currency)}</td>
+                <td className="px-2 py-2">
                   {isEditing ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1">
                       <input
                         type="number"
                         min={0}
@@ -142,7 +142,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                         step={0.01}
                         value={editingFee}
                         onChange={(event) => setEditingFee(Number(event.target.value))}
-                        className="w-20 rounded border border-green-800 bg-black px-2 py-1 text-xs text-green-300"
+                        className="w-16 rounded border border-green-800 bg-black px-1 py-1 text-xs text-green-300"
                       />
                       <span className="text-xs text-green-500">%</span>
                       <button
@@ -155,7 +155,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1">
                       <span className="text-xs font-semibold text-green-300">{row.commissionPercent}%</span>
                       <button
                         type="button"
@@ -170,11 +170,11 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-3 text-xs font-medium uppercase text-green-400">{row.paymentMethod}</td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-2 text-xs font-medium uppercase text-green-400">{row.paymentMethod}</td>
+                <td className="px-2 py-2">
                   <Link
                     href={`/admin/orders/${row.id}`}
-                    className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-300 transition hover:bg-green-950"
+                    className="inline-flex rounded-md border border-green-800 px-2 py-1 text-[11px] font-semibold text-green-300 transition hover:bg-green-950"
                   >
                     View applicants
                   </Link>
