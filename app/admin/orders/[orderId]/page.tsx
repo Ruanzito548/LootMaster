@@ -61,7 +61,7 @@ export default async function AdminOrderApplicantsPage(
     if (orderDoc.exists) {
       const data = orderDoc.data() as Record<string, unknown>;
       const amountTotalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
-      const currency = typeof data.currency === "string" ? data.currency : "brl";
+      const currency = typeof data.currency === "string" ? data.currency : "usd";
       const commissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
       const sellerAmountCents =
         typeof data.sellerAmountCents === "number"

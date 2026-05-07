@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import type { OrderRow } from "./export-button";
 
 function formatMoney(cents: number, currency: string): string {
-  return new Intl.NumberFormat("pt-BR", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(cents / 100);

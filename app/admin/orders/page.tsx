@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 function formatMoney(amountInCents: number | null, currency: string | null) {
   if (typeof amountInCents !== "number" || !currency) return "--";
-  return new Intl.NumberFormat("pt-BR", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(amountInCents / 100);
@@ -88,7 +88,7 @@ export default async function AdminOrdersPage() {
       const data = docRow.data() as Record<string, unknown>;
       const orderId = typeof data.orderId === "string" && data.orderId ? data.orderId : docRow.id;
       const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
-      const currency = typeof data.currency === "string" && data.currency ? data.currency : "brl";
+      const currency = typeof data.currency === "string" && data.currency ? data.currency : "usd";
       const storedCommissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
       const financials =
         typeof data.sellerAmountCents === "number" && typeof data.platformProfitCents === "number"
@@ -172,7 +172,7 @@ export default async function AdminOrdersPage() {
       deliveryMethod: s.metadata?.deliveryMethod || "--",
       paymentMethod: s.metadata?.paymentMethod || "--",
       total: formatMoney(s.amount_total, s.currency),
-      currency: s.currency ?? "brl",
+      currency: s.currency ?? "usd",
       totalCents: s.amount_total ?? 0,
       commissionPercent: 15,
       sellerAmountCents: Math.round((s.amount_total ?? 0) * 0.85),

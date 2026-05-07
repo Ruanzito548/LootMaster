@@ -1,23 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { FirebaseError } from "firebase/app";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-
-import { auth, db, firebaseEnabled } from "../../lib/firebase";
-import { getFriendlyAuthError } from "../../lib/auth-errors";
-import { ensureUserProfileDoc } from "../../lib/profile-data";
-
-type FormState = {
-  username: string;
-};
-
-const defaultForm: FormState = {
-  username: "",
-};
 
 function normalizeRef(value: string | null | undefined) {
   return (value ?? "").trim().toUpperCase();
@@ -41,87 +26,12 @@ function CadastroContent() {
   const params = useSearchParams();
   const referralFromLink = useMemo(() => getReferralFromQuery(params), [params]);
 
-  const [form, setForm] = useState<FormState>(defaultForm);
-  const [saving, setSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  const assignedAgentId = referralFromLink || null;
-
-  const onChange = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    setForm((current) => ({ ...current, [key]: value }));
-  };
-
-  const submit = async () => {
-    if (!firebaseEnabled || !db || !auth) {
-      setErrorMessage("Firebase is not configured. Please try again later.");
-      return;
+  const handleDiscordSignup = () => {
+    // Store referral in sessionStorage so the callback can pick it up
+    if (referralFromLink) {
+      sessionStorage.setItem("signup_referral", referralFromLink);
     }
-
-    if (form.username.trim() === "") {
-      setErrorMessage("Please enter your username before continuing with Google.");
-      return;
-    }
-
-    setSaving(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    try {
-      const provider = new GoogleAuthProvider();
-      const credentials = await signInWithPopup(auth, provider);
-      await credentials.user.getIdToken();
-
-      const googleEmail = credentials.user.email?.trim().toLowerCase() ?? "";
-      const username = form.username.trim() || credentials.user.displayName?.trim() || "";
-
-      if (googleEmail === "") {
-        setErrorMessage("Your Google account did not provide an email. Try another account.");
-        setSaving(false);
-        return;
-      }
-
-      if (username === "") {
-        setErrorMessage("Could not resolve your username. Please type your username and try again.");
-        setSaving(false);
-        return;
-      }
-
-      await ensureUserProfileDoc(credentials.user, {
-        username,
-        email: googleEmail,
-        assignedAgentId,
-      });
-
-      const referrer = typeof document !== "undefined" ? document.referrer : "";
-
-      await addDoc(collection(db, "agent-signups"), {
-        uid: credentials.user.uid,
-        username,
-        email: googleEmail,
-        referralFromLink,
-        assignedAgentId,
-        sourcePath: typeof window !== "undefined" ? window.location.pathname : "/cadastro",
-        sourceQuery: typeof window !== "undefined" ? window.location.search : "",
-        referrer,
-        status: "new",
-        createdAt: serverTimestamp(),
-      });
-
-      setSuccessMessage("Registration completed successfully using Google.");
-
-      setForm(defaultForm);
-    } catch (error) {
-      if (error instanceof FirebaseError) {
-        setErrorMessage(getFriendlyAuthError(error.code, `Could not complete registration (${error.code}).`));
-      } else {
-        setErrorMessage(error instanceof Error ? error.message : "Could not complete registration.");
-      }
-    } finally {
-      setSaving(false);
-    }
+    window.location.href = "/api/auth/discord";
   };
 
   return (
@@ -133,49 +43,39 @@ function CadastroContent() {
             Create your account
           </h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Complete the form and continue with Google to create your account.
+            Connect your Discord account to get started. Your Discord username will be used automatically.
           </p>
         </div>
 
         <section className="loot-panel mt-8 rounded-[1.75rem] p-8">
           <div className="grid gap-5">
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-              Username
-              <input
-                value={form.username}
-                onChange={(event) => onChange("username", event.target.value)}
-                className="loot-input px-4 py-3 text-sm font-semibold"
-                placeholder="Your username"
-              />
-            </label>
+            <p className="loot-muted text-sm">
+              Your username, avatar, and account details will be pulled directly from Discord — no manual setup needed.
+            </p>
 
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#a89a7b]">
-              Login method
-              <input
-                value="Google Sign-In"
-                disabled
-                className="loot-input cursor-not-allowed px-4 py-3 text-sm font-semibold opacity-80"
-              />
-            </label>
+            {referralFromLink ? (
+              <p className="text-xs font-semibold text-[#a89a7b]">
+                Referral code applied: <span className="text-[#f0c060]">{referralFromLink}</span>
+              </p>
+            ) : null}
 
             <button
               type="button"
-              onClick={() => void submit()}
-              disabled={saving}
-              className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+              onClick={handleDiscordSignup}
+              className="loot-gold-button flex items-center justify-center gap-3 rounded-full px-5 py-3 text-sm font-semibold"
             >
-              {saving ? "Connecting Google..." : "Continue with Google"}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+              </svg>
+              Create account with Discord
             </button>
-
-            {successMessage ? <p className="text-sm font-semibold text-emerald-500">{successMessage}</p> : null}
-            {errorMessage ? <p className="text-sm font-semibold text-rose-500">{errorMessage}</p> : null}
           </div>
         </section>
 
         <div className="mt-8">
           <div className="flex flex-wrap gap-3">
             <Link href="/" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
-            Back to home
+              Back to home
             </Link>
             <Link href="/login" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
               I already have an account

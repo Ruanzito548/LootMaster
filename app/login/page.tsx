@@ -1,20 +1,56 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FirebaseError } from "firebase/app";
-import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import { onAuthStateChanged, signInWithCustomToken, signOut } from "firebase/auth";
 
 import { auth, firebaseEnabled } from "../../lib/firebase";
 import { getFriendlyAuthError } from "../../lib/auth-errors";
-import { ensureUserProfileDoc } from "../../lib/profile-data";
 
-export default function LoginPage() {
+const DISCORD_ERROR_LABELS: Record<string, string> = {
+  access_denied: "Discord access denied. Please try again.",
+  token_exchange_failed: "Could not exchange Discord token. Please try again.",
+  user_fetch_failed: "Could not fetch your Discord profile. Please try again.",
+  server_misconfigured: "Discord OAuth is not configured on this server.",
+};
+
+function LoginContent() {
   const router = useRouter();
+  const params = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Handle Discord callback: customToken or error in query params
+  useEffect(() => {
+    const customToken = params.get("customToken");
+    const error = params.get("error");
+
+    if (error) {
+      setErrorMessage(DISCORD_ERROR_LABELS[error] ?? "An error occurred. Please try again.");
+      return;
+    }
+
+    if (!customToken || !auth) {
+      return;
+    }
+
+    setLoading(true);
+    signInWithCustomToken(auth, customToken)
+      .then(() => {
+        router.replace("/profile");
+      })
+      .catch((err: unknown) => {
+        if (err instanceof FirebaseError) {
+          setErrorMessage(getFriendlyAuthError(err.code, "Could not sign in."));
+        } else {
+          setErrorMessage(err instanceof Error ? err.message : "Could not sign in.");
+        }
+        setLoading(false);
+      });
+  }, [params, router]);
 
   useEffect(() => {
     if (!auth) {
@@ -26,29 +62,8 @@ export default function LoginPage() {
     });
   }, []);
 
-  const submit = async () => {
-    if (!firebaseEnabled || !auth) {
-      setErrorMessage("Firebase is not configured. Please try again later.");
-      return;
-    }
-
-    setLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const provider = new GoogleAuthProvider();
-      const credentials = await signInWithPopup(auth, provider);
-      await ensureUserProfileDoc(credentials.user);
-      router.push("/profile");
-    } catch (error) {
-      if (error instanceof FirebaseError) {
-        setErrorMessage(getFriendlyAuthError(error.code, "Could not sign in."));
-      } else {
-        setErrorMessage(error instanceof Error ? error.message : "Could not sign in.");
-      }
-    } finally {
-      setLoading(false);
-    }
+  const loginWithDiscord = () => {
+    window.location.href = "/api/auth/discord";
   };
 
   const logout = async () => {
@@ -77,23 +92,26 @@ export default function LoginPage() {
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Login</p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Access your account</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            {loggedIn ? "You are already signed in." : "Sign in with Google to continue."}
+            {loggedIn ? "You are already signed in." : "Sign in with Discord to continue."}
           </p>
         </div>
 
         <section className="loot-panel mt-8 rounded-[1.75rem] p-8">
           <div className="grid gap-5">
             <p className="loot-muted text-sm">
-              Your session will be created using your Google account.
+              Your session will be created using your Discord account. Your Discord username will be linked automatically.
             </p>
 
             <button
               type="button"
-              onClick={() => void submit()}
-              disabled={loading || loggedIn}
-              className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+              onClick={loginWithDiscord}
+              disabled={loading || loggedIn || !firebaseEnabled}
+              className="loot-gold-button flex items-center justify-center gap-3 rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
             >
-              {loading ? "Connecting Google..." : loggedIn ? "Already connected" : "Continue with Google"}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+              </svg>
+              {loading ? "Connecting..." : loggedIn ? "Already connected" : "Continue with Discord"}
             </button>
 
             {loggedIn ? (
@@ -128,3 +146,12 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
+  );
+}
+

@@ -43,6 +43,8 @@ export type UserProfile = {
   transactions: ProfileTransaction[];
   inventorySlots: number;
   vipInventory: boolean;
+  discordId?: string;
+  discordUsername?: string;
 };
 
 const defaultInventory: InventoryItem[] = [
@@ -193,6 +195,8 @@ function mapUserProfile(uid: string, source: Record<string, unknown>): UserProfi
     transactions: transactions.length > 0 ? transactions : fallback.transactions,
     inventorySlots: getNumber(source.inventorySlots, fallback.inventorySlots),
     vipInventory: source.vipInventory === true,
+    ...(typeof source.discordId === "string" && { discordId: source.discordId }),
+    ...(typeof source.discordUsername === "string" && { discordUsername: source.discordUsername }),
   };
 }
 
