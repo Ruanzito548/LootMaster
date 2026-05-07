@@ -17,7 +17,8 @@ type DiscordUser = {
 
 function getAvatarUrl(user: DiscordUser): string {
   if (!user.avatar) {
-    const defaultIndex = (BigInt(user.id) >> 22n) % 6n;
+    // Discord default avatar: (userId >> 22) % 6, computed without BigInt literals
+    const defaultIndex = Number((BigInt(user.id) >> BigInt(22)) % BigInt(6));
     return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
   }
   return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
