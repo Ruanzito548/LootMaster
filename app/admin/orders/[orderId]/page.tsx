@@ -8,11 +8,11 @@ import { AdminOrderApplicantsClient } from "./page-client";
 
 export const dynamic = "force-dynamic";
 
-function formatMoney(amountInCents: number | null, currency: string | null) {
-  if (typeof amountInCents !== "number" || !currency) return "--";
+function formatMoney(amountInCents: number | null) {
+  if (typeof amountInCents !== "number") return "--";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency.toUpperCase(),
+    currency: "USD",
   }).format(amountInCents / 100);
 }
 
@@ -61,7 +61,6 @@ export default async function AdminOrderApplicantsPage(
     if (orderDoc.exists) {
       const data = orderDoc.data() as Record<string, unknown>;
       const amountTotalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
-      const currency = typeof data.currency === "string" ? data.currency : "usd";
       const commissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
       const sellerAmountCents =
         typeof data.sellerAmountCents === "number"
@@ -76,11 +75,8 @@ export default async function AdminOrderApplicantsPage(
         goldAmount: typeof data.goldAmount === "number" ? data.goldAmount : 0,
         server: typeof data.server === "string" ? data.server : "-",
         faction: typeof data.faction === "string" ? data.faction : "-",
-        totalLabel: formatMoney(
-          amountTotalCents,
-          currency,
-        ),
-        payoutLabel: formatMoney(sellerAmountCents, "usd"),
+        totalLabel: formatMoney(amountTotalCents),
+        payoutLabel: formatMoney(sellerAmountCents),
       };
     }
   } catch (error) {
@@ -102,11 +98,8 @@ export default async function AdminOrderApplicantsPage(
           goldAmount: Number(session.metadata?.goldAmount ?? 0),
           server: session.metadata?.server ?? "-",
           faction: session.metadata?.faction ?? "-",
-          totalLabel: formatMoney(session.amount_total, session.currency),
-          payoutLabel: formatMoney(
-            Math.round((session.amount_total ?? 0) * 0.85),
-            "usd",
-          ),
+          totalLabel: formatMoney(session.amount_total),
+          payoutLabel: formatMoney(Math.round((session.amount_total ?? 0) * 0.85)),
         };
       } catch (error) {
         loadError = error instanceof Error ? error.message : "Could not load order details.";
@@ -146,7 +139,7 @@ export default async function AdminOrderApplicantsPage(
         faction: typeof data.faction === "string" ? data.faction : "-",
         nickname: typeof data.nickname === "string" ? data.nickname : "-",
         finalAmountCents: typeof data.finalAmountCents === "number" ? data.finalAmountCents : 0,
-        currency: typeof data.currency === "string" ? data.currency : "brl",
+        currency: typeof data.currency === "string" ? data.currency : "usd",
         status: typeof data.status === "string" ? data.status : "applied",
       };
     });

@@ -7,11 +7,11 @@ import OrdersTable from "./orders-table";
 
 export const dynamic = "force-dynamic";
 
-function formatMoney(amountInCents: number | null, currency: string | null) {
-  if (typeof amountInCents !== "number" || !currency) return "--";
+function formatMoney(amountInCents: number | null) {
+  if (typeof amountInCents !== "number") return "--";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency.toUpperCase(),
+    currency: "USD",
   }).format(amountInCents / 100);
 }
 
@@ -88,7 +88,6 @@ export default async function AdminOrdersPage() {
       const data = docRow.data() as Record<string, unknown>;
       const orderId = typeof data.orderId === "string" && data.orderId ? data.orderId : docRow.id;
       const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
-      const currency = typeof data.currency === "string" && data.currency ? data.currency : "usd";
       const storedCommissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
       const financials =
         typeof data.sellerAmountCents === "number" && typeof data.platformProfitCents === "number"
@@ -121,8 +120,8 @@ export default async function AdminOrdersPage() {
         faction: typeof data.faction === "string" && data.faction ? data.faction : "--",
         deliveryMethod: typeof data.deliveryMethod === "string" && data.deliveryMethod ? data.deliveryMethod : "--",
         paymentMethod: typeof data.paymentMethod === "string" && data.paymentMethod ? data.paymentMethod : "--",
-        total: formatMoney(totalCents, currency),
-        currency,
+        total: formatMoney(totalCents),
+        currency: "usd",
         totalCents,
         commissionPercent: financials.commissionPercent,
         sellerAmountCents: financials.sellerAmountCents,
@@ -171,7 +170,7 @@ export default async function AdminOrdersPage() {
       faction: s.metadata?.faction || "--",
       deliveryMethod: s.metadata?.deliveryMethod || "--",
       paymentMethod: s.metadata?.paymentMethod || "--",
-      total: formatMoney(s.amount_total, s.currency),
+      total: formatMoney(s.amount_total),
       currency: s.currency ?? "usd",
       totalCents: s.amount_total ?? 0,
       commissionPercent: 15,

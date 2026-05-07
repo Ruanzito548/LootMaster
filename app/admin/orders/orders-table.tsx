@@ -6,10 +6,10 @@ import { useMemo, useState } from "react";
 
 import type { OrderRow } from "./export-button";
 
-function formatMoney(cents: number, currency: string): string {
+function formatMoney(cents: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency.toUpperCase(),
+    currency: "USD",
   }).format(cents / 100);
 }
 
@@ -129,9 +129,9 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                   {row.faction !== "--" ? ` / ${row.faction}` : ""}
                   {row.server === "--" && row.faction === "--" ? "--" : ""}
                 </td>
-                <td className="px-2 py-2 font-semibold text-green-300">{formatMoney(row.totalCents, row.currency)}</td>
-                <td className="px-2 py-2 text-amber-300">{formatMoney(row.sellerAmountCents, row.currency)}</td>
-                <td className="px-2 py-2 text-cyan-300">{formatMoney(row.platformProfitCents, row.currency)}</td>
+                <td className="px-2 py-2 font-semibold text-green-300">{formatMoney(row.totalCents)}</td>
+                <td className="px-2 py-2 text-amber-300">{formatMoney(row.sellerAmountCents)}</td>
+                <td className="px-2 py-2 text-cyan-300">{formatMoney(row.platformProfitCents)}</td>
                 <td className="px-2 py-2">
                   {isEditing ? (
                     <div className="flex flex-wrap items-center gap-1">

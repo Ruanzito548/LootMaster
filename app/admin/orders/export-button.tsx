@@ -21,10 +21,10 @@ export type OrderRow = {
   platformProfitCents: number;
 };
 
-function formatMoney(cents: number, currency: string): string {
+function formatMoney(cents: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency.toUpperCase(),
+    currency: "USD",
   }).format(cents / 100);
 }
 
@@ -61,9 +61,9 @@ export default function OrdersExportButton({ orders }: { orders: OrderRow[] }) {
         o.categoryTitle,
         o.goldAmount,
         o.server,
-        formatMoney(o.totalCents, o.currency),
-        formatMoney(o.sellerAmountCents, o.currency),
-        formatMoney(o.platformProfitCents, o.currency),
+        formatMoney(o.totalCents),
+        formatMoney(o.sellerAmountCents),
+        formatMoney(o.platformProfitCents),
         `${o.commissionPercent}%`,
         o.faction,
         o.deliveryMethod,
