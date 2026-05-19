@@ -126,6 +126,19 @@ function getOnboardingFallbackMessage() {
   return "Application submitted successfully. Your account-linking step is temporarily unavailable. Contact an admin so they can verify WALLET_BACKEND_URL and WALLET_BACKEND_TOKEN.";
 }
 
+function getFallbackSignupUrl(request: Request) {
+  const appUrl = process.env.APP_URL?.trim();
+  if (appUrl) {
+    return `${appUrl.replace(/\/$/, "")}/cadastro`;
+  }
+
+  try {
+    return new URL("/cadastro", request.url).toString();
+  } catch {
+    return null;
+  }
+}
+
 async function saveDiscordCandidate(orderId: string, user: DiscordInteractionUser, member?: DiscordInteractionMember) {
   const normalizedOrderId = orderId.trim();
   const adminDb = getAdminDb();
@@ -224,6 +237,6 @@ export async function POST(request: Request): Promise<Response> {
     return responseMessage(getSupplierApplySuccessMessage(onboarding), onboarding.registrationUrl);
   } catch (error) {
     console.error("[Discord Interactions] Candidate saved, but wallet onboarding failed:", error);
-    return responseMessage(getOnboardingFallbackMessage());
+    return responseMessage(getOnboardingFallbackMessage(), getFallbackSignupUrl(request));
   }
 }
