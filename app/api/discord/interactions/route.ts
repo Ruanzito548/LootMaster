@@ -122,6 +122,10 @@ function getFriendlyApplyError(error: unknown): string {
   return "Nao foi possivel registrar sua candidatura agora. Tente novamente.";
 }
 
+function getOnboardingFallbackMessage() {
+  return "Application submitted successfully. Your account-linking step is temporarily unavailable. Contact an admin so they can verify WALLET_BACKEND_URL and WALLET_BACKEND_TOKEN.";
+}
+
 async function saveDiscordCandidate(orderId: string, user: DiscordInteractionUser, member?: DiscordInteractionMember) {
   const normalizedOrderId = orderId.trim();
   const adminDb = getAdminDb();
@@ -204,6 +208,12 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     await saveDiscordCandidate(orderId, user, payload.member);
+  } catch (error) {
+    console.error("[Discord Interactions] Could not save candidate:", error);
+    return responseMessage(getFriendlyApplyError(error));
+  }
+
+  try {
     const onboarding = await registerSupplierApplicationWithWalletBackend({
       orderId,
       discordId: user.id,
@@ -213,7 +223,7 @@ export async function POST(request: Request): Promise<Response> {
 
     return responseMessage(getSupplierApplySuccessMessage(onboarding), onboarding.registrationUrl);
   } catch (error) {
-    console.error("[Discord Interactions] Could not save candidate:", error);
-    return responseMessage(getFriendlyApplyError(error));
+    console.error("[Discord Interactions] Candidate saved, but wallet onboarding failed:", error);
+    return responseMessage(getOnboardingFallbackMessage());
   }
 }
