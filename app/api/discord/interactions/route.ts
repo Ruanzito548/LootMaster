@@ -46,27 +46,51 @@ async function isDiscordRequestValid(signature: string, timestamp: string, body:
   return await verifyKey(body, signature, timestamp, publicKey);
 }
 
-function responseMessage(content: string) {
+function responseMessage(content: string, registrationUrl?: string | null) {
+  const url = registrationUrl?.trim() ?? "";
+
   return Response.json({
     type: DISCORD_MESSAGE_RESPONSE,
     data: {
       content,
       flags: DISCORD_EPHEMERAL_FLAG,
+      ...(url
+        ? {
+            components: [
+              {
+                type: 1,
+                components: [
+                  {
+                    type: 2,
+                    style: 5,
+                    label: "Criar/Vincular conta",
+                    url,
+                  },
+                ],
+              },
+            ],
+          }
+        : {}),
     },
   });
 }
 
 function getSupplierApplySuccessMessage(result: {
+  configured: boolean;
   linkRequired: boolean;
   registrationUrl: string | null;
   dmQueued: boolean;
 }) {
+  if (!result.configured) {
+    return "Application submitted. Automatic account-linking is temporarily unavailable. Ask an admin to configure WALLET_BACKEND_URL before payouts can be credited.";
+  }
+
   if (!result.linkRequired) {
     return "Application submitted successfully. The admin can now select you for this order.";
   }
 
-  if (result.dmQueued) {
-    return "Application submitted. We sent you a Discord DM with your secure site-linking URL. Finish the sign up/login flow there to receive payouts.";
+  if (result.registrationUrl && result.dmQueued) {
+    return `Application submitted. We sent your secure link by DM, and you can also complete the linking now: ${result.registrationUrl}`;
   }
 
   if (result.registrationUrl) {
@@ -187,7 +211,7 @@ export async function POST(request: Request): Promise<Response> {
       discordGlobalName: payload.member?.nick ?? user.global_name ?? null,
     });
 
-    return responseMessage(getSupplierApplySuccessMessage(onboarding));
+    return responseMessage(getSupplierApplySuccessMessage(onboarding), onboarding.registrationUrl);
   } catch (error) {
     console.error("[Discord Interactions] Could not save candidate:", error);
     return responseMessage(getFriendlyApplyError(error));
