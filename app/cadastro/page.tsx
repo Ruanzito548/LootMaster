@@ -25,13 +25,18 @@ function getReferralFromQuery(params: URLSearchParams) {
 function CadastroContent() {
   const params = useSearchParams();
   const referralFromLink = useMemo(() => getReferralFromQuery(params), [params]);
+  const linkToken = useMemo(() => (params.get("token") ?? "").trim(), [params]);
 
   const handleDiscordSignup = () => {
     // Store referral in sessionStorage so the callback can pick it up
     if (referralFromLink) {
       sessionStorage.setItem("signup_referral", referralFromLink);
     }
-    window.location.href = "/api/auth/discord";
+    const authUrl = new URL("/api/auth/discord", window.location.origin);
+    if (linkToken) {
+      authUrl.searchParams.set("linkToken", linkToken);
+    }
+    window.location.href = authUrl.toString();
   };
 
   return (
@@ -59,6 +64,12 @@ function CadastroContent() {
               </p>
             ) : null}
 
+            {linkToken ? (
+              <p className="text-xs font-semibold text-[#a89a7b]">
+                Supplier payout link detected. Complete Discord sign up to bind your account automatically.
+              </p>
+            ) : null}
+
             <button
               type="button"
               onClick={handleDiscordSignup}
@@ -78,7 +89,7 @@ function CadastroContent() {
               Back to home
             </Link>
             <Link href="/login" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
-              I already have an account
+              {linkToken ? "I already have an account" : "I already have an account"}
             </Link>
           </div>
         </div>

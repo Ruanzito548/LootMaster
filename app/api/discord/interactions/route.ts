@@ -2,6 +2,7 @@ import { verifyKey } from "discord-interactions";
 import { FieldValue } from "firebase-admin/firestore";
 
 import { getAdminDb } from "@/lib/firebase-admin";
+import { registerSupplierApplicationWithWalletBackend } from "@/lib/wallet-backend";
 
 export const runtime = "nodejs";
 
@@ -53,6 +54,26 @@ function responseMessage(content: string) {
       flags: DISCORD_EPHEMERAL_FLAG,
     },
   });
+}
+
+function getSupplierApplySuccessMessage(result: {
+  linkRequired: boolean;
+  registrationUrl: string | null;
+  dmQueued: boolean;
+}) {
+  if (!result.linkRequired) {
+    return "Application submitted successfully. The admin can now select you for this order.";
+  }
+
+  if (result.dmQueued) {
+    return "Application submitted. We sent you a Discord DM with your secure site-linking URL. Finish the sign up/login flow there to receive payouts.";
+  }
+
+  if (result.registrationUrl) {
+    return `Application submitted. Finish your site-linking flow here before receiving payouts: ${result.registrationUrl}`;
+  }
+
+  return "Application submitted. Your Discord account still needs to be linked to a site account before payouts can be credited.";
 }
 
 function getFriendlyApplyError(error: unknown): string {
@@ -159,7 +180,14 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     await saveDiscordCandidate(orderId, user, payload.member);
-    return responseMessage("Application submitted successfully. The admin can now select you for this order.");
+    const onboarding = await registerSupplierApplicationWithWalletBackend({
+      orderId,
+      discordId: user.id,
+      discordUsername: user.username,
+      discordGlobalName: payload.member?.nick ?? user.global_name ?? null,
+    });
+
+    return responseMessage(getSupplierApplySuccessMessage(onboarding));
   } catch (error) {
     console.error("[Discord Interactions] Could not save candidate:", error);
     return responseMessage(getFriendlyApplyError(error));

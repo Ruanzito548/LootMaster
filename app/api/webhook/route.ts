@@ -2,6 +2,7 @@ import Stripe from "stripe";
 
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { syncPaidOrderToWalletBackend } from "@/lib/wallet-backend";
 
 /**
  * Stripe webhook endpoint.
@@ -170,6 +171,7 @@ export async function POST(request: Request): Promise<Response> {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
+    const meta = session.metadata ?? {};
 
     // Only notify for fully paid sessions
     if (session.payment_status === "paid") {
@@ -179,7 +181,32 @@ export async function POST(request: Request): Promise<Response> {
         console.error("[Stripe Webhook] Could not persist paid order to Firestore:", err);
       }
 
-      const meta = session.metadata ?? {};
+      try {
+        const amountTotalCents = session.amount_total ?? 0;
+        const commissionPercent = Number(meta.commissionPercent ?? 15) || 15;
+        const supplierPayoutCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
+
+        await syncPaidOrderToWalletBackend({
+          orderId: session.id,
+          customerId: session.customer_email ?? null,
+          totalAmount: amountTotalCents / 100,
+          supplierPayout: supplierPayoutCents / 100,
+          currency: (session.currency ?? "usd").toUpperCase(),
+          metadata: {
+            gameId: meta.gameId ?? "",
+            gameTitle: meta.gameTitle ?? "",
+            categoryId: meta.categoryId ?? "",
+            categoryTitle: meta.categoryTitle ?? "",
+            server: meta.server ?? "",
+            faction: meta.faction ?? "",
+            nickname: meta.nickname ?? "",
+            goldAmount: Number(meta.goldAmount ?? 0) || 0,
+          },
+        });
+      } catch (err) {
+        console.error("[Stripe Webhook] Wallet backend order sync failed:", err);
+      }
+
       const discordChannelId = await resolveDiscordChannelId(
         meta.gameId ?? "",
         meta.categoryId ?? meta.categoryTitle?.toLowerCase() ?? "",

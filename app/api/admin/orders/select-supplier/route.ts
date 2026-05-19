@@ -1,4 +1,6 @@
+import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 import { createPrivateSupplierThread } from "@/lib/discord-bot";
+import { assignSupplierToOrderInWalletBackend } from "@/lib/wallet-backend";
 
 type RequestBody = {
   orderId: string;
@@ -19,9 +21,12 @@ export async function POST(request: Request): Promise<Response> {
   let body: RequestBody;
 
   try {
+    await requireAuthenticatedAdminRequest(request);
     body = (await request.json()) as RequestBody;
-  } catch {
-    return Response.json({ error: "Invalid request body." }, { status: 400 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unauthorized request.";
+    const status = message.includes("authorization") || message.includes("token") ? 401 : 400;
+    return Response.json({ error: status === 401 ? "Unauthorized request." : "Invalid request body." }, { status });
   }
 
   if (!body.orderId || !body.supplierName) {
@@ -30,6 +35,14 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const thread = await createPrivateSupplierThread(body);
+    if (body.supplierDiscordUserId?.trim()) {
+      await assignSupplierToOrderInWalletBackend({
+        orderId: body.orderId,
+        supplierDiscordId: body.supplierDiscordUserId.trim(),
+        supplierDiscordUsername: body.supplierDiscordHandle,
+      });
+    }
+
     return Response.json(thread);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not create supplier Discord thread.";

@@ -22,6 +22,7 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const linkToken = (params.get("token") ?? "").trim();
 
   // Handle Discord callback: customToken or error in query params
   useEffect(() => {
@@ -63,7 +64,11 @@ function LoginContent() {
   }, []);
 
   const loginWithDiscord = () => {
-    window.location.href = "/api/auth/discord";
+    const authUrl = new URL("/api/auth/discord", window.location.origin);
+    if (linkToken) {
+      authUrl.searchParams.set("linkToken", linkToken);
+    }
+    window.location.href = authUrl.toString();
   };
 
   const logout = async () => {
@@ -102,6 +107,12 @@ function LoginContent() {
               Your session will be created using your Discord account. Your Discord username will be linked automatically.
             </p>
 
+            {linkToken ? (
+              <p className="text-xs font-semibold text-[#a89a7b]">
+                Supplier payout link detected. Continue with Discord to bind this site account to your supplier wallet.
+              </p>
+            ) : null}
+
             <button
               type="button"
               onClick={loginWithDiscord}
@@ -130,7 +141,7 @@ function LoginContent() {
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/cadastro" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
+          <Link href={linkToken ? `/cadastro?token=${encodeURIComponent(linkToken)}` : "/cadastro"} className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors">
             Create account
           </Link>
           {loggedIn ? (

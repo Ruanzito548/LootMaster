@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
+import { consumeDiscordLinkTokenWithWalletBackend } from "@/lib/wallet-backend";
 
 type DiscordTokenResponse = {
   access_token: string;
@@ -24,6 +25,24 @@ function getAvatarUrl(user: DiscordUser): string {
   return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
 }
 
+function getLinkTokenFromState(rawState: string | null): string | null {
+  if (!rawState) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(Buffer.from(rawState, "base64url").toString("utf8")) as {
+      linkToken?: unknown;
+    };
+
+    return typeof payload.linkToken === "string" && payload.linkToken.trim()
+      ? payload.linkToken.trim()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * GET /api/auth/discord/callback
  * Handles the Discord OAuth2 redirect, exchanges the code for a Firebase custom token,
@@ -33,6 +52,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");
   const error = searchParams.get("error");
+  const linkToken = getLinkTokenFromState(searchParams.get("state"));
 
   if (error || !code) {
     return NextResponse.redirect(
@@ -129,6 +149,20 @@ export async function GET(request: NextRequest) {
     discordId: discordUser.id,
     discordUsername: discordUser.username,
   });
+
+  if (linkToken) {
+    try {
+      await consumeDiscordLinkTokenWithWalletBackend({
+        token: linkToken,
+        siteUserId: firebaseUid,
+        discordId: discordUser.id,
+        discordUsername: discordUser.username,
+        email,
+      });
+    } catch (error) {
+      console.error("[Discord OAuth] Could not consume wallet link token:", error);
+    }
+  }
 
   // Pass token to client via redirect
   const redirectUrl = new URL("/login", request.url);

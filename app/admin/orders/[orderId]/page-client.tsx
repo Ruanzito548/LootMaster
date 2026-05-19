@@ -1,7 +1,7 @@
 "use client";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import Link from "next/link";
 import { startTransition, useEffect, useRef, useState } from "react";
 
@@ -94,9 +94,13 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
     setErrorMessage(null);
 
     try {
+      const idToken = await auth.currentUser.getIdToken();
       const response = await fetch("/api/admin/orders/select-supplier", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           orderId: summary.orderId,
           supplierName: application.supplierName,
@@ -151,12 +155,19 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
     setErrorMessage(null);
 
     try {
+      const idToken = await auth.currentUser.getIdToken();
+      const idempotencyKey = `complete:${summary.orderId}:${dispatch.threadId}`;
       const response = await fetch("/api/admin/orders/complete-supplier", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           orderId: summary.orderId,
           threadId: dispatch.threadId,
+          completedByUid: auth.currentUser.uid,
+          idempotencyKey,
         }),
       });
 
@@ -166,13 +177,6 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
         setErrorMessage(data.error ?? "Could not close supplier Discord channel.");
         return;
       }
-
-      await setDoc(doc(db, "order-dispatches", summary.orderId), {
-        status: "completed",
-        completedAt: serverTimestamp(),
-        completedByUid: auth.currentUser.uid,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not close supplier Discord channel.");
     } finally {
