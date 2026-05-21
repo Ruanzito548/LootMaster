@@ -63,7 +63,7 @@ function responseMessage(content: string, registrationUrl?: string | null) {
                   {
                     type: 2,
                     style: 5,
-                    label: "Criar/Vincular conta",
+                    label: "Create/Link account",
                     url,
                   },
                 ],
@@ -105,63 +105,63 @@ function getSupplierApplySuccessMessage(result: {
 }, hasSiteAccount: boolean) {
   if (!result.configured) {
     return hasSiteAccount
-      ? "Aplicacao enviada com sucesso. Encontramos sua conta no site. A vinculacao automatica esta temporariamente indisponivel, mas o admin ainda pode te selecionar normalmente."
-      : "Aplicacao enviada com sucesso. Nao encontramos cadastro no site com este Discord. Crie sua conta para liberar o credito de payout quando for selecionado.";
+      ? "Application submitted successfully. We found your site account. Automatic linking is temporarily unavailable, but an admin can still select you normally."
+      : "Application submitted successfully. We could not find a site account for this Discord user. Create your account to unlock payout credits when selected.";
   }
 
   if (!result.linkRequired) {
-    return "Aplicacao enviada com sucesso. Sua conta ja esta pronta no site e o admin pode te selecionar para esta order.";
+    return "Application submitted successfully. Your site account is already ready, and the admin can select you for this order.";
   }
 
   if (hasSiteAccount) {
     if (result.registrationUrl && result.dmQueued) {
-      return `Aplicacao enviada. Encontramos sua conta, mas a vinculacao com Discord ainda precisa ser concluida. Enviamos o link por DM e voce pode concluir agora: ${result.registrationUrl}`;
+      return `Application submitted. We found your account, but Discord linking still needs to be completed. We sent the link by DM, and you can complete it now: ${result.registrationUrl}`;
     }
 
     if (result.registrationUrl) {
-      return `Aplicacao enviada. Sua conta existe, mas falta concluir a vinculacao com Discord antes de receber payout: ${result.registrationUrl}`;
+      return `Application submitted. Your account exists, but Discord linking must be completed before receiving payouts: ${result.registrationUrl}`;
     }
 
-    return "Aplicacao enviada. Sua conta existe, mas o Discord ainda nao esta vinculado para credito de payout.";
+    return "Application submitted. Your account exists, but Discord is not linked yet for payout credits.";
   }
 
   if (result.registrationUrl && result.dmQueued) {
-    return `Aplicacao enviada. Nao encontramos seu cadastro no site. Enviamos um link por DM para criar/vincular sua conta: ${result.registrationUrl}`;
+    return `Application submitted. We could not find your site account. We sent a DM link so you can create/link your account: ${result.registrationUrl}`;
   }
 
   if (result.registrationUrl) {
-    return `Aplicacao enviada. Crie/vincule sua conta no site para receber payout: ${result.registrationUrl}`;
+    return `Application submitted. Create/link your site account to receive payouts: ${result.registrationUrl}`;
   }
 
-  return "Aplicacao enviada. Este Discord ainda nao possui cadastro/vinculo no site para receber payout.";
+  return "Application submitted. This Discord user does not have a site account/link yet for payouts.";
 }
 
 function getFriendlyApplyError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error ?? "");
 
   if (message.includes("FIREBASE_PROJECT_ID") || message.includes("FIREBASE_CLIENT_EMAIL") || message.includes("FIREBASE_PRIVATE_KEY")) {
-    return "Falha de configuracao no servidor (Firebase Admin env). Avise o admin para revisar FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL e FIREBASE_PRIVATE_KEY no Vercel.";
+    return "Server configuration failure (Firebase Admin env). Ask the admin to review FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY in Vercel.";
   }
 
   if (message.includes("private key")) {
-    return "Falha na chave privada do Firebase. Confira FIREBASE_PRIVATE_KEY no Vercel (formato com \\n).";
+    return "Firebase private key failure. Check FIREBASE_PRIVATE_KEY in Vercel (escaped \\n format).";
   }
 
   if (message.includes("The caller does not have permission") || message.includes("permission")) {
-    return "Servico sem permissao no Firestore. Verifique a Service Account usada no FIREBASE_CLIENT_EMAIL.";
+    return "Service has no permission in Firestore. Verify the service account used in FIREBASE_CLIENT_EMAIL.";
   }
 
   if (message.includes("requested entity was not found") || message.includes("project")) {
-    return "Projeto Firebase nao encontrado. Confira FIREBASE_PROJECT_ID.";
+    return "Firebase project not found. Check FIREBASE_PROJECT_ID.";
   }
 
-  return "Nao foi possivel registrar sua candidatura agora. Tente novamente.";
+  return "Could not register your application right now. Please try again.";
 }
 
 function getOnboardingFallbackMessage(hasSiteAccount: boolean) {
   return hasSiteAccount
-    ? "Aplicacao enviada com sucesso. Identificamos sua conta no site. A etapa automatica de vinculacao esta temporariamente indisponivel, mas o admin pode seguir com sua selecao."
-    : "Aplicacao enviada com sucesso. Nao encontramos cadastro no site para este Discord. Crie sua conta para garantir o recebimento de payout quando for selecionado.";
+    ? "Application submitted successfully. We identified your site account. Automatic linking is temporarily unavailable, but the admin can continue with your selection."
+    : "Application submitted successfully. We could not find a site account for this Discord user. Create your account to ensure payout credit when selected.";
 }
 
 function getFallbackSignupUrl(request: Request) {
