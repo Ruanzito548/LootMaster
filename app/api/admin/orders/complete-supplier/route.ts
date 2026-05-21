@@ -12,6 +12,67 @@ type RequestBody = {
   idempotencyKey?: string;
 };
 
+function toFiniteNumber(value: unknown, fallback = 0): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+async function resolveSupplierUidForDispatch(
+  adminDb: ReturnType<typeof getAdminDb>,
+  orderId: string,
+  dispatchData: Record<string, unknown>,
+): Promise<string | null> {
+  const selectedApplicationId =
+    typeof dispatchData.selectedApplicationId === "string"
+      ? dispatchData.selectedApplicationId.trim()
+      : "";
+
+  if (selectedApplicationId) {
+    const directDoc = await adminDb.collection("order-applications").doc(selectedApplicationId).get();
+
+    if (directDoc.exists) {
+      const directData = directDoc.data() as Record<string, unknown>;
+      if (typeof directData.uid === "string" && directData.uid.trim()) {
+        return directData.uid.trim();
+      }
+    }
+
+    const byFieldSnapshot = await adminDb
+      .collection("order-applications")
+      .where("orderId", "==", orderId)
+      .where("applicationId", "==", selectedApplicationId)
+      .limit(1)
+      .get();
+
+    if (!byFieldSnapshot.empty) {
+      const row = byFieldSnapshot.docs[0].data() as Record<string, unknown>;
+      if (typeof row.uid === "string" && row.uid.trim()) {
+        return row.uid.trim();
+      }
+    }
+  }
+
+  const supplierDiscordId =
+    typeof dispatchData.selectedSupplierDiscordUserId === "string"
+      ? dispatchData.selectedSupplierDiscordUserId.trim()
+      : "";
+
+  if (!supplierDiscordId) {
+    return null;
+  }
+
+  const userSnapshot = await adminDb
+    .collection("users")
+    .where("discordId", "==", supplierDiscordId)
+    .limit(1)
+    .get();
+
+  if (userSnapshot.empty) {
+    return null;
+  }
+
+  return userSnapshot.docs[0].id;
+}
+
 export async function POST(request: Request): Promise<Response> {
   let body: RequestBody;
 
@@ -32,31 +93,106 @@ export async function POST(request: Request): Promise<Response> {
     const adminDb = getAdminDb();
     const dispatchRef = adminDb.collection("order-dispatches").doc(body.orderId);
     const dispatchSnapshot = await dispatchRef.get();
+    const dispatchData = dispatchSnapshot.exists
+      ? (dispatchSnapshot.data() as Record<string, unknown>)
+      : null;
 
-    if (dispatchSnapshot.exists) {
-      const dispatchData = dispatchSnapshot.data() as Record<string, unknown>;
-      if (dispatchData.status === "completed") {
-        return Response.json({ ok: true, alreadyCompleted: true });
-      }
+    if (dispatchData?.status === "completed" && dispatchData.lootCoinsPayoutCredited === true) {
+      return Response.json({ ok: true, alreadyCompleted: true, payoutCredited: true });
     }
+
+    const supplierUid = dispatchData
+      ? await resolveSupplierUidForDispatch(adminDb, body.orderId, dispatchData)
+      : null;
+
+    if (!supplierUid) {
+      return Response.json(
+        { error: "Could not resolve supplier account for payout credit." },
+        { status: 409 },
+      );
+    }
+
+    const orderCheckoutRef = adminDb.collection("order-checkouts").doc(body.orderId);
+    const orderCheckoutSnapshot = await orderCheckoutRef.get();
+    const checkoutData = orderCheckoutSnapshot.exists
+      ? (orderCheckoutSnapshot.data() as Record<string, unknown>)
+      : null;
+
+    const amountTotalCents = toFiniteNumber(checkoutData?.amountTotalCents, 0);
+    const commissionPercent = toFiniteNumber(checkoutData?.commissionPercent, 15);
+    const sellerAmountCentsRaw = toFiniteNumber(checkoutData?.sellerAmountCents, Number.NaN);
+    const payoutCents = Number.isFinite(sellerAmountCentsRaw)
+      ? Math.max(0, Math.round(sellerAmountCentsRaw))
+      : Math.max(0, Math.round(amountTotalCents * (1 - commissionPercent / 100)));
+    const payoutLootCoins = Math.round((payoutCents / 100) * 100) / 100;
+
+    const payoutReference = `order-payout:${body.orderId}`;
+    const payoutDocRef = adminDb.collection("order-payouts").doc(body.orderId);
 
     await deleteSupplierChannel(body.threadId);
 
-    await dispatchRef.set(
-      {
-        orderId: body.orderId,
-        status: "completed",
-        completedAt: FieldValue.serverTimestamp(),
-        completedByUid: body.completedByUid ?? null,
-        updatedAt: FieldValue.serverTimestamp(),
-        completionIdempotencyKey: body.idempotencyKey ?? null,
-      },
-      { merge: true },
-    );
+    await adminDb.runTransaction(async (tx) => {
+      const payoutSnapshot = await tx.get(payoutDocRef);
 
-    const walletBackend = await forwardOrderCompletionToWalletBackend(body);
+      if (payoutSnapshot.exists) {
+        return;
+      }
 
-    return Response.json({ ok: true, walletForwarded: walletBackend.forwarded });
+      const supplierRef = adminDb.collection("users").doc(supplierUid);
+
+      tx.set(
+        supplierRef,
+        {
+          lootCoins: FieldValue.increment(payoutLootCoins),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      tx.set(
+        payoutDocRef,
+        {
+          orderId: body.orderId,
+          supplierUid,
+          payoutLootCoins,
+          payoutCents,
+          currency: typeof checkoutData?.currency === "string" ? checkoutData.currency : "usd",
+          reference: payoutReference,
+          completedByUid: body.completedByUid ?? null,
+          createdAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      tx.set(
+        dispatchRef,
+        {
+          orderId: body.orderId,
+          status: "completed",
+          completedAt: FieldValue.serverTimestamp(),
+          completedByUid: body.completedByUid ?? null,
+          updatedAt: FieldValue.serverTimestamp(),
+          completionIdempotencyKey: body.idempotencyKey ?? null,
+          lootCoinsPayoutCredited: true,
+          lootCoinsPayoutAmount: payoutLootCoins,
+          lootCoinsPayoutReference: payoutReference,
+        },
+        { merge: true },
+      );
+    });
+
+    let walletForwarded = false;
+    let walletWarning: string | null = null;
+
+    try {
+      const walletBackend = await forwardOrderCompletionToWalletBackend(body);
+      walletForwarded = walletBackend.forwarded;
+    } catch (error) {
+      walletWarning = error instanceof Error ? error.message : "Wallet backend completion sync failed.";
+      console.error("[Admin Complete Supplier] Wallet backend completion sync failed:", error);
+    }
+
+    return Response.json({ ok: true, walletForwarded, walletWarning });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not close supplier Discord channel.";
     return Response.json({ error: message }, { status: 500 });
