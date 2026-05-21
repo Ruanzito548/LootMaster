@@ -20,3 +20,14 @@ export async function requireAuthenticatedAdminRequest(request: Request) {
   const adminAuth = getAdminAuth();
   return adminAuth.verifyIdToken(token);
 }
+
+export async function requireAuthenticatedUserRequest(request: Request) {
+  const token = getBearerToken(request);
+
+  if (!token) {
+    throw new Error("Missing Firebase authorization token.");
+  }
+
+  const adminAuth = getAdminAuth();
+  return adminAuth.verifyIdToken(token);
+}
