@@ -31,6 +31,12 @@ const adminSections = [
     description: "Manage Stripe payments and follow order processing status.",
     href: "/admin/orders",
   },
+  {
+    id: "06",
+    title: "Withdrawals",
+    description: "Approve or reject supplier cashout requests.",
+    href: "/admin/withdrawals",
+  },
 ];
 
 export default function AdminPage() {
@@ -53,7 +59,7 @@ export default function AdminPage() {
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
           <article className="rounded-2xl border border-green-900 bg-green-950/20 p-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Active modules</p>
-            <p className="mt-2 text-3xl font-black text-green-300">5</p>
+            <p className="mt-2 text-3xl font-black text-green-300">6</p>
           </article>
           <article className="rounded-2xl border border-green-900 bg-green-950/20 p-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Commerce</p>

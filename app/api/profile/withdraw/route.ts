@@ -9,6 +9,10 @@ type RequestBody = {
   payoutReference?: string;
 };
 
+function isEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 function toFiniteNumber(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : Number.NaN;
 }
@@ -43,6 +47,18 @@ export async function POST(request: Request): Promise<Response> {
 
   if (!payoutReference) {
     return Response.json({ error: "Payout destination is required." }, { status: 422 });
+  }
+
+  if (payoutMethod === "paypal" && !isEmail(payoutReference)) {
+    return Response.json({ error: "PayPal method requires a valid email address." }, { status: 422 });
+  }
+
+  if (payoutMethod === "pix" && payoutReference.length < 6) {
+    return Response.json({ error: "PIX method requires a valid PIX key." }, { status: 422 });
+  }
+
+  if (payoutMethod === "crypto-usdt" && payoutReference.length < 12) {
+    return Response.json({ error: "USDT method requires a valid wallet address." }, { status: 422 });
   }
 
   const normalizedAmount = Math.round(amount * 100) / 100;

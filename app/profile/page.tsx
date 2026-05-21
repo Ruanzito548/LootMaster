@@ -3,21 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { auth } from "../../lib/firebase";
 import { defaultCoverURL, defaultPhotoURL } from "../../lib/profile-data";
 import { useProfileSession } from "./use-profile-session";
 
 export default function ProfilePage() {
-  const { status, profile, error, saveProfile, signOutUser, reload } = useProfileSession();
+  const { status, profile, error, saveProfile, signOutUser } = useProfileSession();
   const [photoDraft, setPhotoDraft] = useState<string | null>(null);
   const [coverDraft, setCoverDraft] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [withdrawMethod, setWithdrawMethod] = useState("pix");
-  const [withdrawReference, setWithdrawReference] = useState("");
-  const [withdrawing, setWithdrawing] = useState(false);
-  const [withdrawFeedback, setWithdrawFeedback] = useState<string | null>(null);
 
   const resolvedPhoto = photoDraft ?? profile?.photoURL ?? defaultPhotoURL;
   const resolvedCover = coverDraft ?? profile?.coverURL ?? defaultCoverURL;
@@ -33,59 +27,6 @@ export default function ProfilePage() {
 
     setFeedback(ok ? "Profile photo and cover updated." : "Could not save right now.");
     setSaving(false);
-  };
-
-  const submitWithdraw = async () => {
-    if (!auth?.currentUser) {
-      setWithdrawFeedback("You must be logged in to request a withdrawal.");
-      return;
-    }
-
-    const amount = Number(withdrawAmount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setWithdrawFeedback("Enter a valid Loot Coins amount.");
-      return;
-    }
-
-    if (!withdrawReference.trim()) {
-      setWithdrawFeedback("Add your payout destination before submitting.");
-      return;
-    }
-
-    setWithdrawing(true);
-    setWithdrawFeedback(null);
-
-    try {
-      const idToken = await auth.currentUser.getIdToken();
-      const response = await fetch("/api/profile/withdraw", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({
-          amount,
-          payoutMethod: withdrawMethod,
-          payoutReference: withdrawReference.trim(),
-        }),
-      });
-
-      const data = (await response.json()) as { error?: string; ok?: boolean };
-
-      if (!response.ok || !data.ok) {
-        setWithdrawFeedback(data.error ?? "Could not create withdrawal request.");
-        return;
-      }
-
-      setWithdrawFeedback("Withdrawal request submitted. It is now pending admin review.");
-      setWithdrawAmount("");
-      setWithdrawReference("");
-      reload();
-    } catch (error) {
-      setWithdrawFeedback(error instanceof Error ? error.message : "Could not create withdrawal request.");
-    } finally {
-      setWithdrawing(false);
-    }
   };
 
   if (status === "loading") {
@@ -193,6 +134,9 @@ export default function ProfilePage() {
             <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em] text-[#ffc94d]">Loot Coins</p>
             <h2 className="loot-title mt-4 text-5xl font-black text-[#ffcf57]">{profile.lootCoins.toLocaleString("pt-BR")}</h2>
             <p className="loot-muted mt-4 text-sm leading-7">Current balance for gold purchases, boosts, and items.</p>
+            <Link href="/profile/withdraw" className="loot-gold-button mt-6 inline-flex rounded-full px-5 py-3 text-sm font-semibold">
+              Withdraw
+            </Link>
           </article>
 
           <Link href="/profile/inventory" className="loot-panel rounded-[1.75rem] p-8 transition-colors hover:border-[#4dc6ff]/20 hover:bg-white/4">
@@ -206,66 +150,6 @@ export default function ProfilePage() {
             <h2 className="loot-title mt-4 text-3xl font-black">Purchases and sales</h2>
             <p className="loot-muted mt-4 text-base leading-7">Track all marketplace activity.</p>
           </Link>
-        </section>
-
-        <section className="loot-panel mt-8 rounded-[2rem] p-8">
-          <div className="space-y-4">
-            <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em] text-[#ffcf57]">Withdraw</p>
-            <h2 className="loot-title text-3xl font-black">Cash out Loot Coins</h2>
-            <p className="loot-muted text-sm leading-7">
-              Request a withdrawal from your Loot Coins balance. Your request is submitted for admin review.
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-4 lg:grid-cols-3">
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#a89a7b]">
-              Amount (Loot Coins)
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={withdrawAmount}
-                onChange={(event) => setWithdrawAmount(event.target.value)}
-                placeholder="100"
-                className="loot-input px-4 py-3 text-sm font-semibold"
-              />
-            </label>
-
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#a89a7b]">
-              Method
-              <select
-                value={withdrawMethod}
-                onChange={(event) => setWithdrawMethod(event.target.value)}
-                className="loot-input px-4 py-3 text-sm font-semibold"
-              >
-                <option value="pix">PIX</option>
-                <option value="paypal">PayPal</option>
-                <option value="crypto-usdt">USDT</option>
-              </select>
-            </label>
-
-            <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#a89a7b]">
-              Payout destination
-              <input
-                value={withdrawReference}
-                onChange={(event) => setWithdrawReference(event.target.value)}
-                placeholder="PIX key, email, wallet address"
-                className="loot-input px-4 py-3 text-sm font-semibold"
-              />
-            </label>
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => void submitWithdraw()}
-              disabled={withdrawing}
-              className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
-            >
-              {withdrawing ? "Submitting..." : "Request withdrawal"}
-            </button>
-            {withdrawFeedback ? <p className="text-sm font-semibold text-[#8dd0ff]">{withdrawFeedback}</p> : null}
-          </div>
         </section>
 
         <section className="loot-panel mt-8 rounded-[2rem] p-8">
