@@ -75,29 +75,65 @@ function responseMessage(content: string, registrationUrl?: string | null) {
   });
 }
 
+async function hasSiteAccountForDiscord(discordId: string): Promise<boolean> {
+  const adminDb = getAdminDb();
+  const normalizedDiscordId = discordId.trim();
+
+  if (!normalizedDiscordId) {
+    return false;
+  }
+
+  const discordUidDoc = await adminDb.collection("users").doc(`discord:${normalizedDiscordId}`).get();
+  if (discordUidDoc.exists) {
+    return true;
+  }
+
+  const byDiscordId = await adminDb
+    .collection("users")
+    .where("discordId", "==", normalizedDiscordId)
+    .limit(1)
+    .get();
+
+  return !byDiscordId.empty;
+}
+
 function getSupplierApplySuccessMessage(result: {
   configured: boolean;
   linkRequired: boolean;
   registrationUrl: string | null;
   dmQueued: boolean;
-}) {
+}, hasSiteAccount: boolean) {
   if (!result.configured) {
-    return "Application submitted. Automatic account-linking is temporarily unavailable. Ask an admin to configure WALLET_BACKEND_URL before payouts can be credited.";
+    return hasSiteAccount
+      ? "Aplicacao enviada com sucesso. Encontramos sua conta no site. A vinculacao automatica esta temporariamente indisponivel, mas o admin ainda pode te selecionar normalmente."
+      : "Aplicacao enviada com sucesso. Nao encontramos cadastro no site com este Discord. Crie sua conta para liberar o credito de payout quando for selecionado.";
   }
 
   if (!result.linkRequired) {
-    return "Application submitted successfully. The admin can now select you for this order.";
+    return "Aplicacao enviada com sucesso. Sua conta ja esta pronta no site e o admin pode te selecionar para esta order.";
+  }
+
+  if (hasSiteAccount) {
+    if (result.registrationUrl && result.dmQueued) {
+      return `Aplicacao enviada. Encontramos sua conta, mas a vinculacao com Discord ainda precisa ser concluida. Enviamos o link por DM e voce pode concluir agora: ${result.registrationUrl}`;
+    }
+
+    if (result.registrationUrl) {
+      return `Aplicacao enviada. Sua conta existe, mas falta concluir a vinculacao com Discord antes de receber payout: ${result.registrationUrl}`;
+    }
+
+    return "Aplicacao enviada. Sua conta existe, mas o Discord ainda nao esta vinculado para credito de payout.";
   }
 
   if (result.registrationUrl && result.dmQueued) {
-    return `Application submitted. We sent your secure link by DM, and you can also complete the linking now: ${result.registrationUrl}`;
+    return `Aplicacao enviada. Nao encontramos seu cadastro no site. Enviamos um link por DM para criar/vincular sua conta: ${result.registrationUrl}`;
   }
 
   if (result.registrationUrl) {
-    return `Application submitted. Finish your site-linking flow here before receiving payouts: ${result.registrationUrl}`;
+    return `Aplicacao enviada. Crie/vincule sua conta no site para receber payout: ${result.registrationUrl}`;
   }
 
-  return "Application submitted. Your Discord account still needs to be linked to a site account before payouts can be credited.";
+  return "Aplicacao enviada. Este Discord ainda nao possui cadastro/vinculo no site para receber payout.";
 }
 
 function getFriendlyApplyError(error: unknown): string {
@@ -122,8 +158,10 @@ function getFriendlyApplyError(error: unknown): string {
   return "Nao foi possivel registrar sua candidatura agora. Tente novamente.";
 }
 
-function getOnboardingFallbackMessage() {
-  return "Application submitted successfully. Your account-linking step is temporarily unavailable. Contact an admin so they can verify WALLET_BACKEND_URL and WALLET_BACKEND_TOKEN.";
+function getOnboardingFallbackMessage(hasSiteAccount: boolean) {
+  return hasSiteAccount
+    ? "Aplicacao enviada com sucesso. Identificamos sua conta no site. A etapa automatica de vinculacao esta temporariamente indisponivel, mas o admin pode seguir com sua selecao."
+    : "Aplicacao enviada com sucesso. Nao encontramos cadastro no site para este Discord. Crie sua conta para garantir o recebimento de payout quando for selecionado.";
 }
 
 function getFallbackSignupUrl(request: Request) {
@@ -226,6 +264,13 @@ export async function POST(request: Request): Promise<Response> {
     return responseMessage(getFriendlyApplyError(error));
   }
 
+  let hasSiteAccount = false;
+  try {
+    hasSiteAccount = await hasSiteAccountForDiscord(user.id);
+  } catch (error) {
+    console.error("[Discord Interactions] Could not verify site account link:", error);
+  }
+
   try {
     const onboarding = await registerSupplierApplicationWithWalletBackend({
       orderId,
@@ -234,9 +279,15 @@ export async function POST(request: Request): Promise<Response> {
       discordGlobalName: payload.member?.nick ?? user.global_name ?? null,
     });
 
-    return responseMessage(getSupplierApplySuccessMessage(onboarding), onboarding.registrationUrl);
+    return responseMessage(
+      getSupplierApplySuccessMessage(onboarding, hasSiteAccount),
+      onboarding.registrationUrl,
+    );
   } catch (error) {
     console.error("[Discord Interactions] Candidate saved, but wallet onboarding failed:", error);
-    return responseMessage(getOnboardingFallbackMessage(), getFallbackSignupUrl(request));
+    return responseMessage(
+      getOnboardingFallbackMessage(hasSiteAccount),
+      hasSiteAccount ? null : getFallbackSignupUrl(request),
+    );
   }
 }
