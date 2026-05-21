@@ -3,12 +3,11 @@ import { FieldValue } from "firebase-admin/firestore";
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 import { sendSupplierPayoutMessage } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { forwardOrderCompletionToWalletBackend } from "@/lib/wallet-backend";
 
 type RequestBody = {
   orderId: string;
   threadId: string;
-  completedByUid?: string;
+  paidByUid?: string;
   idempotencyKey?: string;
 };
 
@@ -97,8 +96,8 @@ export async function POST(request: Request): Promise<Response> {
       ? (dispatchSnapshot.data() as Record<string, unknown>)
       : null;
 
-    if (dispatchData?.status === "completed" && dispatchData.lootCoinsPayoutCredited === true) {
-      return Response.json({ ok: true, alreadyCompleted: true, payoutCredited: true });
+    if (dispatchData?.lootCoinsPayoutCredited === true) {
+      return Response.json({ ok: true, alreadyPaid: true, payoutCredited: true });
     }
 
     const supplierUid = dispatchData
@@ -156,7 +155,7 @@ export async function POST(request: Request): Promise<Response> {
           payoutCents,
           currency: typeof checkoutData?.currency === "string" ? checkoutData.currency : "usd",
           reference: payoutReference,
-          completedByUid: body.completedByUid ?? null,
+          paidByUid: body.paidByUid ?? null,
           createdAt: FieldValue.serverTimestamp(),
         },
         { merge: true },
@@ -166,11 +165,11 @@ export async function POST(request: Request): Promise<Response> {
         dispatchRef,
         {
           orderId: body.orderId,
-          status: "completed",
-          completedAt: FieldValue.serverTimestamp(),
-          completedByUid: body.completedByUid ?? null,
+          status: "paid",
+          paidAt: FieldValue.serverTimestamp(),
+          paidByUid: body.paidByUid ?? null,
           updatedAt: FieldValue.serverTimestamp(),
-          completionIdempotencyKey: body.idempotencyKey ?? null,
+          payoutIdempotencyKey: body.idempotencyKey ?? null,
           lootCoinsPayoutCredited: true,
           lootCoinsPayoutAmount: payoutLootCoins,
           lootCoinsPayoutReference: payoutReference,
@@ -203,18 +202,7 @@ export async function POST(request: Request): Promise<Response> {
       }
     }
 
-    let walletForwarded = false;
-    let walletWarning: string | null = null;
-
-    try {
-      const walletBackend = await forwardOrderCompletionToWalletBackend(body);
-      walletForwarded = walletBackend.forwarded;
-    } catch (error) {
-      walletWarning = error instanceof Error ? error.message : "Wallet backend completion sync failed.";
-      console.error("[Admin Complete Supplier] Wallet backend completion sync failed:", error);
-    }
-
-    return Response.json({ ok: true, walletForwarded, walletWarning });
+    return Response.json({ ok: true, payoutCredited: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not complete supplier payout flow.";
     return Response.json({ error: message }, { status: 500 });

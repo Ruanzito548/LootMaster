@@ -167,7 +167,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
         body: JSON.stringify({
           orderId: summary.orderId,
           threadId: dispatch.threadId,
-          completedByUid: auth.currentUser.uid,
+          paidByUid: auth.currentUser.uid,
           idempotencyKey,
         }),
       });
@@ -195,6 +195,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
 
     try {
       const idToken = await auth.currentUser.getIdToken();
+      const idempotencyKey = `complete:${summary.orderId}:${dispatch.threadId}`;
       const response = await fetch("/api/admin/orders/close-order", {
         method: "POST",
         headers: {
@@ -204,7 +205,8 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
         body: JSON.stringify({
           orderId: summary.orderId,
           threadId: dispatch.threadId,
-          closedByUid: auth.currentUser.uid,
+          completedByUid: auth.currentUser.uid,
+          idempotencyKey,
         }),
       });
 
@@ -271,7 +273,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
                 {dispatch.selectedSupplierDiscordHandle || "No Discord handle"} / {dispatch.selectedSupplierDiscordUserId}
               </p>
               <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-emerald-400">
-                Status: {dispatch.status === "completed" ? "Completed" : "Assigned"}
+                Status: {dispatch.status === "completed" ? "Completed" : dispatch.status === "paid" ? "Paid" : "Assigned"}
               </p>
               {dispatch.lootCoinsPayoutAmount > 0 ? (
                 <p className="mt-1 text-xs font-semibold text-emerald-300">
@@ -296,20 +298,20 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
                 className="inline-flex rounded-md border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {isCompleting
-                  ? "Completing..."
-                  : "Mark as completed"}
+                  ? "Marking as paid..."
+                  : "Mark as paid"}
               </button>
               <button
                 type="button"
                 onClick={() => void closeOrder()}
-                disabled={!isAuthenticated || dispatch.status !== "completed" || dispatch.channelClosed || isClosing || isCompleting}
+                disabled={!isAuthenticated || (dispatch.status !== "paid" && dispatch.status !== "completed") || dispatch.channelClosed || isClosing || isCompleting}
                 className="inline-flex rounded-md border border-rose-700 px-4 py-2 text-sm font-semibold text-rose-200 transition hover:bg-rose-950/40 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {dispatch.channelClosed
-                  ? "Order closed"
+                  ? "Completed"
                   : isClosing
-                  ? "Closing..."
-                  : "Close order"}
+                  ? "Completing..."
+                  : "Mark as complete"}
               </button>
             </div>
           </div>
@@ -369,6 +371,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
                         onClick={() => void selectSupplier(application)}
                         disabled={
                           !isAuthenticated ||
+                          dispatch?.status === "paid" ||
                           dispatch?.status === "completed" ||
                           submittingId === application.applicationId ||
                           isSelected
