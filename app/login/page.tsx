@@ -4,7 +4,13 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FirebaseError } from "firebase/app";
-import { onAuthStateChanged, signInWithCustomToken, signOut } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithCustomToken,
+  signInWithPopup,
+  signOut,
+} from "firebase/auth";
 
 import { auth, firebaseEnabled } from "../../lib/firebase";
 import { getFriendlyAuthError } from "../../lib/auth-errors";
@@ -71,6 +77,29 @@ function LoginContent() {
     window.location.href = authUrl.toString();
   };
 
+  const loginWithGoogle = async () => {
+    if (!auth) {
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      router.push("/profile");
+    } catch (err: unknown) {
+      if (err instanceof FirebaseError) {
+        setErrorMessage(getFriendlyAuthError(err.code, "Could not sign in with Google."));
+      } else {
+        setErrorMessage(err instanceof Error ? err.message : "Could not sign in with Google.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     if (!auth) {
       return;
@@ -97,7 +126,7 @@ function LoginContent() {
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em]">Login</p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Access your account</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            {loggedIn ? "You are already signed in." : "Sign in with Discord to continue."}
+            {loggedIn ? "You are already signed in." : "Sign in with Discord or Google to continue."}
           </p>
         </div>
 
@@ -124,6 +153,39 @@ function LoginContent() {
               </svg>
               {loading ? "Connecting..." : loggedIn ? "Already connected" : "Continue with Discord"}
             </button>
+
+            <button
+              type="button"
+              onClick={() => void loginWithGoogle()}
+              disabled={loading || loggedIn || !firebaseEnabled || Boolean(linkToken)}
+              className="loot-secondary-button flex items-center justify-center gap-3 rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="#EA4335"
+                  d="M12 10.2v3.9h5.48c-.24 1.26-.96 2.33-2.04 3.06l3.3 2.56c1.92-1.77 3.03-4.37 3.03-7.46 0-.73-.07-1.43-.19-2.1H12z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 22c2.7 0 4.97-.9 6.62-2.43l-3.3-2.56c-.92.62-2.09.99-3.32.99-2.55 0-4.71-1.72-5.48-4.02H3.1v2.63A10 10 0 0 0 12 22z"
+                />
+                <path
+                  fill="#4A90E2"
+                  d="M6.52 13.98A5.98 5.98 0 0 1 6.2 12c0-.69.12-1.36.32-1.98V7.39H3.1A10 10 0 0 0 2 12c0 1.61.38 3.14 1.1 4.61l3.42-2.63z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M12 5.98c1.47 0 2.79.5 3.83 1.48l2.87-2.87C16.97 2.98 14.7 2 12 2a10 10 0 0 0-8.9 5.39l3.42 2.63C7.29 7.7 9.45 5.98 12 5.98z"
+                />
+              </svg>
+              {loading ? "Connecting..." : loggedIn ? "Already connected" : "Continue with Google"}
+            </button>
+
+            {linkToken ? (
+              <p className="text-xs font-semibold text-[#a89a7b]">
+                Google login is unavailable for supplier linking. Use Discord to continue.
+              </p>
+            ) : null}
 
             {loggedIn ? (
               <button
