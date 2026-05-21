@@ -28,6 +28,14 @@ type SendOrderNotificationInput = {
   email: string;
 };
 
+type SendSupplierPayoutMessageInput = {
+  channelId: string;
+  orderId: string;
+  payoutLootCoins: number;
+  supplierDiscordUserId?: string | null;
+  profileUrl?: string | null;
+};
+
 type DiscordThreadResponse = {
   id: string;
 };
@@ -328,4 +336,43 @@ export async function deleteSupplierChannel(channelId: string): Promise<void> {
 
     throw error;
   }
+}
+
+export async function sendSupplierPayoutMessage(input: SendSupplierPayoutMessageInput): Promise<void> {
+  const channelId = input.channelId.trim();
+
+  if (!channelId) {
+    throw new Error("Missing Discord channel ID.");
+  }
+
+  const mention = input.supplierDiscordUserId?.trim()
+    ? `<@${input.supplierDiscordUserId.trim()}> `
+    : "";
+
+  const payoutLabel = input.payoutLootCoins.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  await discordRequest(`/channels/${channelId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({
+      content: `${mention}Order completed. Your Loot Coins payout has been credited.`,
+      embeds: [
+        {
+          title: "Payout Sent",
+          color: 0x2ecc71,
+          fields: [
+            { name: "Order ID", value: `\`${input.orderId}\``, inline: false },
+            { name: "Loot Coins credited", value: payoutLabel, inline: true },
+            {
+              name: "Check your profile",
+              value: input.profileUrl?.trim() || "Open your profile in the site menu.",
+              inline: false,
+            },
+          ],
+        },
+      ],
+    }),
+  });
 }

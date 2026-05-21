@@ -36,6 +36,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser) && firebaseEnabled);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const submitLockRef = useRef(false);
 
@@ -147,7 +148,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
   };
 
   const completeDispatch = async () => {
-    if (!dispatch?.threadId || !db || !auth?.currentUser || isCompleting) {
+    if (!dispatch?.threadId || !db || !auth?.currentUser || isCompleting || isClosing) {
       return;
     }
 
@@ -174,13 +175,48 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
       const data = (await response.json()) as { error?: string; ok?: boolean };
 
       if (!response.ok || !data.ok) {
-        setErrorMessage(data.error ?? "Could not close supplier Discord channel.");
+        setErrorMessage(data.error ?? "Could not complete supplier payout.");
         return;
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not close supplier Discord channel.");
+      setErrorMessage(error instanceof Error ? error.message : "Could not complete supplier payout.");
     } finally {
       setIsCompleting(false);
+    }
+  };
+
+  const closeOrder = async () => {
+    if (!dispatch?.threadId || !auth?.currentUser || isClosing || isCompleting) {
+      return;
+    }
+
+    setIsClosing(true);
+    setErrorMessage(null);
+
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/orders/close-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          orderId: summary.orderId,
+          threadId: dispatch.threadId,
+          closedByUid: auth.currentUser.uid,
+        }),
+      });
+
+      const data = (await response.json()) as { error?: string; ok?: boolean };
+
+      if (!response.ok || !data.ok) {
+        setErrorMessage(data.error ?? "Could not close the order channel.");
+      }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not close the order channel.");
+    } finally {
+      setIsClosing(false);
     }
   };
 
@@ -235,28 +271,45 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
                 {dispatch.selectedSupplierDiscordHandle || "No Discord handle"} / {dispatch.selectedSupplierDiscordUserId}
               </p>
               <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-emerald-400">
-                Status: {dispatch.status === "completed" ? "Completed" : "Assigned"}
+                Status: {dispatch.status === "closed" ? "Closed" : dispatch.status === "completed" ? "Completed" : "Assigned"}
               </p>
+              {dispatch.lootCoinsPayoutAmount > 0 ? (
+                <p className="mt-1 text-xs font-semibold text-emerald-300">
+                  Loot Coins sent: {dispatch.lootCoinsPayoutAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href={dispatch.threadUrl}
-                target="_blank"
-                className="inline-flex rounded-md border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-950/40"
-              >
-                Open Discord channel
-              </Link>
+              {dispatch.status !== "closed" ? (
+                <Link
+                  href={dispatch.threadUrl}
+                  target="_blank"
+                  className="inline-flex rounded-md border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-950/40"
+                >
+                  Open Discord channel
+                </Link>
+              ) : null}
               <button
                 type="button"
                 onClick={() => void completeDispatch()}
-                disabled={!isAuthenticated || dispatch.status === "completed" || isCompleting}
+                disabled={!isAuthenticated || dispatch.status !== "assigned" || isCompleting || isClosing}
                 className="inline-flex rounded-md border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {dispatch.status === "completed"
-                  ? "Completed"
-                  : isCompleting
+                {isCompleting
                   ? "Completing..."
                   : "Mark as completed"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void closeOrder()}
+                disabled={!isAuthenticated || dispatch.status !== "completed" || isClosing || isCompleting}
+                className="inline-flex rounded-md border border-rose-700 px-4 py-2 text-sm font-semibold text-rose-200 transition hover:bg-rose-950/40 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {dispatch.status === "closed"
+                  ? "Order closed"
+                  : isClosing
+                  ? "Closing..."
+                  : "Close order"}
               </button>
             </div>
           </div>
@@ -317,6 +370,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
                         disabled={
                           !isAuthenticated ||
                           dispatch?.status === "completed" ||
+                          dispatch?.status === "closed" ||
                           submittingId === application.applicationId ||
                           isSelected
                         }

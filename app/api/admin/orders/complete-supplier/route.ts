@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
-import { deleteSupplierChannel } from "@/lib/discord-bot";
+import { sendSupplierPayoutMessage } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { forwardOrderCompletionToWalletBackend } from "@/lib/wallet-backend";
 
@@ -129,13 +129,11 @@ export async function POST(request: Request): Promise<Response> {
     const payoutReference = `order-payout:${body.orderId}`;
     const payoutDocRef = adminDb.collection("order-payouts").doc(body.orderId);
 
-    await deleteSupplierChannel(body.threadId);
-
-    await adminDb.runTransaction(async (tx) => {
+    const payoutCreditedNow = await adminDb.runTransaction(async (tx) => {
       const payoutSnapshot = await tx.get(payoutDocRef);
 
       if (payoutSnapshot.exists) {
-        return;
+        return false;
       }
 
       const supplierRef = adminDb.collection("users").doc(supplierUid);
@@ -179,7 +177,31 @@ export async function POST(request: Request): Promise<Response> {
         },
         { merge: true },
       );
+
+      return true;
     });
+
+    if (payoutCreditedNow) {
+      const appUrl = process.env.APP_URL?.trim();
+      const profileUrl = appUrl
+        ? `${appUrl.replace(/\/$/, "")}/profile`
+        : new URL("/profile", request.url).toString();
+
+      try {
+        await sendSupplierPayoutMessage({
+          channelId: body.threadId,
+          orderId: body.orderId,
+          payoutLootCoins,
+          supplierDiscordUserId:
+            typeof dispatchData?.selectedSupplierDiscordUserId === "string"
+              ? dispatchData.selectedSupplierDiscordUserId
+              : null,
+          profileUrl,
+        });
+      } catch (error) {
+        console.error("[Admin Complete Supplier] Could not send payout message to supplier channel:", error);
+      }
+    }
 
     let walletForwarded = false;
     let walletWarning: string | null = null;
@@ -194,7 +216,7 @@ export async function POST(request: Request): Promise<Response> {
 
     return Response.json({ ok: true, walletForwarded, walletWarning });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not close supplier Discord channel.";
+    const message = error instanceof Error ? error.message : "Could not complete supplier payout flow.";
     return Response.json({ error: message }, { status: 500 });
   }
 }

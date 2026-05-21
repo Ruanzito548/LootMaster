@@ -38,6 +38,7 @@ export type OrderDispatch = {
   selectedSupplierDiscordUserId: string;
   threadId: string;
   threadUrl: string;
+  lootCoinsPayoutAmount: number;
 };
 
 const applicationsCol = db && firebaseEnabled ? collection(db, "order-applications") : null;
@@ -122,6 +123,7 @@ export function subscribeToOrderDispatch(
         selectedSupplierDiscordUserId: getString(data.selectedSupplierDiscordUserId),
         threadId: getString(data.threadId),
         threadUrl: getString(data.threadUrl),
+        lootCoinsPayoutAmount: getNumber(data.lootCoinsPayoutAmount),
       });
     },
     () => onChange(null),
