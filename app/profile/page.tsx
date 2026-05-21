@@ -69,7 +69,7 @@ export default function ProfilePage() {
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">Profile</p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Your Gold Account</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Edit your cover and avatar, check your Loot Coins balance, and track buys and sales.
+            Edit your cover and avatar, check your Loot Coins balance, and track buys, sales, and wallet activity.
           </p>
           {error ? <p className="text-sm font-semibold text-rose-400">{error}</p> : null}
         </div>
@@ -134,9 +134,14 @@ export default function ProfilePage() {
             <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em] text-[#ffc94d]">Loot Coins</p>
             <h2 className="loot-title mt-4 text-5xl font-black text-[#ffcf57]">{profile.lootCoins.toLocaleString("pt-BR")}</h2>
             <p className="loot-muted mt-4 text-sm leading-7">Current balance for gold purchases, boosts, and items.</p>
-            <Link href="/profile/withdraw" className="loot-gold-button mt-6 inline-flex rounded-full px-5 py-3 text-sm font-semibold">
-              Withdraw
-            </Link>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/profile/withdraw" className="loot-gold-button inline-flex rounded-full px-5 py-3 text-sm font-semibold">
+                Withdraw
+              </Link>
+              <Link href="/profile/wallet-history" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold">
+                Wallet history
+              </Link>
+            </div>
           </article>
 
           <Link href="/profile/inventory" className="loot-panel rounded-[1.75rem] p-8 transition-colors hover:border-[#4dc6ff]/20 hover:bg-white/4">
