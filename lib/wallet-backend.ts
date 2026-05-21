@@ -64,7 +64,7 @@ async function walletBackendRequest<T>(path: string, body: unknown, idempotencyK
     return null;
   }
 
-  const response = await fetch(`${config.baseUrl}${path}`, {
+  const buildRequestInit = () => ({
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -73,6 +73,8 @@ async function walletBackendRequest<T>(path: string, body: unknown, idempotencyK
     },
     body: JSON.stringify(body),
   });
+
+  const response = await fetch(`${config.baseUrl}${path}`, buildRequestInit());
 
   if (!response.ok) {
     const payload = (await response.text()) || `Wallet backend request failed for ${path}.`;
@@ -107,11 +109,28 @@ export async function syncPaidOrderToWalletBackend(input: WalletBackendPaidOrder
 }
 
 export async function assignSupplierToOrderInWalletBackend(input: WalletBackendAssignedSupplierInput) {
-  const response = await walletBackendRequest<{ ok: boolean }>("/internal/orders/assigned-supplier", input);
+  try {
+    const response = await walletBackendRequest<{ ok: boolean }>("/internal/orders/assigned-supplier", input);
 
-  return {
-    forwarded: Boolean(response),
-  };
+    return {
+      forwarded: Boolean(response),
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const isLegacyRouteNotFound =
+      message.includes("Route POST:/internal/orders/assigned-supplier not found") ||
+      message.includes("/internal/orders/assigned-supplier") && message.includes("Not Found");
+
+    if (!isLegacyRouteNotFound) {
+      throw error;
+    }
+
+    const response = await walletBackendRequest<{ ok: boolean }>("/internal/orders/assign-supplier", input);
+
+    return {
+      forwarded: Boolean(response),
+    };
+  }
 }
 
 export async function registerSupplierApplicationWithWalletBackend(
