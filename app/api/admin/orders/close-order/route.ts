@@ -40,8 +40,9 @@ export async function POST(request: Request): Promise<Response> {
 
     const dispatchData = dispatchSnapshot.data() as Record<string, unknown>;
     const currentStatus = typeof dispatchData.status === "string" ? dispatchData.status : "assigned";
+    const channelClosed = dispatchData.channelClosed === true;
 
-    if (currentStatus === "closed") {
+    if (channelClosed) {
       return Response.json({ ok: true, alreadyClosed: true });
     }
 
@@ -56,7 +57,8 @@ export async function POST(request: Request): Promise<Response> {
 
     await dispatchRef.set(
       {
-        status: "closed",
+        status: "completed",
+        channelClosed: true,
         closedAt: FieldValue.serverTimestamp(),
         closedByUid: body.closedByUid ?? null,
         updatedAt: FieldValue.serverTimestamp(),

@@ -271,7 +271,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
                 {dispatch.selectedSupplierDiscordHandle || "No Discord handle"} / {dispatch.selectedSupplierDiscordUserId}
               </p>
               <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-emerald-400">
-                Status: {dispatch.status === "closed" ? "Closed" : dispatch.status === "completed" ? "Completed" : "Assigned"}
+                Status: {dispatch.status === "completed" ? "Completed" : "Assigned"}
               </p>
               {dispatch.lootCoinsPayoutAmount > 0 ? (
                 <p className="mt-1 text-xs font-semibold text-emerald-300">
@@ -280,7 +280,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
               ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              {dispatch.status !== "closed" ? (
+              {!dispatch.channelClosed ? (
                 <Link
                   href={dispatch.threadUrl}
                   target="_blank"
@@ -302,10 +302,10 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
               <button
                 type="button"
                 onClick={() => void closeOrder()}
-                disabled={!isAuthenticated || dispatch.status !== "completed" || isClosing || isCompleting}
+                disabled={!isAuthenticated || dispatch.status !== "completed" || dispatch.channelClosed || isClosing || isCompleting}
                 className="inline-flex rounded-md border border-rose-700 px-4 py-2 text-sm font-semibold text-rose-200 transition hover:bg-rose-950/40 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {dispatch.status === "closed"
+                {dispatch.channelClosed
                   ? "Order closed"
                   : isClosing
                   ? "Closing..."
@@ -370,7 +370,6 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
                         disabled={
                           !isAuthenticated ||
                           dispatch?.status === "completed" ||
-                          dispatch?.status === "closed" ||
                           submittingId === application.applicationId ||
                           isSelected
                         }

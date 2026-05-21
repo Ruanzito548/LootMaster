@@ -39,6 +39,7 @@ export type OrderDispatch = {
   threadId: string;
   threadUrl: string;
   lootCoinsPayoutAmount: number;
+  channelClosed: boolean;
 };
 
 const applicationsCol = db && firebaseEnabled ? collection(db, "order-applications") : null;
@@ -49,6 +50,10 @@ function getString(value: unknown, fallback = "") {
 
 function getNumber(value: unknown, fallback = 0) {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function getBoolean(value: unknown, fallback = false) {
+  return typeof value === "boolean" ? value : fallback;
 }
 
 function parseOrderApplication(id: string, data: Record<string, unknown>): OrderApplication {
@@ -124,6 +129,7 @@ export function subscribeToOrderDispatch(
         threadId: getString(data.threadId),
         threadUrl: getString(data.threadUrl),
         lootCoinsPayoutAmount: getNumber(data.lootCoinsPayoutAmount),
+        channelClosed: getBoolean(data.channelClosed),
       });
     },
     () => onChange(null),
