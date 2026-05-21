@@ -35,15 +35,28 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const thread = await createPrivateSupplierThread(body);
+    let walletAssignmentWarning: string | null = null;
+
     if (body.supplierDiscordUserId?.trim()) {
-      await assignSupplierToOrderInWalletBackend({
-        orderId: body.orderId,
-        supplierDiscordId: body.supplierDiscordUserId.trim(),
-        supplierDiscordUsername: body.supplierDiscordHandle,
-      });
+      try {
+        await assignSupplierToOrderInWalletBackend({
+          orderId: body.orderId,
+          supplierDiscordId: body.supplierDiscordUserId.trim(),
+          supplierDiscordUsername: body.supplierDiscordHandle,
+        });
+      } catch (error) {
+        walletAssignmentWarning =
+          error instanceof Error
+            ? error.message
+            : "Wallet backend supplier assignment failed.";
+        console.error("[Admin Select Supplier] Wallet backend assignment failed:", error);
+      }
     }
 
-    return Response.json(thread);
+    return Response.json({
+      ...thread,
+      walletAssignmentWarning,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not create supplier Discord thread.";
     return Response.json({ error: message }, { status: 500 });
