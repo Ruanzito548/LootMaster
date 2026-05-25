@@ -10,14 +10,20 @@ import { subscribeToHotGames } from "../../lib/hot-games";
 import { auth } from "../../lib/firebase";
 import { defaultHotGameIds, games } from "../data/games";
 
-const links = [
+type LinkIcon = "home" | "games" | "coins" | "rewards";
+
+type NavLink = {
+  href: string;
+  label: string;
+  icon: LinkIcon;
+};
+
+const links: NavLink[] = [
   { href: "/", label: "Home", icon: "home" },
   { href: "/games", label: "Games", icon: "games" },
   { href: "/coins", label: "LM Coins", icon: "coins" },
   { href: "/rewards", label: "Rewards", icon: "rewards" },
 ];
-
-type LinkIcon = "home" | "games" | "coins" | "rewards";
 
 function NavIcon({ icon }: { icon: LinkIcon }) {
   if (icon === "home") {
