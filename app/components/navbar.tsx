@@ -11,11 +11,52 @@ import { auth } from "../../lib/firebase";
 import { defaultHotGameIds, games } from "../data/games";
 
 const links = [
-  { href: "/", label: "Home" },
-  { href: "/games", label: "Games" },
-  { href: "/coins", label: "LM Coins" },
-  { href: "/rewards", label: "Rewards" },
+  { href: "/", label: "Home", icon: "home" },
+  { href: "/games", label: "Games", icon: "games" },
+  { href: "/coins", label: "LM Coins", icon: "coins" },
+  { href: "/rewards", label: "Rewards", icon: "rewards" },
 ];
+
+type LinkIcon = "home" | "games" | "coins" | "rewards";
+
+function NavIcon({ icon }: { icon: LinkIcon }) {
+  if (icon === "home") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+        <path d="M3 11.5L12 4L21 11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M6.5 10.5V20H17.5V10.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  if (icon === "games") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+        <rect x="3.5" y="7.5" width="17" height="9" rx="4.5" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M8 12H11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M9.5 10.5V13.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <circle cx="15.5" cy="11.5" r="1" fill="currentColor" />
+        <circle cx="17.5" cy="13.5" r="1" fill="currentColor" />
+      </svg>
+    );
+  }
+
+  if (icon === "coins") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+        <ellipse cx="12" cy="7" rx="6.5" ry="3.2" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M5.5 7V11C5.5 12.8 8.4 14.2 12 14.2C15.6 14.2 18.5 12.8 18.5 11V7" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M5.5 11V15C5.5 16.8 8.4 18.2 12 18.2C15.6 18.2 18.5 16.8 18.5 15V11" stroke="currentColor" strokeWidth="1.8" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+      <path d="M12 4L14.4 8.8L19.8 9.6L15.9 13.4L16.8 18.8L12 16.3L7.2 18.8L8.1 13.4L4.2 9.6L9.6 8.8L12 4Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function isLinkActive(pathname: string | null, href: string) {
   if (!pathname) return false;
@@ -134,7 +175,7 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full border px-3 py-1.5 transition-colors ${
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 transition-colors ${
                   isLinkActive(pathname, link.href)
                     ? isTbc
                       ? "border-[#a8ff9f]/35 bg-[#a8ff9f]/12 text-[#e4ffe0]"
@@ -160,7 +201,8 @@ export function Navbar() {
                       : "border-transparent text-[#91b3d8] hover:border-[#46d8ff]/25 hover:text-[#dff6ff]"
                 }`}
               >
-                {link.label}
+                <NavIcon icon={link.icon} />
+                <span>{link.label}</span>
               </Link>
             ))}
           </nav>
@@ -329,7 +371,7 @@ export function Navbar() {
                 key={`drawer-${link.href}`}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className={`rounded-xl border px-3 py-2 text-center text-xs font-bold uppercase tracking-[0.16em] transition-colors ${
+                className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-center text-xs font-bold uppercase tracking-[0.16em] transition-colors ${
                   isLinkActive(pathname, link.href)
                     ? isTbc
                       ? "border-[#a8ff9f]/30 bg-[#a8ff9f]/12 text-[#e4ffe0]"
@@ -347,7 +389,8 @@ export function Navbar() {
                     : "border-[#35d8ff]/14 text-[#9ebada] hover:border-[#35d8ff]/30 hover:text-[#dcf5ff]"
                 }`}
               >
-                {link.label}
+                <NavIcon icon={link.icon} />
+                <span>{link.label}</span>
               </Link>
             ))}
           </div>

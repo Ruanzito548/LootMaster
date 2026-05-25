@@ -5,10 +5,9 @@ import { HotGames } from "./components/hot-games";
 import { games, serviceCategories } from "./data/games";
 
 const marketSignals = [
-  { label: "Daily Rank", value: "n/a", accent: "text-[#ffe082]" },
-  { label: "Activity Points", value: "24", accent: "text-[#dff4ff]" },
-  { label: "Claims Today", value: "0", accent: "text-[#ffd2bc]" },
-  { label: "Shortlinks Today", value: "0", accent: "text-[#bee7ff]" },
+  { label: "Supported games", value: String(games.length).padStart(2, "0"), accent: "text-[#dff4ff]" },
+  { label: "Service lanes", value: String(serviceCategories.length).padStart(2, "0"), accent: "text-[#bee7ff]" },
+  { label: "Fulfillment", value: "24/7", accent: "text-[#ffe082]" },
 ];
 
 export default function Home() {
@@ -22,34 +21,20 @@ export default function Home() {
 
           <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="rounded-[1.5rem] border border-[#3bd5ff]/24 bg-[linear-gradient(180deg,rgba(24,34,57,0.78)_0%,rgba(15,24,42,0.75)_100%)] p-6">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-[#34d6ff]/34 bg-[#34d6ff]/14 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#d9f8ff]">
-                  % Bonus 0.042x
-                </span>
-                <span className="rounded-full border border-[#3ce2bf]/34 bg-[#3ce2bf]/14 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#dbfff3]">
-                  Level 42
-                </span>
-                <span className="rounded-full border border-[#ffcc4a]/40 bg-[#ffcc4a]/16 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#ffe7ac]">
-                  1354 Exp
-                </span>
-              </div>
+              <p className="inline-flex w-fit rounded-full border border-[#34d6ff]/34 bg-[#34d6ff]/14 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.25em] text-[#d9f8ff]">
+                Marketplace OS
+              </p>
 
-              <div className="mt-5 space-y-2">
-                <p className="text-sm text-[#95aac7]">Welcome,</p>
-                <h1 className="font-throne text-5xl leading-none text-[#ecf9ff] sm:text-6xl">Cloudder</h1>
-                <p className="text-sm leading-7 text-[#abc2de] sm:text-base">
-                  Progress to <span className="font-bold text-[#55e6b2]">Level 43</span> with live rank, points, claims and route tracking.
+              <div className="mt-5 space-y-4">
+                <h1 className="font-throne text-5xl leading-[0.95] text-[#ecf9ff] sm:text-6xl">
+                  Trade smarter.
+                  <br />
+                  Enter the realm loaded.
+                </h1>
+                <p className="max-w-2xl text-base leading-8 text-[#abc2de] sm:text-lg">
+                  A complete storefront for gold, boosts and accounts with direct routing to each game flow.
+                  Pick your title, choose your category and jump to checkout in a few clicks.
                 </p>
-              </div>
-
-              <div className="mt-5">
-                <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.14em] text-[#86a7c9]">
-                  <span>Level progress</span>
-                  <span>62%</span>
-                </div>
-                <div className="h-3 overflow-hidden rounded-full bg-[#2f3d59]">
-                  <div className="h-full w-[62%] rounded-full bg-[linear-gradient(90deg,#4ea1ff_0%,#39d5ff_40%,#3ae3ab_100%)]" />
-                </div>
               </div>
 
               <div className="mt-5 flex flex-wrap gap-3">
@@ -63,16 +48,16 @@ export default function Home() {
                   href="#service-lanes"
                   className="loot-secondary-button inline-flex rounded-full px-6 py-3 text-sm font-semibold"
                 >
-                  View rewards
+                  Explore service lanes
                 </Link>
               </div>
             </div>
 
             <div className="rounded-[1.5rem] border border-[#30d5ff]/22 bg-[linear-gradient(180deg,rgba(20,33,57,0.84)_0%,rgba(12,20,35,0.78)_100%)] p-6">
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#9fd4ec]">My Wallet / Withdrawal</p>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#9fd4ec]">Live Control</p>
               <h2 className="mt-3 text-2xl font-black text-[#ecf9ff]">Marketplace command panel</h2>
               <p className="mt-2 text-sm leading-7 text-[#9bb6d3]">
-                Centralized controls for your routes, claims and daily actions with one consistent checkout flow.
+                Open any game card and continue with the same checkout logic across categories.
               </p>
 
               <div className="mt-5 space-y-2">
@@ -100,7 +85,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="relative mt-5 grid gap-3 sm:grid-cols-3">
             {marketSignals.map((item) => (
               <article
                 key={item.label}
