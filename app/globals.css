@@ -9,7 +9,7 @@
 }
 
 :root {
-  --background: #04070d;
+  --background: #060b16;
   --foreground: #f5f9ff;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -17,7 +17,7 @@
   --font-mono: "Cascadia Code", "Consolas", monospace;
   --loot-ink: #070b12;
   --loot-panel: rgba(7, 13, 22, 0.84);
-  --loot-gold: #7de9ff;
+  --loot-gold: #5de2ff;
   --loot-gold-soft: #b7f4ff;
   --loot-blue: #20d3ff;
   --loot-blue-deep: #0b7aa0;
@@ -25,7 +25,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #04070d;
+    --background: #060b16;
     --foreground: #f5f9ff;
   }
 }
@@ -39,10 +39,14 @@ body {
   color: var(--foreground);
   font-family: "ThroneOfShadows", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   background-image:
-    radial-gradient(circle at 15% -10%, rgba(47, 203, 255, 0.2), transparent 30%),
-    radial-gradient(circle at 85% 0%, rgba(75, 225, 164, 0.14), transparent 28%),
-    radial-gradient(circle at 50% 110%, rgba(32, 92, 255, 0.12), transparent 30%),
-    linear-gradient(180deg, #070d17 0%, #040912 52%, #03060d 100%);
+    radial-gradient(circle at 8% -6%, rgba(57, 206, 255, 0.23), transparent 34%),
+    radial-gradient(circle at 88% -8%, rgba(255, 206, 88, 0.13), transparent 24%),
+    radial-gradient(circle at 50% 104%, rgba(70, 120, 255, 0.14), transparent 32%),
+    linear-gradient(rgba(54, 96, 148, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(54, 96, 148, 0.12) 1px, transparent 1px),
+    linear-gradient(180deg, #10192d 0%, #0b1222 40%, #070d18 100%);
+  background-size: auto, auto, auto, 58px 58px, 58px 58px, auto;
+  background-position: center, center, center, center, center, center;
   background-attachment: fixed;
 }
 
@@ -88,9 +92,9 @@ body {
 }
 
 .loot-gold-button {
-  border: 1px solid rgba(126, 234, 255, 0.42);
-  background: linear-gradient(180deg, #84efff 0%, #39d4ff 52%, #1f86e6 100%);
-  color: #021624;
+  border: 1px solid rgba(110, 227, 255, 0.5);
+  background: linear-gradient(180deg, #89f2ff 0%, #40dbff 58%, #24a9ff 100%);
+  color: #011521;
   box-shadow:
     inset 0 1px 0 rgba(242, 253, 255, 0.8),
     0 14px 36px rgba(52, 162, 255, 0.3);
@@ -140,16 +144,16 @@ body {
 /* ─────────────────────────────────────────────────────────────────── */
 
 .loot-secondary-button {
-  background: linear-gradient(180deg, rgba(111, 223, 255, 0.14), rgba(32, 98, 196, 0.2));
-  border: 1px solid rgba(122, 226, 255, 0.24);
-  color: #dff6ff;
+  background: linear-gradient(180deg, rgba(91, 209, 255, 0.14), rgba(29, 81, 176, 0.24));
+  border: 1px solid rgba(83, 210, 255, 0.33);
+  color: #dff4ff;
   box-shadow: inset 0 1px 0 rgba(231, 249, 255, 0.12);
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .loot-secondary-button:hover {
-  background: linear-gradient(180deg, rgba(124, 230, 255, 0.2), rgba(42, 112, 214, 0.26));
-  border-color: rgba(167, 238, 255, 0.4);
+  background: linear-gradient(180deg, rgba(118, 226, 255, 0.24), rgba(36, 98, 205, 0.32));
+  border-color: rgba(151, 234, 255, 0.48);
 }
 
 .tbc-shell {

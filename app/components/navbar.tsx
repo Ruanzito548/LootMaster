@@ -78,8 +78,12 @@ export function Navbar() {
           ? "border-[#8df0c8]/24 bg-[#071c16]/88"
           : isAdmin
           ? "border-[#4ade80]/20 bg-black/90"
-          : "border-[#ffd76a]/10 bg-[#08111f]/84"
+          : "border-[#2fd3ff]/24 bg-[linear-gradient(180deg,rgba(16,24,42,0.96)_0%,rgba(10,17,32,0.94)_100%)]"
       }`}>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(0,229,255,0.05)_0%,rgba(0,229,255,0.85)_36%,rgba(255,201,77,0.8)_70%,rgba(255,201,77,0.06)_100%)]"
+        />
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
           <div className="flex items-center gap-4">
             <button
@@ -96,7 +100,7 @@ export function Navbar() {
                   ? "border-[#8df0c8]/28 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
                   : isAdmin
                   ? "border-[#4ade80]/25 bg-[#052e16]/60 text-[#86efac] hover:bg-[#052e16]"
-                  : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
+                    : "border-[#43d5ff]/30 bg-[#102843]/80 text-[#ddf7ff] hover:border-[#6be0ff]/45 hover:bg-[#15355b]"
               }`}
               aria-label="Open side menu"
             >
@@ -142,7 +146,7 @@ export function Navbar() {
                       ? "border-[#8df0c8]/35 bg-[#8df0c8]/14 text-[#e7fff6]"
                       : isAdmin
                       ? "border-[#4ade80]/35 bg-[#4ade80]/12 text-[#86efac]"
-                      : "border-[#ffd76a]/28 bg-[#ffd76a]/10 text-[#fff1be]"
+                      : "border-[#46d8ff]/40 bg-[#46d8ff]/14 text-[#e8faff] shadow-[0_0_0_1px_rgba(70,216,255,0.2)]"
                     : isTbc
                     ? "border-transparent text-[#b8e6b8] hover:text-[#d4ffcc]"
                     : isMidnight
@@ -153,7 +157,7 @@ export function Navbar() {
                     ? "border-transparent text-[#b9eddc] hover:text-[#e5fff5]"
                     : isAdmin
                     ? "border-transparent text-[#4ade80] hover:text-[#86efac]"
-                    : "border-transparent text-[#dbcaa7] hover:text-[#fff1be]"
+                      : "border-transparent text-[#91b3d8] hover:border-[#46d8ff]/25 hover:text-[#dff6ff]"
                 }`}
               >
                 {link.label}
@@ -177,7 +181,7 @@ export function Navbar() {
                       ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
                       : isAdmin
                       ? "border-[#4ade80]/28 bg-[#052e16]/60 text-[#86efac] hover:bg-[#052e16]"
-                      : "border-[#ffd76a]/28 bg-[#ffd76a]/12 text-[#fff1be] hover:bg-[#ffd76a]/20"
+                      : "border-[#2fd3ff]/38 bg-[#173350]/80 text-[#e9f8ff] hover:border-[#5bddff]/52 hover:bg-[#1f4368]"
                   }`}
                 >
                   My Profile
@@ -197,7 +201,7 @@ export function Navbar() {
                       ? "border-[#8df0c8]/25 bg-[#103e31]/55 text-[#e7fff6] hover:bg-[#155341]"
                       : isAdmin
                       ? "border-[#4ade80]/22 bg-[#052e16]/55 text-[#86efac] hover:bg-[#052e16]"
-                      : "border-[#84d5ff]/20 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
+                      : "border-[#4cb7ff]/30 bg-[#11243c]/78 text-[#cae6ff] hover:border-[#79ccff]/45 hover:bg-[#173356]"
                   }`}
                 >
                   Sign Out
@@ -217,7 +221,7 @@ export function Navbar() {
                     ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
                     : isAdmin
                     ? "border-[#4ade80]/28 bg-[#052e16]/60 text-[#86efac] hover:bg-[#052e16]"
-                    : "border-[#ffd76a]/28 bg-[#ffd76a]/12 text-[#fff1be] hover:bg-[#ffd76a]/20"
+                    : "border-[#2fd3ff]/38 bg-[#173350]/80 text-[#e9f8ff] hover:border-[#5bddff]/52 hover:bg-[#1f4368]"
                 }`}
               >
                 Login/Sign Up
@@ -237,7 +241,7 @@ export function Navbar() {
                   ? "border-[#8df0c8]/25 bg-[#185641]/45 text-[#e7fff6] hover:bg-[#226f54]"
                   : isAdmin
                   ? "border-[#4ade80]/22 bg-[#052e16]/50 text-[#4ade80] hover:bg-[#052e16]"
-                  : "border-[#84d5ff]/18 bg-[#0c2848]/50 text-[#eef8ff] hover:bg-[#11325f]"
+                  : "border-[#f6c748]/36 bg-[#43330e]/72 text-[#ffe7a6] hover:border-[#ffd770]/50 hover:bg-[#574313]"
               }`}
             >
               Admin
@@ -264,7 +268,7 @@ export function Navbar() {
               ? "bg-[#120c06]/80"
               : isPandaria
               ? "bg-[#03110d]/80"
-              : "bg-[#050b14]/78"
+              : "bg-[#020711]/82"
           } ${isOpen ? "opacity-100" : "opacity-0"}`}
         />
 
@@ -278,18 +282,18 @@ export function Navbar() {
               ? "border-[#e9b775]/18 bg-[linear-gradient(180deg,#4a2e18_0%,#1b120a_100%)]"
               : isPandaria
               ? "border-[#8df0c8]/18 bg-[linear-gradient(180deg,#1b5f49_0%,#092118_100%)]"
-              : "border-[#ffd76a]/12 bg-[linear-gradient(180deg,#0f2240_0%,#07101d_100%)]"
+              : "border-[#35d7ff]/20 bg-[linear-gradient(180deg,#14253f_0%,#0a1325_70%,#070f1f_100%)]"
           } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
           <div className="flex items-center justify-between border-b pb-5">
             <div>
               <p className={`text-sm font-bold uppercase tracking-[0.28em] ${
-                isTbc ? "text-[#a8ff9f]" : isMidnight ? "text-[#7fd4ff]" : isAdmin ? "text-[#4ade80]" : "text-[#8dd0ff]"
+                isTbc ? "text-[#a8ff9f]" : isMidnight ? "text-[#7fd4ff]" : isAdmin ? "text-[#4ade80]" : "text-[#69deff]"
               }`}>
                 Games
               </p>
               <h2 className={`font-throne mt-3 text-4xl ${
-                isTbc ? "text-[#d4ffcc]" : isMidnight ? "text-[#b8e0ff]" : isAdmin ? "text-[#86efac]" : "text-[#ffc94d]"
+                isTbc ? "text-[#d4ffcc]" : isMidnight ? "text-[#b8e0ff]" : isAdmin ? "text-[#86efac]" : "text-[#e8f8ff]"
               }`}>
                 Choose your game
               </h2>
@@ -305,7 +309,7 @@ export function Navbar() {
                   ? "border-[#4dc6ff]/20 bg-[#4dc6ff]/10 hover:bg-[#4dc6ff]/16 hover:border-[#4dc6ff]/30"
                   : isAdmin
                   ? "border-[#4ade80]/20 bg-[#4ade80]/8 hover:bg-[#4ade80]/12 hover:border-[#4ade80]/30"
-                  : "border-[#ffd76a]/14 bg-[#fff1be]/8 hover:bg-[#fff1be]/12 hover:border-[#ffd76a]/20"
+                  : "border-[#36d8ff]/22 bg-[#36d8ff]/10 text-[#d8f4ff] hover:border-[#67e2ff]/34 hover:bg-[#36d8ff]/16"
               }`}
             >
               Close
@@ -313,7 +317,7 @@ export function Navbar() {
           </div>
 
           <div className={`mt-6 flex items-center justify-between text-xs font-bold uppercase tracking-[0.26em] ${
-            isTbc ? "text-[#b8e6b8]" : isMidnight ? "text-[#a8d0ff]" : isAdmin ? "text-[#22c55e]" : "text-[#b39a74]"
+            isTbc ? "text-[#b8e6b8]" : isMidnight ? "text-[#a8d0ff]" : isAdmin ? "text-[#22c55e]" : "text-[#9ab8de]"
           }`}>
             <span>Available</span>
             <span>{orderedGames.length}</span>
@@ -333,14 +337,14 @@ export function Navbar() {
                       ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/12 text-[#e4f6ff]"
                       : isAdmin
                       ? "border-[#4ade80]/30 bg-[#4ade80]/12 text-[#86efac]"
-                      : "border-[#ffd76a]/24 bg-[#ffd76a]/10 text-[#fff1be]"
+                      : "border-[#35d8ff]/34 bg-[#35d8ff]/14 text-[#e2f7ff]"
                     : isTbc
                     ? "border-[#a8ff9f]/12 text-[#b8e6b8] hover:border-[#a8ff9f]/24"
                     : isMidnight
                     ? "border-[#4dc6ff]/14 text-[#a8d8ff] hover:border-[#4dc6ff]/28"
                     : isAdmin
                     ? "border-[#4ade80]/12 text-[#4ade80] hover:border-[#4ade80]/28"
-                    : "border-[#ffd76a]/10 text-[#dbcaa7] hover:border-[#ffd76a]/20"
+                    : "border-[#35d8ff]/14 text-[#9ebada] hover:border-[#35d8ff]/30 hover:text-[#dcf5ff]"
                 }`}
               >
                 {link.label}
@@ -364,7 +368,7 @@ export function Navbar() {
                       ? "border-[#4dc6ff]/18 hover:border-[#4dc6ff]/35 hover:shadow-[0_0_20px_rgba(77,198,255,0.2)]"
                       : isAdmin
                       ? "border-[#4ade80]/18 hover:border-[#4ade80]/35 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]"
-                      : "border-[#ffd76a]/10 hover:border-[#4dc6ff]/25 hover:shadow-[0_0_20px_rgba(77,198,255,0.15)]"
+                        : "border-[#35d8ff]/16 bg-[linear-gradient(120deg,rgba(10,23,42,0.76),rgba(13,30,54,0.62))] hover:border-[#35d8ff]/35 hover:shadow-[0_0_20px_rgba(53,216,255,0.22)]"
                   }`}
                   style={{
                     backgroundImage:
@@ -391,7 +395,7 @@ export function Navbar() {
                             ? "border-[#4dc6ff]/28 bg-[#4dc6ff]/14 text-[#dff3ff]"
                             : isAdmin
                             ? "border-[#4ade80]/28 bg-[#4ade80]/14 text-[#86efac]"
-                            : "border-[#ffd76a]/24 bg-[#f7ba2c]/14 text-[#ffc94d]"
+                            : "border-[#f4c241]/35 bg-[#f4c241]/16 text-[#ffe8a8]"
                         }`}>
                           Hot
                         </span>
@@ -403,13 +407,13 @@ export function Navbar() {
                           ? "text-[#c7e7ff] group-hover:text-[#f0f9ff]"
                           : isAdmin
                           ? "text-[#4ade80] group-hover:text-[#86efac]"
-                          : "text-[#ffc94d] group-hover:text-[#ffeb3b]"
+                            : "text-[#e2f5ff] group-hover:text-[#f4fbff]"
                       }`}>
                         {game.title}
                       </p>
                     </div>
                     <p className={`mt-1 text-xs ${
-                      isTbc ? "text-[#a8d0a8]" : isMidnight ? "text-[#9dc4ea]" : isAdmin ? "text-[#22c55e]" : "text-[#c5d4e0]"
+                        isTbc ? "text-[#a8d0a8]" : isMidnight ? "text-[#9dc4ea]" : isAdmin ? "text-[#22c55e]" : "text-[#93b3d8]"
                     }`}>
                       {game.shortTitle}
                     </p>
@@ -421,7 +425,7 @@ export function Navbar() {
                       ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/18 text-[#dff3ff] group-hover:border-[#7fd4ff]/55 group-hover:shadow-[0_0_12px_rgba(77,198,255,0.35)]"
                       : isAdmin
                       ? "border-[#4ade80]/28 bg-[#4ade80]/14 text-[#86efac] group-hover:border-[#4ade80]/55 group-hover:shadow-[0_0_12px_rgba(74,222,128,0.3)]"
-                      : "border-[#4dc6ff]/25 bg-[#4dc6ff]/15 text-[#d0e8ff] group-hover:border-[#4dc6ff]/50 group-hover:shadow-[0_0_12px_rgba(77,198,255,0.3)]"
+                      : "border-[#36d8ff]/34 bg-[#36d8ff]/14 text-[#dff7ff] group-hover:border-[#67e2ff]/55 group-hover:shadow-[0_0_12px_rgba(54,216,255,0.38)]"
                   }`}>
                     {game.tag}
                   </span>

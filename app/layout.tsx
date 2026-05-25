@@ -24,7 +24,7 @@ export default function RootLayout({
           className="pointer-events-none fixed inset-0 z-0"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 12% 6%, rgba(67,210,255,0.12), transparent 24%), radial-gradient(circle at 86% 8%, rgba(93,237,188,0.08), transparent 20%), radial-gradient(circle at 50% 100%, rgba(56,129,255,0.08), transparent 30%)",
+              "radial-gradient(circle at 14% 4%, rgba(67,210,255,0.16), transparent 26%), radial-gradient(circle at 86% 6%, rgba(255,199,90,0.1), transparent 22%), radial-gradient(circle at 50% 100%, rgba(56,129,255,0.1), transparent 32%)",
           }}
         />
         <div className="relative z-10 flex min-h-full flex-col">
