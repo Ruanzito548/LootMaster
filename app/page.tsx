@@ -1,103 +1,12 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { HotGames } from "./components/hot-games";
 import { games, serviceCategories } from "./data/games";
 
-const marketSignals = [
-  { label: "Supported games", value: String(games.length).padStart(2, "0"), accent: "text-[#dff4ff]" },
-  { label: "Service lanes", value: String(serviceCategories.length).padStart(2, "0"), accent: "text-[#bee7ff]" },
-  { label: "Fulfillment", value: "24/7", accent: "text-[#ffe082]" },
-];
-
 export default function Home() {
   return (
     <div className="min-h-screen text-white">
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 pb-20 pt-8 lg:px-8">
-        <section className="relative overflow-hidden rounded-[2.2rem] border border-[#2fd3ff]/20 bg-[linear-gradient(180deg,rgba(20,29,49,0.95)_0%,rgba(12,19,36,0.94)_62%,rgba(9,15,30,0.96)_100%)] p-5 shadow-[0_28px_85px_rgba(0,0,0,0.44)] sm:p-7">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(0,229,255,0.12)_0%,rgba(0,229,255,0.92)_40%,rgba(255,201,77,0.85)_72%,rgba(255,201,77,0.1)_100%)]" />
-          <div className="pointer-events-none absolute -left-20 -top-20 h-72 w-72 rounded-full bg-cyan-300/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-20 right-8 h-72 w-72 rounded-full bg-sky-400/10 blur-3xl" />
-
-          <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="rounded-[1.5rem] border border-[#3bd5ff]/24 bg-[linear-gradient(180deg,rgba(24,34,57,0.78)_0%,rgba(15,24,42,0.75)_100%)] p-6">
-              <p className="inline-flex w-fit rounded-full border border-[#34d6ff]/34 bg-[#34d6ff]/14 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.25em] text-[#d9f8ff]">
-                Marketplace OS
-              </p>
-
-              <div className="mt-5 space-y-4">
-                <h1 className="font-throne text-5xl leading-[0.95] text-[#ecf9ff] sm:text-6xl">
-                  Trade smarter.
-                  <br />
-                  Enter the realm loaded.
-                </h1>
-                <p className="max-w-2xl text-base leading-8 text-[#abc2de] sm:text-lg">
-                  A complete storefront for gold, boosts and accounts with direct routing to each game flow.
-                  Pick your title, choose your category and jump to checkout in a few clicks.
-                </p>
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href="#game-grid"
-                  className="loot-gold-button inline-flex rounded-full px-6 py-3 text-sm font-semibold"
-                >
-                  Start shopping
-                </Link>
-                <Link
-                  href="#service-lanes"
-                  className="loot-secondary-button inline-flex rounded-full px-6 py-3 text-sm font-semibold"
-                >
-                  Explore service lanes
-                </Link>
-              </div>
-            </div>
-
-            <div className="rounded-[1.5rem] border border-[#30d5ff]/22 bg-[linear-gradient(180deg,rgba(20,33,57,0.84)_0%,rgba(12,20,35,0.78)_100%)] p-6">
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#9fd4ec]">Live Control</p>
-              <h2 className="mt-3 text-2xl font-black text-[#ecf9ff]">Marketplace command panel</h2>
-              <p className="mt-2 text-sm leading-7 text-[#9bb6d3]">
-                Open any game card and continue with the same checkout logic across categories.
-              </p>
-
-              <div className="mt-5 space-y-2">
-                {serviceCategories.map((category) => (
-                  <div
-                    key={category.id}
-                    className="flex items-center justify-between rounded-xl border border-[#3ed6ff]/16 bg-black/24 px-3 py-2"
-                  >
-                    <p className="text-sm font-semibold text-[#e6f8ff]">{category.title}</p>
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-[#8eb4d2]">{category.id}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 flex items-center justify-center">
-                <Image
-                  src="/lootmasterlogo.png"
-                  alt="Loot Master"
-                  width={300}
-                  height={300}
-                  priority
-                  className="h-auto w-48 drop-shadow-[0_20px_44px_rgba(52,173,255,0.35)]"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="relative mt-5 grid gap-3 sm:grid-cols-3">
-            {marketSignals.map((item) => (
-              <article
-                key={item.label}
-                className="rounded-2xl border border-[#35d8ff]/16 bg-[linear-gradient(180deg,rgba(15,26,45,0.75),rgba(11,20,35,0.76))] px-4 py-4"
-              >
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[#8db4d6]">{item.label}</p>
-                <p className={`mt-2 text-3xl font-black ${item.accent}`}>{item.value}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 pb-20 pt-10 lg:px-8">
         <HotGames />
 
         <section id="service-lanes" className="space-y-6">

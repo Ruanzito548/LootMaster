@@ -17,10 +17,11 @@
   --font-mono: "Cascadia Code", "Consolas", monospace;
   --loot-ink: #070b12;
   --loot-panel: rgba(7, 13, 22, 0.84);
-  --loot-gold: #5de2ff;
-  --loot-gold-soft: #b7f4ff;
-  --loot-blue: #20d3ff;
-  --loot-blue-deep: #0b7aa0;
+  --loot-gold: #43dbff;
+  --loot-gold-soft: #c8f6ff;
+  --loot-blue: #1bcfff;
+  --loot-blue-deep: #0c6f9a;
+  --loot-accent-yellow: #f3c84f;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -91,19 +92,85 @@ body {
   color: #f5f9ff;
 }
 
+.loot-gold-button,
+.loot-secondary-button,
+.tbc-gold-button,
+.midnight-gold-button,
+.classic-gold-button,
+.pandaria-gold-button,
+.tbc-secondary-button,
+.midnight-secondary-button,
+.classic-secondary-button,
+.pandaria-secondary-button {
+  position: relative;
+  border-radius: 999px;
+  border-style: solid;
+  border-width: 1px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.loot-gold-button:active,
+.loot-secondary-button:active,
+.tbc-gold-button:active,
+.midnight-gold-button:active,
+.classic-gold-button:active,
+.pandaria-gold-button:active,
+.tbc-secondary-button:active,
+.midnight-secondary-button:active,
+.classic-secondary-button:active,
+.pandaria-secondary-button:active {
+  transform: translateY(0);
+}
+
+.loot-gold-button:focus-visible,
+.loot-secondary-button:focus-visible,
+.tbc-gold-button:focus-visible,
+.midnight-gold-button:focus-visible,
+.classic-gold-button:focus-visible,
+.pandaria-gold-button:focus-visible,
+.tbc-secondary-button:focus-visible,
+.midnight-secondary-button:focus-visible,
+.classic-secondary-button:focus-visible,
+.pandaria-secondary-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(7, 12, 24, 0.86), 0 0 0 4px rgba(84, 219, 255, 0.42);
+}
+
+.loot-gold-button:disabled,
+.loot-secondary-button:disabled,
+.tbc-gold-button:disabled,
+.midnight-gold-button:disabled,
+.classic-gold-button:disabled,
+.pandaria-gold-button:disabled,
+.tbc-secondary-button:disabled,
+.midnight-secondary-button:disabled,
+.classic-secondary-button:disabled,
+.pandaria-secondary-button:disabled {
+  filter: saturate(0.35) brightness(0.82);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .loot-gold-button {
-  border: 1px solid rgba(110, 227, 255, 0.5);
-  background: linear-gradient(180deg, #89f2ff 0%, #40dbff 58%, #24a9ff 100%);
-  color: #011521;
+  border-color: rgba(99, 225, 255, 0.65);
+  background: linear-gradient(180deg, #87f1ff 0%, #3ad8ff 55%, #1b9af2 100%);
+  color: #021a2a;
   box-shadow:
-    inset 0 1px 0 rgba(242, 253, 255, 0.8),
-    0 14px 36px rgba(52, 162, 255, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    inset 0 1px 0 rgba(243, 253, 255, 0.85),
+    inset 0 -1px 0 rgba(8, 81, 128, 0.45),
+    0 12px 30px rgba(30, 150, 255, 0.28);
 }
 
 .loot-gold-button:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.07);
   transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(244, 254, 255, 0.9),
+    inset 0 -1px 0 rgba(9, 89, 142, 0.52),
+    0 16px 34px rgba(30, 150, 255, 0.34);
 }
 
 /* ── Inventory slot arcade hover ───────────────────────────────────── */
@@ -144,16 +211,21 @@ body {
 /* ─────────────────────────────────────────────────────────────────── */
 
 .loot-secondary-button {
-  background: linear-gradient(180deg, rgba(91, 209, 255, 0.14), rgba(29, 81, 176, 0.24));
-  border: 1px solid rgba(83, 210, 255, 0.33);
-  color: #dff4ff;
-  box-shadow: inset 0 1px 0 rgba(231, 249, 255, 0.12);
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  background: linear-gradient(180deg, rgba(32, 63, 105, 0.88), rgba(16, 34, 64, 0.9));
+  border-color: rgba(74, 209, 255, 0.38);
+  color: #def3ff;
+  box-shadow:
+    inset 0 1px 0 rgba(198, 238, 255, 0.15),
+    inset 0 -1px 0 rgba(7, 20, 44, 0.55);
 }
 
 .loot-secondary-button:hover {
-  background: linear-gradient(180deg, rgba(118, 226, 255, 0.24), rgba(36, 98, 205, 0.32));
-  border-color: rgba(151, 234, 255, 0.48);
+  background: linear-gradient(180deg, rgba(43, 81, 132, 0.92), rgba(20, 45, 82, 0.94));
+  border-color: rgba(109, 222, 255, 0.56);
+  box-shadow:
+    inset 0 1px 0 rgba(215, 243, 255, 0.18),
+    inset 0 -1px 0 rgba(8, 26, 56, 0.62),
+    0 12px 26px rgba(22, 89, 185, 0.24);
 }
 
 .tbc-shell {
