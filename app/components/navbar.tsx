@@ -64,6 +64,35 @@ function NavIcon({ icon }: { icon: LinkIcon }) {
   );
 }
 
+function NavbarActionIcon({ kind }: { kind: "profile" | "login" | "admin" }) {
+  if (kind === "profile") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+        <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M5 19C5.8 15.9 8.4 14 12 14C15.6 14 18.2 15.9 19 19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (kind === "login") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+        <path d="M10 5H6.5C5.7 5 5 5.7 5 6.5V17.5C5 18.3 5.7 19 6.5 19H10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M13 8L17 12L13 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M17 12H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+      <rect x="4" y="5" width="16" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8 10H16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M8 14H13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function isLinkActive(pathname: string | null, href: string) {
   if (!pathname) return false;
   if (href === "/") return pathname === "/";
@@ -218,7 +247,7 @@ export function Navbar() {
               <>
                 <Link
                   href="/profile"
-                  className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors ${
+                  className={`inline-flex items-center gap-2 rounded-[11px] border px-4 py-2.5 text-sm font-semibold tracking-[0.02em] transition-all duration-200 ${
                     isTbc
                       ? "border-[#a8ff9f]/28 bg-[#1a3a20]/55 text-[#e4ffe0] hover:bg-[#204a25]"
                       : isMidnight
@@ -229,16 +258,17 @@ export function Navbar() {
                       ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
                       : isAdmin
                       ? "border-[#4ade80]/28 bg-[#052e16]/60 text-[#86efac] hover:bg-[#052e16]"
-                      : "border-[#2fd3ff]/38 bg-[#173350]/80 text-[#e9f8ff] hover:border-[#5bddff]/52 hover:bg-[#1f4368]"
+                      : "border-[#4cb8ff]/72 bg-[linear-gradient(180deg,#2f93f5_0%,#1f7ed8_100%)] text-[#eaf6ff] shadow-[inset_0_1px_0_rgba(160,221,255,0.32),inset_0_-1px_0_rgba(6,45,98,0.58),0_8px_20px_rgba(21,103,198,0.34)] hover:border-[#72cbff] hover:brightness-110"
                   }`}
                 >
+                  <NavbarActionIcon kind="profile" />
                   My Profile
                 </Link>
 
                 <button
                   type="button"
                   onClick={() => void logout()}
-                  className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors ${
+                  className={`inline-flex items-center gap-2 rounded-[11px] border px-4 py-2.5 text-sm font-semibold tracking-[0.02em] transition-all duration-200 ${
                     isTbc
                       ? "border-[#a8ff9f]/25 bg-[#0f2713]/50 text-[#d4ffcc] hover:bg-[#153518]"
                       : isMidnight
@@ -258,7 +288,7 @@ export function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors ${
+                className={`inline-flex items-center gap-2 rounded-[11px] border px-4 py-2.5 text-sm font-semibold tracking-[0.02em] transition-all duration-200 ${
                   isTbc
                     ? "border-[#a8ff9f]/28 bg-[#1a3a20]/55 text-[#e4ffe0] hover:bg-[#204a25]"
                     : isMidnight
@@ -269,16 +299,17 @@ export function Navbar() {
                     ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
                     : isAdmin
                     ? "border-[#4ade80]/28 bg-[#052e16]/60 text-[#86efac] hover:bg-[#052e16]"
-                    : "border-[#2fd3ff]/38 bg-[#173350]/80 text-[#e9f8ff] hover:border-[#5bddff]/52 hover:bg-[#1f4368]"
+                    : "border-[#6c819f]/64 bg-[linear-gradient(180deg,rgba(58,66,84,0.96),rgba(47,55,71,0.96))] text-[#deecff] shadow-[inset_0_1px_0_rgba(204,217,244,0.16),inset_0_-1px_0_rgba(19,24,35,0.66)] hover:border-[#4bc2ff]/74 hover:bg-[linear-gradient(180deg,rgba(39,66,106,0.96),rgba(29,50,84,0.96))]"
                 }`}
               >
+                <NavbarActionIcon kind="login" />
                 Login/Sign Up
               </Link>
             )}
 
             <Link
               href="/admin"
-              className={`hidden rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors xl:inline-flex ${
+              className={`hidden items-center gap-2 rounded-[11px] border px-4 py-2.5 text-sm font-semibold tracking-[0.02em] transition-all duration-200 xl:inline-flex ${
                 isTbc
                   ? "border-[#a8ff9f]/25 bg-[#1a3a20]/45 text-[#e0ffe0] hover:bg-[#204a25]"
                   : isMidnight
@@ -289,9 +320,10 @@ export function Navbar() {
                   ? "border-[#8df0c8]/25 bg-[#185641]/45 text-[#e7fff6] hover:bg-[#226f54]"
                   : isAdmin
                   ? "border-[#4ade80]/22 bg-[#052e16]/50 text-[#4ade80] hover:bg-[#052e16]"
-                  : "border-[#f6c748]/36 bg-[#43330e]/72 text-[#ffe7a6] hover:border-[#ffd770]/50 hover:bg-[#574313]"
+                  : "border-[#f3c84f]/68 bg-[linear-gradient(180deg,rgba(72,55,21,0.94),rgba(62,47,18,0.94))] text-[#ffe8ac] shadow-[inset_0_1px_0_rgba(255,230,162,0.2),inset_0_-1px_0_rgba(33,23,8,0.6)] hover:border-[#ffd776] hover:bg-[linear-gradient(180deg,rgba(83,63,24,0.96),rgba(72,55,21,0.96))]"
               }`}
             >
+              <NavbarActionIcon kind="admin" />
               Admin
             </Link>
           </div>
