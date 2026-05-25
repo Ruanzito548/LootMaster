@@ -22,6 +22,8 @@
   --loot-blue: #1bcfff;
   --loot-blue-deep: #0c6f9a;
   --loot-accent-yellow: #f3c84f;
+  --loot-panel-dark: #1f2537;
+  --loot-panel-blue: #213a5d;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -40,13 +42,12 @@ body {
   color: var(--foreground);
   font-family: "ThroneOfShadows", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   background-image:
-    radial-gradient(circle at 8% -6%, rgba(57, 206, 255, 0.23), transparent 34%),
-    radial-gradient(circle at 88% -8%, rgba(255, 206, 88, 0.13), transparent 24%),
-    radial-gradient(circle at 50% 104%, rgba(70, 120, 255, 0.14), transparent 32%),
-    linear-gradient(rgba(54, 96, 148, 0.14) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(54, 96, 148, 0.12) 1px, transparent 1px),
-    linear-gradient(180deg, #10192d 0%, #0b1222 40%, #070d18 100%);
-  background-size: auto, auto, auto, 58px 58px, 58px 58px, auto;
+    radial-gradient(circle at 10% -8%, rgba(54, 197, 247, 0.2), transparent 30%),
+    radial-gradient(circle at 90% -10%, rgba(247, 198, 86, 0.1), transparent 24%),
+    linear-gradient(rgba(58, 106, 162, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(58, 106, 162, 0.1) 1px, transparent 1px),
+    linear-gradient(180deg, #11192c 0%, #0c1527 45%, #071021 100%);
+  background-size: auto, auto, 52px 52px, 52px 52px, auto;
   background-position: center, center, center, center, center, center;
   background-attachment: fixed;
 }
@@ -103,7 +104,7 @@ body {
 .classic-secondary-button,
 .pandaria-secondary-button {
   position: relative;
-  border-radius: 999px;
+  border-radius: 11px;
   border-style: solid;
   border-width: 1px;
   font-weight: 700;
@@ -155,22 +156,23 @@ body {
 }
 
 .loot-gold-button {
-  border-color: rgba(99, 225, 255, 0.65);
-  background: linear-gradient(180deg, #87f1ff 0%, #3ad8ff 55%, #1b9af2 100%);
-  color: #021a2a;
+  border-color: rgba(61, 174, 255, 0.85);
+  background: linear-gradient(180deg, #2f95f7 0%, #1f7ed9 100%);
+  color: #eaf6ff;
   box-shadow:
-    inset 0 1px 0 rgba(243, 253, 255, 0.85),
-    inset 0 -1px 0 rgba(8, 81, 128, 0.45),
-    0 12px 30px rgba(30, 150, 255, 0.28);
+    inset 0 1px 0 rgba(160, 221, 255, 0.32),
+    inset 0 -1px 0 rgba(6, 45, 98, 0.58),
+    0 8px 22px rgba(21, 103, 198, 0.35);
 }
 
 .loot-gold-button:hover {
-  filter: brightness(1.07);
+  filter: brightness(1.08);
   transform: translateY(-1px);
+  border-color: rgba(99, 196, 255, 0.95);
   box-shadow:
-    inset 0 1px 0 rgba(244, 254, 255, 0.9),
-    inset 0 -1px 0 rgba(9, 89, 142, 0.52),
-    0 16px 34px rgba(30, 150, 255, 0.34);
+    inset 0 1px 0 rgba(174, 229, 255, 0.42),
+    inset 0 -1px 0 rgba(8, 57, 116, 0.62),
+    0 10px 26px rgba(24, 120, 228, 0.44);
 }
 
 /* ── Inventory slot arcade hover ───────────────────────────────────── */
@@ -211,21 +213,22 @@ body {
 /* ─────────────────────────────────────────────────────────────────── */
 
 .loot-secondary-button {
-  background: linear-gradient(180deg, rgba(32, 63, 105, 0.88), rgba(16, 34, 64, 0.9));
-  border-color: rgba(74, 209, 255, 0.38);
-  color: #def3ff;
+  background: linear-gradient(180deg, rgba(57, 65, 82, 0.96), rgba(48, 55, 71, 0.96));
+  border-color: rgba(111, 130, 168, 0.55);
+  color: #d9e9ff;
   box-shadow:
-    inset 0 1px 0 rgba(198, 238, 255, 0.15),
-    inset 0 -1px 0 rgba(7, 20, 44, 0.55);
+    inset 0 1px 0 rgba(204, 217, 244, 0.16),
+    inset 0 -1px 0 rgba(19, 24, 35, 0.66);
 }
 
 .loot-secondary-button:hover {
-  background: linear-gradient(180deg, rgba(43, 81, 132, 0.92), rgba(20, 45, 82, 0.94));
-  border-color: rgba(109, 222, 255, 0.56);
+  background: linear-gradient(180deg, rgba(38, 65, 105, 0.96), rgba(29, 51, 84, 0.96));
+  border-color: rgba(75, 196, 255, 0.74);
+  color: #e6f7ff;
   box-shadow:
-    inset 0 1px 0 rgba(215, 243, 255, 0.18),
-    inset 0 -1px 0 rgba(8, 26, 56, 0.62),
-    0 12px 26px rgba(22, 89, 185, 0.24);
+    inset 0 1px 0 rgba(204, 239, 255, 0.2),
+    inset 0 -1px 0 rgba(11, 37, 69, 0.64),
+    0 10px 22px rgba(23, 100, 196, 0.28);
 }
 
 .tbc-shell {
