@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { auth } from "../../../lib/firebase";
 import { useProfileSession } from "../use-profile-session";
@@ -90,8 +90,22 @@ export default function ProfileWalletHistoryPage() {
   const { status, profile } = useProfileSession();
   const [items, setItems] = useState<WalletHistoryItem[]>([]);
   const [activeFilter, setActiveFilter] = useState<"All" | WalletHistoryItem["category"]>("All");
+  const [sortBy, setSortBy] = useState<"date" | "category" | "title" | "status" | "method" | "reference" | "amount">("date");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [columnWidths, setColumnWidths] = useState<number[]>([13, 10, 22, 12, 11, 20, 12]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const resizeStateRef = useRef<{ index: number; startX: number; startWidths: number[] } | null>(null);
+
+  const columns = [
+    { key: "date", label: "Date", sortable: true },
+    { key: "category", label: "Category", sortable: true },
+    { key: "title", label: "Title", sortable: true },
+    { key: "status", label: "Status", sortable: true },
+    { key: "method", label: "Method", sortable: true },
+    { key: "reference", label: "Reference", sortable: true },
+    { key: "amount", label: "Amount", sortable: true },
+  ] as const;
 
   const filteredItems = useMemo(() => {
     if (activeFilter === "All") {
@@ -101,9 +115,97 @@ export default function ProfileWalletHistoryPage() {
     return items.filter((item) => item.category === activeFilter);
   }, [activeFilter, items]);
 
+  const sortedItems = useMemo(() => {
+    const directionMultiplier = sortDirection === "asc" ? 1 : -1;
+
+    return [...filteredItems].sort((left, right) => {
+      const leftDate = left.createdAt ? new Date(left.createdAt).getTime() : 0;
+      const rightDate = right.createdAt ? new Date(right.createdAt).getTime() : 0;
+
+      const leftSignedAmount = left.direction === "out" ? -left.amount : left.amount;
+      const rightSignedAmount = right.direction === "out" ? -right.amount : right.amount;
+
+      let compare = 0;
+
+      if (sortBy === "date") {
+        compare = leftDate - rightDate;
+      } else if (sortBy === "category") {
+        compare = left.category.localeCompare(right.category, "en-US", { sensitivity: "base" });
+      } else if (sortBy === "title") {
+        compare = left.title.localeCompare(right.title, "en-US", { sensitivity: "base" });
+      } else if (sortBy === "status") {
+        compare = formatStatus(left.status).localeCompare(formatStatus(right.status), "en-US", { sensitivity: "base" });
+      } else if (sortBy === "method") {
+        compare = (left.method ?? "").localeCompare(right.method ?? "", "en-US", { sensitivity: "base" });
+      } else if (sortBy === "reference") {
+        compare = (left.reference ?? "").localeCompare(right.reference ?? "", "en-US", { sensitivity: "base" });
+      } else {
+        compare = leftSignedAmount - rightSignedAmount;
+      }
+
+      return compare * directionMultiplier;
+    });
+  }, [filteredItems, sortBy, sortDirection]);
+
+  useEffect(() => {
+    const onMouseMove = (event: MouseEvent) => {
+      const resizeState = resizeStateRef.current;
+      if (!resizeState) {
+        return;
+      }
+
+      const { index, startX, startWidths } = resizeState;
+      const deltaX = event.clientX - startX;
+      const deltaPercent = (deltaX / window.innerWidth) * 100;
+      const leftWidth = startWidths[index] + deltaPercent;
+      const rightWidth = startWidths[index + 1] - deltaPercent;
+      const minWidth = 6;
+
+      if (leftWidth < minWidth || rightWidth < minWidth) {
+        return;
+      }
+
+      const next = [...startWidths];
+      next[index] = leftWidth;
+      next[index + 1] = rightWidth;
+      setColumnWidths(next);
+    };
+
+    const onMouseUp = () => {
+      resizeStateRef.current = null;
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
+  const beginResize = (index: number, event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    resizeStateRef.current = {
+      index,
+      startX: event.clientX,
+      startWidths: [...columnWidths],
+    };
+  };
+
+  const handleSort = (column: typeof columns[number]["key"]) => {
+    if (sortBy === column) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortBy(column);
+    setSortDirection(column === "date" ? "desc" : "asc");
+  };
+
   const exportCsv = () => {
     const header = ["Date", "Category", "Title", "Direction", "Amount", "Unit", "Status", "Method", "Reference"];
-    const rows = filteredItems.map((item) => [
+    const rows = sortedItems.map((item) => [
       formatDate(item.createdAt),
       item.category,
       item.title,
@@ -207,7 +309,7 @@ export default function ProfileWalletHistoryPage() {
 
   return (
     <div className="loot-shell">
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
+      <main className="mx-auto flex w-full max-w-none flex-1 flex-col px-4 pb-20 pt-12 sm:px-6 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#ffcf57]">Wallet History</p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Wallet Statement</h1>
@@ -242,7 +344,7 @@ export default function ProfileWalletHistoryPage() {
             <button
               type="button"
               onClick={exportCsv}
-              disabled={filteredItems.length === 0}
+              disabled={sortedItems.length === 0}
               className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
             >
               Export CSV
@@ -253,32 +355,63 @@ export default function ProfileWalletHistoryPage() {
             {filteredItems.length === 0 ? (
               <p className="loot-muted px-5 py-4 text-sm">No records found for this filter.</p>
             ) : (
-              <div className="divide-y divide-[#fff1be]/10">
-                {filteredItems.map((item, index) => (
-                  <article key={item.id} className={`px-4 py-4 ${index % 2 === 0 ? "" : "bg-[#0a1a2b]/55"}`}>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0 space-y-2">
-                        <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.12em]">
-                          <span className="font-semibold text-[#8dd0ff]">{item.category || getKindLabel(item)}</span>
-                          <span className="text-[#6f88a5]">•</span>
-                          <span className="text-[#b7cce3]">{formatDate(item.createdAt)}</span>
-                        </div>
+              <div className="overflow-hidden">
+                <table className="w-full table-fixed border-collapse text-left text-sm">
+                  <colgroup>
+                    {columnWidths.map((width, index) => (
+                      <col key={columns[index].key} style={{ width: `${width}%` }} />
+                    ))}
+                  </colgroup>
+                  <thead>
+                    <tr className="border-b border-[#fff1be]/10 bg-[#0a1a2b]/70 text-xs font-semibold uppercase tracking-[0.12em] text-[#8dd0ff]">
+                      {columns.map((column, index) => {
+                        const isActiveSort = sortBy === column.key;
+                        const isAmount = column.key === "amount";
 
-                        <p className="text-sm font-semibold text-[#e5f3ff]">{item.title}</p>
+                        return (
+                          <th key={column.key} className={`relative px-4 py-3 ${isAmount ? "text-right" : "text-left"}`}>
+                            <button
+                              type="button"
+                              onClick={() => handleSort(column.key)}
+                              className={`inline-flex items-center gap-1 ${isAmount ? "ml-auto" : ""} hover:text-[#d9f1ff]`}
+                            >
+                              <span>{column.label}</span>
+                              <span className="text-[10px] text-[#86accf]">
+                                {isActiveSort ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}
+                              </span>
+                            </button>
 
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#c4d5e9]">
-                          <span>Status: {formatStatus(item.status)}</span>
-                          <span>Method: {item.method ? item.method.toUpperCase() : "--"}</span>
-                          <span className="break-all">Reference: {item.reference ?? "--"}</span>
-                        </div>
-                      </div>
-
-                      <p className={`shrink-0 text-sm font-semibold ${amountColor(item)}`}>
-                        {amountPrefix(item)}{formatAmount(item)}
-                      </p>
-                    </div>
-                  </article>
-                ))}
+                            {index < columns.length - 1 ? (
+                              <div
+                                role="separator"
+                                aria-orientation="vertical"
+                                onMouseDown={(event) => beginResize(index, event)}
+                                className="absolute right-0 top-0 h-full w-2 cursor-col-resize"
+                              >
+                                <div className="mx-auto h-full w-px bg-[#84d5ff]/25" />
+                              </div>
+                            ) : null}
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedItems.map((item, index) => (
+                      <tr key={item.id} className={`border-b border-[#fff1be]/10 align-top ${index % 2 === 0 ? "" : "bg-[#0a1a2b]/45"}`}>
+                        <td className="px-4 py-3 text-[#b7cce3]">{formatDate(item.createdAt)}</td>
+                        <td className="px-4 py-3 font-semibold text-[#8dd0ff]">{item.category || getKindLabel(item)}</td>
+                        <td className="break-words px-4 py-3 text-[#e5f3ff]">{item.title}</td>
+                        <td className="break-words px-4 py-3 text-[#c4d5e9]">{formatStatus(item.status)}</td>
+                        <td className="break-words px-4 py-3 text-[#c4d5e9]">{item.method ? item.method.toUpperCase() : "--"}</td>
+                        <td className="break-all px-4 py-3 text-[#c4d5e9]">{item.reference ?? "--"}</td>
+                        <td className={`px-4 py-3 text-right font-semibold ${amountColor(item)}`}>
+                          {amountPrefix(item)}{formatAmount(item)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
