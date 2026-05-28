@@ -84,6 +84,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const basePrice = (goldAmount / 1000) * pricePerThousand;
+  const baseAmountCents = Math.round(basePrice * 100);
   const unitAmount = computeFinalAmount(basePrice, paymentMethod);
 
   if (unitAmount <= 0) {
@@ -102,6 +103,7 @@ export async function POST(request: Request): Promise<Response> {
     categoryTitle,
     goldAmount: String(goldAmount),
     pricePerThousand: String(pricePerThousand),
+    baseAmountCents: String(baseAmountCents),
     finalAmountCents: String(unitAmount),
     serverId,
     server,

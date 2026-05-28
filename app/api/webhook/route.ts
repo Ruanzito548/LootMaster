@@ -120,9 +120,11 @@ async function persistPaidOrder(session: Stripe.Checkout.Session): Promise<void>
   const meta = session.metadata ?? {};
   const adminDb = getAdminDb();
   const amountTotalCents = session.amount_total ?? 0;
+  const baseAmountCents = Number(meta.baseAmountCents ?? 0) || 0;
   const commissionPercent = Number(meta.commissionPercent ?? DEFAULT_PLATFORM_FEE_PERCENT) || DEFAULT_PLATFORM_FEE_PERCENT;
-  const sellerAmountCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
-  const platformProfitCents = amountTotalCents - sellerAmountCents;
+  const commissionBaseCents = baseAmountCents > 0 ? baseAmountCents : amountTotalCents;
+  const sellerAmountCents = Math.round(commissionBaseCents * (1 - commissionPercent / 100));
+  const platformProfitCents = commissionBaseCents - sellerAmountCents;
 
   await adminDb.collection("order-checkouts").doc(session.id).set(
     {
@@ -132,6 +134,7 @@ async function persistPaidOrder(session: Stripe.Checkout.Session): Promise<void>
       currency: (session.currency ?? "brl").toLowerCase(),
       customerEmail: session.customer_email ?? "",
       customerUid: meta.customerUid ?? "",
+      baseAmountCents: commissionBaseCents,
       gameId: meta.gameId ?? "",
       gameTitle: meta.gameTitle ?? "",
       categoryId: meta.categoryId ?? "",
@@ -250,10 +253,12 @@ async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<voi
   const adminDb = getAdminDb();
   const meta = session.metadata ?? {};
   const totalCents = session.amount_total ?? 0;
+  const baseAmountCents = Number(meta.baseAmountCents ?? 0) || 0;
   const commissionPercent = Number(meta.commissionPercent ?? DEFAULT_PLATFORM_FEE_PERCENT) || DEFAULT_PLATFORM_FEE_PERCENT;
+  const commissionBaseCents = baseAmountCents > 0 ? baseAmountCents : totalCents;
   const customerAgent = await resolveCustomerAgent(session);
   const feeBreakdown = computeFeeBreakdown(
-    totalCents,
+    commissionBaseCents,
     commissionPercent,
     customerAgent.agentUid ? customerAgent.agentFeeSharePercent : 0,
   );
@@ -275,7 +280,7 @@ async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<voi
         orderId: session.id,
         customerUid: customerAgent.customerUid,
         customerEmail: session.customer_email ?? "",
-        amountTotalCents: totalCents,
+        amountTotalCents: commissionBaseCents,
         currency: (session.currency ?? "brl").toLowerCase(),
         commissionPercent,
         platformFeeCents: feeBreakdown.platformFeeCents,
@@ -362,8 +367,8 @@ export async function POST(request: Request): Promise<Response> {
         await syncPaidOrderToWalletBackend({
           orderId: session.id,
           customerId: session.customer_email ?? null,
-          totalAmount: amountTotalCents / 100,
-          supplierPayout: supplierPayoutCents / 100,
+            totalAmount: commissionBaseCents / 100,
+            supplierPayout: supplierPayoutCents / 100,
           currency: (session.currency ?? "usd").toUpperCase(),
           metadata: {
             gameId: meta.gameId ?? "",
