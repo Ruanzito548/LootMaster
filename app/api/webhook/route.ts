@@ -269,17 +269,6 @@ async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<voi
       return;
     }
 
-    if (customerAgent.agentUid && agentPayoutLootCoins > 0) {
-      tx.set(
-        adminDb.collection("users").doc(customerAgent.agentUid),
-        {
-          lootCoins: FieldValue.increment(agentPayoutLootCoins),
-          updatedAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true },
-      );
-    }
-
     tx.set(
       feeRef,
       {
@@ -295,7 +284,8 @@ async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<voi
         agentPayoutCents: feeBreakdown.agentPayoutCents,
         lootmasterFeeCents: feeBreakdown.lootmasterFeeCents,
         agentPayoutLootCoins,
-        status: "processed",
+        agentPayoutCredited: false,
+        status: "pending_completion",
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       },

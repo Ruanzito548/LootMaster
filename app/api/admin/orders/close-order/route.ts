@@ -55,6 +55,62 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
+    const feeTransferRef = adminDb.collection("fee-transfers").doc(body.orderId);
+    let agentPayoutCreditedNow = false;
+
+    await adminDb.runTransaction(async (tx) => {
+      const feeTransferSnapshot = await tx.get(feeTransferRef);
+
+      if (!feeTransferSnapshot.exists) {
+        return;
+      }
+
+      const feeTransferData = feeTransferSnapshot.data() as Record<string, unknown>;
+      const alreadyCredited =
+        feeTransferData.agentPayoutCredited === true || feeTransferData.status === "processed";
+
+      if (alreadyCredited) {
+        return;
+      }
+
+      const agentUid =
+        typeof feeTransferData.agentUid === "string" ? feeTransferData.agentUid.trim() : "";
+      const payoutLootCoinsRaw =
+        typeof feeTransferData.agentPayoutLootCoins === "number"
+          ? feeTransferData.agentPayoutLootCoins
+          : typeof feeTransferData.agentPayoutCents === "number"
+          ? feeTransferData.agentPayoutCents / 100
+          : 0;
+      const payoutLootCoins =
+        Number.isFinite(payoutLootCoinsRaw) && payoutLootCoinsRaw > 0
+          ? Math.round(payoutLootCoinsRaw * 100) / 100
+          : 0;
+
+      if (agentUid && payoutLootCoins > 0) {
+        tx.set(
+          adminDb.collection("users").doc(agentUid),
+          {
+            lootCoins: FieldValue.increment(payoutLootCoins),
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+      }
+
+      tx.set(
+        feeTransferRef,
+        {
+          status: "processed",
+          agentPayoutCredited: true,
+          agentPayoutCreditedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      agentPayoutCreditedNow = true;
+    });
+
     await deleteSupplierChannel(body.threadId);
 
     let walletForwarded = false;
@@ -87,7 +143,7 @@ export async function POST(request: Request): Promise<Response> {
       { merge: true },
     );
 
-    return Response.json({ ok: true, walletForwarded, walletWarning });
+    return Response.json({ ok: true, walletForwarded, walletWarning, agentPayoutCreditedNow });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not close supplier channel.";
     return Response.json({ error: message }, { status: 500 });

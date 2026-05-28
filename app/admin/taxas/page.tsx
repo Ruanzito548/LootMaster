@@ -17,6 +17,7 @@ type FeeTransferRow = {
   agentFeeSharePercent: number;
   agentPayoutCents: number;
   lootmasterFeeCents: number;
+  status: string;
   createdAt: string | null;
 };
 
@@ -38,10 +39,10 @@ function serializeTimestamp(value: unknown): string | null {
   return date.toISOString();
 }
 
-function formatMoney(cents: number, currency: string) {
-  return new Intl.NumberFormat("pt-BR", {
+function formatMoneyUsd(cents: number) {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: (currency || "BRL").toUpperCase(),
+    currency: "USD",
   }).format((Number.isFinite(cents) ? cents : 0) / 100);
 }
 
@@ -73,6 +74,7 @@ export default async function AdminTaxasPage() {
         agentFeeSharePercent: typeof data.agentFeeSharePercent === "number" ? data.agentFeeSharePercent : 0,
         agentPayoutCents: typeof data.agentPayoutCents === "number" ? data.agentPayoutCents : 0,
         lootmasterFeeCents: typeof data.lootmasterFeeCents === "number" ? data.lootmasterFeeCents : 0,
+        status: typeof data.status === "string" ? data.status : "unknown",
         createdAt: serializeTimestamp(data.createdAt),
       };
     });
@@ -127,6 +129,7 @@ export default async function AdminTaxasPage() {
                   <th className="px-4 py-3">Agente</th>
                   <th className="px-4 py-3">Repasse agente</th>
                   <th className="px-4 py-3">LootMaster</th>
+                  <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Criado em</th>
                 </tr>
               </thead>
@@ -140,18 +143,21 @@ export default async function AdminTaxasPage() {
                       <p>{row.customerUid ?? "--"}</p>
                       <p className="mt-1">{row.customerEmail || "--"}</p>
                     </td>
-                    <td className="px-4 py-3 text-xs text-green-300">{formatMoney(row.amountTotalCents, row.currency)}</td>
+                    <td className="px-4 py-3 text-xs text-green-300">{formatMoneyUsd(row.amountTotalCents)}</td>
                     <td className="px-4 py-3 text-xs text-green-300">
-                      {formatMoney(row.platformFeeCents, row.currency)} ({row.commissionPercent.toFixed(2)}%)
+                      {formatMoneyUsd(row.platformFeeCents)} ({row.commissionPercent.toFixed(2)}%)
                     </td>
                     <td className="px-4 py-3 text-xs text-green-500">
                       {row.agentUid ? `${row.agentUid} (${row.agentFeeSharePercent.toFixed(2)}%)` : "Sem agente"}
                     </td>
                     <td className="px-4 py-3 text-xs font-semibold text-emerald-300">
-                      {formatMoney(row.agentPayoutCents, row.currency)}
+                      {formatMoneyUsd(row.agentPayoutCents)}
                     </td>
                     <td className="px-4 py-3 text-xs font-semibold text-green-300">
-                      {formatMoney(row.lootmasterFeeCents, row.currency)}
+                      {formatMoneyUsd(row.lootmasterFeeCents)}
+                    </td>
+                    <td className="px-4 py-3 text-xs font-semibold text-amber-300">
+                      {row.status.replace(/_/g, " ")}
                     </td>
                     <td className="px-4 py-3 text-xs text-green-500">
                       {row.createdAt ? new Date(row.createdAt).toLocaleString("pt-BR") : "--"}
