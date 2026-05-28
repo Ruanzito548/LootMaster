@@ -361,14 +361,16 @@ export async function POST(request: Request): Promise<Response> {
 
       try {
         const amountTotalCents = session.amount_total ?? 0;
+        const baseAmountCents = Number(meta.baseAmountCents ?? 0) || 0;
+        const commissionBaseCents = baseAmountCents > 0 ? baseAmountCents : amountTotalCents;
         const commissionPercent = Number(meta.commissionPercent ?? 15) || 15;
-        const supplierPayoutCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
+        const supplierPayoutCents = Math.round(commissionBaseCents * (1 - commissionPercent / 100));
 
         await syncPaidOrderToWalletBackend({
           orderId: session.id,
           customerId: session.customer_email ?? null,
-            totalAmount: commissionBaseCents / 100,
-            supplierPayout: supplierPayoutCents / 100,
+          totalAmount: commissionBaseCents / 100,
+          supplierPayout: supplierPayoutCents / 100,
           currency: (session.currency ?? "usd").toUpperCase(),
           metadata: {
             gameId: meta.gameId ?? "",
