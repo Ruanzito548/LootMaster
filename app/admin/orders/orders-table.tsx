@@ -19,12 +19,180 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
   const [editingFee, setEditingFee] = useState<number>(0);
   const [savingOrderId, setSavingOrderId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<
+    | "created"
+    | "status"
+    | "nickname"
+    | "email"
+    | "game"
+    | "gold"
+    | "server"
+    | "value"
+    | "payout"
+    | "profit"
+    | "fee"
+    | "payment"
+  >("created");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [filters, setFilters] = useState({
+    date: "",
+    status: "All",
+    nickname: "",
+    email: "",
+    game: "",
+    payment: "All",
+  });
 
   const rowsById = useMemo(() => {
     const map = new Map<string, OrderRow>();
     rows.forEach((row) => map.set(row.id, row));
     return map;
   }, [rows]);
+
+  const statusOptions = useMemo(
+    () => ["All", ...Array.from(new Set(rows.map((row) => row.status).filter(Boolean))).sort()],
+    [rows],
+  );
+
+  const paymentOptions = useMemo(
+    () => ["All", ...Array.from(new Set(rows.map((row) => row.paymentMethod).filter(Boolean))).sort()],
+    [rows],
+  );
+
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      const matchesDate = filters.date
+        ? row.created.toLowerCase().includes(filters.date.trim().toLowerCase())
+        : true;
+      const matchesStatus = filters.status === "All" ? true : row.status === filters.status;
+      const matchesNickname = filters.nickname
+        ? row.nickname.toLowerCase().includes(filters.nickname.trim().toLowerCase())
+        : true;
+      const matchesEmail = filters.email
+        ? row.email.toLowerCase().includes(filters.email.trim().toLowerCase())
+        : true;
+      const matchesGame = filters.game
+        ? `${row.gameTitle} ${row.categoryTitle}`.toLowerCase().includes(filters.game.trim().toLowerCase())
+        : true;
+      const matchesPayment = filters.payment === "All" ? true : row.paymentMethod === filters.payment;
+
+      return (
+        matchesDate &&
+        matchesStatus &&
+        matchesNickname &&
+        matchesEmail &&
+        matchesGame &&
+        matchesPayment
+      );
+    });
+  }, [filters, rows]);
+
+  const sortedRows = useMemo(() => {
+    const directionMultiplier = sortDirection === "asc" ? 1 : -1;
+
+    return [...filteredRows].sort((left, right) => {
+      let compare = 0;
+
+      if (sortBy === "created") {
+        compare = new Date(left.created).getTime() - new Date(right.created).getTime();
+      } else if (sortBy === "status") {
+        compare = left.status.localeCompare(right.status, "en-US", { sensitivity: "base" });
+      } else if (sortBy === "nickname") {
+        compare = left.nickname.localeCompare(right.nickname, "en-US", { sensitivity: "base" });
+      } else if (sortBy === "email") {
+        compare = left.email.localeCompare(right.email, "en-US", { sensitivity: "base" });
+      } else if (sortBy === "game") {
+        compare = `${left.gameTitle} ${left.categoryTitle}`.localeCompare(
+          `${right.gameTitle} ${right.categoryTitle}`,
+          "en-US",
+          { sensitivity: "base" },
+        );
+      } else if (sortBy === "gold") {
+        compare = Number(left.goldAmount.replace(/,/g, "")) - Number(right.goldAmount.replace(/,/g, ""));
+      } else if (sortBy === "server") {
+        compare = `${left.server} ${left.faction}`.localeCompare(`${right.server} ${right.faction}`, "en-US", {
+          sensitivity: "base",
+        });
+      } else if (sortBy === "value") {
+        compare = left.totalCents - right.totalCents;
+      } else if (sortBy === "payout") {
+        compare = left.sellerAmountCents - right.sellerAmountCents;
+      } else if (sortBy === "profit") {
+        compare = left.platformProfitCents - right.platformProfitCents;
+      } else if (sortBy === "fee") {
+        compare = left.commissionPercent - right.commissionPercent;
+      } else if (sortBy === "payment") {
+        compare = left.paymentMethod.localeCompare(right.paymentMethod, "en-US", { sensitivity: "base" });
+      }
+
+      return compare * directionMultiplier;
+    });
+  }, [filteredRows, sortBy, sortDirection]);
+
+  function toggleSort(column: typeof sortBy) {
+    if (sortBy === column) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortBy(column);
+    setSortDirection(column === "created" ? "desc" : "asc");
+  }
+
+  function updateFilter<K extends keyof typeof filters>(key: K, value: (typeof filters)[K]) {
+    setFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  function exportVisibleRows() {
+    const headers = [
+      "ID",
+      "Date",
+      "Status",
+      "Nickname",
+      "Email",
+      "Game",
+      "Category",
+      "Gold",
+      "Server",
+      "Faction",
+      "Value",
+      "Payout",
+      "Profit",
+      "Fee",
+      "Delivery",
+      "Payment",
+    ];
+
+    const csvRows = sortedRows.map((row) =>
+      [
+        row.id,
+        row.created,
+        row.status,
+        row.nickname,
+        row.email,
+        row.gameTitle,
+        row.categoryTitle,
+        row.goldAmount,
+        row.server,
+        row.faction,
+        formatMoney(row.totalCents),
+        formatMoney(row.sellerAmountCents),
+        formatMoney(row.platformProfitCents),
+        `${row.commissionPercent}%`,
+        row.deliveryMethod,
+        row.paymentMethod,
+      ].map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","),
+    );
+
+    const csv = [headers.join(","), ...csvRows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   async function saveFee(orderId: string) {
     const row = rowsById.get(orderId);
@@ -73,26 +241,72 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
         <p className="border-b border-red-900 bg-red-950/20 px-5 py-3 text-sm font-medium text-red-400">{errorMessage}</p>
       ) : null}
 
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-green-900 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-green-500">
+          <span>{sortedRows.length} visible</span>
+          <span>•</span>
+          <span>{rows.length} total</span>
+        </div>
+        <button
+          type="button"
+          onClick={exportVisibleRows}
+          className="rounded-md border border-green-700 bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wide text-green-400 transition hover:bg-green-950"
+        >
+          Export visible rows
+        </button>
+      </div>
+
       <table className="w-full table-fixed text-left text-xs">
         <thead>
           <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
-            <th className="px-2 py-2">Date</th>
-            <th className="px-2 py-2">Status</th>
-            <th className="px-2 py-2">Nickname</th>
-            <th className="px-2 py-2">Email</th>
-            <th className="px-2 py-2">Game</th>
-            <th className="px-2 py-2">Gold</th>
-            <th className="px-2 py-2">Server</th>
-            <th className="px-2 py-2">Value</th>
-            <th className="px-2 py-2">Payout</th>
-            <th className="px-2 py-2">Profit</th>
-            <th className="px-2 py-2">Fee</th>
-            <th className="px-2 py-2">Payment</th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("created")} className="inline-flex items-center gap-1">Date <span>{sortBy === "created" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("status")} className="inline-flex items-center gap-1">Status <span>{sortBy === "status" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("nickname")} className="inline-flex items-center gap-1">Nickname <span>{sortBy === "nickname" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("email")} className="inline-flex items-center gap-1">Email <span>{sortBy === "email" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("game")} className="inline-flex items-center gap-1">Game <span>{sortBy === "game" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("gold")} className="inline-flex items-center gap-1">Gold <span>{sortBy === "gold" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("server")} className="inline-flex items-center gap-1">Server <span>{sortBy === "server" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("value")} className="inline-flex items-center gap-1">Value <span>{sortBy === "value" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("payout")} className="inline-flex items-center gap-1">Payout <span>{sortBy === "payout" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("profit")} className="inline-flex items-center gap-1">Profit <span>{sortBy === "profit" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("fee")} className="inline-flex items-center gap-1">Fee <span>{sortBy === "fee" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("payment")} className="inline-flex items-center gap-1">Payment <span>{sortBy === "payment" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2">Applicants</th>
+          </tr>
+          <tr className="border-b border-green-950 bg-green-950/10 text-[11px] text-green-400">
+            <th className="px-2 py-2">
+              <input value={filters.date} onChange={(event) => updateFilter("date", event.target.value)} placeholder="Filter" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
+            </th>
+            <th className="px-2 py-2">
+              <select value={filters.status} onChange={(event) => updateFilter("status", event.target.value)} className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300">
+                {statusOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+            </th>
+            <th className="px-2 py-2">
+              <input value={filters.nickname} onChange={(event) => updateFilter("nickname", event.target.value)} placeholder="Filter" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
+            </th>
+            <th className="px-2 py-2">
+              <input value={filters.email} onChange={(event) => updateFilter("email", event.target.value)} placeholder="Filter" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
+            </th>
+            <th className="px-2 py-2">
+              <input value={filters.game} onChange={(event) => updateFilter("game", event.target.value)} placeholder="Filter" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
+            </th>
+            <th className="px-2 py-2" />
+            <th className="px-2 py-2" />
+            <th className="px-2 py-2" />
+            <th className="px-2 py-2" />
+            <th className="px-2 py-2" />
+            <th className="px-2 py-2" />
+            <th className="px-2 py-2">
+              <select value={filters.payment} onChange={(event) => updateFilter("payment", event.target.value)} className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300">
+                {paymentOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+            </th>
+            <th className="px-2 py-2" />
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, i) => {
+          {sortedRows.map((row, i) => {
             const isEditing = editingOrderId === row.id;
             const isSaving = savingOrderId === row.id;
 

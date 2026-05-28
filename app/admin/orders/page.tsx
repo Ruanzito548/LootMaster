@@ -2,7 +2,7 @@ import Link from "next/link";
 import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
 import CreateTestOrderButton from "./create-test-order-button";
-import OrdersExportButton, { type OrderRow } from "./export-button";
+import { type OrderRow } from "./export-button";
 import OrdersTable from "./orders-table";
 
 export const dynamic = "force-dynamic";
@@ -189,7 +189,6 @@ export default async function AdminOrdersPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <CreateTestOrderButton />
-            <OrdersExportButton orders={rows} />
           </div>
         </div>
 
