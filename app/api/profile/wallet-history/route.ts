@@ -4,6 +4,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 type WalletHistoryItem = {
   id: string;
   kind: "credit" | "withdrawal" | "purchase" | "fee";
+  category: "Fee" | "Withdrawal" | "Sale Receipt" | "Purchase";
   direction: "in" | "out" | "info";
   title: string;
   amount: number;
@@ -83,6 +84,7 @@ export async function GET(request: Request): Promise<Response> {
       return {
         id: row.id,
         kind: "credit",
+        category: "Sale Receipt",
         direction: "in",
         title: `Loot Coins credited for order ${orderId}`,
         amount,
@@ -103,6 +105,7 @@ export async function GET(request: Request): Promise<Response> {
       return {
         id: row.id,
         kind: "withdrawal",
+        category: "Withdrawal",
         direction: "out",
         title: `Withdrawal request (${typeof data.payoutMethod === "string" ? data.payoutMethod.toUpperCase() : "PAYOUT"})`,
         amount,
@@ -126,6 +129,7 @@ export async function GET(request: Request): Promise<Response> {
       return {
         id: `agent-fee-${row.id}`,
         kind: "fee",
+        category: "Fee",
         direction: "in",
         title: `Agent fee payout for order ${orderId}`,
         amount,
@@ -147,6 +151,7 @@ export async function GET(request: Request): Promise<Response> {
       return {
         id: `customer-fee-${row.id}`,
         kind: "fee",
+        category: "Fee",
         direction: "out",
         title: `Platform fee charged on order ${orderId}`,
         amount,
@@ -183,6 +188,7 @@ export async function GET(request: Request): Promise<Response> {
       return {
         id: `purchase-${docId}`,
         kind: "purchase",
+        category: "Purchase",
         direction: "out",
         title: `Purchase: ${gameTitle} / ${categoryTitle}`,
         amount: amountTotalCents / 100,

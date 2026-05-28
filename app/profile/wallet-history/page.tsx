@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { auth } from "../../../lib/firebase";
 import { useProfileSession } from "../use-profile-session";
@@ -9,6 +9,7 @@ import { useProfileSession } from "../use-profile-session";
 type WalletHistoryItem = {
   id: string;
   kind: "credit" | "withdrawal" | "purchase" | "fee";
+  category: "Fee" | "Withdrawal" | "Sale Receipt" | "Purchase";
   direction: "in" | "out" | "info";
   title: string;
   amount: number;
@@ -34,6 +35,14 @@ function formatDate(value: string | null): string {
 
 function formatStatus(value: string): string {
   return value.replace(/_/g, " ");
+}
+
+function formatAmountForCsv(item: WalletHistoryItem): string {
+  if (item.unit === "usd") {
+    return item.amount.toFixed(2);
+  }
+
+  return item.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function getKindLabel(item: WalletHistoryItem): string {
@@ -68,11 +77,59 @@ function amountPrefix(item: WalletHistoryItem): string {
   return "";
 }
 
+function escapeCsv(value: string): string {
+  const normalized = value.replace(/\r?\n|\r/g, " ");
+  if (/[",]/.test(normalized)) {
+    return `"${normalized.replace(/"/g, '""')}"`;
+  }
+
+  return normalized;
+}
+
 export default function ProfileWalletHistoryPage() {
   const { status, profile } = useProfileSession();
   const [items, setItems] = useState<WalletHistoryItem[]>([]);
+  const [activeFilter, setActiveFilter] = useState<"All" | WalletHistoryItem["category"]>("All");
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const filteredItems = useMemo(() => {
+    if (activeFilter === "All") {
+      return items;
+    }
+
+    return items.filter((item) => item.category === activeFilter);
+  }, [activeFilter, items]);
+
+  const exportCsv = () => {
+    const header = ["Date", "Category", "Title", "Direction", "Amount", "Unit", "Status", "Method", "Reference"];
+    const rows = filteredItems.map((item) => [
+      formatDate(item.createdAt),
+      item.category,
+      item.title,
+      item.direction,
+      formatAmountForCsv(item),
+      item.unit.toUpperCase(),
+      formatStatus(item.status),
+      item.method?.toUpperCase() ?? "",
+      item.reference ?? "",
+    ]);
+
+    const csv = [header, ...rows]
+      .map((row) => row.map((value) => escapeCsv(String(value))).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const date = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `wallet-history-${date}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     if (status !== "authenticated" || !auth?.currentUser) {
@@ -153,9 +210,9 @@ export default function ProfileWalletHistoryPage() {
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#ffcf57]">Wallet History</p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Full wallet statement</h1>
+          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Wallet Statement</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            Review purchases, withdrawals, credits, and fee movements in one timeline.
+            Simple list with filters and spreadsheet export.
           </p>
         </div>
 
@@ -163,31 +220,67 @@ export default function ProfileWalletHistoryPage() {
           <p className="mt-8 rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">{errorMessage}</p>
         ) : null}
 
-        <section className="loot-panel mt-8 rounded-[2rem] p-8">
-          <div className="flex flex-col gap-4">
-            {items.length === 0 ? (
-              <p className="loot-muted text-sm">No wallet records found yet.</p>
+        <section className="loot-panel mt-8 rounded-[2rem] p-6">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {(["All", "Fee", "Withdrawal", "Sale Receipt", "Purchase"] as const).map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setActiveFilter(filter)}
+                  className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] transition ${
+                    activeFilter === filter
+                      ? "border-[#ffcf57]/50 bg-[#ffcf57]/15 text-[#ffe7a3]"
+                      : "border-[#ffffff22] text-[#c4d5e9] hover:border-[#84d5ff]/40 hover:text-[#e5f3ff]"
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={exportCsv}
+              disabled={filteredItems.length === 0}
+              className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Export CSV
+            </button>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-[#fff1be]/10 bg-[#06121d]/80">
+            {filteredItems.length === 0 ? (
+              <p className="loot-muted px-5 py-4 text-sm">No records found for this filter.</p>
             ) : (
-              items.map((item) => (
-                <article key={item.id} className="rounded-3xl border border-[#fff1be]/10 bg-[#06121d]/80 p-6">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8dd0ff]">
-                        {getKindLabel(item)}
-                      </p>
-                      <h2 className="loot-title mt-2 text-2xl font-black">{item.title}</h2>
-                      <p className="loot-muted mt-2 text-sm">
-                        Status: {formatStatus(item.status)} • {formatDate(item.createdAt)}
-                      </p>
-                      {item.method ? <p className="loot-muted mt-1 text-sm">Method: {item.method.toUpperCase()}</p> : null}
-                      {item.reference ? <p className="loot-muted mt-1 text-sm break-all">Reference: {item.reference}</p> : null}
-                    </div>
-                    <p className={`text-lg font-black ${amountColor(item)}`}>
-                      {amountPrefix(item)}{formatAmount(item)}
-                    </p>
-                  </div>
-                </article>
-              ))
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-[#fff1be]/10 text-xs font-semibold uppercase tracking-[0.14em] text-[#8dd0ff]">
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Category</th>
+                    <th className="px-4 py-3">Title</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Method</th>
+                    <th className="px-4 py-3">Reference</th>
+                    <th className="px-4 py-3 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredItems.map((item, index) => (
+                    <tr key={item.id} className={`border-b border-[#fff1be]/10 ${index % 2 === 0 ? "" : "bg-[#0a1a2b]/55"}`}>
+                      <td className="px-4 py-3 text-[#b7cce3]">{formatDate(item.createdAt)}</td>
+                      <td className="px-4 py-3 text-[#8dd0ff]">{item.category || getKindLabel(item)}</td>
+                      <td className="px-4 py-3 text-[#e5f3ff]">{item.title}</td>
+                      <td className="px-4 py-3 text-[#c4d5e9]">{formatStatus(item.status)}</td>
+                      <td className="px-4 py-3 text-[#c4d5e9]">{item.method ? item.method.toUpperCase() : "--"}</td>
+                      <td className="px-4 py-3 text-[#c4d5e9]">{item.reference ?? "--"}</td>
+                      <td className={`px-4 py-3 text-right font-semibold ${amountColor(item)}`}>
+                        {amountPrefix(item)}{formatAmount(item)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
         </section>
