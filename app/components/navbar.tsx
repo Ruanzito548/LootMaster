@@ -10,7 +10,7 @@ import { subscribeToHotGames } from "../../lib/hot-games";
 import { auth } from "../../lib/firebase";
 import { defaultHotGameIds, games } from "../data/games";
 
-type LinkIcon = "home" | "games" | "coins" | "rewards";
+type LinkIcon = "home" | "games" | "rewards";
 
 type NavLink = {
   href: string;
@@ -21,7 +21,6 @@ type NavLink = {
 const links: NavLink[] = [
   { href: "/", label: "Home", icon: "home" },
   { href: "/games", label: "Games", icon: "games" },
-  { href: "/coins", label: "LM Coins", icon: "coins" },
   { href: "/rewards", label: "Rewards", icon: "rewards" },
 ];
 
@@ -43,16 +42,6 @@ function NavIcon({ icon }: { icon: LinkIcon }) {
         <path d="M9.5 10.5V13.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         <circle cx="15.5" cy="11.5" r="1" fill="currentColor" />
         <circle cx="17.5" cy="13.5" r="1" fill="currentColor" />
-      </svg>
-    );
-  }
-
-  if (icon === "coins") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
-        <ellipse cx="12" cy="7" rx="6.5" ry="3.2" stroke="currentColor" strokeWidth="1.8" />
-        <path d="M5.5 7V11C5.5 12.8 8.4 14.2 12 14.2C15.6 14.2 18.5 12.8 18.5 11V7" stroke="currentColor" strokeWidth="1.8" />
-        <path d="M5.5 11V15C5.5 16.8 8.4 18.2 12 18.2C15.6 18.2 18.5 16.8 18.5 15V11" stroke="currentColor" strokeWidth="1.8" />
       </svg>
     );
   }

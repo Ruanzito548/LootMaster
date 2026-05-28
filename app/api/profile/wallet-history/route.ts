@@ -42,39 +42,33 @@ export async function GET(request: Request): Promise<Response> {
       adminDb
         .collection("order-payouts")
         .where("supplierUid", "==", decodedToken.uid)
-        .orderBy("createdAt", "desc")
-        .limit(100)
+        .limit(300)
         .get(),
       adminDb
         .collection("withdraw-requests")
         .where("uid", "==", decodedToken.uid)
-        .orderBy("createdAt", "desc")
-        .limit(100)
+        .limit(300)
         .get(),
       adminDb
         .collection("fee-transfers")
         .where("agentUid", "==", decodedToken.uid)
-        .orderBy("createdAt", "desc")
-        .limit(100)
+        .limit(300)
         .get(),
       adminDb
         .collection("fee-transfers")
         .where("customerUid", "==", decodedToken.uid)
-        .orderBy("createdAt", "desc")
-        .limit(100)
+        .limit(300)
         .get(),
       adminDb
         .collection("order-checkouts")
         .where("customerUid", "==", decodedToken.uid)
-        .orderBy("updatedAt", "desc")
-        .limit(100)
+        .limit(300)
         .get(),
       userEmail
         ? adminDb
             .collection("order-checkouts")
             .where("customerEmail", "==", userEmail)
-            .orderBy("updatedAt", "desc")
-            .limit(100)
+            .limit(300)
             .get()
         : Promise.resolve(null),
     ]);

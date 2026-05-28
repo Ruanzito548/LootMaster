@@ -96,12 +96,6 @@ export default function GamesIndexPage() {
           >
             Back to home
           </Link>
-          <Link
-            href="/coins"
-            className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
-          >
-            View LM Coins
-          </Link>
         </div>
       </main>
     </div>

@@ -65,11 +65,6 @@ export function Footer() {
               }`}>
                 Games
               </Link>
-              <Link href="/coins" className={`transition-colors ${
-                isTbc ? "text-[#b8e6b8] hover:text-[#d4ffcc]" : "text-[#b8cee2] hover:text-[#91e5ff]"
-              }`}>
-                LM Coins
-              </Link>
               <Link href="/rewards" className={`transition-colors ${
                 isTbc ? "text-[#b8e6b8] hover:text-[#d4ffcc]" : "text-[#b8cee2] hover:text-[#91e5ff]"
               }`}>
