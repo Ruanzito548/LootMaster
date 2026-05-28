@@ -249,38 +249,37 @@ export default function ProfileWalletHistoryPage() {
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-[#fff1be]/10 bg-[#06121d]/80">
+          <div className="rounded-2xl border border-[#fff1be]/10 bg-[#06121d]/80">
             {filteredItems.length === 0 ? (
               <p className="loot-muted px-5 py-4 text-sm">No records found for this filter.</p>
             ) : (
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-[#fff1be]/10 text-xs font-semibold uppercase tracking-[0.14em] text-[#8dd0ff]">
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Category</th>
-                    <th className="px-4 py-3">Title</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Method</th>
-                    <th className="px-4 py-3">Reference</th>
-                    <th className="px-4 py-3 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredItems.map((item, index) => (
-                    <tr key={item.id} className={`border-b border-[#fff1be]/10 ${index % 2 === 0 ? "" : "bg-[#0a1a2b]/55"}`}>
-                      <td className="px-4 py-3 text-[#b7cce3]">{formatDate(item.createdAt)}</td>
-                      <td className="px-4 py-3 text-[#8dd0ff]">{item.category || getKindLabel(item)}</td>
-                      <td className="px-4 py-3 text-[#e5f3ff]">{item.title}</td>
-                      <td className="px-4 py-3 text-[#c4d5e9]">{formatStatus(item.status)}</td>
-                      <td className="px-4 py-3 text-[#c4d5e9]">{item.method ? item.method.toUpperCase() : "--"}</td>
-                      <td className="px-4 py-3 text-[#c4d5e9]">{item.reference ?? "--"}</td>
-                      <td className={`px-4 py-3 text-right font-semibold ${amountColor(item)}`}>
+              <div className="divide-y divide-[#fff1be]/10">
+                {filteredItems.map((item, index) => (
+                  <article key={item.id} className={`px-4 py-4 ${index % 2 === 0 ? "" : "bg-[#0a1a2b]/55"}`}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.12em]">
+                          <span className="font-semibold text-[#8dd0ff]">{item.category || getKindLabel(item)}</span>
+                          <span className="text-[#6f88a5]">•</span>
+                          <span className="text-[#b7cce3]">{formatDate(item.createdAt)}</span>
+                        </div>
+
+                        <p className="text-sm font-semibold text-[#e5f3ff]">{item.title}</p>
+
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#c4d5e9]">
+                          <span>Status: {formatStatus(item.status)}</span>
+                          <span>Method: {item.method ? item.method.toUpperCase() : "--"}</span>
+                          <span className="break-all">Reference: {item.reference ?? "--"}</span>
+                        </div>
+                      </div>
+
+                      <p className={`shrink-0 text-sm font-semibold ${amountColor(item)}`}>
                         {amountPrefix(item)}{formatAmount(item)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </p>
+                    </div>
+                  </article>
+                ))}
+              </div>
             )}
           </div>
         </section>
