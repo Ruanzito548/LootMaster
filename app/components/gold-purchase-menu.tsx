@@ -1,10 +1,12 @@
 "use client";
 
 import { startTransition, useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
 
 import { defaultGoldConfigEntry, emptyGoldConfig, getGoldConfigFor } from "../data/gold-config";
 import type { GameServer } from "../data/games";
 import { subscribeToGoldConfig } from "../../lib/gold-config";
+import { auth } from "../../lib/firebase";
 
 type GoldPurchaseMenuProps = {
   gameId: string;
@@ -68,6 +70,7 @@ export function GoldPurchaseMenu({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [customerUid, setCustomerUid] = useState("");
   const hasServerOptions = servers.length > 0;
   const requiresFaction = hasServerOptions && gameId !== "retail";
 
@@ -80,6 +83,20 @@ export function GoldPurchaseMenu({
       }),
     []
   );
+
+  useEffect(() => {
+    if (!auth) {
+      return () => undefined;
+    }
+
+    return onAuthStateChanged(auth, (user) => {
+      setCustomerUid(user?.uid ?? "");
+
+      if (user?.email) {
+        setEmail((current) => (current.trim() ? current : user.email ?? current));
+      }
+    });
+  }, []);
 
   const goldConfig = getGoldConfigFor(fullGoldConfig, gameId, selectedServerId, selectedFaction);
 
@@ -135,6 +152,7 @@ export function GoldPurchaseMenu({
           deliveryMethod,
           email: email.trim(),
           hasServerOptions,
+          customerUid,
         }),
       });
 

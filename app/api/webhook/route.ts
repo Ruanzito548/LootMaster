@@ -1,5 +1,11 @@
 import Stripe from "stripe";
+import { FieldValue } from "firebase-admin/firestore";
 
+import {
+  computeFeeBreakdown,
+  DEFAULT_AGENT_FEE_SHARE_PERCENT,
+  DEFAULT_PLATFORM_FEE_PERCENT,
+} from "@/lib/agency";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { syncPaidOrderToWalletBackend } from "@/lib/wallet-backend";
@@ -113,14 +119,19 @@ async function resolveDiscordChannelId(gameId: string, categoryId: string): Prom
 async function persistPaidOrder(session: Stripe.Checkout.Session): Promise<void> {
   const meta = session.metadata ?? {};
   const adminDb = getAdminDb();
+  const amountTotalCents = session.amount_total ?? 0;
+  const commissionPercent = Number(meta.commissionPercent ?? DEFAULT_PLATFORM_FEE_PERCENT) || DEFAULT_PLATFORM_FEE_PERCENT;
+  const sellerAmountCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
+  const platformProfitCents = amountTotalCents - sellerAmountCents;
 
   await adminDb.collection("order-checkouts").doc(session.id).set(
     {
       orderId: session.id,
       paymentStatus: session.payment_status ?? "unknown",
-      amountTotalCents: session.amount_total ?? 0,
+      amountTotalCents,
       currency: (session.currency ?? "brl").toLowerCase(),
       customerEmail: session.customer_email ?? "",
+      customerUid: meta.customerUid ?? "",
       gameId: meta.gameId ?? "",
       gameTitle: meta.gameTitle ?? "",
       categoryId: meta.categoryId ?? "",
@@ -135,11 +146,177 @@ async function persistPaidOrder(session: Stripe.Checkout.Session): Promise<void>
       nickname: meta.nickname ?? "",
       paymentMethod: meta.paymentMethod ?? "",
       hasServerOptions: meta.hasServerOptions === "true",
+      commissionPercent,
+      sellerAmountCents,
+      platformProfitCents,
       stripeCreatedAt: typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : null,
       updatedAt: new Date().toISOString(),
     },
     { merge: true },
   );
+}
+
+type ResolvedCustomerAgent = {
+  customerUid: string | null;
+  agentUid: string | null;
+  agentFeeSharePercent: number;
+};
+
+async function resolveCustomerAgent(session: Stripe.Checkout.Session): Promise<ResolvedCustomerAgent> {
+  const adminDb = getAdminDb();
+  const meta = session.metadata ?? {};
+  const customerUidFromMeta = typeof meta.customerUid === "string" ? meta.customerUid.trim() : "";
+  const customerEmail = (session.customer_email ?? "").trim().toLowerCase();
+
+  let customerUid: string | null = customerUidFromMeta || null;
+  let customerData: Record<string, unknown> | null = null;
+
+  if (customerUid) {
+    const customerDoc = await adminDb.collection("users").doc(customerUid).get();
+    if (customerDoc.exists) {
+      customerData = customerDoc.data() as Record<string, unknown>;
+    } else {
+      customerUid = null;
+    }
+  }
+
+  if (!customerUid && customerEmail) {
+    const customerSnapshot = await adminDb
+      .collection("users")
+      .where("email", "==", customerEmail)
+      .limit(1)
+      .get();
+
+    if (!customerSnapshot.empty) {
+      customerUid = customerSnapshot.docs[0].id;
+      customerData = customerSnapshot.docs[0].data() as Record<string, unknown>;
+    }
+  }
+
+  if (!customerUid || !customerData) {
+    return {
+      customerUid: null,
+      agentUid: null,
+      agentFeeSharePercent: DEFAULT_AGENT_FEE_SHARE_PERCENT,
+    };
+  }
+
+  const assignedAgentId =
+    typeof customerData.assignedAgentId === "string"
+      ? customerData.assignedAgentId.trim()
+      : "";
+
+  if (!assignedAgentId || assignedAgentId === customerUid) {
+    return {
+      customerUid,
+      agentUid: null,
+      agentFeeSharePercent: DEFAULT_AGENT_FEE_SHARE_PERCENT,
+    };
+  }
+
+  const agentDoc = await adminDb.collection("users").doc(assignedAgentId).get();
+
+  if (!agentDoc.exists) {
+    return {
+      customerUid,
+      agentUid: null,
+      agentFeeSharePercent: DEFAULT_AGENT_FEE_SHARE_PERCENT,
+    };
+  }
+
+  const agentData = agentDoc.data() as Record<string, unknown>;
+  const isAgent = agentData.isAgent === true;
+  if (!isAgent) {
+    return {
+      customerUid,
+      agentUid: null,
+      agentFeeSharePercent: DEFAULT_AGENT_FEE_SHARE_PERCENT,
+    };
+  }
+
+  const rawShare =
+    typeof agentData.agentFeeSharePercent === "number" && Number.isFinite(agentData.agentFeeSharePercent)
+      ? agentData.agentFeeSharePercent
+      : DEFAULT_AGENT_FEE_SHARE_PERCENT;
+
+  return {
+    customerUid,
+    agentUid: assignedAgentId,
+    agentFeeSharePercent: rawShare,
+  };
+}
+
+async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<void> {
+  const adminDb = getAdminDb();
+  const meta = session.metadata ?? {};
+  const totalCents = session.amount_total ?? 0;
+  const commissionPercent = Number(meta.commissionPercent ?? DEFAULT_PLATFORM_FEE_PERCENT) || DEFAULT_PLATFORM_FEE_PERCENT;
+  const customerAgent = await resolveCustomerAgent(session);
+  const feeBreakdown = computeFeeBreakdown(
+    totalCents,
+    commissionPercent,
+    customerAgent.agentUid ? customerAgent.agentFeeSharePercent : 0,
+  );
+  const agentPayoutLootCoins = Math.round((feeBreakdown.agentPayoutCents / 100) * 100) / 100;
+
+  const feeRef = adminDb.collection("fee-transfers").doc(session.id);
+  const checkoutRef = adminDb.collection("order-checkouts").doc(session.id);
+
+  await adminDb.runTransaction(async (tx) => {
+    const feeSnapshot = await tx.get(feeRef);
+
+    if (feeSnapshot.exists) {
+      return;
+    }
+
+    if (customerAgent.agentUid && agentPayoutLootCoins > 0) {
+      tx.set(
+        adminDb.collection("users").doc(customerAgent.agentUid),
+        {
+          lootCoins: FieldValue.increment(agentPayoutLootCoins),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+    }
+
+    tx.set(
+      feeRef,
+      {
+        orderId: session.id,
+        customerUid: customerAgent.customerUid,
+        customerEmail: session.customer_email ?? "",
+        amountTotalCents: totalCents,
+        currency: (session.currency ?? "brl").toLowerCase(),
+        commissionPercent,
+        platformFeeCents: feeBreakdown.platformFeeCents,
+        agentUid: customerAgent.agentUid,
+        agentFeeSharePercent: customerAgent.agentUid ? customerAgent.agentFeeSharePercent : 0,
+        agentPayoutCents: feeBreakdown.agentPayoutCents,
+        lootmasterFeeCents: feeBreakdown.lootmasterFeeCents,
+        agentPayoutLootCoins,
+        status: "processed",
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    tx.set(
+      checkoutRef,
+      {
+        customerUid: customerAgent.customerUid,
+        assignedAgentId: customerAgent.agentUid,
+        commissionPercent,
+        platformFeeCents: feeBreakdown.platformFeeCents,
+        agentPayoutCents: feeBreakdown.agentPayoutCents,
+        lootmasterFeeCents: feeBreakdown.lootmasterFeeCents,
+        platformProfitCents: feeBreakdown.lootmasterFeeCents,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true },
+    );
+  });
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -179,6 +356,12 @@ export async function POST(request: Request): Promise<Response> {
         await persistPaidOrder(session);
       } catch (err) {
         console.error("[Stripe Webhook] Could not persist paid order to Firestore:", err);
+      }
+
+      try {
+        await processFeeTransfer(session);
+      } catch (err) {
+        console.error("[Stripe Webhook] Could not process fee transfer:", err);
       }
 
       try {

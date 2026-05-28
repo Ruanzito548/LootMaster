@@ -14,6 +14,7 @@ type CheckoutBody = {
   deliveryMethod: string;
   email: string;
   hasServerOptions: boolean;
+  customerUid?: string;
 };
 
 function computeFinalAmount(price: number, paymentMethod: string): number {
@@ -52,6 +53,7 @@ export async function POST(request: Request): Promise<Response> {
     deliveryMethod,
     email,
     hasServerOptions,
+    customerUid,
   } = body;
 
   const requiresFaction = hasServerOptions && gameId !== "retail";
@@ -108,6 +110,7 @@ export async function POST(request: Request): Promise<Response> {
     nickname,
     paymentMethod,
     hasServerOptions: String(hasServerOptions),
+    customerUid: customerUid?.trim() ?? "",
   };
 
   try {

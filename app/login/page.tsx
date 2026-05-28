@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FirebaseError } from "firebase/app";
 import {
   GoogleAuthProvider,
+  type User,
   onAuthStateChanged,
   signInWithCustomToken,
   signInWithPopup,
@@ -28,7 +29,40 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const referralProcessedRef = useRef(false);
   const linkToken = (params.get("token") ?? "").trim();
+
+  const applyStoredReferral = async (user: User) => {
+    if (referralProcessedRef.current) {
+      return;
+    }
+
+    const referral = (sessionStorage.getItem("signup_referral") ?? "").trim();
+    if (!referral) {
+      referralProcessedRef.current = true;
+      return;
+    }
+
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/profile/apply-referral", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ referralCode: referral }),
+      });
+
+      if (response.ok) {
+        sessionStorage.removeItem("signup_referral");
+      }
+    } catch {
+      // Keep referral in storage for a later retry if network/server is unavailable.
+    } finally {
+      referralProcessedRef.current = true;
+    }
+  };
 
   // Handle Discord callback: customToken or error in query params
   useEffect(() => {
@@ -66,6 +100,10 @@ function LoginContent() {
 
     return onAuthStateChanged(auth, (user) => {
       setLoggedIn(Boolean(user));
+
+      if (user) {
+        void applyStoredReferral(user);
+      }
     });
   }, []);
 
