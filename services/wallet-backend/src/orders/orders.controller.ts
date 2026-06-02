@@ -21,6 +21,11 @@ export class OrdersController {
     return this.ordersService.assignSupplier(dto);
   }
 
+  @Post("assign-supplier")
+  async assignSupplierLegacy(@Body() dto: AssignSupplierDto) {
+    return this.ordersService.assignSupplier(dto);
+  }
+
   @Post("completed")
   async completeOrder(
     @Body() dto: CompleteOrderDto,
