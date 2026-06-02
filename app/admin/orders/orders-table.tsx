@@ -22,6 +22,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
   const [sortBy, setSortBy] = useState<
     | "created"
     | "status"
+    | "agent"
     | "nickname"
     | "email"
     | "game"
@@ -37,6 +38,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
   const [filters, setFilters] = useState({
     date: "",
     status: "All",
+    agent: "",
     nickname: "",
     email: "",
     game: "",
@@ -68,6 +70,9 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
       const matchesNickname = filters.nickname
         ? row.nickname.toLowerCase().includes(filters.nickname.trim().toLowerCase())
         : true;
+      const matchesAgent = filters.agent
+        ? `${row.agentName} ${row.agentEmail}`.toLowerCase().includes(filters.agent.trim().toLowerCase())
+        : true;
       const matchesEmail = filters.email
         ? row.email.toLowerCase().includes(filters.email.trim().toLowerCase())
         : true;
@@ -79,6 +84,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
       return (
         matchesDate &&
         matchesStatus &&
+        matchesAgent &&
         matchesNickname &&
         matchesEmail &&
         matchesGame &&
@@ -99,6 +105,12 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
         compare = left.status.localeCompare(right.status, "en-US", { sensitivity: "base" });
       } else if (sortBy === "nickname") {
         compare = left.nickname.localeCompare(right.nickname, "en-US", { sensitivity: "base" });
+      } else if (sortBy === "agent") {
+        compare = `${left.agentName} ${left.agentEmail}`.localeCompare(
+          `${right.agentName} ${right.agentEmail}`,
+          "en-US",
+          { sensitivity: "base" },
+        );
       } else if (sortBy === "email") {
         compare = left.email.localeCompare(right.email, "en-US", { sensitivity: "base" });
       } else if (sortBy === "game") {
@@ -148,6 +160,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
       "ID",
       "Date",
       "Status",
+      "Agent",
       "Nickname",
       "Email",
       "Game",
@@ -168,6 +181,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
         row.id,
         row.created,
         row.status,
+        row.agentName,
         row.nickname,
         row.email,
         row.gameTitle,
@@ -261,6 +275,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
           <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("created")} className="inline-flex items-center gap-1">Date <span>{sortBy === "created" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("status")} className="inline-flex items-center gap-1">Status <span>{sortBy === "status" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("agent")} className="inline-flex items-center gap-1">Agent <span>{sortBy === "agent" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("nickname")} className="inline-flex items-center gap-1">Nickname <span>{sortBy === "nickname" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("email")} className="inline-flex items-center gap-1">Email <span>{sortBy === "email" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("game")} className="inline-flex items-center gap-1">Game <span>{sortBy === "game" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
@@ -281,6 +296,9 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
               <select value={filters.status} onChange={(event) => updateFilter("status", event.target.value)} className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300">
                 {statusOptions.map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
+            </th>
+            <th className="px-2 py-2">
+              <input value={filters.agent} onChange={(event) => updateFilter("agent", event.target.value)} placeholder="Filter" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
             </th>
             <th className="px-2 py-2">
               <input value={filters.nickname} onChange={(event) => updateFilter("nickname", event.target.value)} placeholder="Filter" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
@@ -330,6 +348,10 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                   >
                     {row.status}
                   </span>
+                </td>
+                <td className="break-words px-2 py-2 text-[11px] text-cyan-300">
+                  <p>{row.agentName}</p>
+                  {row.agentEmail !== "--" ? <p className="text-cyan-500">{row.agentEmail}</p> : null}
                 </td>
                 <td className="break-words px-2 py-2 font-medium text-green-300">{row.nickname}</td>
                 <td className="break-all px-2 py-2 text-[11px] text-green-500">{row.email}</td>

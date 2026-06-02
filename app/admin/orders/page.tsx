@@ -67,6 +67,7 @@ export default async function AdminOrdersPage() {
 
   try {
     const adminDb = getAdminDb();
+    const agentByUid = new Map<string, { name: string; email: string }>();
     try {
       const completedDispatches = await adminDb
         .collection("order-dispatches")
@@ -84,9 +85,39 @@ export default async function AdminOrdersPage() {
       .limit(200)
       .get();
 
+    const assignedAgentIds = Array.from(
+      new Set(
+        snapshot.docs
+          .map((docRow) => {
+            const data = docRow.data() as Record<string, unknown>;
+            return typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
+          })
+          .filter((value) => value.length > 0),
+      ),
+    );
+
+    if (assignedAgentIds.length > 0) {
+      const agentRefs = assignedAgentIds.map((uid) => adminDb.collection("users").doc(uid));
+      const agentDocs = await adminDb.getAll(...agentRefs);
+
+      for (const agentDoc of agentDocs) {
+        if (!agentDoc.exists) {
+          continue;
+        }
+
+        const data = agentDoc.data() as Record<string, unknown>;
+        const name = typeof data.username === "string" && data.username.trim() ? data.username.trim() : "Agent";
+        const email = typeof data.email === "string" && data.email.trim() ? data.email.trim() : "--";
+
+        agentByUid.set(agentDoc.id, { name, email });
+      }
+    }
+
     rows = snapshot.docs.map((docRow) => {
       const data = docRow.data() as Record<string, unknown>;
       const orderId = typeof data.orderId === "string" && data.orderId ? data.orderId : docRow.id;
+      const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
+      const assignedAgent = assignedAgentId ? agentByUid.get(assignedAgentId) : null;
       const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
       const storedCommissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
       const financials =
@@ -108,6 +139,8 @@ export default async function AdminOrdersPage() {
             : typeof data.paymentStatus === "string" && data.paymentStatus === "paid"
             ? "Paid"
             : "Unpaid",
+          agentName: assignedAgent?.name ?? (assignedAgentId ? `UID: ${assignedAgentId}` : "--"),
+          agentEmail: assignedAgent?.email ?? "--",
         nickname: typeof data.nickname === "string" && data.nickname ? data.nickname : "--",
         email: typeof data.customerEmail === "string" && data.customerEmail ? data.customerEmail : "--",
         gameTitle: typeof data.gameTitle === "string" && data.gameTitle ? data.gameTitle : "--",
@@ -161,6 +194,8 @@ export default async function AdminOrdersPage() {
       id: s.id,
       created: formatDate(s.created),
       status: completedOrderIds.has(s.id) ? "Completed" : getStatus(s.payment_status, s.status).label,
+      agentName: "--",
+      agentEmail: "--",
       nickname: s.metadata?.nickname || "--",
       email: s.customer_email || "--",
       gameTitle: s.metadata?.gameTitle || "--",

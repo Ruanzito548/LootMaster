@@ -23,6 +23,8 @@ type OrderSummary = {
   faction: string;
   totalLabel: string;
   payoutLabel: string;
+  agentName: string;
+  agentEmail: string;
 };
 
 type Props = {
@@ -333,6 +335,13 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
           <div>
             <p className="text-xs uppercase tracking-wide text-green-700">Supplier Payout</p>
             <p className="mt-1 text-sm font-semibold text-green-300">{summary.payoutLabel}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-green-700">Assigned Agent</p>
+            <p className="mt-1 text-sm font-semibold text-green-300">{summary.agentName}</p>
+            {summary.agentEmail !== "--" ? (
+              <p className="mt-1 text-xs text-green-500">{summary.agentEmail}</p>
+            ) : null}
           </div>
         </div>
       </article>

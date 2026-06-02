@@ -32,6 +32,8 @@ export default async function AdminOrderApplicantsPage(
     faction: "-",
     totalLabel: "--",
     payoutLabel: "--",
+    agentName: "--",
+    agentEmail: "--",
   };
   let loadError: string | null = null;
   let preloadError: string | null = null;
@@ -66,6 +68,26 @@ export default async function AdminOrderApplicantsPage(
         typeof data.sellerAmountCents === "number"
           ? data.sellerAmountCents
           : Math.round(amountTotalCents * (1 - commissionPercent / 100));
+      const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
+      let agentName = "--";
+      let agentEmail = "--";
+
+      if (assignedAgentId) {
+        const agentDoc = await adminDb.collection("users").doc(assignedAgentId).get();
+        if (agentDoc.exists) {
+          const agentData = agentDoc.data() as Record<string, unknown>;
+          agentName =
+            typeof agentData.username === "string" && agentData.username.trim()
+              ? agentData.username.trim()
+              : `UID: ${assignedAgentId}`;
+          agentEmail =
+            typeof agentData.email === "string" && agentData.email.trim()
+              ? agentData.email.trim()
+              : "--";
+        } else {
+          agentName = `UID: ${assignedAgentId}`;
+        }
+      }
 
       summary = {
         orderId,
@@ -77,6 +99,8 @@ export default async function AdminOrderApplicantsPage(
         faction: typeof data.faction === "string" ? data.faction : "-",
         totalLabel: formatMoney(amountTotalCents),
         payoutLabel: formatMoney(sellerAmountCents),
+        agentName,
+        agentEmail,
       };
     }
   } catch (error) {
@@ -100,6 +124,8 @@ export default async function AdminOrderApplicantsPage(
           faction: session.metadata?.faction ?? "-",
           totalLabel: formatMoney(session.amount_total),
           payoutLabel: formatMoney(Math.round((session.amount_total ?? 0) * 0.85)),
+          agentName: "--",
+          agentEmail: "--",
         };
       } catch (error) {
         loadError = error instanceof Error ? error.message : "Could not load order details.";

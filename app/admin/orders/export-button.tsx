@@ -4,6 +4,8 @@ export type OrderRow = {
   id: string;
   created: string;
   status: string;
+  agentName: string;
+  agentEmail: string;
   nickname: string;
   email: string;
   gameTitle: string;
@@ -34,6 +36,8 @@ export default function OrdersExportButton({ orders }: { orders: OrderRow[] }) {
       "ID",
       "Data",
       "Status",
+      "Agente",
+      "Email do agente",
       "Nickname",
       "Email",
       "Jogo",
@@ -55,6 +59,8 @@ export default function OrdersExportButton({ orders }: { orders: OrderRow[] }) {
         o.id,
         o.created,
         o.status,
+        o.agentName,
+        o.agentEmail,
         o.nickname,
         o.email,
         o.gameTitle,
