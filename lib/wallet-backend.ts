@@ -44,6 +44,11 @@ type WalletBackendSupplierApplicationResult = {
 };
 
 function getWalletBackendConfig() {
+  const enabled = process.env.WALLET_BACKEND_ENABLED?.trim().toLowerCase() === "true";
+  if (!enabled) {
+    return null;
+  }
+
   const baseUrl = process.env.WALLET_BACKEND_URL?.trim();
   const token = process.env.WALLET_BACKEND_TOKEN?.trim();
 
