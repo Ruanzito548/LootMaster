@@ -51,6 +51,18 @@ function getWalletBackendConfig() {
     return null;
   }
 
+  try {
+    const parsed = new URL(baseUrl);
+    const hostname = parsed.hostname.toLowerCase();
+    const isPlaceholderHost = hostname === "example.com" || hostname.endsWith(".example.com");
+
+    if (isPlaceholderHost) {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+
   return {
     baseUrl: baseUrl.replace(/\/$/, ""),
     token,
