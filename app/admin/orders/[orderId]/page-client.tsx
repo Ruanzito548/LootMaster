@@ -37,7 +37,9 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const submitLockRef = useRef(false);
 
   useEffect(() => {
@@ -93,9 +95,16 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
     submitLockRef.current = true;
     setSubmittingId(application.applicationId);
     setErrorMessage(null);
+    setInfoMessage(null);
 
     try {
       const idToken = await auth.currentUser.getIdToken();
+      const isReplacingSupplier =
+        Boolean(dispatch?.threadId) &&
+        dispatch?.status === "assigned" &&
+        dispatch.selectedApplicationId !== application.applicationId &&
+        !dispatch.channelClosed;
+
       const response = await fetch("/api/admin/orders/select-supplier", {
         method: "POST",
         headers: {
@@ -115,14 +124,30 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
           nickname: summary.nickname,
           totalLabel: summary.totalLabel,
           payoutLabel: summary.payoutLabel,
+          previousThreadId: dispatch?.threadId ?? "",
+          closePreviousThread: isReplacingSupplier,
         }),
       });
 
-      const data = (await response.json()) as { error?: string; threadId?: string; threadUrl?: string };
+      const data = (await response.json()) as {
+        error?: string;
+        threadId?: string;
+        threadUrl?: string;
+        walletAssignmentWarning?: string | null;
+        previousThreadCloseWarning?: string | null;
+      };
 
       if (!response.ok || !data.threadId || !data.threadUrl) {
         setErrorMessage(data.error ?? "Could not create the supplier Discord thread.");
         return;
+      }
+
+      const warnings = [data.walletAssignmentWarning, data.previousThreadCloseWarning].filter(
+        (value): value is string => Boolean(value),
+      );
+
+      if (warnings.length > 0) {
+        setInfoMessage(warnings.join(" "));
       }
 
       await setDoc(doc(db, "order-dispatches", summary.orderId), {
@@ -135,8 +160,11 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
         selectedSupplierDiscordUserId: application.supplierDiscordUserId,
         threadId: data.threadId,
         threadUrl: data.threadUrl,
+        previousThreadId: isReplacingSupplier ? dispatch?.threadId ?? null : null,
         selectedByUid: auth.currentUser.uid,
         selectedAt: serverTimestamp(),
+        reassignedAt: isReplacingSupplier ? serverTimestamp() : null,
+        channelClosed: false,
         updatedAt: serverTimestamp(),
       }, { merge: true });
     } catch (error) {
@@ -144,6 +172,43 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
     } finally {
       submitLockRef.current = false;
       setSubmittingId(null);
+    }
+  };
+
+  const resendOrderToDiscord = async () => {
+    if (!auth?.currentUser || isResending || isClosing) {
+      return;
+    }
+
+    setIsResending(true);
+    setErrorMessage(null);
+    setInfoMessage(null);
+
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/orders/resend-discord", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          orderId: summary.orderId,
+        }),
+      });
+
+      const data = (await response.json()) as { error?: string; ok?: boolean };
+
+      if (!response.ok || !data.ok) {
+        setErrorMessage(data.error ?? "Could not resend order to Discord.");
+        return;
+      }
+
+      setInfoMessage("Order resent to Discord successfully.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not resend order to Discord.");
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -225,7 +290,17 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
   return (
     <section className="mt-6 space-y-6">
       <article className="rounded-2xl border border-green-900 bg-black p-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Order Summary</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Order Summary</p>
+          <button
+            type="button"
+            onClick={() => void resendOrderToDiscord()}
+            disabled={!isAuthenticated || dispatch?.status === "completed" || isResending || isCompleting || isClosing}
+            className="inline-flex rounded-md border border-cyan-700 px-3 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-950/30 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {isResending ? "Resending..." : "Resend order to Discord"}
+          </button>
+        </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-green-700">Order ID</p>
@@ -333,6 +408,10 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
         <p className="rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">{errorMessage}</p>
       ) : null}
 
+      {infoMessage ? (
+        <p className="rounded-xl border border-cyan-900 bg-cyan-950/20 px-5 py-4 text-sm font-medium text-cyan-300">{infoMessage}</p>
+      ) : null}
+
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
         {applications.length === 0 ? (
           <p className="px-5 py-4 text-sm text-green-600">No suppliers have applied for this order yet.</p>
@@ -382,6 +461,8 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
                           ? "Supplier selected"
                           : submittingId === application.applicationId
                           ? "Creating thread..."
+                          : dispatch?.selectedApplicationId
+                          ? "Switch to this supplier"
                           : "Select supplier"}
                       </button>
                     </td>

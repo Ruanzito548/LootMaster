@@ -289,6 +289,10 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
   await discordRequest(`/channels/${input.channelId}/messages`, {
     method: "POST",
     body: JSON.stringify({
+      content: "@everyone",
+      allowed_mentions: {
+        parse: ["everyone"],
+      },
       embeds: [
         {
           title: "🚀 NEW ORDER",
