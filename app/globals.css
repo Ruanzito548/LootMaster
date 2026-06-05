@@ -38,6 +38,7 @@ html {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
+  background-color: #08090c !important;
 }
 
 body {
@@ -48,6 +49,10 @@ body {
   background: #08090c;
   color: var(--foreground);
   font-family: "Energy", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+#__next {
+  background-color: #08090c !important;
 }
 
 ::selection {
@@ -1529,7 +1534,19 @@ body {
 .midnight-shell,
 .classic-shell,
 .pandaria-shell {
-  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+.theme-transition-surface,
+.theme-transition-surface main,
+.loot-shell,
+.gm-shell,
+.tbc-shell,
+.midnight-shell,
+.classic-shell,
+.pandaria-shell {
+  background-color: #08090c !important;
 }
 
 body {
