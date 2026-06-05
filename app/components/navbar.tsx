@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type ComponentType, useEffect, useRef, useState } from "react";
+import { type ComponentType, useState } from "react";
 import {
   Bell,
   Crown,
@@ -58,39 +58,8 @@ export function Navbar() {
   const { profile, status, signOutUser } = useProfileSession();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
   const avatar = profile?.photoURL || "/lootmasterlogo.png";
-
-  useEffect(() => {
-    setIsProfileOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!isProfileOpen) {
-      return;
-    }
-
-    const onPointerDown = (event: PointerEvent) => {
-      if (!profileMenuRef.current?.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
-    };
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsProfileOpen(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [isProfileOpen]);
 
   return (
     <header className="theme-transition-surface theme-navbar-shell sticky top-0 z-50 border-b border-[color:var(--border-color)] bg-[color:var(--navbar-bg)] backdrop-blur-xl">
@@ -159,7 +128,7 @@ export function Navbar() {
           </button>
 
           {status === "authenticated" && profile ? (
-            <div className="relative" ref={profileMenuRef}>
+            <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsProfileOpen((current) => !current)}
