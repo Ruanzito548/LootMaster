@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+
+import { ChestOpeningAnimation } from "../../components/chests/ChestOpeningAnimation";
 
 const chests = [
   {
@@ -23,17 +26,47 @@ function getChestReward(rewards: string[]) {
 }
 
 export default function RewardsChestsPage() {
+  const pathname = usePathname();
   const [opened, setOpened] = useState<Record<string, string | null>>({
     common: null,
     legendary: null,
   });
+  const [isOpening, setIsOpening] = useState(false);
+  const [openSequence, setOpenSequence] = useState(0);
+  const [pendingOpen, setPendingOpen] = useState<{ chestId: string; reward: string } | null>(null);
 
   const openChest = (chestId: string, rewards: string[]) => {
-    setOpened((current) => ({
-      ...current,
-      [chestId]: getChestReward(rewards),
-    }));
+    if (isOpening) {
+      return;
+    }
+
+    const reward = getChestReward(rewards);
+    setPendingOpen({ chestId, reward });
+    setOpenSequence((current) => current + 1);
+    setIsOpening(true);
   };
+
+  const handleAnimationComplete = useCallback(() => {
+    setPendingOpen((currentPendingOpen) => {
+      if (!currentPendingOpen) {
+        return null;
+      }
+
+      setOpened((currentOpened) => ({
+        ...currentOpened,
+        [currentPendingOpen.chestId]: currentPendingOpen.reward,
+      }));
+
+      return null;
+    });
+
+    setIsOpening(false);
+  }, []);
+
+  useEffect(() => {
+    setIsOpening(false);
+    setPendingOpen(null);
+  }, [pathname]);
 
   return (
     <div className="loot-shell">
@@ -67,9 +100,10 @@ export default function RewardsChestsPage() {
                 <button
                   type="button"
                   onClick={() => openChest(chest.id, chest.rewards)}
-                  className="loot-gold-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors"
+                  disabled={isOpening}
+                  className="loot-gold-button inline-flex rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Open chest
+                  {isOpening ? "Opening..." : "Open chest"}
                 </button>
 
                 {opened[chest.id] ? (
@@ -96,6 +130,8 @@ export default function RewardsChestsPage() {
           </Link>
         </div>
       </main>
+
+      <ChestOpeningAnimation isOpen={isOpening} openSequence={openSequence} onComplete={handleAnimationComplete} />
     </div>
   );
 }
