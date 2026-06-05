@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type ComponentType, useState } from "react";
+import { type ComponentType, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Bell,
   Crown,
@@ -58,8 +59,67 @@ export function Navbar() {
   const { profile, status, signOutUser } = useProfileSession();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profileMenuPosition, setProfileMenuPosition] = useState({ top: 0, left: 0 });
+  const profileButtonRef = useRef<HTMLButtonElement | null>(null);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
   const avatar = profile?.photoURL || "/lootmasterlogo.png";
+
+  useEffect(() => {
+    setIsProfileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isProfileOpen) {
+      return;
+    }
+
+    const updateProfileMenuPosition = () => {
+      const buttonRect = profileButtonRef.current?.getBoundingClientRect();
+
+      if (!buttonRect) {
+        return;
+      }
+
+      const menuWidth = 256;
+      const viewportPadding = 8;
+      const maxLeft = window.innerWidth - menuWidth - viewportPadding;
+      const left = Math.max(viewportPadding, Math.min(buttonRect.right - menuWidth, maxLeft));
+      const top = buttonRect.bottom + 10;
+
+      setProfileMenuPosition({ top, left });
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      const clickedButton = profileButtonRef.current?.contains(target);
+      const clickedMenu = profileMenuRef.current?.contains(target);
+
+      if (!clickedButton && !clickedMenu) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsProfileOpen(false);
+      }
+    };
+
+    updateProfileMenuPosition();
+
+    window.addEventListener("resize", updateProfileMenuPosition);
+    window.addEventListener("scroll", updateProfileMenuPosition, true);
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("resize", updateProfileMenuPosition);
+      window.removeEventListener("scroll", updateProfileMenuPosition, true);
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isProfileOpen]);
 
   return (
     <header className="theme-transition-surface theme-navbar-shell sticky top-0 z-50 border-b border-[color:var(--border-color)] bg-[color:var(--navbar-bg)] backdrop-blur-xl">
@@ -130,6 +190,7 @@ export function Navbar() {
           {status === "authenticated" && profile ? (
             <div className="relative">
               <button
+                ref={profileButtonRef}
                 type="button"
                 onClick={() => setIsProfileOpen((current) => !current)}
                 className="gm-glass gm-button inline-flex items-center gap-2 rounded-xl px-2.5 py-2"
@@ -148,42 +209,47 @@ export function Navbar() {
                 </div>
               </button>
 
-              {isProfileOpen ? (
-                <div
-                  className="gm-glass absolute right-0 top-[calc(100%+10px)] z-[90] w-64 rounded-2xl border border-[color:var(--border-color)] p-2"
-                  role="menu"
-                >
-                  {profileItems.map((item) => {
-                    const Icon = item.icon;
+              {isProfileOpen && typeof document !== "undefined"
+                ? createPortal(
+                    <div
+                      ref={profileMenuRef}
+                      className="gm-glass fixed z-[140] w-64 rounded-2xl border border-[color:var(--border-color)] p-2"
+                      role="menu"
+                      style={{ top: profileMenuPosition.top, left: profileMenuPosition.left }}
+                    >
+                      {profileItems.map((item) => {
+                        const Icon = item.icon;
 
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setIsProfileOpen(false)}
-                        className="gm-button inline-flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--text-muted)] hover:bg-white/6 hover:text-[color:var(--text-main)]"
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setIsProfileOpen(false)}
+                            className="gm-button inline-flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--text-muted)] hover:bg-white/6 hover:text-[color:var(--text-main)]"
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                            <span>{item.label}</span>
+                          </Link>
+                        );
+                      })}
+
+                      <div className="gm-divider my-2" />
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          void signOutUser();
+                        }}
+                        className="gm-button inline-flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#ffb5b5] hover:bg-[color:var(--danger-soft)]"
                       >
-                        <Icon className="h-3.5 w-3.5" />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-
-                  <div className="gm-divider my-2" />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsProfileOpen(false);
-                      void signOutUser();
-                    }}
-                    className="gm-button inline-flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#ffb5b5] hover:bg-[color:var(--danger-soft)]"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              ) : null}
+                        <LogOut className="h-3.5 w-3.5" />
+                        <span>Logout</span>
+                      </button>
+                    </div>,
+                    document.body,
+                  )
+                : null}
             </div>
           ) : (
             <Link href="/login" className="gm-button gm-button-primary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase">
