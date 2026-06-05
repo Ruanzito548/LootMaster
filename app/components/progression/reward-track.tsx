@@ -41,7 +41,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
   return (
     <div className="overflow-x-auto pb-2">
       <div className="relative min-w-[920px] px-2">
-        <div className="absolute left-0 right-0 top-12 h-[4px] rounded-full bg-[#1b2f4a]" />
+        <div className="theme-progress-track absolute left-0 right-0 top-12 h-[4px] rounded-full" />
         <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${nodes.length}, minmax(0, 1fr))` }}>
           {nodes.map((node) => {
             const styles = rarityStyles[node.reward.rarity] ?? rarityStyles.common;
@@ -52,12 +52,12 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
               <article key={`track-${node.level}`} className="relative flex flex-col items-center gap-2">
                 <div
                   className={`z-10 h-6 w-6 rounded-full border-2 ${styles.border} ${styles.dot} ${styles.glow} ${
-                    isCurrent ? "ring-4 ring-[#4dc6ff]/40" : ""
+                    isCurrent ? "ring-4 ring-[color:var(--accent)]" : ""
                   } ${isClaimed ? "opacity-100" : "opacity-70"}`}
                 />
 
                 <div
-                  className={`w-full rounded-2xl border bg-[#08111f]/88 p-3 transition-all duration-300 hover:-translate-y-1 ${styles.border} ${
+                  className={`theme-surface-soft w-full rounded-2xl border p-3 transition-all duration-300 hover:-translate-y-1 ${styles.border} ${
                     isCurrent ? "reward-node-current" : ""
                   } ${isClaimed ? "border-white/40" : "border-white/10"}`}
                 >
@@ -68,20 +68,20 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                     </span>
                   </div>
 
-                  <p className="mt-2 truncate text-xs font-black uppercase tracking-[0.14em] text-[#dbe9ff]">
+                  <p className="mt-2 truncate text-xs font-black uppercase tracking-[0.14em] text-[color:var(--text-main)]">
                     Lvl {node.level}
                   </p>
 
-                  <p className="mt-1 line-clamp-2 text-[0.66rem] font-semibold text-[#9db2d3]">{node.reward.shortLabel}</p>
+                  <p className="mt-1 line-clamp-2 text-[0.66rem] font-semibold text-[color:var(--text-muted)]">{node.reward.shortLabel}</p>
 
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <span
                       className={`rounded-full px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.14em] ${
                         isClaimed
-                          ? "bg-[#3cffbb]/14 text-[#75ffcf]"
+                          ? "theme-status-claimed"
                           : isCurrent
-                          ? "bg-[#4dc6ff]/18 text-[#8edbff]"
-                          : "bg-white/6 text-[#8ea2c0]"
+                          ? "theme-status-current"
+                          : "theme-status-locked"
                       }`}
                     >
                       {isClaimed ? "claimed" : isCurrent ? "current" : "locked"}

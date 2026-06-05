@@ -884,3 +884,419 @@ body {
 .gm-glow-pulse {
   animation: gm-glow-pulse 3.5s ease-in-out infinite;
 }
+
+/* Dynamic game theme system */
+:root,
+html[data-game-theme="default"] {
+  --primary: #3ba8ff;
+  --secondary: #0f1a30;
+  --accent: #6ee7ff;
+  --glow: rgba(59, 168, 255, 0.35);
+  --card-bg: rgba(20, 30, 55, 0.78);
+  --border-color: rgba(130, 196, 255, 0.24);
+  --navbar-bg: rgba(9, 15, 30, 0.76);
+  --footer-bg: rgba(10, 16, 32, 0.84);
+  --button-primary: #3ba8ff;
+  --button-hover: #6ee7ff;
+  --badge-color: rgba(59, 168, 255, 0.16);
+  --shadow-color: rgba(2, 9, 21, 0.48);
+  --text-main: #eaf6ff;
+  --text-muted: #9fb9da;
+  --surface-overlay: rgba(2, 7, 18, 0.78);
+  --danger-soft: rgba(239, 68, 68, 0.18);
+  --ambient-a: rgba(59, 168, 255, 0.24);
+  --ambient-b: rgba(124, 77, 255, 0.2);
+  --ambient-c: rgba(110, 231, 255, 0.18);
+  --progress-start: #3184ff;
+  --progress-end: #63f5b0;
+}
+
+html[data-game-theme="classic-era"] {
+  --primary: #3fa34d;
+  --secondary: #1e5128;
+  --accent: #7cfc98;
+  --glow: rgba(63, 163, 77, 0.35);
+  --card-bg: rgba(18, 42, 23, 0.8);
+  --border-color: rgba(124, 252, 152, 0.25);
+  --navbar-bg: rgba(10, 31, 14, 0.78);
+  --footer-bg: rgba(8, 24, 12, 0.86);
+  --button-primary: #3fa34d;
+  --button-hover: #7cfc98;
+  --badge-color: rgba(63, 163, 77, 0.18);
+  --shadow-color: rgba(3, 12, 6, 0.55);
+  --text-main: #e8ffeb;
+  --text-muted: #afdcb6;
+  --ambient-a: rgba(63, 163, 77, 0.24);
+  --ambient-b: rgba(30, 81, 40, 0.26);
+  --ambient-c: rgba(124, 252, 152, 0.16);
+  --progress-start: #2f8d46;
+  --progress-end: #7cfc98;
+}
+
+html[data-game-theme="tbc-anniversary"] {
+  --primary: #4ade80;
+  --secondary: #14532d;
+  --accent: #86efac;
+  --glow: rgba(74, 222, 128, 0.4);
+  --card-bg: rgba(12, 36, 20, 0.82);
+  --border-color: rgba(134, 239, 172, 0.28);
+  --navbar-bg: rgba(8, 26, 14, 0.8);
+  --footer-bg: rgba(6, 20, 11, 0.88);
+  --button-primary: #4ade80;
+  --button-hover: #86efac;
+  --badge-color: rgba(74, 222, 128, 0.2);
+  --shadow-color: rgba(2, 12, 6, 0.56);
+  --text-main: #ebffef;
+  --text-muted: #b6e9c7;
+  --ambient-a: rgba(74, 222, 128, 0.26);
+  --ambient-b: rgba(20, 83, 45, 0.24);
+  --ambient-c: rgba(134, 239, 172, 0.2);
+  --progress-start: #2bd06a;
+  --progress-end: #86efac;
+}
+
+html[data-game-theme="wrath"] {
+  --primary: #60a5fa;
+  --secondary: #172554;
+  --accent: #bfdbfe;
+  --glow: rgba(96, 165, 250, 0.4);
+  --card-bg: rgba(17, 33, 74, 0.8);
+  --border-color: rgba(191, 219, 254, 0.28);
+  --navbar-bg: rgba(11, 23, 52, 0.8);
+  --footer-bg: rgba(10, 20, 44, 0.88);
+  --button-primary: #60a5fa;
+  --button-hover: #bfdbfe;
+  --badge-color: rgba(96, 165, 250, 0.2);
+  --shadow-color: rgba(4, 9, 24, 0.58);
+  --text-main: #ebf4ff;
+  --text-muted: #afc4e7;
+  --ambient-a: rgba(96, 165, 250, 0.24);
+  --ambient-b: rgba(23, 37, 84, 0.26);
+  --ambient-c: rgba(191, 219, 254, 0.16);
+  --progress-start: #4e8fe9;
+  --progress-end: #bfdbfe;
+}
+
+html[data-game-theme="mist-of-pandaria"] {
+  --primary: #10b981;
+  --secondary: #064e3b;
+  --accent: #fbbf24;
+  --glow: rgba(16, 185, 129, 0.35);
+  --card-bg: rgba(9, 41, 33, 0.8);
+  --border-color: rgba(95, 225, 182, 0.28);
+  --navbar-bg: rgba(6, 32, 26, 0.8);
+  --footer-bg: rgba(5, 27, 22, 0.88);
+  --button-primary: #10b981;
+  --button-hover: #fbbf24;
+  --badge-color: rgba(16, 185, 129, 0.2);
+  --shadow-color: rgba(3, 11, 9, 0.55);
+  --text-main: #e8fff6;
+  --text-muted: #abd8cb;
+  --ambient-a: rgba(16, 185, 129, 0.22);
+  --ambient-b: rgba(6, 78, 59, 0.24);
+  --ambient-c: rgba(251, 191, 36, 0.18);
+  --progress-start: #10b981;
+  --progress-end: #fbbf24;
+}
+
+html[data-game-theme="diablo"] {
+  --primary: #ef4444;
+  --secondary: #3b0b0b;
+  --accent: #f97316;
+  --glow: rgba(239, 68, 68, 0.38);
+  --card-bg: rgba(44, 14, 14, 0.82);
+  --border-color: rgba(248, 113, 113, 0.28);
+  --navbar-bg: rgba(30, 8, 8, 0.82);
+  --footer-bg: rgba(24, 7, 7, 0.88);
+  --button-primary: #ef4444;
+  --button-hover: #f97316;
+  --badge-color: rgba(239, 68, 68, 0.2);
+  --shadow-color: rgba(15, 3, 3, 0.6);
+  --text-main: #ffeaea;
+  --text-muted: #e0afaf;
+  --ambient-a: rgba(239, 68, 68, 0.24);
+  --ambient-b: rgba(59, 11, 11, 0.28);
+  --ambient-c: rgba(249, 115, 22, 0.16);
+  --progress-start: #dc2626;
+  --progress-end: #f97316;
+}
+
+html[data-game-theme="runescape"] {
+  --primary: #b88746;
+  --secondary: #4d3521;
+  --accent: #f3c96b;
+  --glow: rgba(184, 135, 70, 0.34);
+  --card-bg: rgba(42, 28, 17, 0.82);
+  --border-color: rgba(243, 201, 107, 0.26);
+  --navbar-bg: rgba(29, 20, 13, 0.82);
+  --footer-bg: rgba(25, 17, 11, 0.88);
+  --button-primary: #b88746;
+  --button-hover: #f3c96b;
+  --badge-color: rgba(184, 135, 70, 0.2);
+  --shadow-color: rgba(14, 9, 5, 0.58);
+  --text-main: #fff1dc;
+  --text-muted: #d8bea0;
+  --ambient-a: rgba(184, 135, 70, 0.2);
+  --ambient-b: rgba(77, 53, 33, 0.24);
+  --ambient-c: rgba(243, 201, 107, 0.16);
+  --progress-start: #b88746;
+  --progress-end: #f3c96b;
+}
+
+html[data-game-theme="gta"] {
+  --primary: #22c55e;
+  --secondary: #1f2937;
+  --accent: #86efac;
+  --glow: rgba(34, 197, 94, 0.36);
+  --card-bg: rgba(22, 33, 31, 0.8);
+  --border-color: rgba(110, 231, 183, 0.26);
+  --navbar-bg: rgba(16, 22, 21, 0.82);
+  --footer-bg: rgba(13, 18, 17, 0.88);
+  --button-primary: #22c55e;
+  --button-hover: #86efac;
+  --badge-color: rgba(34, 197, 94, 0.2);
+  --shadow-color: rgba(6, 10, 9, 0.58);
+  --text-main: #ecfff2;
+  --text-muted: #aed1bd;
+  --ambient-a: rgba(34, 197, 94, 0.22);
+  --ambient-b: rgba(31, 41, 55, 0.26);
+  --ambient-c: rgba(134, 239, 172, 0.16);
+  --progress-start: #22c55e;
+  --progress-end: #86efac;
+}
+
+.theme-transition-surface,
+.theme-transition-surface * {
+  transition-property: background-color, border-color, box-shadow, color, filter;
+  transition-duration: 420ms;
+  transition-timing-function: ease;
+}
+
+body {
+  background:
+    radial-gradient(circle at 10% -8%, var(--ambient-a), transparent 32%),
+    radial-gradient(circle at 90% -10%, var(--ambient-b), transparent 28%),
+    linear-gradient(rgba(58, 106, 162, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(58, 106, 162, 0.06) 1px, transparent 1px),
+    linear-gradient(180deg, color-mix(in srgb, var(--secondary) 88%, #0a1122) 0%, color-mix(in srgb, var(--secondary) 62%, #050b16) 48%, #050b14 100%);
+  background-size: auto, auto, 52px 52px, 52px 52px, auto;
+  color: var(--text-main);
+}
+
+.theme-ambient-overlay {
+  background:
+    radial-gradient(circle at 14% 4%, var(--ambient-a), transparent 28%),
+    radial-gradient(circle at 86% 6%, var(--ambient-b), transparent 24%),
+    radial-gradient(circle at 50% 100%, var(--ambient-c), transparent 34%);
+  transition: background 520ms ease, opacity 520ms ease;
+  opacity: 0.95;
+}
+
+.theme-top-highlight {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--primary) 76%, transparent) 34%,
+    color-mix(in srgb, var(--accent) 66%, transparent) 70%,
+    transparent 100%
+  );
+}
+
+.theme-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 32%, transparent), transparent);
+}
+
+.theme-footer-link {
+  color: var(--text-muted);
+  transition: color 280ms ease, text-shadow 280ms ease;
+}
+
+.theme-footer-link:hover {
+  color: var(--text-main);
+  text-shadow: 0 0 14px var(--glow);
+}
+
+.theme-nav-active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--primary) 24%, transparent);
+  color: var(--text-main);
+  box-shadow: 0 0 18px var(--glow);
+}
+
+.loot-shell,
+.gm-shell {
+  color: var(--text-main);
+}
+
+.loot-panel,
+.gm-panel,
+.gm-glass {
+  border-color: var(--border-color);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 44px var(--shadow-color);
+}
+
+.loot-panel,
+.gm-panel {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 92%, transparent), color-mix(in srgb, var(--secondary) 74%, transparent));
+}
+
+.gm-glass {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--secondary) 56%, transparent), color-mix(in srgb, var(--secondary) 82%, transparent));
+}
+
+.gm-panel-hover:hover {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 24px 48px var(--shadow-color),
+    0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.gm-title,
+.loot-title {
+  color: var(--text-main);
+}
+
+.gm-subtitle,
+.loot-muted,
+.loot-label {
+  color: var(--text-muted);
+}
+
+.gm-kicker,
+.loot-kicker {
+  color: var(--accent);
+}
+
+.gm-button-primary,
+.loot-gold-button,
+.tbc-gold-button,
+.midnight-gold-button,
+.classic-gold-button,
+.pandaria-gold-button {
+  border-color: color-mix(in srgb, var(--accent) 66%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--button-primary) 82%, #ffffff) 0%, var(--button-primary) 52%, color-mix(in srgb, var(--button-hover) 75%, #ffffff) 100%);
+  color: color-mix(in srgb, var(--text-main) 92%, #ffffff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 12px 26px color-mix(in srgb, var(--glow) 85%, transparent);
+}
+
+.gm-button-primary:hover,
+.loot-gold-button:hover,
+.tbc-gold-button:hover,
+.midnight-gold-button:hover,
+.classic-gold-button:hover,
+.pandaria-gold-button:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 14px 30px color-mix(in srgb, var(--glow) 92%, transparent),
+    0 0 22px color-mix(in srgb, var(--accent) 56%, transparent);
+}
+
+.gm-button-secondary,
+.loot-secondary-button,
+.tbc-secondary-button,
+.midnight-secondary-button,
+.classic-secondary-button,
+.pandaria-secondary-button {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--secondary) 58%, #ffffff), color-mix(in srgb, var(--secondary) 88%, #000000));
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+.gm-button-secondary:hover,
+.loot-secondary-button:hover,
+.tbc-secondary-button:hover,
+.midnight-secondary-button:hover,
+.classic-secondary-button:hover,
+.pandaria-secondary-button:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--glow) 75%, transparent);
+}
+
+.gm-input,
+.gm-select,
+.loot-input,
+.loot-select,
+.loot-textarea {
+  border-color: color-mix(in srgb, var(--accent) 34%, transparent);
+  background: color-mix(in srgb, var(--secondary) 86%, transparent);
+  color: var(--text-main);
+}
+
+.gm-input::placeholder,
+.loot-input::placeholder,
+.loot-textarea::placeholder {
+  color: color-mix(in srgb, var(--text-muted) 80%, transparent);
+}
+
+.gm-input:focus,
+.gm-select:focus,
+.loot-input:focus,
+.loot-select:focus,
+.loot-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--glow) 52%, transparent);
+}
+
+.gm-badge,
+.loot-badge,
+.loot-badge-blue {
+  border-color: color-mix(in srgb, var(--accent) 54%, transparent);
+  background: color-mix(in srgb, var(--badge-color) 88%, transparent);
+  color: var(--text-main);
+}
+
+.gm-divider {
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 36%, transparent), transparent);
+}
+
+.reward-progress-glow {
+  background: linear-gradient(90deg, var(--progress-start) 0%, color-mix(in srgb, var(--accent) 78%, #ffffff) 45%, var(--progress-end) 100%);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--glow) 70%, transparent);
+}
+
+.reward-node-current {
+  animation: reward-node-current 2.1s ease-in-out infinite;
+  box-shadow: 0 0 20px color-mix(in srgb, var(--glow) 75%, transparent);
+}
+
+.theme-pill-accent {
+  border: 1px solid color-mix(in srgb, var(--accent) 58%, transparent);
+  background: color-mix(in srgb, var(--badge-color) 90%, transparent);
+  color: var(--text-main);
+}
+
+.theme-pill-warn {
+  border: 1px solid color-mix(in srgb, var(--button-hover) 48%, transparent);
+  background: color-mix(in srgb, var(--button-hover) 18%, transparent);
+  color: color-mix(in srgb, var(--button-hover) 78%, #ffffff);
+}
+
+.theme-progress-track {
+  background: color-mix(in srgb, var(--secondary) 82%, #000000);
+}
+
+.theme-surface-soft {
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--secondary) 78%, transparent);
+}
+
+.theme-status-claimed {
+  background: color-mix(in srgb, #22c55e 24%, transparent);
+  color: #86efac;
+}
+
+.theme-status-current {
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+  color: var(--text-main);
+}
+
+.theme-status-locked {
+  background: color-mix(in srgb, var(--secondary) 42%, transparent);
+  color: var(--text-muted);
+}

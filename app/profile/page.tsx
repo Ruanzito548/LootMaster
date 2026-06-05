@@ -129,7 +129,7 @@ export default function ProfilePage() {
         <section className="loot-panel rounded-[2rem] p-6 sm:p-8">
           <div className="flex items-center justify-between gap-3">
             <h2 className="loot-title text-2xl font-black sm:text-3xl">Reward Track</h2>
-            <span className="rounded-full border border-[#4dc6ff]/30 bg-[#4dc6ff]/12 px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#8dd0ff]">
+            <span className="theme-pill-accent rounded-full px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.16em]">
               Level {progress.level}
             </span>
           </div>
@@ -142,21 +142,21 @@ export default function ProfilePage() {
 
         <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
           <article className="loot-panel rounded-2xl p-5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#8dd0ff]">Daily streak</p>
-            <p className="mt-3 text-3xl font-black text-[#8dd0ff]">{profile.dailyStreak} days</p>
-            <p className="mt-2 text-sm font-semibold text-[#9fb4d3]">Next bonus: +20 XP</p>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--accent)]">Daily streak</p>
+            <p className="mt-3 text-3xl font-black text-[color:var(--accent)]">{profile.dailyStreak} days</p>
+            <p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Next bonus: +20 XP</p>
           </article>
 
           <article className="loot-panel rounded-2xl p-5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#ffcf57]">Season track</p>
-            <p className="mt-3 text-3xl font-black text-[#ffcf57]">Tier {profile.seasonTrackTier}</p>
-            <p className="mt-2 text-sm font-semibold text-[#9fb4d3]">2 premium nodes ahead</p>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--button-hover)]">Season track</p>
+            <p className="mt-3 text-3xl font-black text-[color:var(--button-hover)]">Tier {profile.seasonTrackTier}</p>
+            <p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">2 premium nodes ahead</p>
           </article>
 
           <article className="loot-panel rounded-2xl p-5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#f6a7ff]">Achievements</p>
-            <p className="mt-3 text-3xl font-black text-[#f6a7ff]">{profile.achievementPoints}</p>
-            <p className="mt-2 text-sm font-semibold text-[#9fb4d3]">Integrated with profile progression</p>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-main)]">Achievements</p>
+            <p className="mt-3 text-3xl font-black text-[color:var(--text-main)]">{profile.achievementPoints}</p>
+            <p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Integrated with profile progression</p>
           </article>
         </section>
 
@@ -184,7 +184,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
-            <label className="grid gap-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#a2b8d8]">
+            <label className="grid gap-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
               Avatar URL
               <input
                 value={resolvedPhoto}
@@ -194,7 +194,7 @@ export default function ProfilePage() {
               />
             </label>
 
-            <label className="grid gap-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#a2b8d8]">
+            <label className="grid gap-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
               Cover URL
               <input
                 value={resolvedCover}
@@ -214,16 +214,16 @@ export default function ProfilePage() {
             >
               {saving ? "Saving..." : "Save"}
             </button>
-            {feedback ? <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8dd0ff]">{feedback}</p> : null}
+            {feedback ? <p className="text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">{feedback}</p> : null}
             {error ? <p className="text-xs font-bold uppercase tracking-[0.16em] text-rose-400">{error}</p> : null}
           </div>
         </section>
 
         {showXpPopup ? (
-          <div className="xp-popup pointer-events-none fixed right-5 top-5 z-50 rounded-2xl border border-[#4dc6ff]/40 bg-[#08111f]/92 px-4 py-3 shadow-[0_18px_45px_rgba(14,30,54,0.55)]">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8dd0ff]">XP Gained</p>
-            <p className="mt-2 text-xl font-black text-[#dff7ff]">+{profile.lastXpGain.toFixed(2)} XP</p>
-            <p className="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[#94acd0]">
+          <div className="xp-popup pointer-events-none fixed right-5 top-5 z-50 rounded-2xl border border-[color:var(--border-color)] bg-[color:var(--navbar-bg)] px-4 py-3 shadow-[0_18px_45px_var(--shadow-color)]">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">XP Gained</p>
+            <p className="mt-2 text-xl font-black text-[color:var(--text-main)]">+{profile.lastXpGain.toFixed(2)} XP</p>
+            <p className="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
               ${formatMoneyUsd(profile.lastSpendUsd)} purchase
             </p>
           </div>
@@ -232,12 +232,12 @@ export default function ProfilePage() {
         {showLevelModal && levelUpReward ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#03070f]/78 p-5">
             <div className="reward-claim-pop loot-panel w-full max-w-md rounded-[2rem] p-7">
-              <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-[#8dd0ff]">Level up</p>
-              <h3 className="mt-3 text-center text-4xl font-black text-[#dff7ff]">Level {profile.lastLevelUpLevel}</h3>
-              <div className="mt-6 rounded-2xl border border-white/12 bg-[#08111f]/82 p-5 text-center">
+              <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-[color:var(--accent)]">Level up</p>
+              <h3 className="mt-3 text-center text-4xl font-black text-[color:var(--text-main)]">Level {profile.lastLevelUpLevel}</h3>
+              <div className="theme-surface-soft mt-6 rounded-2xl p-5 text-center">
                 <p className="text-4xl leading-none">{levelUpReward.icon}</p>
-                <p className="mt-3 text-xl font-black text-[#eaf5ff]">{levelUpReward.title}</p>
-                <p className="mt-2 text-xs font-bold uppercase tracking-[0.16em] text-[#8dd0ff]">{levelUpReward.badge} Reward Claimed</p>
+                <p className="mt-3 text-xl font-black text-[color:var(--text-main)]">{levelUpReward.title}</p>
+                <p className="mt-2 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">{levelUpReward.badge} Reward Claimed</p>
               </div>
               <button
                 type="button"

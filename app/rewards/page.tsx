@@ -25,27 +25,27 @@ export default function RewardsPage() {
         <section className="loot-panel rounded-[2.1rem] p-6 sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[#8dd0ff]">Rewards Hub</p>
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[color:var(--accent)]">Rewards Hub</p>
               <h1 className="loot-title mt-3 text-4xl font-black leading-none sm:text-5xl">Battle Pass Progress</h1>
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full border border-[#4dc6ff]/35 bg-[#4dc6ff]/12 px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#8dd0ff]">
+              <span className="theme-pill-accent rounded-full px-3 py-2 text-xs font-bold uppercase tracking-[0.16em]">
                 Level {progress.level}
               </span>
-              <span className="rounded-full border border-[#ffcf57]/35 bg-[#ffcf57]/12 px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#ffcf57]">
+              <span className="theme-pill-warn rounded-full px-3 py-2 text-xs font-bold uppercase tracking-[0.16em]">
                 {progress.xpCents.toFixed(2)} / {LEVEL_XP_REQUIREMENT} XP
               </span>
             </div>
           </div>
 
-          <div className="mt-6 h-4 overflow-hidden rounded-full bg-[#17263c]">
+          <div className="theme-progress-track mt-6 h-4 overflow-hidden rounded-full">
             <div
-              className="reward-progress-glow h-full rounded-full bg-[linear-gradient(90deg,#3184ff_0%,#35c7ff_45%,#63f5b0_100%)]"
+              className="reward-progress-glow h-full rounded-full"
               style={{ width: `${progress.progressPercent}%` }}
             />
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs font-bold uppercase tracking-[0.15em] text-[#9db3d3]">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs font-bold uppercase tracking-[0.15em] text-[color:var(--text-muted)]">
             <span>{progress.progressPercent.toFixed(1)}%</span>
             <span>{progress.xpToNextLevel.toFixed(2)} XP to Level {progress.nextLevel}</span>
             <span>${formatMoneyUsd(progress.spendToNextLevelUsd)} remaining</span>
@@ -56,7 +56,7 @@ export default function RewardsPage() {
           <article className="loot-panel rounded-[2rem] p-6 sm:p-8">
             <div className="flex items-center justify-between gap-3">
               <h2 className="loot-title text-2xl font-black sm:text-3xl">Reward Road</h2>
-              <span className="rounded-full bg-[#4dc6ff]/14 px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[#8dd0ff]">
+              <span className="theme-pill-accent rounded-full px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.14em]">
                 Infinite scaling
               </span>
             </div>
@@ -66,19 +66,19 @@ export default function RewardsPage() {
           </article>
 
           <article className="loot-panel rounded-[2rem] p-6 sm:p-8">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#9bb2d3]">System Rules</p>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">System Rules</p>
             <div className="mt-4 grid gap-3">
-              <div className="rounded-2xl border border-white/12 bg-[#08111f]/80 p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#8dd0ff]">XP formula</p>
-                <p className="mt-2 text-2xl font-black text-[#dff7ff]">$1 = {XP_PER_USD} XP</p>
+              <div className="theme-surface-soft rounded-2xl p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.15em] text-[color:var(--accent)]">XP formula</p>
+                <p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">$1 = {XP_PER_USD} XP</p>
               </div>
-              <div className="rounded-2xl border border-white/12 bg-[#08111f]/80 p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#ffcf57]">Level requirement</p>
-                <p className="mt-2 text-2xl font-black text-[#ffcf57]">{LEVEL_XP_REQUIREMENT} XP</p>
+              <div className="theme-surface-soft rounded-2xl p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.15em] text-[color:var(--button-hover)]">Level requirement</p>
+                <p className="mt-2 text-2xl font-black text-[color:var(--button-hover)]">{LEVEL_XP_REQUIREMENT} XP</p>
               </div>
-              <div className="rounded-2xl border border-white/12 bg-[#08111f]/80 p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#f6a7ff]">Reward cadence</p>
-                <p className="mt-2 text-sm font-semibold text-[#b7cbe7]">Every level, milestone at 5, premium at 10, rare bonus drops on milestones.</p>
+              <div className="theme-surface-soft rounded-2xl p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.15em] text-[color:var(--text-main)]">Reward cadence</p>
+                <p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Every level, milestone at 5, premium at 10, rare bonus drops on milestones.</p>
               </div>
             </div>
           </article>
@@ -89,7 +89,7 @@ export default function RewardsPage() {
             <h2 className="loot-title text-2xl font-black sm:text-3xl">Rarity</h2>
             <div className="flex flex-wrap gap-2">
               {rarityLegend.map((item) => (
-                <span key={item.label} className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-[#08111f]/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#d7e5ff]">
+                <span key={item.label} className="theme-surface-soft inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--text-main)]">
                   <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
                   {item.label}
                 </span>
@@ -103,13 +103,13 @@ export default function RewardsPage() {
               const reward = buildLevelReward(level, `preview-${level}`);
 
               return (
-                <article key={level} className="rounded-2xl border border-white/12 bg-[#08111f]/80 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-[#4dc6ff]/40">
-                  <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#9db3d3]">Level {level}</p>
+                <article key={level} className="theme-surface-soft rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--accent)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.15em] text-[color:var(--text-muted)]">Level {level}</p>
                   <div className="mt-3 flex items-center gap-2">
                     <span className="text-2xl">{reward.icon}</span>
-                    <p className="text-sm font-black text-[#e3f0ff]">{reward.shortLabel}</p>
+                    <p className="text-sm font-black text-[color:var(--text-main)]">{reward.shortLabel}</p>
                   </div>
-                  <p className="mt-3 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[#8dd0ff]">{reward.badge}</p>
+                  <p className="mt-3 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">{reward.badge}</p>
                 </article>
               );
             })}
@@ -118,21 +118,21 @@ export default function RewardsPage() {
 
         <section className="grid gap-4 lg:grid-cols-3">
           <article className="loot-panel rounded-2xl p-5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#8dd0ff]">Seasonal Track</p>
-            <p className="mt-3 text-2xl font-black text-[#dff7ff]">Nightfall Season</p>
-            <p className="mt-2 text-sm font-semibold text-[#9db3d3]">Limited banners, cosmetics, and event keys.</p>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--accent)]">Seasonal Track</p>
+            <p className="mt-3 text-2xl font-black text-[color:var(--text-main)]">Nightfall Season</p>
+            <p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Limited banners, cosmetics, and event keys.</p>
           </article>
 
           <article className="loot-panel rounded-2xl p-5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#ffcf57]">Daily Bonus</p>
-            <p className="mt-3 text-2xl font-black text-[#ffcf57]">Streak XP</p>
-            <p className="mt-2 text-sm font-semibold text-[#9db3d3]">Claim daily for stacking XP boosts.</p>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--button-hover)]">Daily Bonus</p>
+            <p className="mt-3 text-2xl font-black text-[color:var(--button-hover)]">Streak XP</p>
+            <p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Claim daily for stacking XP boosts.</p>
           </article>
 
           <article className="loot-panel rounded-2xl p-5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#f6a7ff]">Achievements</p>
-            <p className="mt-3 text-2xl font-black text-[#f6a7ff]">Meta Goals</p>
-            <p className="mt-2 text-sm font-semibold text-[#9db3d3]">Integrated with progression and reward unlocks.</p>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-main)]">Achievements</p>
+            <p className="mt-3 text-2xl font-black text-[color:var(--text-main)]">Meta Goals</p>
+            <p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Integrated with progression and reward unlocks.</p>
           </article>
         </section>
 
