@@ -18,6 +18,8 @@ type ChestOpeningAnimationProps = {
   isOpen: boolean;
   openSequence: number;
   onComplete: () => void;
+  chestRarity?: string;
+  chestTitle?: string;
 };
 
 type LottieAnimationData = {
@@ -27,6 +29,39 @@ type LottieAnimationData = {
 };
 
 const FALLBACK_DURATION_MS = 2200;
+
+const OVERLAY_THEME: Record<string, { glow: string; ring: string; text: string; particle: string }> = {
+  common: {
+    glow: "bg-[radial-gradient(circle_at_center,rgba(215,223,236,0.24),transparent_62%)]",
+    ring: "border-[#d7dfec]/35",
+    text: "text-[#e6eef9]",
+    particle: "bg-[#d7dfec]/55",
+  },
+  rare: {
+    glow: "bg-[radial-gradient(circle_at_center,rgba(114,200,255,0.28),transparent_62%)]",
+    ring: "border-[#5fb7ff]/38",
+    text: "text-[#caeaff]",
+    particle: "bg-[#72c8ff]/58",
+  },
+  epic: {
+    glow: "bg-[radial-gradient(circle_at_center,rgba(215,164,255,0.3),transparent_62%)]",
+    ring: "border-[#c286ff]/40",
+    text: "text-[#edd6ff]",
+    particle: "bg-[#d7a4ff]/60",
+  },
+  legendary: {
+    glow: "bg-[radial-gradient(circle_at_center,rgba(255,217,160,0.3),transparent_62%)]",
+    ring: "border-[#ffc46c]/44",
+    text: "text-[#ffe9c5]",
+    particle: "bg-[#ffd9a0]/62",
+  },
+  mythic: {
+    glow: "bg-[radial-gradient(circle_at_center,rgba(255,177,190,0.34),transparent_62%)]",
+    ring: "border-[#ff758b]/46",
+    text: "text-[#ffd5dc]",
+    particle: "bg-[#ffb1be]/64",
+  },
+};
 
 function toDescriptor(basePath: string, fileName: string): AnimationFileDescriptor {
   const extension = fileName.split(".").pop()?.toLowerCase() ?? "";
@@ -50,12 +85,15 @@ function computeLottieDuration(data: LottieAnimationData | null): number {
   return Math.max(900, Math.round((frames / data.fr) * 1000));
 }
 
-export function ChestOpeningAnimation({ isOpen, openSequence, onComplete }: ChestOpeningAnimationProps) {
+export function ChestOpeningAnimation({ isOpen, openSequence, onComplete, chestRarity, chestTitle }: ChestOpeningAnimationProps) {
   const [files, setFiles] = useState<AnimationFileDescriptor[]>([]);
   const [lottieData, setLottieData] = useState<LottieAnimationData | null>(null);
   const [ready, setReady] = useState(false);
   const hasCompletedRef = useRef(false);
   const fallbackTimerRef = useRef<number | null>(null);
+
+  const rarityKey = chestRarity && chestRarity in OVERLAY_THEME ? chestRarity : "common";
+  const rarityTheme = OVERLAY_THEME[rarityKey];
 
   const selectedFile = useMemo(() => {
     return files[0] ?? null;
@@ -198,16 +236,65 @@ export function ChestOpeningAnimation({ isOpen, openSequence, onComplete }: Ches
           aria-live="polite"
           aria-label="Opening chest animation"
         >
-          <div className="absolute inset-0 bg-black/72 backdrop-blur-[4px]" />
+          <motion.div
+            className="absolute inset-0 bg-black/78 backdrop-blur-[6px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.24 }}
+          />
 
           <motion.div
-            className="relative w-full max-w-[420px] overflow-hidden rounded-3xl border border-white/12 bg-[radial-gradient(circle_at_top,rgba(99,201,255,0.22),rgba(3,10,20,0.82)_56%,rgba(2,7,14,0.94)_100%)] p-4 shadow-[0_30px_80px_rgba(0,0,0,0.55)] sm:p-6"
+            className={`pointer-events-none absolute inset-0 ${rarityTheme.glow}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0.1, 0.42, 0.22] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.15, ease: "easeInOut" }}
+          />
+
+          {Array.from({ length: 14 }).map((_, index) => (
+            <motion.span
+              key={`opening-particle-${openSequence}-${index}`}
+              className={`pointer-events-none absolute rounded-full ${rarityTheme.particle}`}
+              style={{
+                width: index % 2 === 0 ? 3 : 2,
+                height: index % 2 === 0 ? 3 : 2,
+                left: `${15 + ((index * 7.3) % 70)}%`,
+                top: `${18 + ((index * 9.7) % 56)}%`,
+              }}
+              animate={{ y: [0, -14, 0], opacity: [0.2, 0.9, 0.2], scale: [1, 1.25, 1] }}
+              transition={{
+                duration: 2.1 + (index % 4) * 0.45,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+                delay: index * 0.07,
+              }}
+            />
+          ))}
+
+          <motion.div
+            className={`relative w-full max-w-[460px] overflow-hidden rounded-3xl border ${rarityTheme.ring} bg-[radial-gradient(circle_at_top,rgba(99,201,255,0.22),rgba(3,10,20,0.82)_56%,rgba(2,7,14,0.94)_100%)] p-4 shadow-[0_30px_80px_rgba(0,0,0,0.55)] sm:p-6`}
             initial={{ opacity: 0, scale: 0.88, y: 24 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
+            animate={{ opacity: 1, scale: 1, y: 0, x: [0, -2, 2, -1, 1, 0] }}
             exit={{ opacity: 0, scale: 0.94, y: 16 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
           >
+            <motion.div
+              className="pointer-events-none absolute inset-0 rounded-3xl bg-white/20"
+              initial={{ opacity: 0.22 }}
+              animate={{ opacity: [0.34, 0.06, 0] }}
+              transition={{ duration: 0.48, ease: "easeOut" }}
+            />
             <div className="pointer-events-none absolute inset-0 rounded-3xl border border-white/10" />
+
+            <div className="relative mb-3 flex items-center justify-between gap-2">
+              <p className={`text-[0.62rem] font-black uppercase tracking-[0.18em] ${rarityTheme.text}`}>
+                {chestTitle ?? "Chest"}
+              </p>
+              <span className={`rounded-full border px-2.5 py-1 text-[0.58rem] font-black uppercase tracking-[0.16em] ${rarityTheme.ring} ${rarityTheme.text}`}>
+                {rarityKey}
+              </span>
+            </div>
 
             <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black/35">
               {selectedFile?.extension === "json" && lottieData ? (
@@ -246,7 +333,7 @@ export function ChestOpeningAnimation({ isOpen, openSequence, onComplete }: Ches
               )}
             </div>
 
-            <p className="mt-4 text-center text-xs font-bold uppercase tracking-[0.18em] text-[#d6efff] sm:text-sm">
+            <p className={`mt-4 text-center text-xs font-bold uppercase tracking-[0.18em] sm:text-sm ${rarityTheme.text}`}>
               Opening chest...
             </p>
 
