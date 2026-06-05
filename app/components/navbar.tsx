@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type ComponentType, useState } from "react";
+import { type ComponentType, useEffect, useRef, useState } from "react";
 import {
   Bell,
   Crown,
@@ -58,8 +58,39 @@ export function Navbar() {
   const { profile, status, signOutUser } = useProfileSession();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
   const avatar = profile?.photoURL || "/lootmasterlogo.png";
+
+  useEffect(() => {
+    setIsProfileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isProfileOpen) {
+      return;
+    }
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!profileMenuRef.current?.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isProfileOpen]);
 
   return (
     <header className="theme-transition-surface theme-navbar-shell sticky top-0 z-50 border-b border-[color:var(--border-color)] bg-[color:var(--navbar-bg)] backdrop-blur-xl">
@@ -128,11 +159,14 @@ export function Navbar() {
           </button>
 
           {status === "authenticated" && profile ? (
-            <div className="relative">
+            <div className="relative" ref={profileMenuRef}>
               <button
                 type="button"
                 onClick={() => setIsProfileOpen((current) => !current)}
                 className="gm-glass gm-button inline-flex items-center gap-2 rounded-xl px-2.5 py-2"
+                aria-haspopup="menu"
+                aria-expanded={isProfileOpen}
+                aria-label="Open profile menu"
               >
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -146,7 +180,10 @@ export function Navbar() {
               </button>
 
               {isProfileOpen ? (
-                <div className="gm-glass absolute right-0 top-[calc(100%+10px)] z-50 w-64 rounded-2xl border border-[color:var(--border-color)] p-2">
+                <div
+                  className="gm-glass absolute right-0 top-[calc(100%+10px)] z-50 w-64 rounded-2xl border border-[color:var(--border-color)] p-2"
+                  role="menu"
+                >
                   {profileItems.map((item) => {
                     const Icon = item.icon;
 
@@ -167,7 +204,10 @@ export function Navbar() {
 
                   <button
                     type="button"
-                    onClick={() => void signOutUser()}
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      void signOutUser();
+                    }}
                     className="gm-button inline-flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#ffb5b5] hover:bg-[color:var(--danger-soft)]"
                   >
                     <LogOut className="h-3.5 w-3.5" />
