@@ -1705,3 +1705,10 @@ html[data-game-theme]:not([data-game-theme="default"]) .loot-badge-blue {
   color: color-mix(in srgb, var(--theme-accent) 74%, #ffffff) !important;
   border-color: color-mix(in srgb, var(--theme-accent) 36%, transparent) !important;
 }
+
+/* Global layout width refinement: keep full-bleed background, tighten content area */
+.mx-auto.w-full.max-w-7xl {
+  max-width: 87.5rem !important; /* 1400px */
+  padding-left: clamp(1.5rem, 2vw, 2rem) !important;
+  padding-right: clamp(1.5rem, 2vw, 2rem) !important;
+}

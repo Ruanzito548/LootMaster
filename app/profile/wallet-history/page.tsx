@@ -309,7 +309,7 @@ export default function ProfileWalletHistoryPage() {
 
   return (
     <div className="loot-shell">
-      <main className="mx-auto flex w-full max-w-none flex-1 flex-col px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pb-20 pt-12 sm:px-6 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#ffcf57]">Wallet History</p>
           <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Wallet Statement</h1>
