@@ -46,9 +46,11 @@ export function useProfileSession() {
   }, []);
 
   useEffect(() => {
-    if (!firebaseEnabled || !auth) {
+    if (!firebaseEnabled || !auth || !db) {
       return;
     }
+
+    const firestoreDb = db;
 
     let unsubscribeProfile: (() => void) | null = null;
 
@@ -67,7 +69,7 @@ export function useProfileSession() {
         try {
           await ensureUserProfileDoc(nextUser);
 
-          unsubscribeProfile = onSnapshot(doc(db, "users", nextUser.uid), (snapshot) => {
+          unsubscribeProfile = onSnapshot(doc(firestoreDb, "users", nextUser.uid), (snapshot) => {
             if (!snapshot.exists()) {
               setState({
                 status: "authenticated",
