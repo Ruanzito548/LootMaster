@@ -6,6 +6,7 @@ import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
 import { CHEST_DEFINITIONS, CHEST_IDS, getChestDefinition, type ChestDefinition, type ChestId, type ChestRewardType } from "@/lib/chests";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
+import { applyXpGain, getInventorySlotLimitFromLevel, mergeItemIntoInventory } from "@/lib/rpg-system";
 
 type OpenChestBody = {
   chestId?: string;
@@ -28,6 +29,10 @@ type OpenChestResponse = {
   reward: OpenChestReward;
   lootCoins: number;
   inventory: InventoryItem[];
+  xpGain: number;
+  rpgXp: number;
+  rpgLevel: number;
+  inventorySlotLimit: number;
 };
 
 const REQUEST_ID_PATTERN = /^[a-zA-Z0-9_-]{8,64}$/;
@@ -204,8 +209,10 @@ function rollItemReward(chestDefinition: ChestDefinition): InventoryItem {
   const itemNames = ITEM_NAME_BY_RARITY[rarityResult.rarity] ?? ITEM_NAME_BY_RARITY.common;
   const pickedName = itemNames[roll(itemNames.length)] ?? "Loot Item";
 
+  const slug = pickedName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
   return {
-    id: `reward-item-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+    id: `loot-${slug || "item"}-${rarityResult.rarity}`,
     name: pickedName,
     category: "Loot",
     description: `Dropped from ${chestDefinition.title}.`,
@@ -273,6 +280,26 @@ function statusFromErrorMessage(message: string): number {
   return 500;
 }
 
+function getChestXpGain(chestId: ChestId): number {
+  if (chestId === "mythic") {
+    return 44;
+  }
+
+  if (chestId === "legendary") {
+    return 30;
+  }
+
+  if (chestId === "epic") {
+    return 20;
+  }
+
+  if (chestId === "rare") {
+    return 13;
+  }
+
+  return 8;
+}
+
 export async function POST(request: Request): Promise<Response> {
   let decodedToken: Awaited<ReturnType<typeof requireAuthenticatedUserRequest>>;
   let body: OpenChestBody;
@@ -324,6 +351,7 @@ export async function POST(request: Request): Promise<Response> {
       const rawInventory = Array.isArray(userData.inventory) ? userData.inventory : [];
       const strictInventory = rawInventory.filter(isInventoryItem);
       const baseInventory = rawInventory.length > 0 ? strictInventory : [];
+      const slotLimit = Math.max(mappedProfile.inventorySlotLimit, getInventorySlotLimitFromLevel(mappedProfile.rpgLevel || 1));
 
       let nextInventory = [...baseInventory];
       nextInventory = decrementChest(nextInventory, chestDefinition);
@@ -344,7 +372,11 @@ export async function POST(request: Request): Promise<Response> {
         };
       } else if (rewardType === "item") {
         const item = rollItemReward(chestDefinition);
-        nextInventory = mergeInventoryItem(nextInventory, item);
+        const merged = mergeItemIntoInventory(nextInventory, item, slotLimit);
+        if (!merged.ok) {
+          throw new Error(merged.error ?? "Inventory is full.");
+        }
+        nextInventory = merged.inventory;
 
         reward = {
           type: "item",
@@ -354,7 +386,24 @@ export async function POST(request: Request): Promise<Response> {
         };
       } else if (rewardType === "chest") {
         const bonusChest = rollChestReward(chestDefinition.id);
-        nextInventory = incrementChest(nextInventory, bonusChest, 1);
+        const bonus = CHEST_DEFINITIONS[bonusChest];
+        const merged = mergeItemIntoInventory(
+          nextInventory,
+          {
+            id: bonus.inventoryItemId,
+            name: bonus.inventoryItemName,
+            category: "Chest",
+            description: `${bonus.title} used in rewards opening.`,
+            quantity: 1,
+            rarity: chestRarityToInventoryRarity(bonus.rarity),
+            iconPath: "/itens/general/ticket.png",
+          },
+          slotLimit,
+        );
+        if (!merged.ok) {
+          throw new Error(merged.error ?? "Inventory is full.");
+        }
+        nextInventory = merged.inventory;
 
         reward = {
           type: "chest",
@@ -364,7 +413,11 @@ export async function POST(request: Request): Promise<Response> {
         };
       } else {
         const cosmetic = rollCosmeticReward();
-        nextInventory = mergeInventoryItem(nextInventory, cosmetic);
+        const merged = mergeItemIntoInventory(nextInventory, cosmetic, slotLimit);
+        if (!merged.ok) {
+          throw new Error(merged.error ?? "Inventory is full.");
+        }
+        nextInventory = merged.inventory;
 
         reward = {
           type: "cosmetic",
@@ -381,13 +434,28 @@ export async function POST(request: Request): Promise<Response> {
         reward,
         lootCoins: nextLootCoins,
         inventory: nextInventory,
+        xpGain: 0,
+        rpgXp: mappedProfile.rpgXp,
+        rpgLevel: mappedProfile.rpgLevel,
+        inventorySlotLimit: mappedProfile.inventorySlotLimit,
       };
+
+      const xpGain = getChestXpGain(chestDefinition.id);
+      const progression = applyXpGain(mappedProfile.rpgXp ?? 0, xpGain);
+
+      responsePayload.xpGain = xpGain;
+      responsePayload.rpgXp = progression.xp;
+      responsePayload.rpgLevel = progression.level;
+      responsePayload.inventorySlotLimit = progression.slotLimit;
 
       tx.set(
         userRef,
         {
           inventory: nextInventory,
           lootCoins: nextLootCoins,
+          rpgXp: progression.xp,
+          rpgLevel: progression.level,
+          inventorySlotLimit: progression.slotLimit,
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true },

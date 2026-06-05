@@ -1,0 +1,174 @@
+import { FieldValue } from "firebase-admin/firestore";
+
+import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
+import {
+  applyXpGain,
+  CRAFT_RECIPES,
+  getCraftRecipe,
+  getInventorySlotLimitFromLevel,
+  getItemQuantity,
+  mergeItemIntoInventory,
+  normalizeInventory,
+  removeItemQuantity,
+} from "@/lib/rpg-system";
+
+type CraftBody = {
+  recipeId?: string;
+  quantity?: number;
+};
+
+function isInventoryItem(value: unknown): value is InventoryItem {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const parsed = value as Partial<InventoryItem>;
+
+  return (
+    typeof parsed.id === "string" &&
+    typeof parsed.name === "string" &&
+    typeof parsed.category === "string" &&
+    typeof parsed.description === "string" &&
+    typeof parsed.quantity === "number" &&
+    (parsed.rarity === "poor" ||
+      parsed.rarity === "common" ||
+      parsed.rarity === "uncommon" ||
+      parsed.rarity === "rare" ||
+      parsed.rarity === "epic" ||
+      parsed.rarity === "legendary" ||
+      parsed.rarity === "artifact" ||
+      parsed.rarity === "heirloom")
+  );
+}
+
+function statusFromErrorMessage(message: string): number {
+  if (message.includes("authorization") || message.includes("token")) {
+    return 401;
+  }
+
+  if (message.includes("Invalid") || message.includes("recipe")) {
+    return 422;
+  }
+
+  if (message.includes("Insufficient") || message.includes("full")) {
+    return 409;
+  }
+
+  if (message.includes("profile")) {
+    return 404;
+  }
+
+  return 500;
+}
+
+export async function POST(request: Request): Promise<Response> {
+  let decodedToken: Awaited<ReturnType<typeof requireAuthenticatedUserRequest>>;
+  let body: CraftBody;
+
+  try {
+    decodedToken = await requireAuthenticatedUserRequest(request);
+    body = (await request.json()) as CraftBody;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unauthorized request.";
+    return Response.json({ error: message }, { status: statusFromErrorMessage(message) });
+  }
+
+  const recipeId = (body.recipeId ?? "").trim();
+  const quantity = Math.max(1, Math.min(10, Math.floor(body.quantity ?? 1)));
+  const recipe = getCraftRecipe(recipeId);
+
+  if (!recipe) {
+    return Response.json({ error: "Invalid recipe id." }, { status: 422 });
+  }
+
+  try {
+    const adminDb = getAdminDb();
+    const userRef = adminDb.collection("users").doc(decodedToken.uid);
+
+    const txResult = await adminDb.runTransaction(async (tx) => {
+      const userSnapshot = await tx.get(userRef);
+
+      if (!userSnapshot.exists) {
+        throw new Error("User profile not found.");
+      }
+
+      const source = userSnapshot.data() as Record<string, unknown>;
+      const profile = mapUserProfile(decodedToken.uid, source);
+      const inventoryRaw = Array.isArray(source.inventory) ? source.inventory : [];
+      const inventory = normalizeInventory(inventoryRaw.filter(isInventoryItem));
+
+      let nextInventory = [...inventory];
+
+      for (const material of recipe.materials) {
+        const required = material.quantity * quantity;
+        if (getItemQuantity(nextInventory, material.itemId) < required) {
+          throw new Error(`Insufficient material: ${material.name}.`);
+        }
+      }
+
+      for (const material of recipe.materials) {
+        const required = material.quantity * quantity;
+        const removed = removeItemQuantity(nextInventory, material.itemId, required);
+        if (!removed.ok) {
+          throw new Error(removed.error ?? "Could not consume crafting material.");
+        }
+        nextInventory = removed.inventory;
+      }
+
+      const output: InventoryItem = {
+        ...recipe.outputItem,
+        quantity: recipe.outputItem.quantity * quantity,
+        description: `${recipe.title} crafted at the forge.`,
+      };
+
+      const slotLimit = Math.max(profile.inventorySlotLimit, getInventorySlotLimitFromLevel(profile.rpgLevel || 1));
+      const merged = mergeItemIntoInventory(nextInventory, output, slotLimit);
+      if (!merged.ok) {
+        throw new Error(merged.error ?? "Inventory is full.");
+      }
+
+      nextInventory = merged.inventory;
+
+      const xpGain = recipe.xpGain * quantity;
+      const progression = applyXpGain(profile.rpgXp ?? 0, xpGain);
+
+      tx.set(
+        userRef,
+        {
+          inventory: nextInventory,
+          rpgXp: progression.xp,
+          rpgLevel: progression.level,
+          inventorySlotLimit: progression.slotLimit,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      tx.set(adminDb.collection("craft-history").doc(), {
+        uid: decodedToken.uid,
+        recipeId: recipe.id,
+        recipeTitle: recipe.title,
+        quantity,
+        xpGain,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      return {
+        ok: true,
+        recipeId: recipe.id,
+        recipeTitle: recipe.title,
+        quantity,
+        xpGain,
+        level: progression.level,
+        inventory: nextInventory,
+      };
+    });
+
+    return Response.json(txResult);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not complete craft.";
+    return Response.json({ error: message, recipes: CRAFT_RECIPES }, { status: statusFromErrorMessage(message) });
+  }
+}

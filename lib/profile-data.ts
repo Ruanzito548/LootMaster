@@ -56,6 +56,12 @@ export type UserProfile = {
   dailyStreak: number;
   seasonTrackTier: number;
   achievementPoints: number;
+  rpgXp: number;
+  rpgLevel: number;
+  inventorySlotLimit: number;
+  marketplaceSales: number;
+  marketplaceBuys: number;
+  marketplaceVolume: number;
   discordId?: string;
   discordUsername?: string;
 };
@@ -86,6 +92,105 @@ const defaultInventory: InventoryItem[] = [
     description: "High-value chest with premium drops.",
     quantity: 1,
     rarity: "epic",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "material-wood",
+    name: "Wood",
+    category: "Material",
+    description: "Core crafting material for chest forging.",
+    quantity: 40,
+    rarity: "common",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "material-metal",
+    name: "Metal",
+    category: "Material",
+    description: "Refined metal used in reinforced chests.",
+    quantity: 25,
+    rarity: "common",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "material-elder-wood",
+    name: "Elder Wood",
+    category: "Material",
+    description: "Rare wood from ancient biomes.",
+    quantity: 10,
+    rarity: "rare",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "material-astral-metal",
+    name: "Astral Metal",
+    category: "Material",
+    description: "High-density ore with unstable energy.",
+    quantity: 7,
+    rarity: "epic",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "material-void-shard",
+    name: "Void Shard",
+    category: "Material",
+    description: "Fragment from mythic dimensional rifts.",
+    quantity: 3,
+    rarity: "legendary",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "material-celestial-core",
+    name: "Celestial Core",
+    category: "Material",
+    description: "Ultra-rare catalyst for mythic crafting.",
+    quantity: 1,
+    rarity: "artifact",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "rune-common",
+    name: "Common Rune",
+    category: "Rune",
+    description: "Basic rune that stabilizes common crafts.",
+    quantity: 4,
+    rarity: "common",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "rune-rare",
+    name: "Rare Rune",
+    category: "Rune",
+    description: "Rune used to bind rare chest recipes.",
+    quantity: 2,
+    rarity: "rare",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "rune-epic",
+    name: "Epic Rune",
+    category: "Rune",
+    description: "High-energy rune for epic crafting.",
+    quantity: 1,
+    rarity: "epic",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "rune-legendary",
+    name: "Legendary Rune",
+    category: "Rune",
+    description: "Rare catalyst rune for legendary recipes.",
+    quantity: 1,
+    rarity: "legendary",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "rune-mythic",
+    name: "Mythic Rune",
+    category: "Rune",
+    description: "Mythic rune that defines apex chest quality.",
+    quantity: 1,
+    rarity: "artifact",
     iconPath: "/itens/general/ticket.png",
   },
   {
@@ -246,6 +351,12 @@ function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" |
     dailyStreak: 1,
     seasonTrackTier: 1,
     achievementPoints: 0,
+    rpgXp: 0,
+    rpgLevel: 1,
+    inventorySlotLimit: 20,
+    marketplaceSales: 0,
+    marketplaceBuys: 0,
+    marketplaceVolume: 0,
   };
 }
 
@@ -287,6 +398,12 @@ export function mapUserProfile(uid: string, source: Record<string, unknown>): Us
     dailyStreak: getNumber(source.dailyStreak, fallback.dailyStreak),
     seasonTrackTier: getNumber(source.seasonTrackTier, fallback.seasonTrackTier),
     achievementPoints: getNumber(source.achievementPoints, fallback.achievementPoints),
+    rpgXp: getNumber(source.rpgXp, fallback.rpgXp),
+    rpgLevel: getNumber(source.rpgLevel, fallback.rpgLevel),
+    inventorySlotLimit: getNumber(source.inventorySlotLimit, fallback.inventorySlotLimit),
+    marketplaceSales: getNumber(source.marketplaceSales, fallback.marketplaceSales),
+    marketplaceBuys: getNumber(source.marketplaceBuys, fallback.marketplaceBuys),
+    marketplaceVolume: getNumber(source.marketplaceVolume, fallback.marketplaceVolume),
     ...(typeof source.discordId === "string" && { discordId: source.discordId }),
     ...(typeof source.discordUsername === "string" && { discordUsername: source.discordUsername }),
   };

@@ -238,8 +238,8 @@ export default function RewardsPage() {
           <Link href="/profile/inventory" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]">
             Inventory
           </Link>
-          <Link href="/rewards/chests" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]">
-            Chests
+          <Link href="/profile/inventory" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]">
+            Inventory Chests
           </Link>
         </div>
       </main>

@@ -27,6 +27,12 @@ type EditableProfileFields = Partial<
     | "keys"
     | "inventory"
     | "transactions"
+    | "rpgXp"
+    | "rpgLevel"
+    | "inventorySlotLimit"
+    | "marketplaceSales"
+    | "marketplaceBuys"
+    | "marketplaceVolume"
   >
 >;
 
