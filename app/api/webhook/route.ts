@@ -9,7 +9,7 @@ import {
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { syncPaidOrderToWalletBackend } from "@/lib/wallet-backend";
-import { buildLevelRewards, calculateLevelProgress } from "@/lib/level-rewards";
+import { buildLevelRewards, buildUnlockHistoryItem, calculateLevelProgress, calculateTotalXp } from "../../../lib/level-rewards";
 
 /**
  * Stripe webhook endpoint.
@@ -350,6 +350,8 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
   }
 
   const spendCents = Math.max(0, Math.round((session.amount_total ?? 0)));
+  const spendUsd = Math.round((spendCents / 100) * 100) / 100;
+  const gainedXp = calculateTotalXp(spendCents);
 
   if (spendCents <= 0) {
     return;
@@ -392,8 +394,32 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
       ? buildLevelRewards(currentRewardLevel + 1, nextProgress.level, session.id)
       : [];
 
+    const nowIso = new Date().toISOString();
+    const storedUnlocks = Array.isArray(userData.recentUnlocks)
+      ? [...(userData.recentUnlocks as unknown[])]
+      : [];
+    const nextUnlockHistory = [
+      ...rewardLevels.map((reward) => buildUnlockHistoryItem(reward, session.id, nowIso)),
+      ...storedUnlocks,
+    ].slice(0, 24);
+
     for (const reward of rewardLevels) {
       nextInventory.push(reward.inventoryItem);
+
+      if (reward.bonusDrop) {
+        nextInventory.push({
+          id: `bonus-${session.id}-${reward.level}`,
+          name: reward.bonusDrop.title,
+          category: "Reward",
+          description: `${reward.bonusDrop.rarity} bonus drop from milestone level ${reward.level}.`,
+          quantity: 1,
+          rarity:
+            reward.bonusDrop.rarity === "mythic"
+              ? "artifact"
+              : reward.bonusDrop.rarity,
+          iconPath: "/itens/general/ticket.png",
+        });
+      }
     }
 
     tx.set(
@@ -405,7 +431,13 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
         nextLevelXpCents: nextProgress.nextLevelXpCents,
         highestRewardedLevel: Math.max(currentRewardLevel, nextProgress.level),
         inventory: nextInventory,
-        updatedAt: new Date().toISOString(),
+        recentUnlocks: nextUnlockHistory,
+        lastXpGain: gainedXp,
+        lastSpendUsd: spendUsd,
+        lastLevelUpLevel: nextProgress.level > currentProgress.level ? nextProgress.level : 0,
+        lastLevelUpAt: nextProgress.level > currentProgress.level ? nowIso : "",
+        lastProgressAt: nowIso,
+        updatedAt: nowIso,
       },
       { merge: true },
     );

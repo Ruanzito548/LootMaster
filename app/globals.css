@@ -231,6 +231,79 @@ body {
     0 10px 22px rgba(23, 100, 196, 0.28);
 }
 
+@keyframes reward-progress-pulse {
+  0% {
+    filter: brightness(1);
+    box-shadow: 0 0 0 rgba(77, 198, 255, 0.35);
+  }
+  50% {
+    filter: brightness(1.08);
+    box-shadow: 0 0 24px rgba(77, 198, 255, 0.52);
+  }
+  100% {
+    filter: brightness(1);
+    box-shadow: 0 0 0 rgba(77, 198, 255, 0.35);
+  }
+}
+
+.reward-progress-glow {
+  animation: reward-progress-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes reward-node-current {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 rgba(77, 198, 255, 0.25);
+  }
+  50% {
+    transform: translateY(-4px);
+    box-shadow: 0 0 18px rgba(77, 198, 255, 0.45);
+  }
+}
+
+.reward-node-current {
+  animation: reward-node-current 2.1s ease-in-out infinite;
+}
+
+@keyframes xp-popup-in {
+  0% {
+    transform: translateY(-10px) scale(0.94);
+    opacity: 0;
+  }
+  20% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  85% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-8px) scale(0.96);
+    opacity: 0;
+  }
+}
+
+.xp-popup {
+  animation: xp-popup-in 2.8s ease forwards;
+}
+
+@keyframes reward-claim-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.reward-claim-pop {
+  animation: reward-claim-pop 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
 .tbc-shell {
   color: #e8ffeb;
   background-image:

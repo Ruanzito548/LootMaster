@@ -1,7 +1,7 @@
 import { User } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 
-import { calculateLevelProgress } from "./level-rewards";
+import { calculateLevelProgress, type UnlockHistoryItem, type RewardRarity } from "./level-rewards";
 import { db, firebaseEnabled } from "./firebase";
 
 export type InventoryItem = {
@@ -47,6 +47,15 @@ export type UserProfile = {
   levelXpCents: number;
   nextLevelXpCents: number;
   highestRewardedLevel: number;
+  recentUnlocks: UnlockHistoryItem[];
+  lastXpGain: number;
+  lastSpendUsd: number;
+  lastProgressAt: string;
+  lastLevelUpLevel: number;
+  lastLevelUpAt: string;
+  dailyStreak: number;
+  seasonTrackTier: number;
+  achievementPoints: number;
   discordId?: string;
   discordUsername?: string;
 };
@@ -160,6 +169,28 @@ function isTransaction(value: unknown): value is ProfileTransaction {
   );
 }
 
+function isRewardRarity(value: unknown): value is RewardRarity {
+  return value === "common" || value === "rare" || value === "epic" || value === "legendary" || value === "mythic";
+}
+
+function isUnlockHistoryItem(value: unknown): value is UnlockHistoryItem {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const parsed = value as Partial<UnlockHistoryItem>;
+
+  return (
+    typeof parsed.id === "string" &&
+    typeof parsed.level === "number" &&
+    typeof parsed.title === "string" &&
+    isRewardRarity(parsed.rarity) &&
+    typeof parsed.icon === "string" &&
+    typeof parsed.kind === "string" &&
+    typeof parsed.unlockedAt === "string"
+  );
+}
+
 function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" | "photoURL">): UserProfile {
   const progress = calculateLevelProgress(0);
 
@@ -179,6 +210,15 @@ function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" |
     levelXpCents: progress.xpCents,
     nextLevelXpCents: progress.nextLevelXpCents,
     highestRewardedLevel: progress.level,
+    recentUnlocks: [],
+    lastXpGain: 0,
+    lastSpendUsd: 0,
+    lastProgressAt: "",
+    lastLevelUpLevel: 0,
+    lastLevelUpAt: "",
+    dailyStreak: 1,
+    seasonTrackTier: 1,
+    achievementPoints: 0,
   };
 }
 
@@ -187,9 +227,11 @@ export function mapUserProfile(uid: string, source: Record<string, unknown>): Us
 
   const inventoryRaw = Array.isArray(source.inventory) ? source.inventory : [];
   const transactionsRaw = Array.isArray(source.transactions) ? source.transactions : [];
+  const recentUnlocksRaw = Array.isArray(source.recentUnlocks) ? source.recentUnlocks : [];
 
   const inventory = inventoryRaw.filter(isInventoryItem);
   const transactions = transactionsRaw.filter(isTransaction);
+  const recentUnlocks = recentUnlocksRaw.filter(isUnlockHistoryItem);
   const spentCents = getNumber(source.totalSpentCents, fallback.totalSpentCents);
   const progress = calculateLevelProgress(spentCents);
 
@@ -209,6 +251,15 @@ export function mapUserProfile(uid: string, source: Record<string, unknown>): Us
     levelXpCents: getNumber(source.levelXpCents, progress.xpCents),
     nextLevelXpCents: getNumber(source.nextLevelXpCents, progress.nextLevelXpCents),
     highestRewardedLevel: getNumber(source.highestRewardedLevel, progress.level),
+    recentUnlocks,
+    lastXpGain: getNumber(source.lastXpGain, fallback.lastXpGain),
+    lastSpendUsd: getNumber(source.lastSpendUsd, fallback.lastSpendUsd),
+    lastProgressAt: getString(source.lastProgressAt, fallback.lastProgressAt),
+    lastLevelUpLevel: getNumber(source.lastLevelUpLevel, fallback.lastLevelUpLevel),
+    lastLevelUpAt: getString(source.lastLevelUpAt, fallback.lastLevelUpAt),
+    dailyStreak: getNumber(source.dailyStreak, fallback.dailyStreak),
+    seasonTrackTier: getNumber(source.seasonTrackTier, fallback.seasonTrackTier),
+    achievementPoints: getNumber(source.achievementPoints, fallback.achievementPoints),
     ...(typeof source.discordId === "string" && { discordId: source.discordId }),
     ...(typeof source.discordUsername === "string" && { discordUsername: source.discordUsername }),
   };

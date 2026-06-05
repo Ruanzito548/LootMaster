@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { buildLevelReward, calculateLevelProgress, formatMoneyUsd } from "../../../lib/level-rewards";
+import { buildLevelReward, calculateLevelProgress, formatMoneyUsd, LEVEL_XP_REQUIREMENT, XP_PER_USD } from "../../../lib/level-rewards";
 import { useProfileSession } from "../use-profile-session";
 import { subscribeToInventoryItems, type InventoryCatalogItem, type WowRarity } from "../../../lib/inventory-items";
 import { type InventoryItem } from "../../../lib/profile-data";
@@ -361,7 +361,7 @@ export default function InventoryPage() {
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <div className="rounded-[1.25rem] border border-[#ffffff12] bg-[#09111f]/70 p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9fb8db]">XP</p>
-                <p className="mt-2 text-2xl font-black text-[#8dd0ff]">{(progress.xpCents / 100).toFixed(2)}</p>
+                <p className="mt-2 text-2xl font-black text-[#8dd0ff]">{progress.xpCents.toFixed(2)}</p>
               </div>
               <div className="rounded-[1.25rem] border border-[#ffffff12] bg-[#09111f]/70 p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9fb8db]">Next reward</p>
@@ -528,7 +528,7 @@ export default function InventoryPage() {
           <article className="loot-panel rounded-[1.75rem] p-8">
             <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em] text-[#f7ba2c]">Progress</p>
             <h2 className="loot-title mt-4 text-3xl font-black">{progress.progressPercent}% to level {progress.nextLevel}</h2>
-            <p className="loot-muted mt-4 text-base leading-7">Every $250 spent creates the next level and its automatic reward.</p>
+            <p className="loot-muted mt-4 text-base leading-7">$1 = {XP_PER_USD} XP, and each level needs {LEVEL_XP_REQUIREMENT} XP.</p>
           </article>
         </section>
 
