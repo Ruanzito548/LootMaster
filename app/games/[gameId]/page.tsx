@@ -12,17 +12,17 @@ const coverByGame: Record<string, string> = {
 };
 
 const heroOverlayByGame: Record<string, string> = {
-  "classic-era": "linear-gradient(180deg,rgba(20,14,10,0.55),rgba(35,20,10,0.72))",
-  "tbc-anniversary": "linear-gradient(180deg,rgba(6,20,10,0.52),rgba(7,28,14,0.78))",
-  retail: "linear-gradient(180deg,rgba(8,16,32,0.52),rgba(8,18,40,0.78))",
-  "mist-of-pandaria": "linear-gradient(180deg,rgba(8,22,18,0.52),rgba(10,30,24,0.76))",
+  "classic-era": "linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.4))",
+  "tbc-anniversary": "linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.4))",
+  retail: "linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.4))",
+  "mist-of-pandaria": "linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.4))",
 };
 
 const ambientOverlayByGame: Record<string, string> = {
-  "classic-era": "radial-gradient(circle at 82% 15%, rgba(200,155,60,0.12), transparent 32%)",
-  "tbc-anniversary": "radial-gradient(circle at 82% 15%, rgba(74,222,128,0.18), transparent 32%)",
-  retail: "radial-gradient(circle at 82% 15%, rgba(96,165,250,0.2), transparent 32%)",
-  "mist-of-pandaria": "radial-gradient(circle at 82% 15%, rgba(16,185,129,0.18), transparent 32%)",
+  "classic-era": "linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.18))",
+  "tbc-anniversary": "linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.18))",
+  retail: "linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.18))",
+  "mist-of-pandaria": "linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.18))",
 };
 
 const categoryCoverByGame: Record<string, Record<string, string>> = {
@@ -89,24 +89,24 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
             </div>
 
             <div className="max-w-3xl space-y-4">
-              <h1 className="font-throne text-5xl font-black leading-[0.95] text-[#ecf7ff] sm:text-6xl lg:text-7xl">{game.title}</h1>
-              <p className="text-sm leading-7 text-[#b6cde9] sm:text-base">
+              <h1 className="font-throne text-5xl font-black leading-[0.95] text-[color:var(--text-main)] sm:text-6xl lg:text-7xl">{game.title}</h1>
+              <p className="text-sm leading-7 text-[color:var(--text-muted)] sm:text-base">
                 Fast access to services and checkout.
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
               <article className="gm-panel rounded-xl px-4 py-3">
-                <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#90b3de]">Queue</p>
-                <p className="mt-1 text-sm font-black text-[#e7f5ff]">Live supply updates</p>
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-muted)]">Queue</p>
+                <p className="mt-1 text-sm font-black text-[color:var(--text-main)]">Live supply updates</p>
               </article>
               <article className="gm-panel rounded-xl px-4 py-3">
-                <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#90b3de]">Rewards</p>
-                <p className="mt-1 text-sm font-black text-[#e7f5ff]">Battle pass connected</p>
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-muted)]">Rewards</p>
+                <p className="mt-1 text-sm font-black text-[color:var(--text-main)]">Battle pass connected</p>
               </article>
               <article className="gm-panel rounded-xl px-4 py-3">
-                <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#90b3de]">Security</p>
-                <p className="mt-1 text-sm font-black text-[#e7f5ff]">Protected checkout</p>
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-muted)]">Security</p>
+                <p className="mt-1 text-sm font-black text-[color:var(--text-main)]">Protected checkout</p>
               </article>
             </div>
           </div>
@@ -118,25 +118,31 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
               <Link
                 key={category.id}
                 href={`/games/${game.id}/${category.id}`}
-                className="group relative overflow-hidden rounded-[1.35rem] border border-white/12 bg-[#101a30]"
+                className="group relative overflow-hidden rounded-[1.35rem] border border-white/8 bg-[#171a20]"
               >
                 <div
                   className="h-72 transition-transform duration-500 group-hover:scale-105"
                   style={{
-                    backgroundImage: `linear-gradient(180deg,rgba(6,10,20,0.25),rgba(6,10,20,0.86)), url('${categoryCover[category.id] ?? coverByGame[game.id] ?? coverByGame.retail}')`,
+                    backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.32)), url('${categoryCover[category.id] ?? coverByGame[game.id] ?? coverByGame.retail}')`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}
                 />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_28%,rgba(0,0,0,0.18)_74%,rgba(0,0,0,0.5)_100%)]" />
+                <div className="pointer-events-none absolute inset-0 opacity-65 [background-image:linear-gradient(135deg,rgba(255,255,255,0.03),transparent_24%,transparent_76%,rgba(255,255,255,0.02))]" />
                 <div className="absolute inset-x-0 bottom-0 p-4">
-                  <div className="gm-panel rounded-xl px-3 py-3">
+                  <div className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(10,11,14,0.54),rgba(10,11,14,0.84))] px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-[2px]">
                     <div className="flex items-center justify-between gap-2">
-                      <h2 className="text-xl font-black text-[#eaf4ff]">{category.title}</h2>
+                      <div>
+                        <p className="text-[0.56rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-muted)]">Marketplace category</p>
+                        <h2 className="mt-1 text-xl font-black text-[color:var(--text-main)]">{category.title}</h2>
+                      </div>
                       {(() => {
                         const Icon = categoryIcons[category.id];
                         return <Icon className="h-4 w-4 text-[color:var(--theme-accent)]" />;
                       })()}
                     </div>
+                    <p className="mt-2 text-sm leading-6 text-[color:var(--text-muted)]">{category.description}</p>
                     <span className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                       Open {category.title}
                       <ArrowRight className="h-3 w-3" />
@@ -149,22 +155,22 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
 
           <aside className="space-y-4">
             <article className="gm-panel rounded-2xl p-4">
-              <div className="flex items-center gap-2 text-[#6ee7ff]">
+              <div className="flex items-center gap-2 text-[color:var(--theme-accent)]">
                 <Gift className="h-4 w-4" />
                 <p className="text-[0.62rem] font-bold uppercase tracking-[0.17em]">Rewards</p>
               </div>
-              <p className="mt-3 text-sm text-[#bbd2ec]">Every completed order grants XP and unlocks seasonal inventory items.</p>
+              <p className="mt-3 text-sm text-[color:var(--text-muted)]">Every completed order grants XP and unlocks seasonal inventory items.</p>
               <Link href="/rewards" className="gm-button gm-button-secondary mt-4 inline-flex w-full items-center justify-center rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                 View pass
               </Link>
             </article>
 
             <article className="gm-panel rounded-2xl p-4">
-              <div className="flex items-center gap-2 text-[#86efac]">
+              <div className="flex items-center gap-2 text-[color:var(--theme-accent)]">
                 <ShieldCheck className="h-4 w-4" />
                 <p className="text-[0.62rem] font-bold uppercase tracking-[0.17em]">Safety</p>
               </div>
-              <p className="mt-3 text-sm text-[#bbd2ec]">Payment and order data stay protected with server-side verification.</p>
+              <p className="mt-3 text-sm text-[color:var(--text-muted)]">Payment and order data stay protected with server-side verification.</p>
             </article>
           </aside>
         </section>

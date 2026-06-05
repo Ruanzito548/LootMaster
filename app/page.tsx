@@ -35,7 +35,7 @@ export default function Home() {
     <div className="loot-shell gm-shell">
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
         <section className="gm-glass relative overflow-hidden rounded-[2rem] p-6 sm:p-8 lg:p-10">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_10%,rgba(124,77,255,0.22),transparent_35%),radial-gradient(circle_at_18%_100%,rgba(59,168,255,0.2),transparent_34%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_10%,rgba(255,255,255,0.03),transparent_34%),radial-gradient(circle_at_18%_100%,rgba(0,0,0,0.18),transparent_36%)]" />
 
           <div className="relative z-10 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="space-y-5">
@@ -85,7 +85,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative h-[20rem] overflow-hidden rounded-[1.5rem] border border-white/12 bg-[#0a1224] sm:h-[24rem]">
+            <div className="relative h-[20rem] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#111317] sm:h-[24rem]">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeGame.id}
@@ -95,17 +95,17 @@ export default function Home() {
                   transition={{ duration: 0.45 }}
                   className="absolute inset-0"
                   style={{
-                    backgroundImage: `linear-gradient(180deg,rgba(10,16,32,0.2),rgba(10,16,32,0.9)), url('${heroArtByGame[activeGame.id] ?? heroArtByGame.retail}')`,
+                    backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.32)), url('${heroArtByGame[activeGame.id] ?? heroArtByGame.retail}')`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}
                 />
               </AnimatePresence>
 
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_15%,rgba(59,168,255,0.26),transparent_30%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,0.42)_86%)]" />
 
               <div className="absolute bottom-0 left-0 right-0 p-5">
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#9bc9ff]">Featured game</p>
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">Featured game</p>
                 <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">{activeGame.title}</h2>
                 <div className="mt-3 flex items-center gap-2">
                   {featuredGames.map((game, index) => (
@@ -163,7 +163,7 @@ export default function Home() {
 
         <section className="space-y-4">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-throne text-3xl font-black text-[#eaf4ff] sm:text-4xl">Featured Games</h2>
+            <h2 className="font-throne text-3xl font-black text-[color:var(--text-main)] sm:text-4xl">Featured Games</h2>
             <Link href="/games" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase tracking-[0.13em]">
               View all
               <ArrowRight className="h-3.5 w-3.5" />
@@ -175,27 +175,29 @@ export default function Home() {
               <motion.article
                 key={game.id}
                 whileHover={{ y: -6 }}
-                className="group relative overflow-hidden rounded-[1.35rem] border border-white/10 bg-[rgba(17,19,23,0.9)]"
+                className="group relative overflow-hidden rounded-[1.35rem] border border-white/8 bg-[#171a20]"
               >
                 <div
                   className="h-56 transition-transform duration-500 group-hover:scale-110"
                   style={{
-                    backgroundImage: `linear-gradient(180deg,rgba(6,11,24,0.25),rgba(6,11,24,0.85)), url('${heroArtByGame[game.id] ?? heroArtByGame.retail}')`,
+                    backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.32)), url('${heroArtByGame[game.id] ?? heroArtByGame.retail}')`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}
                 />
 
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_0%,rgba(74,141,255,0.12),transparent_34%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_28%,rgba(0,0,0,0.18)_76%,rgba(0,0,0,0.46)_100%)]" />
+                <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:linear-gradient(135deg,rgba(255,255,255,0.03),transparent_24%,transparent_76%,rgba(255,255,255,0.02))]" />
 
                 <div className="absolute inset-x-0 bottom-0 p-4">
-                  <div className="gm-panel rounded-xl px-3 py-3">
+                  <div className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(10,11,14,0.54),rgba(10,11,14,0.82))] px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-[2px]">
                     <div className="flex items-center justify-between gap-2">
                       <h3 className="text-sm font-black text-[color:var(--text-main)]">{game.shortTitle}</h3>
-                      <span className="rounded-full border border-[color:var(--theme-border)] bg-[rgba(74,141,255,0.12)] px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-main)]">
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-main)]">
                         Popular
                       </span>
                     </div>
+                    <p className="mt-2 text-[0.7rem] leading-5 text-[color:var(--text-muted)]">{game.description}</p>
                     <Link href={`/games/${game.id}`} className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                       Enter
                       <ArrowRight className="h-3 w-3" />
@@ -208,7 +210,7 @@ export default function Home() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="font-throne text-3xl font-black text-[#eaf4ff] sm:text-4xl">Marketplace Categories</h2>
+          <h2 className="font-throne text-3xl font-black text-[color:var(--text-main)] sm:text-4xl">Marketplace Categories</h2>
 
           <div className="grid gap-4 md:grid-cols-3">
             {serviceCategories.map((category, index) => (
@@ -218,12 +220,15 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.35, delay: index * 0.06 }}
-                className="gm-panel gm-panel-hover overflow-hidden rounded-[1.35rem] p-5"
+                className="gm-panel gm-panel-hover relative overflow-hidden rounded-[1.35rem] border border-white/8 bg-[#171a20] p-5"
               >
+                <div className="pointer-events-none absolute inset-0 opacity-60 [background-image:linear-gradient(135deg,rgba(255,255,255,0.03),transparent_26%,transparent_78%,rgba(255,255,255,0.02))]" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,0.18)_50%,rgba(0,0,0,0.32)_100%)]" />
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-xl font-black text-[#eaf4ff]">{category.title}</h3>
+                  <h3 className="relative text-xl font-black text-[color:var(--text-main)]">{category.title}</h3>
                   <span className="gm-badge px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em]">Live</span>
                 </div>
+                <p className="relative mt-3 max-w-xs text-sm leading-6 text-[color:var(--text-muted)]">{category.description}</p>
                 <Link href="/games" className="gm-button gm-button-secondary mt-5 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                   Explore
                   <ArrowRight className="h-3 w-3" />

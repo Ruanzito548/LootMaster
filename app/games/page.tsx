@@ -21,8 +21,8 @@ export default function GamesIndexPage() {
                 <Sparkles className="h-3.5 w-3.5" />
                 Games launcher
               </span>
-              <h1 className="mt-5 font-throne text-5xl font-black leading-[0.96] text-[#eaf4ff] sm:text-6xl">Choose Your Game</h1>
-              <p className="mt-4 max-w-xl text-sm leading-7 text-[#a4bddc] sm:text-base">
+              <h1 className="mt-5 font-throne text-5xl font-black leading-[0.96] text-[color:var(--text-main)] sm:text-6xl">Choose Your Game</h1>
+              <p className="mt-4 max-w-xl text-sm leading-7 text-[color:var(--text-muted)] sm:text-base">
                 Launcher-ready game hubs.
               </p>
 
@@ -40,29 +40,29 @@ export default function GamesIndexPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <article className="gm-panel rounded-xl px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <span className="rounded-lg bg-[#3ba8ff]/20 p-2 text-[#6ee7ff]"><Flame className="h-4 w-4" /></span>
+                  <span className="rounded-lg bg-white/5 p-2 text-[color:var(--theme-accent)]"><Flame className="h-4 w-4" /></span>
                   <div>
-                    <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#8baed8]">Live orders</p>
-                    <p className="text-sm font-black text-[#e5f3ff]">Fast queue updates</p>
+                    <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Live orders</p>
+                    <p className="text-sm font-black text-[color:var(--text-main)]">Fast queue updates</p>
                   </div>
                 </div>
               </article>
 
               <article className="gm-panel rounded-xl px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <span className="rounded-lg bg-[#22c55e]/20 p-2 text-[#86efac]"><ShieldCheck className="h-4 w-4" /></span>
+                  <span className="rounded-lg bg-white/5 p-2 text-[color:var(--theme-accent)]"><ShieldCheck className="h-4 w-4" /></span>
                   <div>
-                    <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#8baed8]">Protected</p>
-                    <p className="text-sm font-black text-[#e5f3ff]">Secure checkout stack</p>
+                    <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Protected</p>
+                    <p className="text-sm font-black text-[color:var(--text-main)]">Secure checkout stack</p>
                   </div>
                 </div>
               </article>
 
               <article className="gm-panel rounded-xl px-4 py-3 sm:col-span-2">
-                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#8baed8]">Available services</p>
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Available services</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {serviceCategories.map((category) => (
-                    <span key={category.id} className="rounded-full bg-white/8 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.13em] text-[#aecaea]">
+                    <span key={category.id} className="rounded-full bg-white/8 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.13em] text-[color:var(--text-main)]">
                       {category.title}
                     </span>
                   ))}
@@ -74,27 +74,29 @@ export default function GamesIndexPage() {
 
         <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {games.map((game) => (
-            <Link key={game.id} href={`/games/${game.id}`} className="group relative overflow-hidden rounded-[1.35rem] border border-white/12 bg-[#121d35]">
+            <Link key={game.id} href={`/games/${game.id}`} className="group relative overflow-hidden rounded-[1.35rem] border border-white/8 bg-[#171a20]">
               <div
                 className="h-72 transition-transform duration-500 group-hover:scale-110"
                 style={{
-                  backgroundImage: `linear-gradient(180deg,rgba(6,11,24,0.22),rgba(6,11,24,0.88)), url('${heroArtByGame[game.id] ?? heroArtByGame.retail}')`,
+                  backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.32)), url('${heroArtByGame[game.id] ?? heroArtByGame.retail}')`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}
               />
 
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_0%,rgba(59,168,255,0.2),transparent_35%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_30%,rgba(0,0,0,0.18)_74%,rgba(0,0,0,0.46)_100%)]" />
+              <div className="pointer-events-none absolute inset-0 opacity-65 [background-image:linear-gradient(135deg,rgba(255,255,255,0.03),transparent_22%,transparent_78%,rgba(255,255,255,0.02))]" />
 
               <div className="absolute inset-x-0 bottom-0 p-4">
-                <div className="gm-panel rounded-xl px-3 py-3">
+                <div className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(10,11,14,0.54),rgba(10,11,14,0.82))] px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-[2px]">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-[0.56rem] font-bold uppercase tracking-[0.15em] text-[#88add9]">{game.tag}</p>
-                        <h2 className="mt-1 text-2xl font-black text-[#eaf4ff]">{game.shortTitle}</h2>
+                      <p className="text-[0.56rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-muted)]">{game.tag}</p>
+                      <h2 className="mt-1 text-2xl font-black text-[color:var(--text-main)]">{game.shortTitle}</h2>
                     </div>
                     <span className="gm-badge px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em]">Live</span>
                   </div>
+                  <p className="mt-2 text-sm leading-6 text-[color:var(--text-muted)]">{game.description}</p>
                   <span className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                     Enter hub
                     <ArrowRight className="h-3 w-3" />
