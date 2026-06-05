@@ -150,7 +150,7 @@ export function Navbar() {
 
               {isProfileOpen ? (
                 <div
-                  className="gm-glass absolute right-0 top-[calc(100%+10px)] z-50 w-64 rounded-2xl border border-[color:var(--border-color)] p-2"
+                  className="gm-glass absolute right-0 top-[calc(100%+10px)] z-[90] w-64 rounded-2xl border border-[color:var(--border-color)] p-2"
                   role="menu"
                 >
                   {profileItems.map((item) => {
@@ -194,48 +194,46 @@ export function Navbar() {
         </div>
       </div>
 
-      <div className={`fixed inset-0 z-[70] transition ${isMobileOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
-        <button
-          type="button"
-          className={`absolute inset-0 bg-[color:var(--surface-overlay)] backdrop-blur-sm transition-opacity ${isMobileOpen ? "opacity-100" : "opacity-0"}`}
-          onClick={() => setIsMobileOpen(false)}
-          aria-label="Close menu"
-        />
+      {isMobileOpen ? (
+        <div className="fixed inset-0 z-[70] transition">
+          <button
+            type="button"
+            className="absolute inset-0 bg-[color:var(--surface-overlay)] backdrop-blur-sm transition-opacity opacity-100"
+            onClick={() => setIsMobileOpen(false)}
+            aria-label="Close menu"
+          />
 
-        <aside
-          className={`gm-glass absolute left-0 top-0 h-full w-full max-w-xs border-r border-[color:var(--border-color)] p-4 transition-transform duration-300 ${
-            isMobileOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-[color:var(--text-main)]">Navigation</p>
-            <button type="button" onClick={() => setIsMobileOpen(false)} className="gm-button gm-button-secondary rounded-lg p-2">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          <aside className="gm-glass absolute left-0 top-0 h-full w-full max-w-xs border-r border-[color:var(--border-color)] p-4 transition-transform duration-300 translate-x-0">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-[color:var(--text-main)]">Navigation</p>
+              <button type="button" onClick={() => setIsMobileOpen(false)} className="gm-button gm-button-secondary rounded-lg p-2">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-          <div className="mt-4 grid gap-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(pathname, item.href);
+            <div className="mt-4 grid gap-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(pathname, item.href);
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMobileOpen(false)}
-                  className={`gm-button inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.13em] ${
-                    active ? "theme-nav-active" : "text-[color:var(--text-muted)] hover:bg-white/6"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </aside>
-      </div>
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMobileOpen(false)}
+                    className={`gm-button inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.13em] ${
+                      active ? "theme-nav-active" : "text-[color:var(--text-muted)] hover:bg-white/6"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </aside>
+        </div>
+      ) : null}
     </header>
   );
 }
