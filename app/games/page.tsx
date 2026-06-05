@@ -23,7 +23,7 @@ export default function GamesIndexPage() {
               </span>
               <h1 className="mt-5 font-throne text-5xl font-black leading-[0.96] text-[#eaf4ff] sm:text-6xl">Choose Your Game</h1>
               <p className="mt-4 max-w-xl text-sm leading-7 text-[#a4bddc] sm:text-base">
-                Enter a focused marketplace per game with dedicated gold, account and boost flows.
+                Launcher-ready game hubs.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -91,11 +91,10 @@ export default function GamesIndexPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-[0.56rem] font-bold uppercase tracking-[0.15em] text-[#88add9]">{game.tag}</p>
-                      <h2 className="mt-1 text-lg font-black text-[#eaf4ff]">{game.shortTitle}</h2>
+                        <h2 className="mt-1 text-2xl font-black text-[#eaf4ff]">{game.shortTitle}</h2>
                     </div>
                     <span className="gm-badge px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em]">Live</span>
                   </div>
-                  <p className="mt-2 text-xs leading-6 text-[#a7c2e0]">{game.description}</p>
                   <span className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                     Enter hub
                     <ArrowRight className="h-3 w-3" />

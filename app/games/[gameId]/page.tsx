@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Gift, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Coins, Gift, ShieldCheck, Sparkles, Swords, UserRound } from "lucide-react";
 
 import { getGameById, serviceCategories } from "../../data/games";
 
@@ -57,6 +57,11 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
   }
 
   const categoryCover = categoryCoverByGame[game.id] ?? {};
+  const categoryIcons = {
+    gold: Coins,
+    boost: Swords,
+    accounts: UserRound,
+  } as const;
 
   return (
     <div className="loot-shell gm-shell">
@@ -86,7 +91,7 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
             <div className="max-w-3xl space-y-4">
               <h1 className="font-throne text-5xl font-black leading-[0.95] text-[#ecf7ff] sm:text-6xl lg:text-7xl">{game.title}</h1>
               <p className="text-sm leading-7 text-[#b6cde9] sm:text-base">
-                Enter your dedicated hub with curated offers, cleaner routing and one-click access to the checkout funnel.
+                Fast access to services and checkout.
               </p>
             </div>
 
@@ -125,8 +130,13 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                 />
                 <div className="absolute inset-x-0 bottom-0 p-4">
                   <div className="gm-panel rounded-xl px-3 py-3">
-                    <h2 className="text-xl font-black text-[#eaf4ff]">{category.title}</h2>
-                    <p className="mt-2 text-xs leading-6 text-[#a8c3e0]">{category.description}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <h2 className="text-xl font-black text-[#eaf4ff]">{category.title}</h2>
+                      {(() => {
+                        const Icon = categoryIcons[category.id];
+                        return <Icon className="h-4 w-4 text-[color:var(--theme-accent)]" />;
+                      })()}
+                    </div>
                     <span className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                       Open {category.title}
                       <ArrowRight className="h-3 w-3" />

@@ -36,22 +36,16 @@ export default async function ServerSelectionPage(props: PageProps<"/games/[game
               <h1 className="font-throne text-4xl font-black leading-[0.95] text-[#eaf4ff] sm:text-5xl">
                 {selectedCategory.title} Checkout
               </h1>
-              <p className="mt-3 max-w-xl text-sm leading-7 text-[#a7c2e0] sm:text-base">
-                Configure your order with a cleaner step flow, then proceed to secure payment.
-              </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <article className="gm-panel rounded-xl px-3 py-3">
-                <div className="flex items-center gap-2 text-[#6ee7ff]"><Server className="h-4 w-4" /><p className="text-[0.56rem] font-bold uppercase tracking-[0.15em]">Server</p></div>
-                <p className="mt-2 text-xs text-[#b4cae5]">{hasServers ? `${servers.length} options` : "Not required"}</p>
+                <div className="flex items-center justify-center gap-2 text-[#6ee7ff]"><Server className="h-4 w-4" /><p className="text-[0.56rem] font-bold uppercase tracking-[0.15em]">{hasServers ? `${servers.length} Servers` : "No Server"}</p></div>
               </article>
               <article className="gm-panel rounded-xl px-3 py-3">
-                <div className="flex items-center gap-2 text-[#facc15]"><CircleDollarSign className="h-4 w-4" /><p className="text-[0.56rem] font-bold uppercase tracking-[0.15em]">Payment</p></div>
-                <p className="mt-2 text-xs text-[#b4cae5]">Pix, card or LM Coins</p>
+                <div className="flex items-center justify-center gap-2 text-[#facc15]"><CircleDollarSign className="h-4 w-4" /><p className="text-[0.56rem] font-bold uppercase tracking-[0.15em]">Payment</p></div>
               </article>
               <article className="gm-panel rounded-xl px-3 py-3">
-                <div className="flex items-center gap-2 text-[#86efac]"><Swords className="h-4 w-4" /><p className="text-[0.56rem] font-bold uppercase tracking-[0.15em]">Delivery</p></div>
-                <p className="mt-2 text-xs text-[#b4cae5]">In-game methods</p>
+                <div className="flex items-center justify-center gap-2 text-[#86efac]"><Swords className="h-4 w-4" /><p className="text-[0.56rem] font-bold uppercase tracking-[0.15em]">Delivery</p></div>
               </article>
             </div>
           </div>

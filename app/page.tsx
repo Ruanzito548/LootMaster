@@ -51,7 +51,7 @@ export default function Home() {
               </h1>
 
               <p className="gm-subtitle max-w-xl text-sm leading-7 sm:text-base">
-                Gold, boosts and accounts in one premium flow. Fast routing, instant rewards and battle pass progression.
+                Fast orders, clean routing, one hub.
               </p>
 
               <div className="flex flex-wrap gap-3">
@@ -75,12 +75,12 @@ export default function Home() {
                   <p className="mt-2 text-sm font-black text-[#dff3ff]">Mythic Drop</p>
                 </article>
                 <article className="gm-panel rounded-xl px-4 py-3">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#8fb3de]">Season Event</p>
-                  <p className="mt-2 text-sm font-black text-[#facc15]">Nightfall Raid</p>
+                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#8fb3de]">Season</p>
+                  <p className="mt-2 text-sm font-black text-[#facc15]">Nightfall</p>
                 </article>
                 <article className="gm-panel rounded-xl px-4 py-3">
                   <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#8fb3de]">Security</p>
-                  <p className="mt-2 text-sm font-black text-[#86efac]">Live Protected</p>
+                  <p className="mt-2 text-sm font-black text-[#86efac]">Protected</p>
                 </article>
               </div>
             </div>
@@ -196,13 +196,6 @@ export default function Home() {
                         Popular
                       </span>
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {serviceCategories.map((category) => (
-                        <span key={`${game.id}-${category.id}`} className="rounded-full bg-white/8 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.13em] text-[#a6c6ea]">
-                          {category.title}
-                        </span>
-                      ))}
-                    </div>
                     <Link href={`/games/${game.id}`} className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                       Enter
                       <ArrowRight className="h-3 w-3" />
@@ -231,7 +224,6 @@ export default function Home() {
                   <h3 className="text-xl font-black text-[#eaf4ff]">{category.title}</h3>
                   <span className="gm-badge px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em]">Live</span>
                 </div>
-                <p className="mt-3 text-sm text-[#a4bddc]">{category.description}</p>
                 <Link href="/games" className="gm-button gm-button-secondary mt-5 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                   Explore
                   <ArrowRight className="h-3 w-3" />
