@@ -1535,8 +1535,8 @@ body {
 }
 
 .theme-footer-shell {
-  background: linear-gradient(180deg, #101b35, #0a1020) !important;
-  border-top-color: rgba(80, 140, 255, 0.15) !important;
+  background: linear-gradient(180deg, #121418, #090b0e) !important;
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .theme-nav-active {
