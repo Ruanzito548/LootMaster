@@ -62,7 +62,7 @@ export function HotGames() {
               game.id === "tbc-anniversary"
                 ? {
                     backgroundImage:
-                      "linear-gradient(rgba(43,78,126,0.44),rgba(18,36,62,0.56)), url('/wow/wow-tbc/tbc-logo.jpg')",
+                      "linear-gradient(rgba(43,78,126,0.44),rgba(18,36,62,0.56)), url('/wow/wow-tbc/tbc-logo.avif')",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }

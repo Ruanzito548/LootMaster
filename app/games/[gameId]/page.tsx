@@ -5,7 +5,7 @@ import { ArrowRight, Coins, Gift, ShieldCheck, Sparkles, Swords, UserRound } fro
 import { getGameById, serviceCategories } from "../../data/games";
 
 const coverByGame: Record<string, string> = {
-  "tbc-anniversary": "/wow/wow-tbc/tbc-logo.jpg",
+  "tbc-anniversary": "/wow/wow-tbc/tbc-logo.avif",
   retail: "/wow/wow-retail/midinight-logo.jpeg",
   "classic-era": "/wow/wow-classic-era/classic-era-logo.jpg",
   "mist-of-pandaria": "/wow/wow-pandaria/pandaria-logo.jpg",

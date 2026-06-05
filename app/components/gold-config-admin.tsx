@@ -210,7 +210,7 @@ export function GoldConfigAdmin() {
     if (gameId === "tbc-anniversary") {
       return {
         backgroundImage:
-          'linear-gradient(rgba(8, 18, 10, 0.46), rgba(8, 18, 10, 0.58)), url("/wow/wow-tbc/tbc-logo.jpg")',
+          'linear-gradient(rgba(8, 18, 10, 0.46), rgba(8, 18, 10, 0.58)), url("/wow/wow-tbc/tbc-logo.avif")',
         backgroundSize: "cover",
         backgroundPosition: "center",
       };
