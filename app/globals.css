@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: "TwilightMystic";
-  src: url("/fonts/twilight_mystic/TwilightMystic-Regular.ttf") format("truetype");
+  font-family: "Hellvore";
+  src: url("/fonts/hellvore/Hellvore%20PERSONAL%20USE%20ONLY!.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -13,7 +13,7 @@
   --foreground: #f5f9ff;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "TwilightMystic", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Hellvore", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Code", "Consolas", monospace;
   --loot-ink: #070b12;
   --loot-panel: rgba(7, 13, 22, 0.84);
@@ -40,7 +40,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "TwilightMystic", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Hellvore", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   background-image:
     radial-gradient(circle at 10% -8%, rgba(54, 197, 247, 0.2), transparent 30%),
     radial-gradient(circle at 90% -10%, rgba(247, 198, 86, 0.1), transparent 24%),
@@ -72,7 +72,7 @@ body {
 }
 
 .font-throne {
-  font-family: "TwilightMystic", "Times New Roman", serif;
+  font-family: "Hellvore", "Times New Roman", serif;
   letter-spacing: 0.04em;
 }
 
