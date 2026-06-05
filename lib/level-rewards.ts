@@ -41,6 +41,7 @@ export type LevelRewardPreview = {
   rarity: RewardRarity;
   title: string;
   shortLabel: string;
+  description: string;
   icon: string;
   badge: string;
   inventoryItem: InventoryItem;
@@ -205,6 +206,7 @@ function buildRewardFromTemplate(
     rarity,
     title,
     shortLabel: title,
+    description: `${title} unlocked at level ${level}.`,
     icon,
     badge: rarityBadgeLabel[rarity],
     ...extras,
