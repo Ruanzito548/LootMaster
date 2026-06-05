@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
-import { GAME_THEME_STORAGE_KEY, isGameThemeKey, resolveThemeFromPath, type GameThemeKey } from "../../lib/game-theme";
+import { GAME_THEME_STORAGE_KEY, resolveThemeFromPath, type GameThemeKey } from "../../lib/game-theme";
 
 type GameThemeContextValue = {
   theme: GameThemeKey;
@@ -26,16 +26,7 @@ export function GameThemeProvider({ children }: GameThemeProviderProps) {
 
   const inferredTheme = resolveThemeFromPath(pathname ?? "");
 
-  const storedTheme = useMemo(() => {
-    if (typeof window === "undefined") {
-      return "default" as GameThemeKey;
-    }
-
-    const persisted = window.localStorage.getItem(GAME_THEME_STORAGE_KEY);
-    return persisted && isGameThemeKey(persisted) ? persisted : ("default" as GameThemeKey);
-  }, []);
-
-  const theme = manualTheme ?? inferredTheme ?? storedTheme;
+  const theme = manualTheme ?? inferredTheme ?? "default";
 
   useEffect(() => {
     applyThemeToDom(theme);
