@@ -62,6 +62,33 @@ export type UserProfile = {
 
 const defaultInventory: InventoryItem[] = [
   {
+    id: "chest-common",
+    name: "Common Chest",
+    category: "Chest",
+    description: "Basic chest with starter loot.",
+    quantity: 3,
+    rarity: "common",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "chest-rare",
+    name: "Rare Chest",
+    category: "Chest",
+    description: "Improved chest with better odds.",
+    quantity: 2,
+    rarity: "rare",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
+    id: "chest-epic",
+    name: "Epic Chest",
+    category: "Chest",
+    description: "High-value chest with premium drops.",
+    quantity: 1,
+    rarity: "epic",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
     id: "inv-ticket-common",
     name: "Traveler Ticket",
     category: "Ticket",

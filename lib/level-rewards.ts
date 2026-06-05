@@ -13,7 +13,6 @@ export type RewardKind =
   | "profile-badge"
   | "limited-banner"
   | "event-ticket"
-  | "premium-spin"
   | "mystery-drop"
   | "epic-bundle"
   | "mythic-drop";
@@ -106,7 +105,7 @@ const smallRewards: Array<{
   { kind: "marketplace-credits", title: "Marketplace Credits", rarity: "rare", icon: "💠", creditAmount: 150 },
   { kind: "profile-badge", title: "Profile Badge", rarity: "epic", icon: "🛡️" },
   { kind: "event-ticket", title: "Event Ticket", rarity: "rare", icon: "🎫" },
-  { kind: "premium-spin", title: "Premium Spin", rarity: "epic", icon: "🎰" },
+  { kind: "loot-chest", title: "Premium Chest", rarity: "epic", icon: "🎁" },
   { kind: "limited-banner", title: "Limited Banner", rarity: "epic", icon: "🏳️" },
   { kind: "exclusive-cosmetic", title: "Exclusive Cosmetic", rarity: "legendary", icon: "✨" },
 ];
@@ -126,7 +125,7 @@ const premiumRewards: Array<{ title: string; rarity: RewardRarity; icon: string 
 const rareDrops: Array<{ kind: RewardKind; title: string; rarity: RewardRarity; icon: string }> = [
   { kind: "mystery-drop", title: "Mystery Drop", rarity: "epic", icon: "🎲" },
   { kind: "event-ticket", title: "Event Ticket", rarity: "rare", icon: "🎫" },
-  { kind: "premium-spin", title: "Premium Spin", rarity: "epic", icon: "🎰" },
+  { kind: "loot-chest", title: "Premium Chest", rarity: "epic", icon: "🎁" },
 ];
 
 function seeded(level: number, offset = 0): number {

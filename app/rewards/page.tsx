@@ -241,9 +241,6 @@ export default function RewardsPage() {
           <Link href="/rewards/chests" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]">
             Chests
           </Link>
-          <Link href="/rewards/roulette" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]">
-            Roulette
-          </Link>
         </div>
       </main>
     </div>
