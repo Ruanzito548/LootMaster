@@ -39,10 +39,10 @@ type RewardTrackProps = {
 
 export function RewardTrack({ nodes }: RewardTrackProps) {
   return (
-    <div className="overflow-x-auto pb-3">
-      <div className="relative min-w-[1320px] px-2">
-        <div className="theme-progress-track absolute left-8 right-8 top-16 h-[5px] rounded-full" />
-        <div className="flex items-start gap-4">
+    <div className="w-full max-w-full overflow-hidden pb-3">
+      <div className="w-full max-w-full overflow-x-auto overflow-y-visible pb-2">
+        <div className="relative inline-flex min-w-max items-start gap-4 px-2">
+          <div className="theme-progress-track pointer-events-none absolute left-8 right-8 top-16 h-[5px] rounded-full" />
           {nodes.map((node) => {
             const styles = rarityStyles[node.reward.rarity] ?? rarityStyles.common;
             const isClaimed = node.state === "claimed";
@@ -52,7 +52,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
             return (
               <article
                 key={`track-${node.level}`}
-                className={`group relative flex min-w-[168px] flex-1 flex-col items-center gap-3 ${node.isMilestone ? "pt-0" : "pt-1"}`}
+                className={`group relative flex w-[236px] shrink-0 flex-col items-center gap-3 ${node.isMilestone ? "pt-0" : "pt-1"}`}
               >
                 <div
                   className={`z-10 rounded-full border-2 ${styles.border} ${styles.dot} ${styles.glow} ${
@@ -110,7 +110,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                   </span>
                 ) : null}
 
-                <div className="pointer-events-none absolute -top-2 left-1/2 z-20 w-48 -translate-x-1/2 rounded-xl border border-white/10 bg-[#10141c]/96 p-3 text-left opacity-0 shadow-[0_12px_24px_rgba(0,0,0,0.35)] transition-all duration-200 group-hover:-translate-y-1 group-hover:opacity-100">
+                <div className="pointer-events-none absolute -top-2 left-1/2 z-20 w-56 -translate-x-1/2 rounded-xl border border-white/10 bg-[#10141c]/96 p-3 text-left opacity-0 shadow-[0_12px_24px_rgba(0,0,0,0.35)] transition-all duration-200 group-hover:-translate-y-1 group-hover:opacity-100">
                   <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Level {node.level}</p>
                   <p className="mt-1 text-xs font-black text-[color:var(--text-main)]">{node.reward.title}</p>
                   <p className="mt-1 text-[0.68rem] leading-5 text-[color:var(--text-muted)]">{node.reward.description}</p>

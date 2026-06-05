@@ -35,9 +35,16 @@
 
 html {
   scroll-behavior: smooth;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   background: var(--background);
   color: var(--foreground);
   font-family: "Energy", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -90,7 +97,23 @@ body {
 
 .loot-shell {
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   color: #f5f9ff;
+}
+
+#__next,
+.theme-transition-surface,
+.theme-transition-surface main,
+.gm-shell,
+.tbc-shell,
+.midnight-shell,
+.classic-shell,
+.pandaria-shell {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .loot-gold-button,
@@ -1490,6 +1513,22 @@ html[data-game-theme] {
 }
 
 body,
+.theme-transition-surface,
+.theme-transition-surface main,
+.loot-shell,
+.gm-shell,
+.tbc-shell,
+.midnight-shell,
+.classic-shell,
+.pandaria-shell {
+  color: var(--theme-text);
+}
+
+body {
+  background-color: var(--theme-bg) !important;
+  background-image: var(--theme-gradient) !important;
+}
+
 #__next,
 .theme-transition-surface,
 .theme-transition-surface main,
@@ -1499,9 +1538,7 @@ body,
 .midnight-shell,
 .classic-shell,
 .pandaria-shell {
-  background-color: var(--theme-bg) !important;
-  background-image: var(--theme-gradient) !important;
-  color: var(--theme-text);
+  background: transparent !important;
 }
 
 body {

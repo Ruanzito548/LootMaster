@@ -134,7 +134,7 @@ export default function RewardsPage() {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
-          <article className="loot-panel rounded-[1.8rem] p-5 sm:p-6">
+          <article className="loot-panel overflow-hidden rounded-[1.8rem] p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <h2 className="loot-title text-2xl font-black sm:text-3xl">Reward Road</h2>
               <span className="theme-pill-accent rounded-full px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.14em]">

@@ -24,7 +24,7 @@ export default function RootLayout({
           <div aria-hidden className="theme-ambient-overlay pointer-events-none fixed inset-0 z-0" />
           <div className="relative z-10 flex min-h-full flex-col">
             <Navbar />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 overflow-x-hidden">{children}</main>
             <Footer />
           </div>
         </GameThemeProvider>
