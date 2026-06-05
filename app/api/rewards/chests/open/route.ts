@@ -109,6 +109,14 @@ function clampQuantity(quantity: number): number {
   return Math.max(0, Math.floor(Number.isFinite(quantity) ? quantity : 0));
 }
 
+function chestRarityToInventoryRarity(rarity: ChestDefinition["rarity"]): InventoryItem["rarity"] {
+  if (rarity === "mythic") {
+    return "artifact";
+  }
+
+  return rarity;
+}
+
 function mergeInventoryItem(inventory: InventoryItem[], nextItem: InventoryItem): InventoryItem[] {
   const index = inventory.findIndex(
     (item) => item.name === nextItem.name && item.category === nextItem.category && item.rarity === nextItem.rarity,
@@ -143,7 +151,7 @@ function incrementChest(inventory: InventoryItem[], chestId: ChestId, quantity =
         category: "Chest",
         description: `${chestDefinition.title} used in rewards opening.`,
         quantity: clampQuantity(quantity),
-        rarity: chestDefinition.rarity,
+        rarity: chestRarityToInventoryRarity(chestDefinition.rarity),
         iconPath: "/itens/general/ticket.png",
       },
     ];
