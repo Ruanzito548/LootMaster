@@ -127,8 +127,11 @@ export async function GET(request: NextRequest) {
       keys: 0,
       inventory: [],
       transactions: [],
-      inventorySlots: 9,
-      vipInventory: false,
+      totalSpentCents: 0,
+      level: 1,
+      levelXpCents: 0,
+      nextLevelXpCents: 25_000,
+      highestRewardedLevel: 1,
       authProvider: "discord",
       createdAt: new Date().toISOString(),
     });

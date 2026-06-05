@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { buildLevelReward, calculateLevelProgress, formatMoneyUsd } from "../../../lib/level-rewards";
 import { useProfileSession } from "../use-profile-session";
 import { subscribeToInventoryItems, type InventoryCatalogItem, type WowRarity } from "../../../lib/inventory-items";
 import { type InventoryItem } from "../../../lib/profile-data";
@@ -70,55 +71,20 @@ const lootboxOdds: Array<{ rarity: WowRarity; chance: number }> = [
   { rarity: "legendary", chance: 1 },
 ];
 
-type ContextMenuState = {
-  x: number;
-  y: number;
-  slotIndex: number;
-};
-
-const totalSlots = 15;
-const baseSlots = 9;
-
 export default function InventoryPage() {
   const { status, profile, saveProfile } = useProfileSession();
   const [catalogItems, setCatalogItems] = useState<InventoryCatalogItem[]>([]);
-  const [expanding, setExpanding] = useState(false);
   const [opening, setOpening] = useState(false);
   const [openingPhase, setOpeningPhase] = useState("");
   const [lastDropName, setLastDropName] = useState<string | null>(null);
   const [lastDropRarity, setLastDropRarity] = useState<WowRarity | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
-  const [draggingSlot, setDraggingSlot] = useState<number | null>(null);
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
   useEffect(() => subscribeToInventoryItems(setCatalogItems), []);
 
-  useEffect(() => {
-    const closeMenu = () => setContextMenu(null);
-    window.addEventListener("click", closeMenu);
-    return () => window.removeEventListener("click", closeMenu);
-  }, []);
-
-  const isVip = profile?.vipInventory === true;
-  const unlockedSlots = isVip ? totalSlots : Math.max(baseSlots, profile?.inventorySlots ?? baseSlots);
   const inventory = useMemo(() => profile?.inventory ?? [], [profile?.inventory]);
-
-  const openableCount = Math.max(0, unlockedSlots - inventory.length);
-
-  const visibleItems = useMemo(
-    () =>
-      inventory.map((item) => ({
-        id: item.id,
-        name: item.name,
-        rarity: item.rarity,
-        iconPath: item.iconPath || "/itens/general/unknown.png",
-        gameId: "general",
-      })),
-    [inventory],
-  );
-
-  const selectedItem = selectedSlot !== null ? inventory[selectedSlot] : null;
+  const progress = calculateLevelProgress(profile?.totalSpentCents ?? 0);
+  const nextReward = buildLevelReward(progress.nextLevel, `${profile?.uid ?? "inventory"}-preview`);
 
   const clampQuantity = (value: number) => Math.max(0, Math.floor(value));
 
@@ -219,13 +185,7 @@ export default function InventoryPage() {
       lootCoins: profile.lootCoins + payout,
     });
 
-    if (ok) {
-      setFeedback(`Sold ${item.name} for ${payout.toLocaleString("pt-BR")} coins.`);
-      setSelectedSlot(null);
-      setContextMenu(null);
-    } else {
-      setFeedback("Could not sell item right now.");
-    }
+    setFeedback(ok ? `Sold ${item.name} for ${payout.toLocaleString("pt-BR")} coins.` : "Could not sell item right now.");
   };
 
   const consumeItem = async (slotIndex: number) => {
@@ -262,37 +222,7 @@ export default function InventoryPage() {
       tickets: profile.tickets + 1,
     });
 
-    if (ok) {
-      setFeedback(`${item.name} used. +1 ticket added.`);
-      setSelectedSlot(null);
-      setContextMenu(null);
-    } else {
-      setFeedback("Could not use item right now.");
-    }
-  };
-
-  const onDropToSlot = async (targetSlot: number) => {
-    if (draggingSlot === null || draggingSlot === targetSlot || !profile) {
-      setDraggingSlot(null);
-      return;
-    }
-
-    if (targetSlot >= inventory.length || draggingSlot >= inventory.length) {
-      setDraggingSlot(null);
-      return;
-    }
-
-    const nextInventory = [...inventory];
-    const temp = nextInventory[draggingSlot];
-    nextInventory[draggingSlot] = nextInventory[targetSlot];
-    nextInventory[targetSlot] = temp;
-
-    const ok = await saveProfile({ inventory: nextInventory });
-    if (!ok) {
-      setFeedback("Could not move item right now.");
-    }
-
-    setDraggingSlot(null);
+    setFeedback(ok ? `${item.name} used. +1 ticket added.` : "Could not use item right now.");
   };
 
   const createTradeOffer = async (slotIndex: number) => {
@@ -330,8 +260,6 @@ export default function InventoryPage() {
     } catch {
       setFeedback("Could not copy trade offer to clipboard.");
     }
-
-    setContextMenu(null);
   };
 
   const openLootbox = async () => {
@@ -341,11 +269,6 @@ export default function InventoryPage() {
 
     if (profile.keys <= 0) {
       setFeedback("You need at least 1 key.");
-      return;
-    }
-
-    if (openableCount <= 0) {
-      setFeedback("Inventory full. Free a slot before opening.");
       return;
     }
 
@@ -382,12 +305,6 @@ export default function InventoryPage() {
     setOpeningPhase("");
   };
 
-  const upgradeToVip = async () => {
-    setExpanding(true);
-    await saveProfile({ vipInventory: true, inventorySlots: totalSlots });
-    setExpanding(false);
-  };
-
   if (status === "loading") {
     return (
       <div className="loot-shell">
@@ -418,266 +335,209 @@ export default function InventoryPage() {
 
   return (
     <div className="loot-shell">
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-10 lg:px-8">
         <div className="space-y-4">
           <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">Inventory</p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Minecraft-style Inventory</h1>
+          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">Unlimited vault</h1>
           <p className="loot-muted max-w-2xl text-base leading-8">
-            3x3 base grid. Unlock extra slots if you are VIP.
+            All rewards land here automatically. No slot limits, no VIP lock, just a clean account vault.
           </p>
         </div>
 
-        <section className="mt-8 grid gap-5 lg:grid-cols-3">
-          <article className="loot-panel rounded-[1.75rem] p-8">
-            <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#ffc94d]">Loot Coins</p>
-            <h2 className="loot-title mt-4 text-5xl font-black text-[#ffcf57]">{profile.lootCoins.toLocaleString("pt-BR")}</h2>
-            <p className="loot-muted mt-4 text-sm leading-7">Available balance for marketplace purchases.</p>
-          </article>
-
-          <article className="loot-panel rounded-[1.75rem] p-8">
-            <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#8dd0ff]">Tickets</p>
-            <h2 className="loot-title mt-4 text-5xl font-black text-[#8dd0ff]">{profile.tickets}</h2>
-            <p className="loot-muted mt-4 text-sm leading-7">Use for roulettes, rewards, and seasonal perks.</p>
-          </article>
-
-          <article className="loot-panel rounded-[1.75rem] p-8">
-            <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#f7ba2c]">Keys</p>
-            <h2 className="loot-title mt-4 text-5xl font-black text-[#ffd76a]">{profile.keys}</h2>
-            <p className="loot-muted mt-4 text-sm leading-7">Required to open chests and special rewards.</p>
-          </article>
-        </section>
-
-        <section className="loot-panel mt-8 rounded-[2rem] p-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="loot-title text-3xl font-black">Key opening</h2>
-            <button
-              type="button"
-              onClick={() => void openLootbox()}
-              disabled={opening}
-              className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
-            >
-              {opening ? "Opening..." : "Open with 1 key"}
-            </button>
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-[#ffffff14] bg-[#09111f]/70 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Drop odds</p>
-              <ul className="mt-3 space-y-2 text-sm">
-                {lootboxOdds.map((entry) => (
-                  <li key={entry.rarity} className="flex items-center justify-between">
-                    <span className={wowRarityColor[entry.rarity]}>{entry.rarity.toUpperCase()}</span>
-                    <span className="font-bold text-[#d7e6ff]">{entry.chance}%</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className={`rounded-xl border border-[#ffffff14] bg-[#09111f]/70 p-4 ${lastDropRarity ? wowRarityHoverGlow[lastDropRarity] : ""}`}>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Drop result</p>
-              <p className="mt-3 text-sm text-[#d7e6ff]">
-                {opening ? (
-                  <span className="inline-block rounded bg-[#050c15]/80 px-3 py-1 text-xs font-black tracking-[0.16em] animate-pulse">
-                    {openingPhase || "ROLLING"}
-                  </span>
-                ) : lastDropName ? (
-                  <>
-                    <span className={lastDropRarity ? wowRarityColor[lastDropRarity] : "text-white"}>{lastDropName}</span>
-                    <span className="ml-2 text-xs uppercase tracking-[0.16em] text-[#9fb8db]">
-                      {lastDropRarity}
-                    </span>
-                  </>
-                ) : (
-                  "Use a key to roll your next item."
-                )}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="loot-panel mt-8 rounded-[2rem] p-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="loot-title text-3xl font-black">Item grid</h2>
-            <p className="loot-muted text-sm">
-              Slots unlocked: <span className="font-black text-[#ffcf57]">{unlockedSlots}</span> / {totalSlots}
-            </p>
-          </div>
-
-          <div className="mt-6 grid grid-cols-3 gap-3 sm:max-w-[21rem]">
-            {Array.from({ length: totalSlots }).map((_, index) => {
-              const item = visibleItems[index];
-              const isLocked = index >= unlockedSlots;
-              const rarityBorder = item ? wowRarityBorder[item.rarity] || "border-[#d6d6d6]/25" : "border-[#d6d6d6]/25";
-              const rarityHoverBg = item ? wowRarityHoverBackground[item.rarity] || "" : "";
-              const rarityHoverGlow = item ? wowRarityHoverGlow[item.rarity] || "" : "";
-
-              return (
-                <div
-                  key={`slot-${index}`}
-                  className={`group relative aspect-square overflow-visible rounded-md border p-1 transition-colors duration-300 ${
-                    isLocked
-                      ? "border-[#772e2e] bg-[#2a1010]/80"
-                      : `${rarityBorder} ${rarityHoverBg} bg-[#0f1a27]/90 ${item ? "inv-slot-has-item" : ""}`
-                  }`}
-                  title={isLocked ? "Locked slot" : undefined}
-                  onClick={() => {
-                    if (!isLocked && item) {
-                      setSelectedSlot(index);
-                    }
-                  }}
-                  onContextMenu={(event) => {
-                    if (!item || isLocked) {
-                      return;
-                    }
-
-                    event.preventDefault();
-                    setSelectedSlot(index);
-                    setContextMenu({ x: event.clientX, y: event.clientY, slotIndex: index });
-                  }}
-                  draggable={Boolean(item && !isLocked)}
-                  onDragStart={() => {
-                    if (!item || isLocked) {
-                      return;
-                    }
-
-                    setDraggingSlot(index);
-                  }}
-                  onDragOver={(event) => {
-                    if (!isLocked) {
-                      event.preventDefault();
-                    }
-                  }}
-                  onDrop={() => void onDropToSlot(index)}
-                  onDragEnd={() => setDraggingSlot(null)}
-                >
-                  {item && !isLocked ? (
-                    <>
-                      <div
-                        className={`relative h-full w-full rounded-sm bg-[#101826] transition-all duration-300 group-hover:brightness-115 ${rarityHoverGlow}`}
-                      >
-                        <Image
-                          src={item.iconPath}
-                          alt={item.name}
-                          fill
-                          sizes="96px"
-                          className="object-cover transition-transform duration-300 group-hover:scale-110"
-                        />
-                        <span
-                          aria-hidden
-                          className={`inv-radial-overlay inv-radial-${item.rarity} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
-                        />
-                      </div>
-                      <div className="pointer-events-none absolute bottom-1 right-1 rounded border border-[#ffffff1a] bg-[#04070d]/80 px-1.5 py-[1px] text-[10px] font-bold text-[#ffcf57]">
-                        {(rarityValue[item.rarity] ?? 0).toLocaleString("pt-BR")}
-                      </div>
-                      <div className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded border border-[#ffffff1f] bg-[#05070b]/95 px-2 py-1 text-xs font-bold opacity-0 shadow-lg transition-all duration-200 group-hover:-translate-y-0.5 group-hover:opacity-100 whitespace-nowrap">
-                        <span className={wowRarityColor[item.rarity] || "text-white"}>{item.name}</span>
-                      </div>
-                    </>
-                  ) : isLocked ? (
-                    <div className="flex h-full items-center justify-center text-[10px] font-bold uppercase tracking-[0.16em] text-[#ff9b9b]">
-                      VIP
-                    </div>
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-[10px] font-bold uppercase tracking-[0.16em] text-[#7a8498]">
-                      Empty
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {selectedItem ? (
-            <div className="mt-5 rounded-xl border border-[#ffffff18] bg-[#08111f]/70 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Quick actions</p>
-              <p className="mt-2 text-sm text-[#dbe6fa]">
-                Selected: <span className={wowRarityColor[selectedItem.rarity]}>{selectedItem.name}</span>
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => void consumeItem(selectedSlot as number)}
-                  className="loot-gold-button rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.12em]"
-                >
-                  Use
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void sellItem(selectedSlot as number)}
-                  className="loot-secondary-button rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.12em]"
-                >
-                  Sell
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void createTradeOffer(selectedSlot as number)}
-                  className="loot-secondary-button rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.12em]"
-                >
-                  Trade
-                </button>
+        <section className="mt-8 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+          <article className="loot-panel rounded-[2rem] p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="loot-kicker text-sm uppercase tracking-[0.24em] text-[#ffc94d]">Loot Coins</p>
+                <h2 className="loot-title mt-4 text-5xl font-black text-[#ffcf57]">{profile.lootCoins.toLocaleString("pt-BR")}</h2>
+                <p className="loot-muted mt-4 text-sm leading-7">Available balance for marketplace purchases.</p>
+              </div>
+              <div className="rounded-[1.25rem] border border-[#ffffff12] bg-[#09111f]/70 px-4 py-3 text-right">
+                <p className="text-[0.7rem] font-bold uppercase tracking-[0.2em] text-[#9fb8db]">Level</p>
+                <p className="mt-2 text-3xl font-black text-[#8dd0ff]">{progress.level}</p>
               </div>
             </div>
-          ) : null}
 
-          {feedback ? <p className="mt-4 text-sm font-semibold text-[#9ed5ff]">{feedback}</p> : null}
-
-          {contextMenu ? (
-            <div
-              className="fixed z-50 min-w-[160px] rounded-lg border border-[#ffffff1f] bg-[#060d17]/95 p-1 shadow-2xl"
-              style={{ left: contextMenu.x, top: contextMenu.y }}
-            >
-              <button
-                type="button"
-                className="w-full rounded px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.12em] text-[#d7e6ff] hover:bg-[#0d1f37]"
-                onClick={() => void consumeItem(contextMenu.slotIndex)}
-              >
-                Use
-              </button>
-              <button
-                type="button"
-                className="w-full rounded px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.12em] text-[#ffd8ad] hover:bg-[#2d1a08]"
-                onClick={() => void sellItem(contextMenu.slotIndex)}
-              >
-                Sell
-              </button>
-              <button
-                type="button"
-                className="w-full rounded px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.12em] text-[#cde8ff] hover:bg-[#102943]"
-                onClick={() => void createTradeOffer(contextMenu.slotIndex)}
-              >
-                Trade
-              </button>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[1.25rem] border border-[#ffffff12] bg-[#09111f]/70 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9fb8db]">XP</p>
+                <p className="mt-2 text-2xl font-black text-[#8dd0ff]">{(progress.xpCents / 100).toFixed(2)}</p>
+              </div>
+              <div className="rounded-[1.25rem] border border-[#ffffff12] bg-[#09111f]/70 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9fb8db]">Next reward</p>
+                <p className="mt-2 text-lg font-black text-[#ffcf57]">{nextReward.title}</p>
+              </div>
+              <div className="rounded-[1.25rem] border border-[#ffffff12] bg-[#09111f]/70 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9fb8db]">Items</p>
+                <p className="mt-2 text-2xl font-black text-[#dff7ff]">{inventory.length}</p>
+              </div>
             </div>
-          ) : null}
 
-          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-[#7f93b4]">
-            Drag and drop items to reorder occupied slots.
-          </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/profile" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold">
+                Back to profile
+              </Link>
+              <Link href="/rewards" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-sm font-semibold">
+                Rewards
+              </Link>
+            </div>
+          </article>
 
-          {!isVip ? (
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <p className="loot-muted text-sm">Upgrade to VIP to unlock extra slots (up to 15).</p>
+          <article className="loot-panel rounded-[2rem] p-8">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="loot-title text-3xl font-black">Key opening</h2>
               <button
                 type="button"
-                onClick={() => void upgradeToVip()}
-                disabled={expanding}
+                onClick={() => void openLootbox()}
+                disabled={opening}
                 className="loot-gold-button rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed"
               >
-                {expanding ? "Unlocking..." : "Unlock VIP slots"}
+                {opening ? "Opening..." : "Open with 1 key"}
               </button>
             </div>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-xl border border-[#ffffff14] bg-[#09111f]/70 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Drop odds</p>
+                <ul className="mt-3 space-y-2 text-sm">
+                  {lootboxOdds.map((entry) => (
+                    <li key={entry.rarity} className="flex items-center justify-between">
+                      <span className={wowRarityColor[entry.rarity]}>{entry.rarity.toUpperCase()}</span>
+                      <span className="font-bold text-[#d7e6ff]">{entry.chance}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className={`rounded-xl border border-[#ffffff14] bg-[#09111f]/70 p-4 ${lastDropRarity ? wowRarityHoverGlow[lastDropRarity] : ""}`}>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Drop result</p>
+                <p className="mt-3 text-sm text-[#d7e6ff]">
+                  {opening ? (
+                    <span className="inline-block rounded bg-[#050c15]/80 px-3 py-1 text-xs font-black tracking-[0.16em] animate-pulse">
+                      {openingPhase || "ROLLING"}
+                    </span>
+                  ) : lastDropName ? (
+                    <>
+                      <span className={lastDropRarity ? wowRarityColor[lastDropRarity] : "text-white"}>{lastDropName}</span>
+                      <span className="ml-2 text-xs uppercase tracking-[0.16em] text-[#9fb8db]">{lastDropRarity}</span>
+                    </>
+                  ) : (
+                    "Use a key to roll your next item."
+                  )}
+                </p>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section className="loot-panel mt-8 rounded-[2rem] p-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="loot-title text-3xl font-black">Inventory items</h2>
+              <p className="loot-muted mt-2 text-sm">Everything stays organized in a single unlimited vault.</p>
+            </div>
+            <div className="rounded-full border border-[#ffffff14] bg-[#09111f]/70 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#9fb8db]">
+              {formatMoneyUsd(progress.totalSpentUsd)} spent
+            </div>
+          </div>
+
+          {feedback ? <p className="mt-4 text-sm font-semibold text-[#8dd0ff]">{feedback}</p> : null}
+
+          {inventory.length > 0 ? (
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {inventory.map((item, index) => {
+                const rarityBorder = wowRarityBorder[item.rarity] || "border-[#d6d6d6]/25";
+                const rarityHoverBg = wowRarityHoverBackground[item.rarity] || "";
+                const rarityHoverGlow = wowRarityHoverGlow[item.rarity] || "";
+
+                return (
+                  <article
+                    key={item.id}
+                    className={`group overflow-hidden rounded-[1.5rem] border bg-[#09111f]/90 transition-transform duration-300 hover:-translate-y-1 ${rarityBorder} ${rarityHoverBg} ${rarityHoverGlow}`}
+                  >
+                    <div className="grid gap-4 p-4 sm:grid-cols-[96px_1fr]">
+                      <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-[1.25rem] border border-white/10 bg-[#06101a]">
+                        <div className={`absolute inset-0 ${item.rarity === "legendary" ? "bg-[#ff8000]/10" : "bg-[#4dc6ff]/10"}`} />
+                        <Image
+                          src={item.iconPath || "/itens/general/ticket.png"}
+                          alt={item.name}
+                          width={84}
+                          height={84}
+                          className="relative h-20 w-20 object-contain"
+                        />
+                      </div>
+
+                      <div className="flex min-w-0 flex-col justify-between">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="loot-title text-xl font-black leading-tight">{item.name}</h3>
+                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-[#d7e6ff]">
+                              {item.quantity}x
+                            </span>
+                          </div>
+                          <p className={`mt-2 text-xs font-bold uppercase tracking-[0.18em] ${wowRarityColor[item.rarity] ?? "text-[#d7e6ff]"}`}>
+                            {item.rarity}
+                          </p>
+                          <p className="loot-muted mt-3 text-sm leading-6">{item.description}</p>
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void sellItem(index)}
+                            className="loot-secondary-button rounded-full px-4 py-2 text-xs font-semibold"
+                          >
+                            Sell
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void consumeItem(index)}
+                            className="loot-secondary-button rounded-full px-4 py-2 text-xs font-semibold"
+                          >
+                            Use
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void createTradeOffer(index)}
+                            className="loot-secondary-button rounded-full px-4 py-2 text-xs font-semibold"
+                          >
+                            Copy offer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           ) : (
-            <p className="mt-6 text-sm font-semibold text-emerald-400">VIP slots unlocked.</p>
+            <div className="mt-6 rounded-[1.5rem] border border-dashed border-white/15 bg-[#09111f]/70 p-8 text-center">
+              <p className="loot-title text-2xl font-black">Inventory is empty</p>
+              <p className="loot-muted mt-3 text-sm">Open a chest or wait for a level reward to populate the vault.</p>
+            </div>
           )}
+        </section>
+
+        <section className="mt-8 grid gap-5 lg:grid-cols-2">
+          <article className="loot-panel rounded-[1.75rem] p-8">
+            <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em] text-[#8dd0ff]">Next level</p>
+            <h2 className="loot-title mt-4 text-3xl font-black">{nextReward.title}</h2>
+            <p className="loot-muted mt-4 text-base leading-7">{nextReward.description}</p>
+          </article>
+
+          <article className="loot-panel rounded-[1.75rem] p-8">
+            <p className="loot-kicker text-sm font-bold uppercase tracking-[0.24em] text-[#f7ba2c]">Progress</p>
+            <h2 className="loot-title mt-4 text-3xl font-black">{progress.progressPercent}% to level {progress.nextLevel}</h2>
+            <p className="loot-muted mt-4 text-base leading-7">Every $250 spent creates the next level and its automatic reward.</p>
+          </article>
         </section>
 
         <div className="mt-12 flex flex-wrap gap-3">
           <Link href="/profile" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
             Back to profile
           </Link>
-          <Link href="/" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
-            Back to home
+          <Link href="/rewards" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
+            View rewards
           </Link>
         </div>
       </main>

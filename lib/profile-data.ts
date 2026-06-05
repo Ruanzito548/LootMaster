@@ -1,6 +1,7 @@
 import { User } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 
+import { calculateLevelProgress } from "./level-rewards";
 import { db, firebaseEnabled } from "./firebase";
 
 export type InventoryItem = {
@@ -41,8 +42,11 @@ export type UserProfile = {
   keys: number;
   inventory: InventoryItem[];
   transactions: ProfileTransaction[];
-  inventorySlots: number;
-  vipInventory: boolean;
+  totalSpentCents: number;
+  level: number;
+  levelXpCents: number;
+  nextLevelXpCents: number;
+  highestRewardedLevel: number;
   discordId?: string;
   discordUsername?: string;
 };
@@ -157,6 +161,8 @@ function isTransaction(value: unknown): value is ProfileTransaction {
 }
 
 function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" | "photoURL">): UserProfile {
+  const progress = calculateLevelProgress(0);
+
   return {
     uid: user.uid,
     username: user.displayName?.trim() || "Adventurer",
@@ -168,12 +174,15 @@ function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" |
     keys: 4,
     inventory: defaultInventory,
     transactions: defaultTransactions,
-    inventorySlots: 9,
-    vipInventory: false,
+    totalSpentCents: progress.totalSpentCents,
+    level: progress.level,
+    levelXpCents: progress.xpCents,
+    nextLevelXpCents: progress.nextLevelXpCents,
+    highestRewardedLevel: progress.level,
   };
 }
 
-function mapUserProfile(uid: string, source: Record<string, unknown>): UserProfile {
+export function mapUserProfile(uid: string, source: Record<string, unknown>): UserProfile {
   const fallback = createDefaultProfile({ uid, displayName: null, email: null, photoURL: null });
 
   const inventoryRaw = Array.isArray(source.inventory) ? source.inventory : [];
@@ -181,6 +190,8 @@ function mapUserProfile(uid: string, source: Record<string, unknown>): UserProfi
 
   const inventory = inventoryRaw.filter(isInventoryItem);
   const transactions = transactionsRaw.filter(isTransaction);
+  const spentCents = getNumber(source.totalSpentCents, fallback.totalSpentCents);
+  const progress = calculateLevelProgress(spentCents);
 
   return {
     uid,
@@ -193,8 +204,11 @@ function mapUserProfile(uid: string, source: Record<string, unknown>): UserProfi
     keys: getNumber(source.keys, fallback.keys),
     inventory: inventory.length > 0 ? inventory : fallback.inventory,
     transactions: transactions.length > 0 ? transactions : fallback.transactions,
-    inventorySlots: getNumber(source.inventorySlots, fallback.inventorySlots),
-    vipInventory: source.vipInventory === true,
+    totalSpentCents: spentCents,
+    level: getNumber(source.level, progress.level),
+    levelXpCents: getNumber(source.levelXpCents, progress.xpCents),
+    nextLevelXpCents: getNumber(source.nextLevelXpCents, progress.nextLevelXpCents),
+    highestRewardedLevel: getNumber(source.highestRewardedLevel, progress.level),
     ...(typeof source.discordId === "string" && { discordId: source.discordId }),
     ...(typeof source.discordUsername === "string" && { discordUsername: source.discordUsername }),
   };

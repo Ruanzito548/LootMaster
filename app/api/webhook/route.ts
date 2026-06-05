@@ -9,6 +9,7 @@ import {
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { syncPaidOrderToWalletBackend } from "@/lib/wallet-backend";
+import { buildLevelRewards, calculateLevelProgress } from "@/lib/level-rewards";
 
 /**
  * Stripe webhook endpoint.
@@ -314,6 +315,115 @@ async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<voi
   });
 }
 
+async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Promise<void> {
+  const adminDb = getAdminDb();
+  const meta = session.metadata ?? {};
+  const customerEmail = (session.customer_email ?? "").trim().toLowerCase();
+  let customerUid = typeof meta.customerUid === "string" ? meta.customerUid.trim() : "";
+  let customerData: Record<string, unknown> | null = null;
+
+  if (customerUid) {
+    const customerDoc = await adminDb.collection("users").doc(customerUid).get();
+
+    if (customerDoc.exists) {
+      customerData = customerDoc.data() as Record<string, unknown>;
+    } else {
+      customerUid = "";
+    }
+  }
+
+  if (!customerUid && customerEmail) {
+    const customerSnapshot = await adminDb
+      .collection("users")
+      .where("email", "==", customerEmail)
+      .limit(1)
+      .get();
+
+    if (!customerSnapshot.empty) {
+      customerUid = customerSnapshot.docs[0].id;
+      customerData = customerSnapshot.docs[0].data() as Record<string, unknown>;
+    }
+  }
+
+  if (!customerUid || !customerData) {
+    return;
+  }
+
+  const spendCents = Math.max(0, Math.round((session.amount_total ?? 0)));
+
+  if (spendCents <= 0) {
+    return;
+  }
+
+  const userRef = adminDb.collection("users").doc(customerUid);
+  const rewardCreditRef = adminDb.collection("level-reward-credits").doc(session.id);
+
+  await adminDb.runTransaction(async (tx) => {
+    const rewardCreditSnapshot = await tx.get(rewardCreditRef);
+
+    if (rewardCreditSnapshot.exists) {
+      return;
+    }
+
+    const snapshot = await tx.get(userRef);
+
+    if (!snapshot.exists) {
+      return;
+    }
+
+    const userData = snapshot.data() as Record<string, unknown>;
+    const currentSpentCents =
+      typeof userData.totalSpentCents === "number" && Number.isFinite(userData.totalSpentCents)
+        ? userData.totalSpentCents
+        : 0;
+    const nextSpentCents = currentSpentCents + spendCents;
+    const currentProgress = calculateLevelProgress(currentSpentCents);
+    const nextProgress = calculateLevelProgress(nextSpentCents);
+    const currentRewardLevel =
+      typeof userData.highestRewardedLevel === "number" && Number.isFinite(userData.highestRewardedLevel)
+        ? userData.highestRewardedLevel
+        : currentProgress.level;
+
+    const nextInventory = Array.isArray(userData.inventory)
+      ? [...(userData.inventory as unknown[])]
+      : [];
+
+    const rewardLevels = nextProgress.level > currentRewardLevel
+      ? buildLevelRewards(currentRewardLevel + 1, nextProgress.level, session.id)
+      : [];
+
+    for (const reward of rewardLevels) {
+      nextInventory.push(reward.inventoryItem);
+    }
+
+    tx.set(
+      userRef,
+      {
+        totalSpentCents: nextSpentCents,
+        level: nextProgress.level,
+        levelXpCents: nextProgress.xpCents,
+        nextLevelXpCents: nextProgress.nextLevelXpCents,
+        highestRewardedLevel: Math.max(currentRewardLevel, nextProgress.level),
+        inventory: nextInventory,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true },
+    );
+
+    tx.set(
+      rewardCreditRef,
+      {
+        orderId: session.id,
+        customerUid,
+        spendCents,
+        levelsGranted: rewardLevels.map((reward) => reward.level),
+        createdAt: new Date().toISOString(),
+      },
+      { merge: true },
+    );
+  });
+}
+
 export async function POST(request: Request): Promise<Response> {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -357,6 +467,12 @@ export async function POST(request: Request): Promise<Response> {
         await processFeeTransfer(session);
       } catch (err) {
         console.error("[Stripe Webhook] Could not process fee transfer:", err);
+      }
+
+      try {
+        await applyPurchaseLevelRewards(session);
+      } catch (err) {
+        console.error("[Stripe Webhook] Could not apply level rewards:", err);
       }
 
       try {

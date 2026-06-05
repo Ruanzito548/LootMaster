@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { User, onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 
 import { auth, db, firebaseEnabled } from "../../lib/firebase";
-import { fetchUserProfile, ensureUserProfileDoc, UserProfile } from "../../lib/profile-data";
+import { ensureUserProfileDoc, mapUserProfile, UserProfile } from "../../lib/profile-data";
 
 type SessionStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -27,8 +27,6 @@ type EditableProfileFields = Partial<
     | "keys"
     | "inventory"
     | "transactions"
-    | "inventorySlots"
-    | "vipInventory"
   >
 >;
 
@@ -52,7 +50,12 @@ export function useProfileSession() {
       return;
     }
 
+    let unsubscribeProfile: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+      unsubscribeProfile?.();
+      unsubscribeProfile = null;
+
       if (!nextUser) {
         setState({ status: "unauthenticated", user: null, profile: null, error: null });
         return;
@@ -63,13 +66,24 @@ export function useProfileSession() {
       void (async () => {
         try {
           await ensureUserProfileDoc(nextUser);
-          const profile = await fetchUserProfile(nextUser.uid);
 
-          setState({
-            status: "authenticated",
-            user: nextUser,
-            profile,
-            error: null,
+          unsubscribeProfile = onSnapshot(doc(db, "users", nextUser.uid), (snapshot) => {
+            if (!snapshot.exists()) {
+              setState({
+                status: "authenticated",
+                user: nextUser,
+                profile: null,
+                error: "Could not load your profile.",
+              });
+              return;
+            }
+
+            setState({
+              status: "authenticated",
+              user: nextUser,
+              profile: mapUserProfile(nextUser.uid, snapshot.data() as Record<string, unknown>),
+              error: null,
+            });
           });
         } catch (error) {
           setState({
@@ -82,7 +96,10 @@ export function useProfileSession() {
       })();
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribeProfile?.();
+      unsubscribe();
+    };
   }, [reloadToken]);
 
   const saveProfile = useCallback(
