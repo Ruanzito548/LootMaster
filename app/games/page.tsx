@@ -1,102 +1,110 @@
 import Link from "next/link";
-import { games } from "../data/games";
+import { ArrowRight, Flame, ShieldCheck, Sparkles } from "lucide-react";
 
-function getGameCardStyle(gameId: string) {
-  if (gameId === "tbc-anniversary") {
-    return {
-      backgroundImage:
-        "linear-gradient(rgba(4,10,7,0.46),rgba(4,10,7,0.58)), url('/wow/wow-tbc/tbc-logo.jpg')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-    };
-  }
+import { games, serviceCategories } from "../data/games";
 
-  if (gameId === "retail") {
-    return {
-      backgroundImage:
-        "linear-gradient(rgba(5,10,24,0.46),rgba(5,10,24,0.58)), url('/wow/wow-retail/midinight-logo.jpeg')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-    };
-  }
-
-  if (gameId === "classic-era") {
-    return {
-      backgroundImage:
-        "linear-gradient(rgba(36,24,12,0.46),rgba(20,13,8,0.58)), url('/wow/wow-classic-era/classic-era-logo.jpg')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-    };
-  }
-
-  if (gameId === "mist-of-pandaria") {
-    return {
-      backgroundImage:
-        "linear-gradient(rgba(8,30,24,0.46),rgba(4,15,11,0.58)), url('/wow/wow-pandaria/pandaria-logo.jpg')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-    };
-  }
-
-  return {
-    backgroundImage:
-      "linear-gradient(180deg, rgba(18, 44, 84, 0.78), rgba(5, 12, 24, 0.9))",
-  };
-}
+const heroArtByGame: Record<string, string> = {
+  "tbc-anniversary": "/wow/wow-tbc/tbc-logo.jpg",
+  retail: "/wow/wow-retail/midinight-logo.jpeg",
+  "classic-era": "/wow/wow-classic-era/classic-era-logo.jpg",
+  "mist-of-pandaria": "/wow/wow-pandaria/pandaria-logo.jpg",
+};
 
 export default function GamesIndexPage() {
   return (
-    <div className="loot-shell">
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
-        <div className="space-y-4">
-          <p className="loot-kicker text-sm font-bold uppercase tracking-[0.28em] text-[#8dd0ff]">
-            Games Hub
-          </p>
-          <h1 className="loot-title text-4xl font-black leading-tight sm:text-5xl">
-            Choose your game and continue your purchase
-          </h1>
-          <p className="loot-muted max-w-2xl text-base leading-8">
-            Each entry opens a dedicated storefront with gold, boosts, and accounts.
-          </p>
-        </div>
+    <div className="loot-shell gm-shell">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+        <section className="gm-glass rounded-[1.8rem] p-6 sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+            <div>
+              <span className="gm-badge inline-flex items-center gap-2 px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.17em]">
+                <Sparkles className="h-3.5 w-3.5" />
+                Games launcher
+              </span>
+              <h1 className="mt-5 font-throne text-5xl font-black leading-[0.96] text-[#eaf4ff] sm:text-6xl">Pick A Realm</h1>
+              <p className="mt-4 max-w-xl text-sm leading-7 text-[#a4bddc] sm:text-base">
+                Enter a focused marketplace per expansion with dedicated gold, account and boost flows.
+              </p>
 
-        <section className="mt-8 grid gap-5 lg:grid-cols-2">
-          {games.map((game) => (
-            <Link
-              key={game.id}
-              href={`/games/${game.id}`}
-              className="group relative min-h-[22rem] overflow-hidden rounded-[1.75rem] border border-[#4dc6ff]/12 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[#4dc6ff]/30 hover:shadow-[0_18px_38px_rgba(22,118,196,0.3)] sm:min-h-[24rem]"
-              style={getGameCardStyle(game.id)}
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/52 via-black/18 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-65" />
-              <div className="relative z-10 flex h-full items-end justify-between gap-4">
-                <div className="max-w-[75%]">
-                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b7e7ff]">{game.shortTitle}</p>
-                  <h2 className="loot-title mt-2 text-3xl font-black leading-tight">{game.title}</h2>
-                  <p className="loot-muted mt-4 text-sm leading-7 text-[#e5d4af]">{game.description}</p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href="/" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase tracking-[0.13em]">
+                  Back home
+                </Link>
+                <Link href="/rewards" className="gm-button gm-button-primary gm-shine inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase tracking-[0.13em]">
+                  Rewards track
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <article className="gm-panel rounded-xl px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className="rounded-lg bg-[#3ba8ff]/20 p-2 text-[#6ee7ff]"><Flame className="h-4 w-4" /></span>
+                  <div>
+                    <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#8baed8]">Live orders</p>
+                    <p className="text-sm font-black text-[#e5f3ff]">Fast queue updates</p>
+                  </div>
                 </div>
+              </article>
 
-                <div className="flex flex-col items-end gap-3">
-                  <span className="loot-badge-blue rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]">
-                    {game.tag}
-                  </span>
-                  <span className="rounded-full border border-[#84d5ff]/25 bg-[#0d3f7a]/40 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#d8f4ff]">
-                    Open
+              <article className="gm-panel rounded-xl px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className="rounded-lg bg-[#22c55e]/20 p-2 text-[#86efac]"><ShieldCheck className="h-4 w-4" /></span>
+                  <div>
+                    <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#8baed8]">Protected</p>
+                    <p className="text-sm font-black text-[#e5f3ff]">Secure checkout stack</p>
+                  </div>
+                </div>
+              </article>
+
+              <article className="gm-panel rounded-xl px-4 py-3 sm:col-span-2">
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#8baed8]">Available services</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {serviceCategories.map((category) => (
+                    <span key={category.id} className="rounded-full bg-white/8 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.13em] text-[#aecaea]">
+                      {category.title}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {games.map((game) => (
+            <Link key={game.id} href={`/games/${game.id}`} className="group relative overflow-hidden rounded-[1.35rem] border border-white/12 bg-[#121d35]">
+              <div
+                className="h-72 transition-transform duration-500 group-hover:scale-110"
+                style={{
+                  backgroundImage: `linear-gradient(180deg,rgba(6,11,24,0.22),rgba(6,11,24,0.88)), url('${heroArtByGame[game.id] ?? heroArtByGame.retail}')`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              />
+
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_0%,rgba(59,168,255,0.2),transparent_35%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+              <div className="absolute inset-x-0 bottom-0 p-4">
+                <div className="gm-panel rounded-xl px-3 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-[0.56rem] font-bold uppercase tracking-[0.15em] text-[#88add9]">{game.tag}</p>
+                      <h2 className="mt-1 text-lg font-black text-[#eaf4ff]">{game.shortTitle}</h2>
+                    </div>
+                    <span className="gm-badge px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em]">Live</span>
+                  </div>
+                  <p className="mt-2 text-xs leading-6 text-[#a7c2e0]">{game.description}</p>
+                  <span className="gm-button gm-button-primary gm-shine mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
+                    Enter hub
+                    <ArrowRight className="h-3 w-3" />
                   </span>
                 </div>
               </div>
             </Link>
           ))}
         </section>
-
-        <div className="mt-12 flex flex-wrap gap-3">
-          <Link
-            href="/"
-            className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors"
-          >
-            Back to home
-          </Link>
-        </div>
       </main>
     </div>
   );

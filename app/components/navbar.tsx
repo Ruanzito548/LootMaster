@@ -1,510 +1,232 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, onAuthStateChanged, signOut } from "firebase/auth";
+import { type ComponentType, useState } from "react";
+import {
+  Bell,
+  Crown,
+  Gamepad2,
+  Gift,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Package,
+  Shield,
+  UserRound,
+  Wallet,
+  X,
+} from "lucide-react";
 
-import { subscribeToHotGames } from "../../lib/hot-games";
-import { auth } from "../../lib/firebase";
-import { defaultHotGameIds, games } from "../data/games";
+import { useProfileSession } from "../profile/use-profile-session";
 
-type LinkIcon = "home" | "games" | "rewards";
-
-type NavLink = {
+type NavItem = {
   href: string;
   label: string;
-  icon: LinkIcon;
+  icon: ComponentType<{ className?: string }>;
 };
 
-const links: NavLink[] = [
-  { href: "/", label: "Home", icon: "home" },
-  { href: "/games", label: "Games", icon: "games" },
-  { href: "/rewards", label: "Rewards", icon: "rewards" },
+const navItems: NavItem[] = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/games", label: "Games", icon: Gamepad2 },
+  { href: "/rewards", label: "Rewards", icon: Gift },
+  { href: "/profile/inventory", label: "Inventory", icon: Package },
+  { href: "/profile", label: "Profile", icon: UserRound },
+  { href: "/admin", label: "Admin", icon: Shield },
 ];
 
-function NavIcon({ icon }: { icon: LinkIcon }) {
-  if (icon === "home") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
-        <path d="M3 11.5L12 4L21 11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M6.5 10.5V20H17.5V10.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
+const profileItems: NavItem[] = [
+  { href: "/profile", label: "My Profile", icon: UserRound },
+  { href: "/rewards", label: "Rewards", icon: Gift },
+  { href: "/profile/inventory", label: "Inventory", icon: Package },
+  { href: "/profile/history", label: "Orders", icon: LayoutDashboard },
+  { href: "/profile/wallet-history", label: "Settings", icon: Wallet },
+];
+
+function isActive(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === "/";
   }
 
-  if (icon === "games") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
-        <rect x="3.5" y="7.5" width="17" height="9" rx="4.5" stroke="currentColor" strokeWidth="1.8" />
-        <path d="M8 12H11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        <path d="M9.5 10.5V13.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        <circle cx="15.5" cy="11.5" r="1" fill="currentColor" />
-        <circle cx="17.5" cy="13.5" r="1" fill="currentColor" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
-      <path d="M12 4L14.4 8.8L19.8 9.6L15.9 13.4L16.8 18.8L12 16.3L7.2 18.8L8.1 13.4L4.2 9.6L9.6 8.8L12 4Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function NavbarActionIcon({ kind }: { kind: "profile" | "login" | "admin" }) {
-  if (kind === "profile") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
-        <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
-        <path d="M5 19C5.8 15.9 8.4 14 12 14C15.6 14 18.2 15.9 19 19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
-    );
-  }
-
-  if (kind === "login") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
-        <path d="M10 5H6.5C5.7 5 5 5.7 5 6.5V17.5C5 18.3 5.7 19 6.5 19H10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        <path d="M13 8L17 12L13 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M17 12H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
-      <rect x="4" y="5" width="16" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M8 10H16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M8 14H13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function isLinkActive(pathname: string | null, href: string) {
-  if (!pathname) return false;
-  if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [hotIds, setHotIds] = useState<string[]>(defaultHotGameIds);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const pathname = usePathname();
-  const isTbc = pathname?.includes("tbc-anniversary");
-  const isMidnight = pathname?.includes("retail");
-  const isClassic = pathname?.includes("classic-era");
-  const isPandaria = pathname?.includes("mist-of-pandaria");
-  const isAdmin = pathname?.startsWith("/admin");
+  const { profile, status, signOutUser } = useProfileSession();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  useEffect(() => subscribeToHotGames(setHotIds), []);
-
-  useEffect(() => {
-    if (!auth) {
-      return;
-    }
-
-    return onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-    });
-  }, []);
-
-  const logout = async () => {
-    if (!auth) {
-      return;
-    }
-
-    await signOut(auth);
-  };
-
-  const orderedGames = [...games].sort((a, b) => {
-    const aHot = hotIds.includes(a.id);
-    const bHot = hotIds.includes(b.id);
-
-    if (aHot === bHot) {
-      return 0;
-    }
-
-    return aHot ? -1 : 1;
-  });
+  const avatar = profile?.photoURL || "/lootmasterlogo.png";
 
   return (
-    <>
-      <header className={`sticky top-0 z-50 border-b backdrop-blur-xl ${
-        isTbc 
-          ? "border-[#a8ff9f]/20 bg-[#0a1a0c]/88" 
-          : isMidnight
-          ? "border-[#4dc6ff]/20 bg-[#071427]/88"
-          : isClassic
-          ? "border-[#f1c686]/22 bg-[#1c130b]/88"
-          : isPandaria
-          ? "border-[#8df0c8]/24 bg-[#071c16]/88"
-          : isAdmin
-          ? "border-[#4ade80]/20 bg-black/90"
-          : "border-[#2fd3ff]/24 bg-[linear-gradient(180deg,rgba(16,24,42,0.96)_0%,rgba(10,17,32,0.94)_100%)]"
-      }`}>
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(0,229,255,0.05)_0%,rgba(0,229,255,0.85)_36%,rgba(255,201,77,0.8)_70%,rgba(255,201,77,0.06)_100%)]"
-        />
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => setIsOpen(true)}
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-2.5 text-sm font-semibold transition-colors ${
-                isTbc
-                  ? "border-[#a8ff9f]/25 bg-[#1a3a20]/50 text-[#e0ffe0] hover:bg-[#204a25]"
-                  : isMidnight
-                  ? "border-[#4dc6ff]/25 bg-[#0d2f55]/55 text-[#dff3ff] hover:bg-[#15467a]"
-                  : isClassic
-                  ? "border-[#e9b775]/28 bg-[#4e311a]/55 text-[#ffe8c9] hover:bg-[#5f3d22]"
-                  : isPandaria
-                  ? "border-[#8df0c8]/28 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
-                  : isAdmin
-                  ? "border-[#4ade80]/25 bg-[#052e16]/60 text-[#86efac] hover:bg-[#052e16]"
-                    : "border-[#43d5ff]/30 bg-[#102843]/80 text-[#ddf7ff] hover:border-[#6be0ff]/45 hover:bg-[#15355b]"
-              }`}
-              aria-label="Open side menu"
-            >
-              <span className="flex h-5 w-5 flex-col items-center justify-center gap-1">
-                <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : isAdmin ? "bg-[#4ade80]" : "bg-[#4dc6ff]"
-                }`} />
-                <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : isAdmin ? "bg-[#4ade80]" : "bg-[#4dc6ff]"
-                }`} />
-                <span className={`h-0.5 w-4 rounded-full ${
-                  isTbc ? "bg-[#a8ff9f]" : isMidnight ? "bg-[#7fd4ff]" : isClassic ? "bg-[#f1c686]" : isPandaria ? "bg-[#8df0c8]" : isAdmin ? "bg-[#4ade80]" : "bg-[#4dc6ff]"
-                }`} />
-              </span>
-              <span className="hidden sm:inline">Menu</span>
-            </button>
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[rgba(9,15,30,0.74)] backdrop-blur-xl">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(59,168,255,0.08)_0%,rgba(59,168,255,0.7)_36%,rgba(124,77,255,0.65)_70%,rgba(124,77,255,0.08)_100%)]" />
 
-            <Link href="/" className="flex items-center transition-opacity hover:opacity-80">
-              <Image
-                src="/lootmasterlogo.png"
-                alt="Loot Master Logo"
-                width={70}
-                height={70}
-                className="h-16 w-auto"
-              />
-            </Link>
-          </div>
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsMobileOpen(true)}
+            className="gm-button gm-button-secondary inline-flex items-center justify-center rounded-xl px-3 py-2 lg:hidden"
+            aria-label="Open navigation"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
 
-          <nav className="hidden items-center gap-8 text-sm font-medium lg:flex">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 transition-colors ${
-                  isLinkActive(pathname, link.href)
-                    ? isTbc
-                      ? "border-[#a8ff9f]/35 bg-[#a8ff9f]/12 text-[#e4ffe0]"
-                      : isMidnight
-                      ? "border-[#4dc6ff]/35 bg-[#4dc6ff]/14 text-[#e4f6ff]"
-                      : isClassic
-                      ? "border-[#f1c686]/35 bg-[#f1c686]/14 text-[#ffeed5]"
-                      : isPandaria
-                      ? "border-[#8df0c8]/35 bg-[#8df0c8]/14 text-[#e7fff6]"
-                      : isAdmin
-                      ? "border-[#4ade80]/35 bg-[#4ade80]/12 text-[#86efac]"
-                      : "border-[#46d8ff]/40 bg-[#46d8ff]/14 text-[#e8faff] shadow-[0_0_0_1px_rgba(70,216,255,0.2)]"
-                    : isTbc
-                    ? "border-transparent text-[#b8e6b8] hover:text-[#d4ffcc]"
-                    : isMidnight
-                    ? "border-transparent text-[#a8d8ff] hover:text-[#dff3ff]"
-                    : isClassic
-                    ? "border-transparent text-[#e8c79e] hover:text-[#ffe6c4]"
-                    : isPandaria
-                    ? "border-transparent text-[#b9eddc] hover:text-[#e5fff5]"
-                    : isAdmin
-                    ? "border-transparent text-[#4ade80] hover:text-[#86efac]"
-                      : "border-transparent text-[#91b3d8] hover:border-[#46d8ff]/25 hover:text-[#dff6ff]"
-                }`}
-              >
-                <NavIcon icon={link.icon} />
-                <span>{link.label}</span>
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            {currentUser ? (
-              <>
-                <Link
-                  href="/profile"
-                  className={`inline-flex items-center gap-2 rounded-[11px] border px-4 py-2.5 text-sm font-semibold tracking-[0.02em] transition-all duration-200 ${
-                    isTbc
-                      ? "border-[#a8ff9f]/28 bg-[#1a3a20]/55 text-[#e4ffe0] hover:bg-[#204a25]"
-                      : isMidnight
-                      ? "border-[#4dc6ff]/28 bg-[#0d2f55]/60 text-[#e4f6ff] hover:bg-[#15467a]"
-                      : isClassic
-                      ? "border-[#f1c686]/32 bg-[#4e311a]/55 text-[#ffeed5] hover:bg-[#5f3d22]"
-                      : isPandaria
-                      ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
-                      : isAdmin
-                      ? "border-[#4ade80]/28 bg-[#052e16]/60 text-[#86efac] hover:bg-[#052e16]"
-                      : "border-[#4cb8ff]/72 bg-[linear-gradient(180deg,#2f93f5_0%,#1f7ed8_100%)] text-[#eaf6ff] shadow-[inset_0_1px_0_rgba(160,221,255,0.32),inset_0_-1px_0_rgba(6,45,98,0.58),0_8px_20px_rgba(21,103,198,0.34)] hover:border-[#72cbff] hover:brightness-110"
-                  }`}
-                >
-                  <NavbarActionIcon kind="profile" />
-                  My Profile
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={() => void logout()}
-                  className={`inline-flex items-center gap-2 rounded-[11px] border px-4 py-2.5 text-sm font-semibold tracking-[0.02em] transition-all duration-200 ${
-                    isTbc
-                      ? "border-[#a8ff9f]/25 bg-[#0f2713]/50 text-[#d4ffcc] hover:bg-[#153518]"
-                      : isMidnight
-                      ? "border-[#4dc6ff]/25 bg-[#08213c]/60 text-[#dff3ff] hover:bg-[#0d2f55]"
-                      : isClassic
-                      ? "border-[#f1c686]/25 bg-[#3d2614]/55 text-[#ffeed5] hover:bg-[#4a2f19]"
-                      : isPandaria
-                      ? "border-[#8df0c8]/25 bg-[#103e31]/55 text-[#e7fff6] hover:bg-[#155341]"
-                      : isAdmin
-                      ? "border-[#4ade80]/22 bg-[#052e16]/55 text-[#86efac] hover:bg-[#052e16]"
-                      : "border-[#4cb7ff]/30 bg-[#11243c]/78 text-[#cae6ff] hover:border-[#79ccff]/45 hover:bg-[#173356]"
-                  }`}
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <Link
-                href="/login"
-                className={`inline-flex items-center gap-2 rounded-[11px] border px-4 py-2.5 text-sm font-semibold tracking-[0.02em] transition-all duration-200 ${
-                  isTbc
-                    ? "border-[#a8ff9f]/28 bg-[#1a3a20]/55 text-[#e4ffe0] hover:bg-[#204a25]"
-                    : isMidnight
-                    ? "border-[#4dc6ff]/28 bg-[#0d2f55]/60 text-[#e4f6ff] hover:bg-[#15467a]"
-                    : isClassic
-                    ? "border-[#f1c686]/32 bg-[#4e311a]/55 text-[#ffeed5] hover:bg-[#5f3d22]"
-                    : isPandaria
-                    ? "border-[#8df0c8]/32 bg-[#185641]/55 text-[#e7fff6] hover:bg-[#226f54]"
-                    : isAdmin
-                    ? "border-[#4ade80]/28 bg-[#052e16]/60 text-[#86efac] hover:bg-[#052e16]"
-                    : "border-[#6c819f]/64 bg-[linear-gradient(180deg,rgba(58,66,84,0.96),rgba(47,55,71,0.96))] text-[#deecff] shadow-[inset_0_1px_0_rgba(204,217,244,0.16),inset_0_-1px_0_rgba(19,24,35,0.66)] hover:border-[#4bc2ff]/74 hover:bg-[linear-gradient(180deg,rgba(39,66,106,0.96),rgba(29,50,84,0.96))]"
-                }`}
-              >
-                <NavbarActionIcon kind="login" />
-                Login/Sign Up
-              </Link>
-            )}
-
-            <Link
-              href="/admin"
-              className={`hidden items-center gap-2 rounded-[11px] border px-4 py-2.5 text-sm font-semibold tracking-[0.02em] transition-all duration-200 xl:inline-flex ${
-                isTbc
-                  ? "border-[#a8ff9f]/25 bg-[#1a3a20]/45 text-[#e0ffe0] hover:bg-[#204a25]"
-                  : isMidnight
-                  ? "border-[#4dc6ff]/25 bg-[#0d2f55]/50 text-[#dff3ff] hover:bg-[#15467a]"
-                  : isClassic
-                  ? "border-[#e9b775]/25 bg-[#4e311a]/45 text-[#ffe8c9] hover:bg-[#5f3d22]"
-                  : isPandaria
-                  ? "border-[#8df0c8]/25 bg-[#185641]/45 text-[#e7fff6] hover:bg-[#226f54]"
-                  : isAdmin
-                  ? "border-[#4ade80]/22 bg-[#052e16]/50 text-[#4ade80] hover:bg-[#052e16]"
-                  : "border-[#f3c84f]/68 bg-[linear-gradient(180deg,rgba(72,55,21,0.94),rgba(62,47,18,0.94))] text-[#ffe8ac] shadow-[inset_0_1px_0_rgba(255,230,162,0.2),inset_0_-1px_0_rgba(33,23,8,0.6)] hover:border-[#ffd776] hover:bg-[linear-gradient(180deg,rgba(83,63,24,0.96),rgba(72,55,21,0.96))]"
-              }`}
-            >
-              <NavbarActionIcon kind="admin" />
-              Admin
-            </Link>
-          </div>
+          <Link href="/" className="gm-glass inline-flex items-center gap-2 rounded-xl px-3 py-2">
+            <Image src="/lootmasterlogo.png" alt="Loot Master" width={34} height={34} className="h-8 w-8 rounded-md" />
+            <div className="hidden sm:block">
+              <p className="font-throne text-lg font-black leading-none text-[#e9f6ff]">Loot Master</p>
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#8cb4df]">Gaming Market</p>
+            </div>
+          </Link>
         </div>
-      </header>
 
-      <div
-        className={`fixed inset-0 z-50 transition ${
-          isOpen ? "pointer-events-auto" : "pointer-events-none"
-        }`}
-      >
+        <nav className="hidden items-center gap-2 lg:flex">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(pathname, item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`gm-button inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-all ${
+                  active
+                    ? "border-[#6ee7ff]/40 bg-[#3ba8ff]/16 text-[#dff6ff] shadow-[0_0_20px_rgba(59,168,255,0.25)]"
+                    : "border-transparent text-[#9cb8dc] hover:border-white/15 hover:bg-white/5 hover:text-[#dcf1ff]"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <div className="gm-glass hidden items-center gap-2 rounded-xl px-3 py-2 sm:flex">
+            <Crown className="h-4 w-4 text-[#facc15]" />
+            <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#e9f6ff]">
+              {profile ? `${profile.lootCoins.toLocaleString("pt-BR")} LC` : "0 LC"}
+            </span>
+          </div>
+
+          <Link
+            href="/rewards"
+            className="gm-button gm-button-secondary inline-flex items-center justify-center rounded-xl p-2.5"
+            aria-label="Rewards"
+          >
+            <Gift className="h-4 w-4 text-[#6ee7ff]" />
+          </Link>
+
+          <button type="button" className="gm-button gm-button-secondary inline-flex items-center justify-center rounded-xl p-2.5" aria-label="Notifications">
+            <Bell className="h-4 w-4 text-[#9dc6f7]" />
+          </button>
+
+          {status === "authenticated" && profile ? (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen((current) => !current)}
+                className="gm-glass gm-button inline-flex items-center gap-2 rounded-xl px-2.5 py-2"
+              >
+                <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={avatar} alt="Avatar" className="h-8 w-8 rounded-lg border border-white/20 object-cover" />
+                  <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full border border-[#091020] bg-[#22c55e]" />
+                </div>
+                <div className="hidden text-left sm:block">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#dff2ff]">{profile.username}</p>
+                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#88b6e8]">Lvl {profile.level}</p>
+                </div>
+              </button>
+
+              {isProfileOpen ? (
+                <div className="gm-glass absolute right-0 top-[calc(100%+10px)] z-50 w-64 rounded-2xl border border-white/12 p-2">
+                  {profileItems.map((item) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsProfileOpen(false)}
+                        className="gm-button inline-flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#b8cff0] hover:bg-white/6 hover:text-[#e8f5ff]"
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+
+                  <div className="gm-divider my-2" />
+
+                  <button
+                    type="button"
+                    onClick={() => void signOutUser()}
+                    className="gm-button inline-flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#ffb5b5] hover:bg-[#ef4444]/12"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <Link href="/login" className="gm-button gm-button-primary gm-shine inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase">
+              <UserRound className="h-3.5 w-3.5" />
+              <span>Login</span>
+            </Link>
+          )}
+        </div>
+      </div>
+
+      <div className={`fixed inset-0 z-[70] transition ${isMobileOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
         <button
           type="button"
+          className={`absolute inset-0 bg-[#030814]/75 backdrop-blur-sm transition-opacity ${isMobileOpen ? "opacity-100" : "opacity-0"}`}
+          onClick={() => setIsMobileOpen(false)}
           aria-label="Close menu"
-          onClick={() => setIsOpen(false)}
-          className={`absolute inset-0 backdrop-blur-sm transition-opacity duration-300 ${
-            isTbc 
-              ? "bg-[#030805]/78" 
-              : isMidnight
-              ? "bg-[#020812]/80"
-              : isClassic
-              ? "bg-[#120c06]/80"
-              : isPandaria
-              ? "bg-[#03110d]/80"
-              : "bg-[#020711]/82"
-          } ${isOpen ? "opacity-100" : "opacity-0"}`}
         />
 
         <aside
-          className={`absolute left-0 top-0 flex h-full w-full max-w-[22rem] flex-col border-r p-6 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] transition-transform duration-300 ${
-            isTbc
-              ? "border-[#a8ff9f]/15 bg-[linear-gradient(180deg,#1a3a20_0%,#0a1a0c_100%)]"
-              : isMidnight
-              ? "border-[#4dc6ff]/18 bg-[linear-gradient(180deg,#0c2a4d_0%,#061323_100%)]"
-              : isClassic
-              ? "border-[#e9b775]/18 bg-[linear-gradient(180deg,#4a2e18_0%,#1b120a_100%)]"
-              : isPandaria
-              ? "border-[#8df0c8]/18 bg-[linear-gradient(180deg,#1b5f49_0%,#092118_100%)]"
-              : "border-[#35d7ff]/20 bg-[linear-gradient(180deg,#14253f_0%,#0a1325_70%,#070f1f_100%)]"
-          } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+          className={`gm-glass absolute left-0 top-0 h-full w-full max-w-xs border-r border-white/12 p-4 transition-transform duration-300 ${
+            isMobileOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
         >
-          <div className="flex items-center justify-between border-b pb-5">
-            <div>
-              <p className={`text-sm font-bold uppercase tracking-[0.28em] ${
-                isTbc ? "text-[#a8ff9f]" : isMidnight ? "text-[#7fd4ff]" : isAdmin ? "text-[#4ade80]" : "text-[#69deff]"
-              }`}>
-                Games
-              </p>
-              <h2 className={`font-throne mt-3 text-4xl ${
-                isTbc ? "text-[#d4ffcc]" : isMidnight ? "text-[#b8e0ff]" : isAdmin ? "text-[#86efac]" : "text-[#e8f8ff]"
-              }`}>
-                Choose your game
-              </h2>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className={`rounded-full border px-4 py-2 text-sm font-semibold text-white transition-colors ${
-                isTbc
-                  ? "border-[#a8ff9f]/20 bg-[#a8ff9f]/10 hover:bg-[#a8ff9f]/15 hover:border-[#a8ff9f]/25"
-                  : isMidnight
-                  ? "border-[#4dc6ff]/20 bg-[#4dc6ff]/10 hover:bg-[#4dc6ff]/16 hover:border-[#4dc6ff]/30"
-                  : isAdmin
-                  ? "border-[#4ade80]/20 bg-[#4ade80]/8 hover:bg-[#4ade80]/12 hover:border-[#4ade80]/30"
-                  : "border-[#36d8ff]/22 bg-[#36d8ff]/10 text-[#d8f4ff] hover:border-[#67e2ff]/34 hover:bg-[#36d8ff]/16"
-              }`}
-            >
-              Close
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-[#dff2ff]">Navigation</p>
+            <button type="button" onClick={() => setIsMobileOpen(false)} className="gm-button gm-button-secondary rounded-lg p-2">
+              <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className={`mt-6 flex items-center justify-between text-xs font-bold uppercase tracking-[0.26em] ${
-            isTbc ? "text-[#b8e6b8]" : isMidnight ? "text-[#a8d0ff]" : isAdmin ? "text-[#22c55e]" : "text-[#9ab8de]"
-          }`}>
-            <span>Available</span>
-            <span>{orderedGames.length}</span>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            {links.map((link) => (
-              <Link
-                key={`drawer-${link.href}`}
-                href={link.href}
-                onClick={() => setIsOpen(false)}
-                className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-center text-xs font-bold uppercase tracking-[0.16em] transition-colors ${
-                  isLinkActive(pathname, link.href)
-                    ? isTbc
-                      ? "border-[#a8ff9f]/30 bg-[#a8ff9f]/12 text-[#e4ffe0]"
-                      : isMidnight
-                      ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/12 text-[#e4f6ff]"
-                      : isAdmin
-                      ? "border-[#4ade80]/30 bg-[#4ade80]/12 text-[#86efac]"
-                      : "border-[#35d8ff]/34 bg-[#35d8ff]/14 text-[#e2f7ff]"
-                    : isTbc
-                    ? "border-[#a8ff9f]/12 text-[#b8e6b8] hover:border-[#a8ff9f]/24"
-                    : isMidnight
-                    ? "border-[#4dc6ff]/14 text-[#a8d8ff] hover:border-[#4dc6ff]/28"
-                    : isAdmin
-                    ? "border-[#4ade80]/12 text-[#4ade80] hover:border-[#4ade80]/28"
-                    : "border-[#35d8ff]/14 text-[#9ebada] hover:border-[#35d8ff]/30 hover:text-[#dcf5ff]"
-                }`}
-              >
-                <NavIcon icon={link.icon} />
-                <span>{link.label}</span>
-              </Link>
-            ))}
-          </div>
-
-          <div className="mt-4 flex-1 space-y-3 overflow-y-auto pr-1">
-            {orderedGames.map((game) => {
-              const isHot = hotIds.includes(game.id);
+          <div className="mt-4 grid gap-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(pathname, item.href);
 
               return (
                 <Link
-                  key={game.id}
-                  href={`/games/${game.id}`}
-                  onClick={() => setIsOpen(false)}
-                  className={`group relative overflow-hidden flex items-center justify-between rounded-[1.4rem] border px-5 py-4 transition-all ${
-                    isTbc
-                      ? "border-[#a8ff9f]/15 hover:border-[#a8ff9f]/30 hover:shadow-[0_0_20px_rgba(168,255,159,0.15)]"
-                      : isMidnight
-                      ? "border-[#4dc6ff]/18 hover:border-[#4dc6ff]/35 hover:shadow-[0_0_20px_rgba(77,198,255,0.2)]"
-                      : isAdmin
-                      ? "border-[#4ade80]/18 hover:border-[#4ade80]/35 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]"
-                        : "border-[#35d8ff]/16 bg-[linear-gradient(120deg,rgba(10,23,42,0.76),rgba(13,30,54,0.62))] hover:border-[#35d8ff]/35 hover:shadow-[0_0_20px_rgba(53,216,255,0.22)]"
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMobileOpen(false)}
+                  className={`gm-button inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.13em] ${
+                    active ? "bg-[#3ba8ff]/20 text-[#dff6ff]" : "text-[#aac6e8] hover:bg-white/6"
                   }`}
-                  style={{
-                    backgroundImage:
-                      game.id === "tbc-anniversary"
-                        ? "url('/wow/wow-tbc/tbc-logo.jpg')"
-                        : game.id === "retail"
-                        ? "url('/wow/wow-retail/midinight-logo.jpeg')"
-                        : game.id === "classic-era"
-                        ? "url('/wow/wow-classic-era/classic-era-logo.jpg')"
-                        : game.id === "mist-of-pandaria"
-                        ? "url('/wow/wow-pandaria/pandaria-logo.jpg')"
-                        : undefined,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
                 >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      {isHot ? (
-                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] ${
-                          isTbc
-                            ? "border-[#a8ff9f]/30 bg-[#a8ff9f]/15 text-[#d4ffcc]"
-                            : isMidnight
-                            ? "border-[#4dc6ff]/28 bg-[#4dc6ff]/14 text-[#dff3ff]"
-                            : isAdmin
-                            ? "border-[#4ade80]/28 bg-[#4ade80]/14 text-[#86efac]"
-                            : "border-[#f4c241]/35 bg-[#f4c241]/16 text-[#ffe8a8]"
-                        }`}>
-                          Hot
-                        </span>
-                      ) : null}
-                      <p className={`text-base font-black transition-colors ${
-                        isTbc
-                          ? "text-[#d4ffcc] group-hover:text-[#e8ffeb]"
-                          : isMidnight
-                          ? "text-[#c7e7ff] group-hover:text-[#f0f9ff]"
-                          : isAdmin
-                          ? "text-[#4ade80] group-hover:text-[#86efac]"
-                            : "text-[#e2f5ff] group-hover:text-[#f4fbff]"
-                      }`}>
-                        {game.title}
-                      </p>
-                    </div>
-                    <p className={`mt-1 text-xs ${
-                        isTbc ? "text-[#a8d0a8]" : isMidnight ? "text-[#9dc4ea]" : isAdmin ? "text-[#22c55e]" : "text-[#93b3d8]"
-                    }`}>
-                      {game.shortTitle}
-                    </p>
-                  </div>
-                  <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] transition-all ${
-                    isTbc
-                      ? "border-[#a8ff9f]/30 bg-[#a8ff9f]/20 text-[#e0ffe0] group-hover:border-[#a8ff9f]/50 group-hover:shadow-[0_0_12px_rgba(168,255,159,0.3)]"
-                      : isMidnight
-                      ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/18 text-[#dff3ff] group-hover:border-[#7fd4ff]/55 group-hover:shadow-[0_0_12px_rgba(77,198,255,0.35)]"
-                      : isAdmin
-                      ? "border-[#4ade80]/28 bg-[#4ade80]/14 text-[#86efac] group-hover:border-[#4ade80]/55 group-hover:shadow-[0_0_12px_rgba(74,222,128,0.3)]"
-                      : "border-[#36d8ff]/34 bg-[#36d8ff]/14 text-[#dff7ff] group-hover:border-[#67e2ff]/55 group-hover:shadow-[0_0_12px_rgba(54,216,255,0.38)]"
-                  }`}>
-                    {game.tag}
-                  </span>
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
           </div>
         </aside>
       </div>
-    </>
+    </header>
   );
 }

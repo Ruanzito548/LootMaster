@@ -1,136 +1,243 @@
-import Link from "next/link";
+"use client";
 
-import { HotGames } from "./components/hot-games";
-import { games, serviceCategories } from "./data/games";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Flame, Gift, ShieldCheck, Sparkles, Trophy } from "lucide-react";
+
+import { defaultHotGameIds, games, serviceCategories } from "./data/games";
+
+const heroArtByGame: Record<string, string> = {
+  "tbc-anniversary": "/wow/wow-tbc/tbc-logo.jpg",
+  retail: "/wow/wow-retail/midinight-logo.jpeg",
+  "classic-era": "/wow/wow-classic-era/classic-era-logo.jpg",
+  "mist-of-pandaria": "/wow/wow-pandaria/pandaria-logo.jpg",
+};
 
 export default function Home() {
+  const featuredGames = useMemo(
+    () => games.filter((game) => defaultHotGameIds.includes(game.id)).concat(games.filter((game) => !defaultHotGameIds.includes(game.id))),
+    [],
+  );
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % featuredGames.length);
+    }, 4200);
+
+    return () => window.clearInterval(timer);
+  }, [featuredGames.length]);
+
+  const activeGame = featuredGames[activeIndex] ?? featuredGames[0];
+
   return (
-    <div className="min-h-screen text-white">
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 pb-20 pt-10 lg:px-8">
-        <HotGames />
+    <div className="loot-shell gm-shell">
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+        <section className="gm-glass relative overflow-hidden rounded-[2rem] p-6 sm:p-8 lg:p-10">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_10%,rgba(124,77,255,0.22),transparent_35%),radial-gradient(circle_at_18%_100%,rgba(59,168,255,0.2),transparent_34%)]" />
 
-        <section id="service-lanes" className="space-y-6">
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#4be3c1]">Service Lanes</p>
-            <h2 className="text-4xl font-black text-[#eaf4ff]">Choose your trading intent</h2>
-          </div>
+          <div className="relative z-10 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="space-y-5">
+              <span className="gm-badge inline-flex items-center gap-2 px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.18em]">
+                <Sparkles className="h-3.5 w-3.5" />
+                Seasonal launcher
+              </span>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            {serviceCategories.map((category) => (
-              <article
-                key={category.id}
-                className="group rounded-[1.1rem] border border-[#2f6aa1]/42 bg-[linear-gradient(180deg,rgba(35,50,78,0.84),rgba(24,34,55,0.9))] p-5 transition hover:-translate-y-1 hover:border-[#48cfff]/48"
-              >
-                <p className="text-xs uppercase tracking-[0.22em] text-[#89c4e6]">{category.id}</p>
-                <h3 className="mt-3 text-2xl font-black text-[#eef6ff]">{category.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[#aec5dc]">{category.description}</p>
-                <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-[#69dbff]/88 group-hover:text-[#97e8ff]">
-                  Available in selected games
-                </p>
-              </article>
-            ))}
+              <h1 className="font-throne text-5xl font-black leading-[0.95] text-[#eaf4ff] sm:text-6xl lg:text-7xl">
+                MMO MARKETPLACE
+                <br />
+                REFORGED
+              </h1>
+
+              <p className="gm-subtitle max-w-xl text-sm leading-7 sm:text-base">
+                Gold, boosts and accounts in one premium flow. Fast routing, instant rewards and battle pass progression.
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                <Link href={`/games/${activeGame?.id ?? "retail"}`} className="gm-button gm-button-primary gm-shine inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
+                  Enter {activeGame?.shortTitle ?? "Midnight"}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+                <Link href="/rewards" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
+                  <Gift className="h-3.5 w-3.5" />
+                  Rewards
+                </Link>
+                <Link href="/profile" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
+                  <Trophy className="h-3.5 w-3.5" />
+                  Progress
+                </Link>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <article className="gm-panel rounded-xl px-4 py-3">
+                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#8fb3de]">Featured reward</p>
+                  <p className="mt-2 text-sm font-black text-[#dff3ff]">Mythic Drop</p>
+                </article>
+                <article className="gm-panel rounded-xl px-4 py-3">
+                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#8fb3de]">Season Event</p>
+                  <p className="mt-2 text-sm font-black text-[#facc15]">Nightfall Raid</p>
+                </article>
+                <article className="gm-panel rounded-xl px-4 py-3">
+                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#8fb3de]">Security</p>
+                  <p className="mt-2 text-sm font-black text-[#86efac]">Live Protected</p>
+                </article>
+              </div>
+            </div>
+
+            <div className="relative h-[20rem] overflow-hidden rounded-[1.5rem] border border-white/12 bg-[#0a1224] sm:h-[24rem]">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeGame.id}
+                  initial={{ opacity: 0, scale: 1.03 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.02 }}
+                  transition={{ duration: 0.45 }}
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `linear-gradient(180deg,rgba(10,16,32,0.2),rgba(10,16,32,0.9)), url('${heroArtByGame[activeGame.id] ?? heroArtByGame.retail}')`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                />
+              </AnimatePresence>
+
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_15%,rgba(59,168,255,0.26),transparent_30%)]" />
+
+              <div className="absolute bottom-0 left-0 right-0 p-5">
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#9bc9ff]">Featured game</p>
+                <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">{activeGame.title}</h2>
+                <div className="mt-3 flex items-center gap-2">
+                  {featuredGames.map((game, index) => (
+                    <button
+                      key={game.id}
+                      type="button"
+                      onClick={() => setActiveIndex(index)}
+                      className={`h-1.5 rounded-full transition-all ${index === activeIndex ? "w-8 bg-[#6ee7ff]" : "w-3 bg-white/35"}`}
+                      aria-label={`Show ${game.title}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section id="game-grid" className="space-y-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#4be3c1]">Game Grid</p>
-              <h2 className="text-4xl font-black text-[#eaf4ff]">Open your game route</h2>
+        <section className="grid gap-4 lg:grid-cols-3">
+          <article className="gm-panel rounded-2xl px-5 py-5">
+            <div className="flex items-center gap-3">
+              <span className="rounded-xl bg-[#3ba8ff]/18 p-2 text-[#6ee7ff]">
+                <Flame className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#8eaed6]">Live activity</p>
+                <p className="text-sm font-black text-[#e4f2ff]">126 orders today</p>
+              </div>
             </div>
-            <p className="max-w-xl text-sm leading-7 text-[#aec5dc]">
-              Every card below points directly to the live game route and keeps the same purchase funnel.
-            </p>
+          </article>
+
+          <article className="gm-panel rounded-2xl px-5 py-5">
+            <div className="flex items-center gap-3">
+              <span className="rounded-xl bg-[#7c4dff]/18 p-2 text-[#bca3ff]">
+                <Gift className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#8eaed6]">Reward road</p>
+                <p className="text-sm font-black text-[#e4f2ff]">New seasonal nodes</p>
+              </div>
+            </div>
+          </article>
+
+          <article className="gm-panel rounded-2xl px-5 py-5">
+            <div className="flex items-center gap-3">
+              <span className="rounded-xl bg-[#22c55e]/18 p-2 text-[#86efac]">
+                <ShieldCheck className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#8eaed6]">Trusted checkout</p>
+                <p className="text-sm font-black text-[#e4f2ff]">Protected payment flow</p>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-throne text-3xl font-black text-[#eaf4ff] sm:text-4xl">Featured Games</h2>
+            <Link href="/games" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase tracking-[0.13em]">
+              View all
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             {games.map((game) => (
-              <article
+              <motion.article
                 key={game.id}
-                className="relative overflow-hidden rounded-[1.15rem] border border-[#2f6aa1]/46 bg-[linear-gradient(180deg,rgba(34,49,76,0.8),rgba(20,31,50,0.92))] p-6"
-                style={
-                  game.id === "tbc-anniversary"
-                    ? {
-                        backgroundImage:
-                          "linear-gradient(rgba(8,20,38,0.5),rgba(8,20,38,0.7)), url('/wow/wow-tbc/tbc-logo.jpg')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : game.id === "retail"
-                    ? {
-                        backgroundImage:
-                          "linear-gradient(rgba(8,20,38,0.5),rgba(8,20,38,0.7)), url('/wow/wow-retail/midinight-logo.jpeg')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : game.id === "classic-era"
-                    ? {
-                        backgroundImage:
-                          "linear-gradient(rgba(18,15,11,0.52),rgba(18,15,11,0.72)), url('/wow/wow-classic-era/classic-era-logo.jpg')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : game.id === "mist-of-pandaria"
-                    ? {
-                        backgroundImage:
-                          "linear-gradient(rgba(7,30,25,0.48),rgba(7,30,25,0.7)), url('/wow/wow-pandaria/pandaria-logo.jpg')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : undefined
-                }
+                whileHover={{ y: -6 }}
+                className="group relative overflow-hidden rounded-[1.35rem] border border-white/12 bg-[#121d35]"
               >
-                <div className="absolute right-4 top-4 rounded-md border border-[#f3c84f]/46 bg-[#f3c84f]/14 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#ffe4a3]">
-                  {game.tag}
-                </div>
+                <div
+                  className="h-56 transition-transform duration-500 group-hover:scale-110"
+                  style={{
+                    backgroundImage: `linear-gradient(180deg,rgba(6,11,24,0.25),rgba(6,11,24,0.85)), url('${heroArtByGame[game.id] ?? heroArtByGame.retail}')`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                />
 
-                <div className="relative">
-                  <p className="text-xs uppercase tracking-[0.2em] text-[#9fd3ee]">{game.shortTitle}</p>
-                  <h3 className="mt-2 text-3xl font-black text-[#edf6ff]">{game.title}</h3>
-                  <p className="mt-4 text-sm leading-7 text-[#cfdfef]">{game.description}</p>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_0%,rgba(59,168,255,0.2),transparent_34%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-                  <div className="mt-6 flex flex-wrap gap-2">
-                    {serviceCategories.map((category) => (
-                      <span
-                        key={`${game.id}-${category.id}`}
-                        className="rounded-md border border-[#3a79b6]/46 bg-[#10243e]/72 px-3 py-1 text-xs font-semibold text-[#d0e8f8]"
-                      >
-                        {category.title}
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                  <div className="gm-panel rounded-xl px-3 py-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-black text-[#eaf4ff]">{game.shortTitle}</h3>
+                      <span className="rounded-full border border-[#6ee7ff]/25 bg-[#3ba8ff]/15 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em] text-[#d8f4ff]">
+                        Popular
                       </span>
-                    ))}
-                  </div>
-
-                  <div className="mt-8">
-                    <Link
-                      href={`/games/${game.id}`}
-                      className="loot-gold-button inline-flex rounded-full px-5 py-3 text-sm font-semibold"
-                    >
-                      Enter {game.shortTitle}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {serviceCategories.map((category) => (
+                        <span key={`${game.id}-${category.id}`} className="rounded-full bg-white/8 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.13em] text-[#a6c6ea]">
+                          {category.title}
+                        </span>
+                      ))}
+                    </div>
+                    <Link href={`/games/${game.id}`} className="gm-button gm-button-primary gm-shine mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
+                      Enter
+                      <ArrowRight className="h-3 w-3" />
                     </Link>
                   </div>
                 </div>
-              </article>
+              </motion.article>
             ))}
           </div>
         </section>
 
-        <section className="rounded-[1.15rem] border border-[#2f6aa1]/44 bg-[linear-gradient(100deg,rgba(34,49,76,0.84),rgba(21,33,54,0.9))] p-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#4be3c1]">Ready To Deploy</p>
-              <h2 className="mt-3 text-4xl font-black text-[#eaf4ff]">Jump from homepage to checkout with less friction</h2>
-              <p className="mt-4 max-w-2xl text-base leading-8 text-[#aec5dc]">
-                This homepage is rebuilt from scratch with stronger hierarchy, clearer actions and direct links into every game route.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/games" className="loot-gold-button inline-flex rounded-full px-6 py-3 text-sm font-semibold">
-                Browse games
-              </Link>
-              <Link href="/rewards" className="loot-secondary-button inline-flex rounded-full px-6 py-3 text-sm font-semibold">
-                Open rewards
-              </Link>
-            </div>
+        <section className="space-y-4">
+          <h2 className="font-throne text-3xl font-black text-[#eaf4ff] sm:text-4xl">Marketplace Categories</h2>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {serviceCategories.map((category, index) => (
+              <motion.article
+                key={category.id}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.35, delay: index * 0.06 }}
+                className="gm-panel gm-panel-hover overflow-hidden rounded-[1.35rem] p-5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-xl font-black text-[#eaf4ff]">{category.title}</h3>
+                  <span className="gm-badge px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em]">Live</span>
+                </div>
+                <p className="mt-3 text-sm text-[#a4bddc]">{category.description}</p>
+                <Link href="/games" className="gm-button gm-button-secondary mt-5 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
+                  Explore
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </motion.article>
+            ))}
           </div>
         </section>
       </main>

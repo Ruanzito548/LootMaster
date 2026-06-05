@@ -1,191 +1,148 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowRight, Gift, ShieldCheck, Sparkles } from "lucide-react";
 
 import { getGameById, serviceCategories } from "../../data/games";
+
+const coverByGame: Record<string, string> = {
+  "tbc-anniversary": "/wow/wow-tbc/tbc-logo.jpg",
+  retail: "/wow/wow-retail/midinight-logo.jpeg",
+  "classic-era": "/wow/wow-classic-era/classic-era-logo.jpg",
+  "mist-of-pandaria": "/wow/wow-pandaria/pandaria-logo.jpg",
+};
+
+const categoryCoverByGame: Record<string, Record<string, string>> = {
+  "tbc-anniversary": {
+    gold: "/wow/wow-tbc/tbc-gold.jpeg",
+    accounts: "/wow/wow-tbc/tbc-accounts.png",
+    boost: "/wow/wow-tbc/tbc-boost.png",
+  },
+  retail: {
+    gold: "/wow/wow-retail/midnight-gold.jpeg",
+    accounts: "/wow/wow-retail/midnight-accounts.png",
+    boost: "/wow/wow-retail/midnight-boost.png",
+  },
+  "classic-era": {
+    gold: "/wow/wow-classic-era/classic-era-gold.png",
+    accounts: "/wow/wow-classic-era/classic-era-accounts.png",
+    boost: "/wow/wow-classic-era/classic-era-boost.png",
+  },
+  "mist-of-pandaria": {
+    gold: "/wow/wow-pandaria/pandaria-gold.png",
+    accounts: "/wow/wow-pandaria/pandaria-accounts.png",
+    boost: "/wow/wow-pandaria/pandaria-boost.png",
+  },
+};
 
 export default async function GamePage(props: PageProps<"/games/[gameId]">) {
   const { gameId } = await props.params;
   const game = getGameById(gameId);
-  const isTbc = game?.id === "tbc-anniversary";
-  const isMidnight = game?.id === "retail";
-  const isClassic = game?.id === "classic-era";
-  const isPandaria = game?.id === "mist-of-pandaria";
 
   if (!game) {
     notFound();
   }
 
+  const categoryCover = categoryCoverByGame[game.id] ?? {};
+
   return (
-    <div className={isTbc ? "loot-shell tbc-shell" : isMidnight ? "loot-shell midnight-shell" : isClassic ? "loot-shell classic-shell" : isPandaria ? "loot-shell pandaria-shell" : "loot-shell"}>
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
-        <div className="flex flex-col gap-4">
-          <Link
-            href="/"
-            className={`loot-secondary-button inline-flex w-fit rounded-full px-5 py-3 text-sm font-semibold transition-colors ${
-              isTbc
-                ? "tbc-secondary-button"
-                : isMidnight
-                ? "midnight-secondary-button"
-                : isClassic
-                ? "classic-secondary-button"
-                : isPandaria
-                ? "pandaria-secondary-button"
-                : ""
-            }`}
-          >
-            Back to home
-          </Link>
+    <div className="loot-shell gm-shell">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+        <section className="gm-glass relative overflow-hidden rounded-[2rem] p-6 sm:p-8 lg:p-10">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `linear-gradient(180deg,rgba(7,12,24,0.52),rgba(7,12,24,0.9)), url('${coverByGame[game.id] ?? coverByGame.retail}')`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_15%,rgba(59,168,255,0.24),transparent_32%)]" />
 
-          <span className="loot-badge-blue inline-flex w-fit rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.24em]">
-            {game.tag}
-          </span>
+          <div className="relative z-10 flex flex-col gap-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <Link href="/games" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase tracking-[0.14em]">
+                Back to launcher
+              </Link>
+              <span className="gm-badge inline-flex items-center gap-2 px-3 py-1 text-[0.6rem] font-bold uppercase tracking-[0.16em]">
+                <Sparkles className="h-3 w-3" />
+                {game.tag}
+              </span>
+            </div>
 
-          <div className="space-y-4">
-            <h1 className={`font-throne text-6xl leading-none sm:text-7xl ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>
-              {game.title}
-            </h1>
-            <p className={`max-w-2xl text-lg leading-8 ${isTbc ? "tbc-muted" : isMidnight ? "midnight-muted" : isClassic ? "classic-muted" : isPandaria ? "pandaria-muted" : "loot-muted"}`}>
-              {isTbc
-                ? "Welcome to the TBC Anniversary experience — choose your path with green fire style."
-                : isMidnight
-                ? "Welcome to the Midnight experience — choose your path with blue midnight style."
-                : isClassic
-                ? "Welcome to Classic Era — old-school adventure with warm tavern tones."
-                : isPandaria
-                ? "Welcome to Pandaria — jade energy, calm mist and focused progression."
-                : "Choose the service category you want to explore first."}
-            </p>
+            <div className="max-w-3xl space-y-4">
+              <h1 className="font-throne text-5xl font-black leading-[0.95] text-[#ecf7ff] sm:text-6xl lg:text-7xl">{game.title}</h1>
+              <p className="text-sm leading-7 text-[#b6cde9] sm:text-base">
+                Enter your dedicated hub with curated offers, cleaner routing and one-click access to the checkout funnel.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <article className="gm-panel rounded-xl px-4 py-3">
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#90b3de]">Queue</p>
+                <p className="mt-1 text-sm font-black text-[#e7f5ff]">Live supply updates</p>
+              </article>
+              <article className="gm-panel rounded-xl px-4 py-3">
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#90b3de]">Rewards</p>
+                <p className="mt-1 text-sm font-black text-[#e7f5ff]">Battle pass connected</p>
+              </article>
+              <article className="gm-panel rounded-xl px-4 py-3">
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#90b3de]">Security</p>
+                <p className="mt-1 text-sm font-black text-[#e7f5ff]">Protected checkout</p>
+              </article>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <section className="mt-12 grid gap-5 lg:grid-cols-3">
-          {serviceCategories.map((category) => {
-            const isGoldTbc = isTbc && category.id === "gold";
-            const isGoldMidnight = isMidnight && category.id === "gold";
-            const isGoldClassic = isClassic && category.id === "gold";
-            const isGoldPandaria = isPandaria && category.id === "gold";
-            const isAccountsCard = category.id === "accounts";
-            const isBoostCard = category.id === "boost";
-
-            return (
+        <section className="grid gap-5 lg:grid-cols-[1fr_18rem]">
+          <div className="grid gap-5 md:grid-cols-3">
+            {serviceCategories.map((category) => (
               <Link
                 key={category.id}
                 href={`/games/${game.id}/${category.id}`}
-                className={`group block min-h-[18.5rem] overflow-hidden rounded-[1.75rem] border transition duration-300 ease-out lg:min-h-[20rem] ${
-                  isTbc ? "tbc-panel" : isMidnight ? "midnight-panel" : isClassic ? "classic-panel" : isPandaria ? "pandaria-panel" : "loot-panel"
-                } ${
-                  isGoldTbc
-                    ? "border-[#99ff99]/20 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(157,255,144,0.28)] hover:border-[#9eff99]/40 hover:-translate-y-1 hover:scale-[1.02]"
-                    : isGoldMidnight
-                    ? "border-[#4dc6ff]/20 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(77,198,255,0.28)] hover:border-[#4dc6ff]/40 hover:-translate-y-1 hover:scale-[1.02]"
-                    : isGoldClassic
-                    ? "border-[#f1c686]/22 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(203,141,74,0.3)] hover:border-[#f1c686]/45 hover:-translate-y-1 hover:scale-[1.02]"
-                    : isGoldPandaria
-                    ? "border-[#8df0c8]/24 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(86,204,163,0.3)] hover:border-[#8df0c8]/45 hover:-translate-y-1 hover:scale-[1.02]"
-                    : isMidnight
-                    ? "border-[#4dc6ff]/20 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(77,198,255,0.28)] hover:border-[#4dc6ff]/40 hover:-translate-y-1 hover:scale-[1.02]"
-                    : isClassic
-                    ? "border-[#e9b775]/20 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(198,132,64,0.26)] hover:border-[#f1c686]/38 hover:-translate-y-1 hover:scale-[1.02]"
-                    : isPandaria
-                    ? "border-[#7de4be]/20 shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(80,194,157,0.26)] hover:border-[#8df0c8]/38 hover:-translate-y-1 hover:scale-[1.02]"
-                    : "border-transparent hover:shadow-[0_0_20px_rgba(45,178,255,0.18)] hover:-translate-y-1"
-                }`}
-                style={
-                  isGoldTbc
-                    ? {
-                        backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/wow-tbc/tbc-gold.jpeg")',
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : isGoldMidnight
-                    ? {
-                        backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/wow-retail/midnight-gold.jpeg")',
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : isGoldClassic
-                    ? {
-                        backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/wow-classic-era/classic-era-gold.png")',
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : isGoldPandaria
-                    ? {
-                        backgroundImage:
-                          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("/wow/wow-pandaria/pandaria-gold.png")',
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : isAccountsCard
-                    ? {
-                        backgroundImage:
-                          `linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("${
-                            isTbc
-                              ? "/wow/wow-tbc/tbc-accounts.png"
-                              : isMidnight
-                              ? "/wow/wow-retail/midnight-accounts.png"
-                              : isClassic
-                              ? "/wow/wow-classic-era/classic-era-accounts.png"
-                              : isPandaria
-                              ? "/wow/wow-pandaria/pandaria-accounts.png"
-                              : "/wow/global-imagens/accounts.png"
-                          }")`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : isBoostCard
-                    ? {
-                        backgroundImage:
-                          `linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("${
-                            isTbc
-                              ? "/wow/wow-tbc/tbc-boost.png"
-                              : isMidnight
-                              ? "/wow/wow-retail/midnight-boost.png"
-                              : isClassic
-                              ? "/wow/wow-classic-era/classic-era-boost.png"
-                              : isPandaria
-                              ? "/wow/wow-pandaria/pandaria-boost.png"
-                              : "/wow/global-imagens/boost.png"
-                          }")`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : undefined
-                }
+                className="group relative overflow-hidden rounded-[1.35rem] border border-white/12 bg-[#101a30]"
               >
-                <article className="h-full rounded-[1.75rem] p-7 lg:p-8">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h2 className={`text-3xl font-black transition-colors ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>
-                        {category.title}
-                      </h2>
-                      <p className={`mt-4 text-sm leading-7 transition-colors ${isTbc ? "tbc-muted" : isMidnight ? "midnight-muted" : isClassic ? "classic-muted" : isPandaria ? "pandaria-muted" : "loot-muted"}`}>
-                        {category.description}
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${category.accent} ${isTbc ? "tbc-badge" : isMidnight ? "midnight-badge" : isClassic ? "classic-badge" : isPandaria ? "pandaria-badge" : ""} transition-colors ${
-                        isGoldTbc
-                          ? "border-[#9eff99]/30 bg-[#9eff99]/10 text-[#e8ffeb]"
-                          : isGoldMidnight
-                          ? "border-[#4dc6ff]/30 bg-[#4dc6ff]/10 text-[#e0f4ff]"
-                          : isGoldClassic
-                          ? "border-[#f1c686]/35 bg-[#f1c686]/12 text-[#fff0da]"
-                          : isGoldPandaria
-                          ? "border-[#8df0c8]/35 bg-[#8df0c8]/12 text-[#e6fff4]"
-                          : ""
-                      }`}
-                    >
-                      Open
+                <div
+                  className="h-72 transition-transform duration-500 group-hover:scale-105"
+                  style={{
+                    backgroundImage: `linear-gradient(180deg,rgba(6,10,20,0.25),rgba(6,10,20,0.86)), url('${categoryCover[category.id] ?? coverByGame[game.id] ?? coverByGame.retail}')`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                />
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                  <div className="gm-panel rounded-xl px-3 py-3">
+                    <h2 className="text-xl font-black text-[#eaf4ff]">{category.title}</h2>
+                    <p className="mt-2 text-xs leading-6 text-[#a8c3e0]">{category.description}</p>
+                    <span className="gm-button gm-button-primary gm-shine mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
+                      Open {category.title}
+                      <ArrowRight className="h-3 w-3" />
                     </span>
                   </div>
-                </article>
+                </div>
               </Link>
-            );
-          })}
+            ))}
+          </div>
+
+          <aside className="space-y-4">
+            <article className="gm-panel rounded-2xl p-4">
+              <div className="flex items-center gap-2 text-[#6ee7ff]">
+                <Gift className="h-4 w-4" />
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.17em]">Rewards</p>
+              </div>
+              <p className="mt-3 text-sm text-[#bbd2ec]">Every completed order grants XP and unlocks seasonal inventory items.</p>
+              <Link href="/rewards" className="gm-button gm-button-secondary mt-4 inline-flex w-full items-center justify-center rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
+                View pass
+              </Link>
+            </article>
+
+            <article className="gm-panel rounded-2xl p-4">
+              <div className="flex items-center gap-2 text-[#86efac]">
+                <ShieldCheck className="h-4 w-4" />
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.17em]">Safety</p>
+              </div>
+              <p className="mt-3 text-sm text-[#bbd2ec]">Payment and order data stay protected with server-side verification.</p>
+            </article>
+          </aside>
         </section>
       </main>
     </div>

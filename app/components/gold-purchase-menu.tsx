@@ -1,7 +1,8 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
+import { Banknote, CreditCard, Landmark, Mail, ScrollText, Sword, UserRound } from "lucide-react";
 
 import { defaultGoldConfigEntry, emptyGoldConfig, getGoldConfigFor } from "../data/gold-config";
 import type { GameServer } from "../data/games";
@@ -21,27 +22,29 @@ const paymentMethods: Array<{
   id: PaymentMethod;
   title: string;
   description: string;
-  accent: string;
+  accentClass: string;
 }> = [
   {
     id: "pix",
     title: "Pix",
-    description: "Instant confirmation with 5% discount.",
-    accent: "text-[#7fffd4]",
+    description: "Instant confirmation and 5% discount.",
+    accentClass: "text-[#86efac]",
   },
   {
     id: "card",
     title: "Credit card",
-    description: "Fast approval with parcel-friendly checkout.",
-    accent: "text-[#8dd0ff]",
+    description: "Fast approval and card-first checkout.",
+    accentClass: "text-[#93c5fd]",
   },
   {
     id: "balance",
     title: "LM Coins",
-    description: "Use your internal balance with zero gateway fee.",
-    accent: "text-[#ffcf57]",
+    description: "Use wallet balance with no external fee.",
+    accentClass: "text-[#facc15]",
   },
 ];
+
+const deliveryMethods = ["Face to face", "Auction House", "Mailbox"];
 
 function formatBRL(value: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -50,27 +53,19 @@ function formatBRL(value: number) {
   }).format(value);
 }
 
-export function GoldPurchaseMenu({
-  gameId,
-  gameTitle,
-  categoryTitle,
-  servers,
-}: GoldPurchaseMenuProps) {
-  const isTbc = gameId === "tbc-anniversary";
-  const isMidnight = gameId === "retail";
-  const isClassic = gameId === "classic-era";
-  const isPandaria = gameId === "mist-of-pandaria";
+export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: GoldPurchaseMenuProps) {
   const [fullGoldConfig, setFullGoldConfig] = useState(emptyGoldConfig);
   const [selectedServerId, setSelectedServerId] = useState("");
   const [selectedFaction, setSelectedFaction] = useState("");
   const [goldAmount, setGoldAmount] = useState(defaultGoldConfigEntry.minGold);
   const [nickname, setNickname] = useState("");
-  const [deliveryMethod, setDeliveryMethod] = useState("Face to face");
+  const [deliveryMethod, setDeliveryMethod] = useState(deliveryMethods[0]);
   const [email, setEmail] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [customerUid, setCustomerUid] = useState("");
+
   const hasServerOptions = servers.length > 0;
   const requiresFaction = hasServerOptions && gameId !== "retail";
 
@@ -81,7 +76,7 @@ export function GoldPurchaseMenu({
           setFullGoldConfig(config);
         });
       }),
-    []
+    [],
   );
 
   useEffect(() => {
@@ -99,32 +94,33 @@ export function GoldPurchaseMenu({
   }, []);
 
   const goldConfig = getGoldConfigFor(fullGoldConfig, gameId, selectedServerId, selectedFaction);
-
   const selectedServer = servers.find((server) => server.id === selectedServerId);
+
   const serverSelected = !hasServerOptions || selectedServerId !== "";
   const factionSelected = !requiresFaction || selectedFaction !== "";
-  const goldUnlocked = serverSelected && factionSelected;
-  const safeGoldAmount = Math.min(
-    Math.max(goldAmount, goldConfig.minGold),
-    goldConfig.maxGold
-  );
-  const detailsUnlocked = goldUnlocked && safeGoldAmount >= goldConfig.minGold;
-  const formReady =
-    detailsUnlocked &&
-    nickname.trim() !== "" &&
-    deliveryMethod.trim() !== "" &&
-    email.trim() !== "" &&
-    paymentMethod.trim() !== "";
-  const price = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
-  const paymentAdjustment =
-    paymentMethod === "pix" ? price * -0.05 : paymentMethod === "card" ? price * 0.04 : 0;
-  const finalPrice = Math.max(0, price + paymentAdjustment);
-  const selectionModeLabel = hasServerOptions
-    ? requiresFaction
-      ? "Game -> Server -> Faction"
-      : "Game -> Region"
-    : "Game";
+  const stepServerDone = serverSelected && factionSelected;
+
+  const safeGoldAmount = Math.min(Math.max(goldAmount, goldConfig.minGold), goldConfig.maxGold);
+  const stepAmountDone = stepServerDone && safeGoldAmount >= goldConfig.minGold;
+
+  const stepDetailsDone =
+    stepAmountDone && nickname.trim() !== "" && deliveryMethod.trim() !== "" && email.trim() !== "";
+  const formReady = stepDetailsDone && paymentMethod.trim() !== "";
+
+  const basePrice = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
+  const paymentAdjustment = paymentMethod === "pix" ? basePrice * -0.05 : paymentMethod === "card" ? basePrice * 0.04 : 0;
+  const finalPrice = Math.max(0, basePrice + paymentAdjustment);
+
   const selectedPayment = paymentMethods.find((method) => method.id === paymentMethod) ?? paymentMethods[0];
+
+  const progressPercent = useMemo(() => {
+    let score = 0;
+    if (stepServerDone) score += 25;
+    if (stepAmountDone) score += 25;
+    if (stepDetailsDone) score += 25;
+    if (formReady) score += 25;
+    return score;
+  }, [formReady, stepAmountDone, stepDetailsDone, stepServerDone]);
 
   const startCheckout = async () => {
     if (!formReady || checkoutLoading) {
@@ -172,370 +168,268 @@ export function GoldPurchaseMenu({
   };
 
   return (
-    <aside className={`loot-panel rounded-[1.75rem] p-6 ${isTbc ? "tbc-panel" : isMidnight ? "midnight-panel" : isClassic ? "classic-panel" : isPandaria ? "pandaria-panel" : ""}`}>
-      <p className={`text-sm font-bold uppercase tracking-[0.24em] ${isTbc ? "tbc-kicker" : isMidnight ? "midnight-kicker" : isClassic ? "classic-kicker" : isPandaria ? "pandaria-kicker" : "loot-kicker"}`}>
-        Buy menu
-      </p>
-      <h2 className={`mt-4 text-3xl font-black ${isTbc ? "tbc-title" : isMidnight ? "midnight-title" : isClassic ? "classic-title" : isPandaria ? "pandaria-title" : "loot-title"}`}>
-        Configure your order
-      </h2>
-
-      <div className="mt-8 space-y-6">
-        <div className="rounded-[1.25rem] border border-[#ffd76a]/10 bg-white/4 p-4">
-          <p className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-            Product
-          </p>
-          <p className="loot-title mt-2 text-lg font-black">{gameTitle}</p>
-          <p className="loot-muted mt-1 text-sm">{categoryTitle}</p>
-          <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-[#d8f4ff]">
-            Mode: {selectionModeLabel}
-          </p>
-        </div>
-
-        <div>
-          <label
-            htmlFor="server-select"
-            className="loot-label text-xs font-bold uppercase tracking-[0.18em]"
-          >
-            Server
-          </label>
-          <select
-            id="server-select"
-            value={selectedServerId}
-            disabled={!hasServerOptions}
-            onChange={(event) => {
-              const nextServerId = event.target.value;
-              const nextConfig = getGoldConfigFor(fullGoldConfig, gameId, nextServerId, undefined);
-              setSelectedServerId(nextServerId);
-              setSelectedFaction("");
-              setGoldAmount(nextConfig.minGold);
-              setNickname("");
-              setDeliveryMethod("Face to face");
-              setEmail("");
-            }}
-            className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
-          >
-            <option value="">
-              {hasServerOptions ? "Select a server" : "No server selection for this game"}
-            </option>
-            {servers.map((server) => (
-              <option key={server.id} value={server.id}>
-                {server.name} ({server.region})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {requiresFaction ? (
-        <div className={!hasServerOptions || !serverSelected ? "opacity-40" : ""}>
-          <p
-            className={`text-xs font-bold uppercase tracking-[0.18em] ${
-              hasServerOptions && serverSelected ? "text-[#a89a7b]" : "text-[#5e6470]"
-            }`}
-          >
-            Faction
-          </p>
-          <div className="mt-3 flex flex-wrap gap-3">
-            {(selectedServer?.factions ?? ["Horde", "Alliance"]).map((faction) => (
-              <button
-                key={faction}
-                type="button"
-                disabled={!hasServerOptions || !serverSelected}
-                onClick={() => {
-                  setSelectedFaction(faction);
-                  const nextConfig = getGoldConfigFor(fullGoldConfig, gameId, selectedServerId, faction);
-                  setGoldAmount(nextConfig.minGold);
-                }}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                  selectedFaction === faction
-                    ? isTbc
-                      ? "tbc-gold-button"
-                      : isMidnight
-                      ? "midnight-gold-button"
-                      : isClassic
-                      ? "classic-gold-button"
-                      : isPandaria
-                      ? "pandaria-gold-button"
-                      : "loot-gold-button"
-                    : "loot-secondary-button border px-4 py-2 text-[#f8eed4]"
-                } ${!hasServerOptions || !serverSelected ? "cursor-not-allowed" : ""}`}
-              >
-                {faction}
-              </button>
-            ))}
-          </div>
-        </div>
-        ) : null}
-
-        <div className={!goldUnlocked ? "opacity-40" : ""}>
-          <div className="flex items-center justify-between">
-            <p
-              className={`text-xs font-bold uppercase tracking-[0.18em] ${
-                goldUnlocked ? "text-[#a89a7b]" : "text-[#5e6470]"
-              }`}
-            >
-              Gold amount
-            </p>
-            {goldUnlocked && (
-              <span className={`${isTbc
-                ? "rounded-full bg-[#2f733e]/20 text-[#d2f5c2]"
-                : isMidnight
-                ? "rounded-full bg-[#1d4d80]/25 text-[#dff3ff]"
-                : isClassic
-                ? "rounded-full bg-[#7c4f28]/28 text-[#ffe7c6]"
-                : isPandaria
-                ? "rounded-full bg-[#1f6f55]/28 text-[#ddfff0]"
-                : "rounded-full bg-[linear-gradient(180deg,#ffe27c_0%,#f7ba2c_65%,#cc7a15_100%)] text-[#2f1405]"} px-3 py-1 text-xs font-bold`}>
-                {safeGoldAmount.toLocaleString()} gold
-              </span>
-            )}
-          </div>
-          <input
-            type="range"
-            min={goldConfig.minGold}
-            max={goldConfig.maxGold}
-            step={Math.max(1, goldConfig.minGold)}
-            value={safeGoldAmount}
-            disabled={!goldUnlocked}
-            onChange={(event) => setGoldAmount(Number(event.target.value))}
-            className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-[#f7ba2c] disabled:cursor-not-allowed"
-          />
-
-          <div className="mt-2 flex justify-between text-xs text-[#7d8597]">
-            <span>{goldConfig.minGold.toLocaleString()}</span>
-            <span>{goldConfig.maxGold.toLocaleString()}</span>
-          </div>
-
-          {goldUnlocked ? (
-            <div
-              className={`mt-4 rounded-[1rem] border p-4 ${
-                isTbc
-                  ? "border-[#99ff99]/20"
-                  : isMidnight
-                  ? "border-[#4dc6ff]/20"
-                  : isClassic
-                  ? "border-[#f1c686]/24"
-                  : isPandaria
-                  ? "border-[#8df0c8]/24"
-                  : "border-[#ffd76a]/10 bg-white/4"
-              }`}
-              style={
-                isTbc
-                  ? {
-                      backgroundImage:
-                        'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/wow/wow-tbc/tbc-gold.jpeg")',
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }
-                  : isMidnight
-                  ? {
-                      backgroundImage:
-                        'linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/wow/wow-retail/midnight-gold.jpeg")',
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }
-                  : isClassic
-                  ? {
-                      backgroundImage:
-                        'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("/wow/wow-classic-era/classic-era-gold.png")',
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }
-                  : isPandaria
-                  ? {
-                      backgroundImage:
-                        'linear-gradient(rgba(0, 0, 0, 0.46), rgba(0, 0, 0, 0.46)), url("/wow/wow-pandaria/pandaria-gold.png")',
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }
-                  : undefined
-              }
-            >
-              <p className="loot-label text-xs font-bold uppercase tracking-[0.18em]">
-                Price
-              </p>
-              <p className="loot-title mt-2 text-3xl font-black">${price}</p>
-              <p className="loot-muted mt-2 text-sm">
-                ${goldConfig.pricePerThousand} per 1,000 gold
+    <section className="grid gap-5 xl:grid-cols-[1fr_22rem]">
+      <div className="space-y-5">
+        <article className="gm-panel rounded-[1.35rem] p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#95b8e2]">Order flow</p>
+              <h2 className="mt-2 text-2xl font-black text-[#eaf4ff]">Configure your gold order</h2>
+              <p className="mt-2 text-sm text-[#a8c3e0]">
+                {gameTitle} / {categoryTitle}
               </p>
             </div>
-          ) : null}
-        </div>
-
-        <div className={!detailsUnlocked ? "opacity-40" : ""}>
-          <p
-            className={`text-xs font-bold uppercase tracking-[0.18em] ${
-              detailsUnlocked ? "text-[#a89a7b]" : "text-[#5e6470]"
-            }`}
-          >
-            Payment method
-          </p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            {paymentMethods.map((method) => (
-              <button
-                key={method.id}
-                type="button"
-                disabled={!detailsUnlocked}
-                onClick={() => setPaymentMethod(method.id)}
-                className={`rounded-[1.1rem] border px-4 py-4 text-left transition-all ${
-                  paymentMethod === method.id
-                    ? "border-[#ffd76a]/40 bg-[#14273f] shadow-[0_16px_32px_rgba(5,10,20,0.22)]"
-                    : "border-[#ffffff12] bg-[#0b1320]/70 hover:border-[#84d5ff]/24 hover:bg-[#101b2c]"
-                } disabled:cursor-not-allowed`}
-              >
-                <p className={`text-sm font-black ${method.accent}`}>{method.title}</p>
-                <p className="mt-2 text-xs leading-6 text-[#a7b6cb]">{method.description}</p>
-              </button>
-            ))}
+            <span className="gm-badge px-3 py-1 text-[0.58rem] font-bold uppercase tracking-[0.15em]">{progressPercent}% ready</span>
           </div>
 
-          {detailsUnlocked ? (
-            <div className="mt-4 rounded-[1rem] border border-[#ffffff12] bg-[#08111f]/80 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9dd3ff]">Checkout summary</p>
-                  <p className="mt-2 text-sm text-[#d9eaff]">
-                    {selectedPayment.title} selected for {gameTitle} / {categoryTitle}.
-                  </p>
+          <div className="mt-4 h-2 rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-[linear-gradient(90deg,#3ba8ff_0%,#6ee7ff_65%,#22c55e_100%)] transition-all" style={{ width: `${progressPercent}%` }} />
+          </div>
+        </article>
+
+        <article className="gm-panel rounded-[1.35rem] p-5 sm:p-6">
+          <div className="flex items-center gap-2 text-[#9ec4f4]">
+            <Sword className="h-4 w-4" />
+            <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em]">Step 1: Server and faction</p>
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label htmlFor="server-select" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
+                Server
+              </label>
+              <select
+                id="server-select"
+                value={selectedServerId}
+                disabled={!hasServerOptions}
+                onChange={(event) => {
+                  const nextServerId = event.target.value;
+                  const nextConfig = getGoldConfigFor(fullGoldConfig, gameId, nextServerId, undefined);
+                  setSelectedServerId(nextServerId);
+                  setSelectedFaction("");
+                  setGoldAmount(nextConfig.minGold);
+                }}
+                className="gm-select mt-2 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+              >
+                <option value="">{hasServerOptions ? "Select a server" : "No server selection for this game"}</option>
+                {servers.map((server) => (
+                  <option key={server.id} value={server.id}>
+                    {server.name} ({server.region})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {requiresFaction ? (
+              <div className="sm:col-span-2">
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">Faction</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(selectedServer?.factions ?? ["Horde", "Alliance"]).map((faction) => (
+                    <button
+                      key={faction}
+                      type="button"
+                      disabled={!serverSelected}
+                      onClick={() => {
+                        setSelectedFaction(faction);
+                        const nextConfig = getGoldConfigFor(fullGoldConfig, gameId, selectedServerId, faction);
+                        setGoldAmount(nextConfig.minGold);
+                      }}
+                      className={`gm-button rounded-lg px-3 py-2 text-[0.62rem] font-bold uppercase tracking-[0.14em] ${
+                        selectedFaction === faction
+                          ? "gm-button-primary"
+                          : "gm-button-secondary disabled:cursor-not-allowed"
+                      }`}
+                    >
+                      {faction}
+                    </button>
+                  ))}
                 </div>
-                <span className={`rounded-full border border-[#ffffff12] px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${selectedPayment.accent}`}>
-                  {selectedPayment.title}
+              </div>
+            ) : null}
+          </div>
+        </article>
+
+        <article className="gm-panel rounded-[1.35rem] p-5 sm:p-6">
+          <div className="flex items-center gap-2 text-[#9ec4f4]">
+            <Landmark className="h-4 w-4" />
+            <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em]">Step 2: Gold and payment</p>
+          </div>
+
+          <div className={`mt-4 space-y-4 ${stepServerDone ? "" : "opacity-45"}`}>
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">Gold amount</p>
+                <span className="gm-badge px-3 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em]">
+                  {safeGoldAmount.toLocaleString()} gold
                 </span>
               </div>
 
-              <div className="mt-4 space-y-2 text-sm text-[#c7d7eb]">
-                <div className="flex items-center justify-between gap-3">
-                  <span>Base price</span>
-                  <span className="font-semibold">{formatBRL(price)}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span>{paymentMethod === "pix" ? "Pix discount" : paymentMethod === "card" ? "Gateway fee" : "Balance adjustment"}</span>
-                  <span className={`font-semibold ${paymentAdjustment <= 0 ? "text-[#89f0be]" : "text-[#ffd5a3]"}`}>
-                    {paymentAdjustment === 0 ? formatBRL(0) : `${paymentAdjustment > 0 ? "+" : "-"}${formatBRL(Math.abs(paymentAdjustment))}`}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-3 border-t border-[#ffffff12] pt-3 text-base">
-                  <span className="font-bold text-[#f4e8c8]">Total</span>
-                  <span className="text-lg font-black text-[#ffcf57]">{formatBRL(finalPrice)}</span>
-                </div>
+              <input
+                type="range"
+                min={goldConfig.minGold}
+                max={goldConfig.maxGold}
+                step={Math.max(1, goldConfig.minGold)}
+                value={safeGoldAmount}
+                disabled={!stepServerDone}
+                onChange={(event) => setGoldAmount(Number(event.target.value))}
+                className="mt-3 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-[#3ba8ff] disabled:cursor-not-allowed"
+              />
+
+              <div className="mt-2 flex justify-between text-xs text-[#88a8d1]">
+                <span>{goldConfig.minGold.toLocaleString()}</span>
+                <span>{goldConfig.maxGold.toLocaleString()}</span>
               </div>
-
-              <p className="mt-4 text-xs leading-6 text-[#94a7c3]">
-                {paymentMethod === "pix"
-                  ? "Pix orders are prioritized and can be confirmed instantly after payment."
-                  : paymentMethod === "card"
-                  ? "Card checkout can support installments once the gateway is connected."
-                  : "LM Coins uses your internal wallet before any external payment is required."}
-              </p>
             </div>
-          ) : null}
-        </div>
 
-        <div className="grid gap-4">
-          <div>
-            <label
-              htmlFor="nickname"
-              className={`text-xs font-bold uppercase tracking-[0.18em] ${
-                detailsUnlocked ? "text-[#a89a7b]" : "text-[#5e6470]"
-              }`}
-            >
-              Nickname
-            </label>
-            <input
-              id="nickname"
-              type="text"
-              value={nickname}
-              disabled={!detailsUnlocked}
-              onChange={(event) => setNickname(event.target.value)}
-              placeholder="Your character name"
-              className="loot-input mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="delivery-method"
-              className={`text-xs font-bold uppercase tracking-[0.18em] ${
-                detailsUnlocked ? "text-[#a89a7b]" : "text-[#5e6470]"
-              }`}
-            >
-              Delivery method
-            </label>
-            <select
-              id="delivery-method"
-              value={deliveryMethod}
-              disabled={!detailsUnlocked}
-              onChange={(event) => setDeliveryMethod(event.target.value)}
-              className="loot-select mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
-            >
-              {["Face to face", "Auction House", "Mailbox"].map((method) => (
-                <option key={method} value={method}>
-                  {method}
-                </option>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {paymentMethods.map((method) => (
+                <button
+                  key={method.id}
+                  type="button"
+                  disabled={!stepAmountDone}
+                  onClick={() => setPaymentMethod(method.id)}
+                  className={`gm-button rounded-xl border px-4 py-4 text-left transition-all disabled:cursor-not-allowed ${
+                    paymentMethod === method.id
+                      ? "border-[#6ee7ff]/35 bg-[#17345d]/75 shadow-[0_14px_28px_rgba(3,10,22,0.3)]"
+                      : "border-white/10 bg-[#0e172c]/70 hover:border-white/18"
+                  }`}
+                >
+                  <p className={`text-sm font-black ${method.accentClass}`}>{method.title}</p>
+                  <p className="mt-2 text-xs leading-6 text-[#a9c4e2]">{method.description}</p>
+                </button>
               ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              className={`text-xs font-bold uppercase tracking-[0.18em] ${
-                detailsUnlocked ? "text-[#a89a7b]" : "text-[#5e6470]"
-              }`}
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              disabled={!detailsUnlocked}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="your@email.com"
-              className="loot-input mt-3 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
-            />
-          </div>
-        </div>
-
-        <div className="rounded-[1.25rem] border border-[#84d5ff]/18 bg-[#0d3f7a]/24 p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#d8f4ff]">
-                {requiresFaction ? "Selected server" : "Selected region"}
-              </p>
-              <p className="loot-title mt-2 text-lg font-black">
-                {selectedServer?.name ?? (requiresFaction ? "No server selected" : "No region selected")}
-              </p>
             </div>
-            <span className={`${isTbc ? "tbc-badge" : isMidnight ? "midnight-badge" : isClassic ? "classic-badge" : isPandaria ? "pandaria-badge" : "loot-badge-blue"} rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em]`}>
-              {requiresFaction
-                ? `${selectedServer?.region ?? "--"} / ${selectedFaction || "--"}`
-                : (selectedServer?.region ?? "--")}
-            </span>
           </div>
-        </div>
+        </article>
 
-        {checkoutError ? (
-          <p className="rounded-xl border border-[#ff6060]/30 bg-[#1e0a0a]/70 px-4 py-3 text-sm font-semibold text-[#ff9898]">
-            {checkoutError}
-          </p>
-        ) : null}
+        <article className="gm-panel rounded-[1.35rem] p-5 sm:p-6">
+          <div className="flex items-center gap-2 text-[#9ec4f4]">
+            <ScrollText className="h-4 w-4" />
+            <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em]">Step 3: Delivery details</p>
+          </div>
 
-        <button
-          type="button"
-          disabled={!formReady || checkoutLoading}
-          onClick={() => void startCheckout()}
-          className={`${isTbc ? "tbc-gold-button" : isMidnight ? "midnight-gold-button" : isClassic ? "classic-gold-button" : isPandaria ? "pandaria-gold-button" : "loot-gold-button"} w-full rounded-full px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-200`}
-        >
-          {checkoutLoading
-            ? "Redirecting to checkout..."
-            : paymentMethod === "pix"
-            ? `Pay with Pix — ${formatBRL(finalPrice)}`
-            : paymentMethod === "card"
-            ? `Pay with card — ${formatBRL(finalPrice)}`
-            : `Pay with LM Coins — ${formatBRL(finalPrice)}`}
-        </button>
+          <div className={`mt-4 grid gap-4 sm:grid-cols-2 ${stepAmountDone ? "" : "opacity-45"}`}>
+            <div>
+              <label htmlFor="nickname" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
+                Nickname
+              </label>
+              <div className="relative mt-2">
+                <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7aa6d6]" />
+                <input
+                  id="nickname"
+                  type="text"
+                  value={nickname}
+                  disabled={!stepAmountDone}
+                  onChange={(event) => setNickname(event.target.value)}
+                  placeholder="Your character name"
+                  className="gm-input pl-10 pr-3 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="delivery-method" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
+                Delivery method
+              </label>
+              <select
+                id="delivery-method"
+                value={deliveryMethod}
+                disabled={!stepAmountDone}
+                onChange={(event) => setDeliveryMethod(event.target.value)}
+                className="gm-select mt-2 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+              >
+                {deliveryMethods.map((method) => (
+                  <option key={method} value={method}>
+                    {method}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label htmlFor="email" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
+                Email
+              </label>
+              <div className="relative mt-2">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7aa6d6]" />
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  disabled={!stepAmountDone}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="your@email.com"
+                  className="gm-input pl-10 pr-3 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+                />
+              </div>
+            </div>
+          </div>
+        </article>
       </div>
-    </aside>
+
+      <aside className="xl:sticky xl:top-24 xl:h-fit">
+        <article className="gm-panel rounded-[1.35rem] p-5">
+          <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">Order summary</p>
+
+          <div className="mt-4 space-y-3 text-sm">
+            <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+              <span>Server</span>
+              <span className="font-semibold text-[#e7f5ff]">{selectedServer?.name ?? "-"}</span>
+            </div>
+            {requiresFaction ? (
+              <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+                <span>Faction</span>
+                <span className="font-semibold text-[#e7f5ff]">{selectedFaction || "-"}</span>
+              </div>
+            ) : null}
+            <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+              <span>Gold</span>
+              <span className="font-semibold text-[#e7f5ff]">{safeGoldAmount.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+              <span>Base</span>
+              <span className="font-semibold text-[#e7f5ff]">{formatBRL(basePrice)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+              <span>{paymentMethod === "pix" ? "Pix discount" : paymentMethod === "card" ? "Card fee" : "Adjustment"}</span>
+              <span className={`font-semibold ${paymentAdjustment <= 0 ? "text-[#86efac]" : "text-[#fdba74]"}`}>
+                {paymentAdjustment === 0 ? formatBRL(0) : `${paymentAdjustment > 0 ? "+" : "-"}${formatBRL(Math.abs(paymentAdjustment))}`}
+              </span>
+            </div>
+          </div>
+
+          <div className="gm-divider my-4" />
+
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#d3e9ff]">Total</p>
+            <p className="text-2xl font-black text-[#6ee7ff]">{formatBRL(finalPrice)}</p>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-white/10 bg-[#0b162b]/75 px-3 py-3">
+            <div className="flex items-center gap-2 text-[#9ec4f4]">
+              {paymentMethod === "pix" ? <Landmark className="h-4 w-4" /> : paymentMethod === "card" ? <CreditCard className="h-4 w-4" /> : <Banknote className="h-4 w-4" />}
+              <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em]">Payment method</p>
+            </div>
+            <p className={`mt-2 text-sm font-black ${selectedPayment.accentClass}`}>{selectedPayment.title}</p>
+            <p className="mt-1 text-xs text-[#a9c4e2]">{selectedPayment.description}</p>
+          </div>
+
+          {checkoutError ? (
+            <p className="mt-4 rounded-xl border border-[#ff6060]/30 bg-[#2a1212]/70 px-3 py-3 text-xs font-semibold text-[#ffb4b4]">
+              {checkoutError}
+            </p>
+          ) : null}
+
+          <button
+            type="button"
+            disabled={!formReady || checkoutLoading}
+            onClick={() => void startCheckout()}
+            className="gm-button gm-button-primary gm-shine mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {checkoutLoading ? "Redirecting..." : `Checkout ${formatBRL(finalPrice)}`}
+          </button>
+        </article>
+      </aside>
+    </section>
   );
 }
