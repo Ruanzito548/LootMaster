@@ -71,16 +71,16 @@ export default function Home() {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <article className="gm-panel rounded-xl px-4 py-3">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#8fb3de]">Featured reward</p>
-                  <p className="mt-2 text-sm font-black text-[#dff3ff]">Mythic Drop</p>
+                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Featured reward</p>
+                  <p className="mt-2 text-sm font-black text-[color:var(--text-main)]">Mythic Drop</p>
                 </article>
                 <article className="gm-panel rounded-xl px-4 py-3">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#8fb3de]">Season</p>
-                  <p className="mt-2 text-sm font-black text-[#facc15]">Nightfall</p>
+                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Season</p>
+                  <p className="mt-2 text-sm font-black text-[color:var(--theme-warm)]">Nightfall</p>
                 </article>
                 <article className="gm-panel rounded-xl px-4 py-3">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#8fb3de]">Security</p>
-                  <p className="mt-2 text-sm font-black text-[#86efac]">Protected</p>
+                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Security</p>
+                  <p className="mt-2 text-sm font-black text-[color:var(--text-main)]">Protected</p>
                 </article>
               </div>
             </div>
@@ -126,36 +126,36 @@ export default function Home() {
         <section className="grid gap-4 lg:grid-cols-3">
           <article className="gm-panel rounded-2xl px-5 py-5">
             <div className="flex items-center gap-3">
-              <span className="rounded-xl bg-[#3ba8ff]/18 p-2 text-[#6ee7ff]">
+              <span className="rounded-xl bg-white/5 p-2 text-[color:var(--theme-accent)]">
                 <Flame className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#8eaed6]">Live activity</p>
-                <p className="text-sm font-black text-[#e4f2ff]">126 orders today</p>
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Live activity</p>
+                <p className="text-sm font-black text-[color:var(--text-main)]">126 orders today</p>
               </div>
             </div>
           </article>
 
           <article className="gm-panel rounded-2xl px-5 py-5">
             <div className="flex items-center gap-3">
-              <span className="rounded-xl bg-[#7c4dff]/18 p-2 text-[#bca3ff]">
+              <span className="rounded-xl bg-white/5 p-2 text-[color:var(--theme-accent)]">
                 <Gift className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#8eaed6]">Reward road</p>
-                <p className="text-sm font-black text-[#e4f2ff]">New seasonal nodes</p>
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Reward road</p>
+                <p className="text-sm font-black text-[color:var(--text-main)]">New seasonal nodes</p>
               </div>
             </div>
           </article>
 
           <article className="gm-panel rounded-2xl px-5 py-5">
             <div className="flex items-center gap-3">
-              <span className="rounded-xl bg-[#22c55e]/18 p-2 text-[#86efac]">
+              <span className="rounded-xl bg-white/5 p-2 text-[color:var(--theme-accent)]">
                 <ShieldCheck className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#8eaed6]">Trusted checkout</p>
-                <p className="text-sm font-black text-[#e4f2ff]">Protected payment flow</p>
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Trusted checkout</p>
+                <p className="text-sm font-black text-[color:var(--text-main)]">Protected payment flow</p>
               </div>
             </div>
           </article>
@@ -175,7 +175,7 @@ export default function Home() {
               <motion.article
                 key={game.id}
                 whileHover={{ y: -6 }}
-                className="group relative overflow-hidden rounded-[1.35rem] border border-white/12 bg-[#121d35]"
+                className="group relative overflow-hidden rounded-[1.35rem] border border-white/10 bg-[rgba(17,19,23,0.9)]"
               >
                 <div
                   className="h-56 transition-transform duration-500 group-hover:scale-110"
@@ -186,13 +186,13 @@ export default function Home() {
                   }}
                 />
 
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_0%,rgba(59,168,255,0.2),transparent_34%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_0%,rgba(74,141,255,0.12),transparent_34%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                 <div className="absolute inset-x-0 bottom-0 p-4">
                   <div className="gm-panel rounded-xl px-3 py-3">
                     <div className="flex items-center justify-between gap-2">
-                      <h3 className="text-sm font-black text-[#eaf4ff]">{game.shortTitle}</h3>
-                      <span className="rounded-full border border-[#6ee7ff]/25 bg-[#3ba8ff]/15 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em] text-[#d8f4ff]">
+                      <h3 className="text-sm font-black text-[color:var(--text-main)]">{game.shortTitle}</h3>
+                      <span className="rounded-full border border-[color:var(--theme-border)] bg-[rgba(74,141,255,0.12)] px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-main)]">
                         Popular
                       </span>
                     </div>

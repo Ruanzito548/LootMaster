@@ -7,7 +7,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="theme-transition-surface relative mt-auto border-t border-[color:var(--border-color)] bg-[color:var(--footer-bg)] backdrop-blur-xl">
+    <footer className="theme-transition-surface theme-footer-shell relative mt-auto border-t border-[color:var(--border-color)] bg-[color:var(--footer-bg)] backdrop-blur-xl">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[1px]"
@@ -17,14 +17,14 @@ export function Footer() {
         }}
       />
 
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-12 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 py-14 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
           <div className="flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-3 text-[color:var(--text-main)]">
               <Image src="/lootmasterlogo.png" alt="Loot Master Logo" width={56} height={56} className="h-14 w-auto" />
               <span className="font-throne text-2xl">Loot Master</span>
             </Link>
-            <p className="text-sm text-[color:var(--text-muted)]">
+            <p className="text-sm leading-7 text-[color:var(--text-muted)]">
               Your premium game marketplace for gold, accounts and progression services with immersive theme-based navigation.
             </p>
           </div>
