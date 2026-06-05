@@ -55,7 +55,7 @@ export default function Home() {
               </p>
 
               <div className="flex flex-wrap gap-3">
-                <Link href={`/games/${activeGame?.id ?? "retail"}`} className="gm-button gm-button-primary gm-shine inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
+                <Link href={`/games/${activeGame?.id ?? "retail"}`} className="gm-button gm-button-primary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
                   Enter {activeGame?.shortTitle ?? "Midnight"}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
@@ -203,7 +203,7 @@ export default function Home() {
                         </span>
                       ))}
                     </div>
-                    <Link href={`/games/${game.id}`} className="gm-button gm-button-primary gm-shine mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
+                    <Link href={`/games/${game.id}`} className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                       Enter
                       <ArrowRight className="h-3 w-3" />
                     </Link>

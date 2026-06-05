@@ -21,16 +21,16 @@ export default function GamesIndexPage() {
                 <Sparkles className="h-3.5 w-3.5" />
                 Games launcher
               </span>
-              <h1 className="mt-5 font-throne text-5xl font-black leading-[0.96] text-[#eaf4ff] sm:text-6xl">Pick A Realm</h1>
+              <h1 className="mt-5 font-throne text-5xl font-black leading-[0.96] text-[#eaf4ff] sm:text-6xl">Choose Your Game</h1>
               <p className="mt-4 max-w-xl text-sm leading-7 text-[#a4bddc] sm:text-base">
-                Enter a focused marketplace per expansion with dedicated gold, account and boost flows.
+                Enter a focused marketplace per game with dedicated gold, account and boost flows.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link href="/" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase tracking-[0.13em]">
                   Back home
                 </Link>
-                <Link href="/rewards" className="gm-button gm-button-primary gm-shine inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase tracking-[0.13em]">
+                <Link href="/rewards" className="gm-button gm-button-primary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase tracking-[0.13em]">
                   Rewards track
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
@@ -96,7 +96,7 @@ export default function GamesIndexPage() {
                     <span className="gm-badge px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em]">Live</span>
                   </div>
                   <p className="mt-2 text-xs leading-6 text-[#a7c2e0]">{game.description}</p>
-                  <span className="gm-button gm-button-primary gm-shine mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
+                  <span className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                     Enter hub
                     <ArrowRight className="h-3 w-3" />
                   </span>

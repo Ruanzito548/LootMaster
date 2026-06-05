@@ -424,7 +424,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             type="button"
             disabled={!formReady || checkoutLoading}
             onClick={() => void startCheckout()}
-            className="gm-button gm-button-primary gm-shine mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-50"
+            className="gm-button gm-button-primary mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {checkoutLoading ? "Redirecting..." : `Checkout ${formatBRL(finalPrice)}`}
           </button>

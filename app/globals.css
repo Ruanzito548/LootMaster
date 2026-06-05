@@ -811,23 +811,6 @@ body {
   color: #ffe3e3;
 }
 
-.gm-shine::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -110%;
-  width: 45%;
-  height: 100%;
-  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-  transform: skewX(-18deg);
-  transition: left 0.55s ease;
-  pointer-events: none;
-}
-
-.gm-shine:hover::after {
-  left: 130%;
-}
-
 .gm-input,
 .gm-select {
   width: 100%;
@@ -1068,7 +1051,7 @@ html[data-game-theme="gta"] {
 .theme-transition-surface,
 .theme-transition-surface * {
   transition-property: background-color, border-color, box-shadow, color, filter;
-  transition-duration: 420ms;
+  transition-duration: 320ms;
   transition-timing-function: ease;
 }
 
@@ -1538,9 +1521,8 @@ body {
   ) !important;
   border-color: var(--theme-border) !important;
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--theme-accent) 16%, transparent),
-    0 20px 42px var(--theme-shadow),
-    0 0 22px color-mix(in srgb, var(--theme-glow) 36%, transparent);
+    inset 0 1px 0 color-mix(in srgb, var(--theme-accent) 10%, transparent),
+    0 16px 30px var(--theme-shadow);
 }
 
 .gm-button-primary,
@@ -1549,17 +1531,49 @@ body {
 .midnight-gold-button,
 .classic-gold-button,
 .pandaria-gold-button {
-  background: linear-gradient(
-    140deg,
-    color-mix(in srgb, var(--theme-warm) 86%, #ffffff) 0%,
-    var(--theme-warm) 55%,
-    color-mix(in srgb, var(--theme-accent) 76%, #ffffff) 100%
-  ) !important;
-  border-color: color-mix(in srgb, var(--theme-accent) 62%, transparent) !important;
+  background: linear-gradient(180deg, #3ba8ff 0%, #2563eb 100%) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #eef6ff !important;
+  transition: all 180ms ease !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 12px 28px color-mix(in srgb, var(--theme-glow) 90%, transparent),
-    0 0 18px color-mix(in srgb, var(--theme-accent) 40%, transparent) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 8px 18px rgba(59, 168, 255, 0.18) !important;
+}
+
+.gm-button-primary:hover,
+.loot-gold-button:hover,
+.tbc-gold-button:hover,
+.midnight-gold-button:hover,
+.classic-gold-button:hover,
+.pandaria-gold-button:hover {
+  transform: translateY(-1px) !important;
+  filter: brightness(1.04) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 10px 20px rgba(59, 168, 255, 0.24) !important;
+}
+
+.gm-button-secondary,
+.loot-secondary-button,
+.tbc-secondary-button,
+.midnight-secondary-button,
+.classic-secondary-button,
+.pandaria-secondary-button {
+  background: linear-gradient(180deg, rgba(18, 28, 46, 0.9), rgba(11, 19, 33, 0.94)) !important;
+  border-color: rgba(59, 168, 255, 0.24) !important;
+  color: #deecff !important;
+  transition: all 180ms ease !important;
+}
+
+.gm-button-secondary:hover,
+.loot-secondary-button:hover,
+.tbc-secondary-button:hover,
+.midnight-secondary-button:hover,
+.classic-secondary-button:hover,
+.pandaria-secondary-button:hover {
+  transform: translateY(-1px) !important;
+  border-color: rgba(59, 168, 255, 0.36) !important;
+  box-shadow: 0 8px 18px rgba(59, 168, 255, 0.16) !important;
 }
 
 .theme-progress-track {

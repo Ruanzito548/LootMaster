@@ -177,7 +177,7 @@ export function Navbar() {
               ) : null}
             </div>
           ) : (
-            <Link href="/login" className="gm-button gm-button-primary gm-shine inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase">
+            <Link href="/login" className="gm-button gm-button-primary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase">
               <UserRound className="h-3.5 w-3.5" />
               <span>Login</span>
             </Link>

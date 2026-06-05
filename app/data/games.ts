@@ -45,7 +45,7 @@ export const games: Game[] = [
     shortTitle: "Classic Era",
     tag: "Classic",
     description:
-      "Dedicated flow for permanent realms, with a more old-school identity and focus on stability.",
+      "Dedicated flow for legacy game servers, with an old-school identity and stable delivery.",
   },
   {
     id: "tbc-anniversary",

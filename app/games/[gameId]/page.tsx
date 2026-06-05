@@ -11,6 +11,20 @@ const coverByGame: Record<string, string> = {
   "mist-of-pandaria": "/wow/wow-pandaria/pandaria-logo.jpg",
 };
 
+const heroOverlayByGame: Record<string, string> = {
+  "classic-era": "linear-gradient(180deg,rgba(20,14,10,0.55),rgba(35,20,10,0.72))",
+  "tbc-anniversary": "linear-gradient(180deg,rgba(6,20,10,0.52),rgba(7,28,14,0.78))",
+  retail: "linear-gradient(180deg,rgba(8,16,32,0.52),rgba(8,18,40,0.78))",
+  "mist-of-pandaria": "linear-gradient(180deg,rgba(8,22,18,0.52),rgba(10,30,24,0.76))",
+};
+
+const ambientOverlayByGame: Record<string, string> = {
+  "classic-era": "radial-gradient(circle at 82% 15%, rgba(200,155,60,0.12), transparent 32%)",
+  "tbc-anniversary": "radial-gradient(circle at 82% 15%, rgba(74,222,128,0.18), transparent 32%)",
+  retail: "radial-gradient(circle at 82% 15%, rgba(96,165,250,0.2), transparent 32%)",
+  "mist-of-pandaria": "radial-gradient(circle at 82% 15%, rgba(16,185,129,0.18), transparent 32%)",
+};
+
 const categoryCoverByGame: Record<string, Record<string, string>> = {
   "tbc-anniversary": {
     gold: "/wow/wow-tbc/tbc-gold.jpeg",
@@ -51,12 +65,12 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `linear-gradient(180deg,rgba(7,12,24,0.52),rgba(7,12,24,0.9)), url('${coverByGame[game.id] ?? coverByGame.retail}')`,
+              backgroundImage: `${heroOverlayByGame[game.id] ?? heroOverlayByGame.retail}, url('${coverByGame[game.id] ?? coverByGame.retail}')`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
           />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_15%,rgba(59,168,255,0.24),transparent_32%)]" />
+          <div className="absolute inset-0" style={{ backgroundImage: ambientOverlayByGame[game.id] ?? ambientOverlayByGame.retail }} />
 
           <div className="relative z-10 flex flex-col gap-6">
             <div className="flex flex-wrap items-center gap-3">
@@ -113,7 +127,7 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                   <div className="gm-panel rounded-xl px-3 py-3">
                     <h2 className="text-xl font-black text-[#eaf4ff]">{category.title}</h2>
                     <p className="mt-2 text-xs leading-6 text-[#a8c3e0]">{category.description}</p>
-                    <span className="gm-button gm-button-primary gm-shine mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
+                    <span className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                       Open {category.title}
                       <ArrowRight className="h-3 w-3" />
                     </span>
