@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 import { DashboardClient, type DashboardOrder } from "./dashboard-client";
+import { GrantRandomChestButton } from "./grant-random-chest-button";
 
 export const dynamic = "force-dynamic";
 
@@ -128,6 +129,7 @@ export default async function DashboardPage() {
 
         <section className="mt-8">
           <DashboardClient orders={orders} loadError={loadError} />
+          <GrantRandomChestButton />
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">
