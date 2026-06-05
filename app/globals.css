@@ -1310,19 +1310,19 @@ html[data-game-theme="default"] {
 }
 
 html[data-game-theme="classic-era"] {
-  --theme-bg: #1b1410;
+  --theme-bg: #08090c;
   --theme-gradient:
-    radial-gradient(circle at 14% 10%, rgba(200, 155, 60, 0.2), transparent 34%),
-    radial-gradient(circle at 82% 12%, rgba(139, 94, 60, 0.2), transparent 32%),
-    radial-gradient(circle at 50% 115%, rgba(150, 94, 41, 0.14), transparent 40%),
-    linear-gradient(180deg, #2a1e17 0%, #1b1410 58%, #120d0a 100%);
-  --theme-surface: rgba(48, 34, 24, 0.84);
-  --theme-card: rgba(40, 28, 20, 0.82);
-  --theme-navbar: rgba(14, 60, 132, 0.9);
-  --theme-footer: rgba(30, 21, 15, 0.9);
+    radial-gradient(circle at 18% -12%, rgba(255, 255, 255, 0.025), transparent 32%),
+    radial-gradient(circle at 82% -8%, rgba(32, 35, 42, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 115%, rgba(18, 20, 26, 0.28), transparent 42%),
+    linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
+  --theme-surface: #111317;
+  --theme-card: rgba(23, 26, 32, 0.9);
+  --theme-navbar: rgba(12, 14, 18, 0.94);
+  --theme-footer: #0b0d11;
   --theme-border: rgba(200, 155, 60, 0.22);
   --theme-glow: rgba(200, 155, 60, 0.25);
-  --theme-overlay: rgba(19, 13, 9, 0.78);
+  --theme-overlay: rgba(7, 8, 12, 0.82);
   --theme-text: #f2e7d3;
   --theme-muted: #ccb79b;
   --theme-accent: #ddb15a;
@@ -1333,19 +1333,19 @@ html[data-game-theme="classic-era"] {
 }
 
 html[data-game-theme="tbc-anniversary"] {
-  --theme-bg: #07130b;
+  --theme-bg: #08090c;
   --theme-gradient:
-    radial-gradient(circle at 14% 0%, rgba(74, 222, 128, 0.24), transparent 32%),
-    radial-gradient(circle at 84% 18%, rgba(20, 83, 45, 0.25), transparent 34%),
-    radial-gradient(circle at 50% 112%, rgba(134, 239, 172, 0.16), transparent 38%),
-    linear-gradient(180deg, #0c2315 0%, #07130b 58%, #050e08 100%);
-  --theme-surface: rgba(11, 37, 20, 0.84);
-  --theme-card: rgba(12, 36, 20, 0.82);
-  --theme-navbar: rgba(14, 60, 132, 0.9);
-  --theme-footer: rgba(7, 22, 12, 0.9);
+    radial-gradient(circle at 18% -12%, rgba(255, 255, 255, 0.025), transparent 32%),
+    radial-gradient(circle at 82% -8%, rgba(32, 35, 42, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 115%, rgba(18, 20, 26, 0.28), transparent 42%),
+    linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
+  --theme-surface: #111317;
+  --theme-card: rgba(23, 26, 32, 0.9);
+  --theme-navbar: rgba(12, 14, 18, 0.94);
+  --theme-footer: #0b0d11;
   --theme-border: rgba(134, 239, 172, 0.28);
   --theme-glow: rgba(74, 222, 128, 0.4);
-  --theme-overlay: rgba(4, 11, 7, 0.8);
+  --theme-overlay: rgba(7, 8, 12, 0.82);
   --theme-text: #ebffef;
   --theme-muted: #b6e9c7;
   --theme-accent: #9dffbe;
@@ -1356,19 +1356,19 @@ html[data-game-theme="tbc-anniversary"] {
 }
 
 html[data-game-theme="wrath"] {
-  --theme-bg: #0b1630;
+  --theme-bg: #08090c;
   --theme-gradient:
-    radial-gradient(circle at 12% -8%, rgba(96, 165, 250, 0.24), transparent 32%),
-    radial-gradient(circle at 85% -6%, rgba(23, 37, 84, 0.24), transparent 30%),
-    radial-gradient(circle at 50% 110%, rgba(191, 219, 254, 0.14), transparent 36%),
-    linear-gradient(180deg, #102146 0%, #0b1630 58%, #070f21 100%);
-  --theme-surface: rgba(16, 31, 70, 0.84);
-  --theme-card: rgba(17, 33, 74, 0.82);
-  --theme-navbar: rgba(14, 60, 132, 0.9);
-  --theme-footer: rgba(10, 20, 44, 0.9);
+    radial-gradient(circle at 18% -12%, rgba(255, 255, 255, 0.025), transparent 32%),
+    radial-gradient(circle at 82% -8%, rgba(32, 35, 42, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 115%, rgba(18, 20, 26, 0.28), transparent 42%),
+    linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
+  --theme-surface: #111317;
+  --theme-card: rgba(23, 26, 32, 0.9);
+  --theme-navbar: rgba(12, 14, 18, 0.94);
+  --theme-footer: #0b0d11;
   --theme-border: rgba(191, 219, 254, 0.26);
   --theme-glow: rgba(96, 165, 250, 0.4);
-  --theme-overlay: rgba(6, 11, 24, 0.8);
+  --theme-overlay: rgba(7, 8, 12, 0.82);
   --theme-text: #ebf4ff;
   --theme-muted: #afc4e7;
   --theme-accent: #d2e7ff;
@@ -1379,19 +1379,19 @@ html[data-game-theme="wrath"] {
 }
 
 html[data-game-theme="mist-of-pandaria"] {
-  --theme-bg: #071a15;
+  --theme-bg: #08090c;
   --theme-gradient:
-    radial-gradient(circle at 13% -9%, rgba(16, 185, 129, 0.24), transparent 32%),
-    radial-gradient(circle at 84% 8%, rgba(6, 78, 59, 0.24), transparent 34%),
-    radial-gradient(circle at 52% 112%, rgba(251, 191, 36, 0.15), transparent 38%),
-    linear-gradient(180deg, #0b2b23 0%, #071a15 58%, #06140f 100%);
-  --theme-surface: rgba(8, 40, 32, 0.84);
-  --theme-card: rgba(9, 41, 33, 0.82);
-  --theme-navbar: rgba(14, 60, 132, 0.9);
-  --theme-footer: rgba(6, 28, 23, 0.9);
+    radial-gradient(circle at 18% -12%, rgba(255, 255, 255, 0.025), transparent 32%),
+    radial-gradient(circle at 82% -8%, rgba(32, 35, 42, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 115%, rgba(18, 20, 26, 0.28), transparent 42%),
+    linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
+  --theme-surface: #111317;
+  --theme-card: rgba(23, 26, 32, 0.9);
+  --theme-navbar: rgba(12, 14, 18, 0.94);
+  --theme-footer: #0b0d11;
   --theme-border: rgba(95, 225, 182, 0.26);
   --theme-glow: rgba(16, 185, 129, 0.34);
-  --theme-overlay: rgba(4, 14, 11, 0.8);
+  --theme-overlay: rgba(7, 8, 12, 0.82);
   --theme-text: #e8fff6;
   --theme-muted: #abd8cb;
   --theme-accent: #ffd25c;
@@ -1402,19 +1402,19 @@ html[data-game-theme="mist-of-pandaria"] {
 }
 
 html[data-game-theme="diablo"] {
-  --theme-bg: #170909;
+  --theme-bg: #08090c;
   --theme-gradient:
-    radial-gradient(circle at 12% 2%, rgba(239, 68, 68, 0.24), transparent 32%),
-    radial-gradient(circle at 86% 4%, rgba(59, 11, 11, 0.26), transparent 34%),
-    radial-gradient(circle at 52% 112%, rgba(249, 115, 22, 0.15), transparent 38%),
-    linear-gradient(180deg, #2a0d0d 0%, #170909 58%, #0f0606 100%);
-  --theme-surface: rgba(38, 13, 13, 0.84);
-  --theme-card: rgba(44, 14, 14, 0.82);
-  --theme-navbar: rgba(14, 60, 132, 0.9);
-  --theme-footer: rgba(24, 7, 7, 0.9);
+    radial-gradient(circle at 18% -12%, rgba(255, 255, 255, 0.025), transparent 32%),
+    radial-gradient(circle at 82% -8%, rgba(32, 35, 42, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 115%, rgba(18, 20, 26, 0.28), transparent 42%),
+    linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
+  --theme-surface: #111317;
+  --theme-card: rgba(23, 26, 32, 0.9);
+  --theme-navbar: rgba(12, 14, 18, 0.94);
+  --theme-footer: #0b0d11;
   --theme-border: rgba(248, 113, 113, 0.26);
   --theme-glow: rgba(239, 68, 68, 0.36);
-  --theme-overlay: rgba(18, 5, 5, 0.82);
+  --theme-overlay: rgba(7, 8, 12, 0.82);
   --theme-text: #ffeaea;
   --theme-muted: #e0afaf;
   --theme-accent: #ff8a38;
@@ -1425,19 +1425,19 @@ html[data-game-theme="diablo"] {
 }
 
 html[data-game-theme="runescape"] {
-  --theme-bg: #1a120c;
+  --theme-bg: #08090c;
   --theme-gradient:
-    radial-gradient(circle at 14% 4%, rgba(184, 135, 70, 0.22), transparent 34%),
-    radial-gradient(circle at 84% 10%, rgba(77, 53, 33, 0.25), transparent 34%),
-    radial-gradient(circle at 52% 112%, rgba(243, 201, 107, 0.14), transparent 38%),
-    linear-gradient(180deg, #2d2015 0%, #1a120c 58%, #120d08 100%);
-  --theme-surface: rgba(39, 28, 18, 0.84);
-  --theme-card: rgba(42, 28, 17, 0.82);
-  --theme-navbar: rgba(14, 60, 132, 0.9);
-  --theme-footer: rgba(25, 17, 11, 0.9);
+    radial-gradient(circle at 18% -12%, rgba(255, 255, 255, 0.025), transparent 32%),
+    radial-gradient(circle at 82% -8%, rgba(32, 35, 42, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 115%, rgba(18, 20, 26, 0.28), transparent 42%),
+    linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
+  --theme-surface: #111317;
+  --theme-card: rgba(23, 26, 32, 0.9);
+  --theme-navbar: rgba(12, 14, 18, 0.94);
+  --theme-footer: #0b0d11;
   --theme-border: rgba(243, 201, 107, 0.24);
   --theme-glow: rgba(184, 135, 70, 0.33);
-  --theme-overlay: rgba(16, 11, 7, 0.8);
+  --theme-overlay: rgba(7, 8, 12, 0.82);
   --theme-text: #fff1dc;
   --theme-muted: #d8bea0;
   --theme-accent: #ffd88a;
@@ -1448,19 +1448,19 @@ html[data-game-theme="runescape"] {
 }
 
 html[data-game-theme="gta"] {
-  --theme-bg: #0a1210;
+  --theme-bg: #08090c;
   --theme-gradient:
-    radial-gradient(circle at 14% 2%, rgba(34, 197, 94, 0.24), transparent 34%),
-    radial-gradient(circle at 84% 6%, rgba(31, 41, 55, 0.26), transparent 32%),
-    radial-gradient(circle at 52% 112%, rgba(134, 239, 172, 0.13), transparent 38%),
-    linear-gradient(180deg, #16211f 0%, #0a1210 58%, #070f0d 100%);
-  --theme-surface: rgba(20, 32, 29, 0.84);
-  --theme-card: rgba(22, 33, 31, 0.82);
-  --theme-navbar: rgba(14, 60, 132, 0.9);
-  --theme-footer: rgba(13, 18, 17, 0.9);
+    radial-gradient(circle at 18% -12%, rgba(255, 255, 255, 0.025), transparent 32%),
+    radial-gradient(circle at 82% -8%, rgba(32, 35, 42, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 115%, rgba(18, 20, 26, 0.28), transparent 42%),
+    linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
+  --theme-surface: #111317;
+  --theme-card: rgba(23, 26, 32, 0.9);
+  --theme-navbar: rgba(12, 14, 18, 0.94);
+  --theme-footer: #0b0d11;
   --theme-border: rgba(110, 231, 183, 0.24);
   --theme-glow: rgba(34, 197, 94, 0.34);
-  --theme-overlay: rgba(8, 11, 10, 0.78);
+  --theme-overlay: rgba(7, 8, 12, 0.82);
   --theme-text: #ecfff2;
   --theme-muted: #aed1bd;
   --theme-accent: #95ffb8;
@@ -1511,15 +1511,6 @@ body {
 
 .theme-ambient-overlay {
   background:
-    radial-gradient(circle at 14% 4%, color-mix(in srgb, var(--theme-glow) 90%, transparent), transparent 30%),
-    radial-gradient(circle at 86% 8%, color-mix(in srgb, var(--theme-accent) 22%, transparent), transparent 26%),
-    radial-gradient(circle at 50% 100%, color-mix(in srgb, var(--theme-border) 46%, transparent), transparent 34%);
-  mix-blend-mode: screen;
-  opacity: 0.58;
-}
-
-html[data-game-theme="default"] .theme-ambient-overlay {
-  background:
     radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.02), transparent 26%),
     radial-gradient(circle at 84% 4%, rgba(21, 24, 30, 0.28), transparent 28%),
     radial-gradient(circle at 50% 100%, rgba(0, 0, 0, 0.22), transparent 34%);
@@ -1538,14 +1529,14 @@ html[data-game-theme="default"] .theme-ambient-overlay {
 }
 
 .theme-navbar-shell {
-  background: linear-gradient(180deg, rgba(16, 24, 48, 0.95), rgba(10, 16, 32, 0.92)) !important;
-  border-bottom-color: rgba(80, 140, 255, 0.18) !important;
-  box-shadow: 0 6px 24px rgba(59, 168, 255, 0.12);
+  background: linear-gradient(180deg, rgba(18, 20, 24, 0.96), rgba(10, 12, 16, 0.94)) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
 }
 
 .theme-footer-shell {
-  background: linear-gradient(180deg, #101b35, #0a1020) !important;
-  border-top-color: rgba(80, 140, 255, 0.15) !important;
+  background: linear-gradient(180deg, #13161b, #0b0d11) !important;
+  border-top-color: rgba(255, 255, 255, 0.07) !important;
 }
 
 .loot-panel,
