@@ -1318,16 +1318,16 @@ html[data-game-theme="classic-era"] {
     linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
   --theme-surface: #111317;
   --theme-card: rgba(23, 26, 32, 0.9);
-  --theme-navbar: rgba(12, 14, 18, 0.94);
-  --theme-footer: #0b0d11;
+  --theme-navbar: rgba(12, 19, 38, 0.94);
+  --theme-footer: #0a1020;
   --theme-border: rgba(200, 155, 60, 0.22);
   --theme-glow: rgba(200, 155, 60, 0.25);
   --theme-overlay: rgba(7, 8, 12, 0.82);
-  --theme-text: #f2e7d3;
-  --theme-muted: #ccb79b;
+  --theme-text: #f3f4f6;
+  --theme-muted: #a1a1aa;
   --theme-accent: #ddb15a;
   --theme-warm: #e3bc6f;
-  --theme-shadow: rgba(20, 12, 7, 0.56);
+  --theme-shadow: rgba(2, 9, 21, 0.48);
   --theme-button-start: #8b5e3c;
   --theme-button-end: #c89b3c;
 }
@@ -1335,22 +1335,22 @@ html[data-game-theme="classic-era"] {
 html[data-game-theme="tbc-anniversary"] {
   --theme-bg: #08090c;
   --theme-gradient:
-    radial-gradient(circle at 12% -8%, rgba(57, 255, 106, 0.12), transparent 30%),
-    radial-gradient(circle at 86% 0%, rgba(25, 201, 75, 0.08), transparent 30%),
-    radial-gradient(circle at 50% 115%, rgba(13, 26, 16, 0.4), transparent 44%),
-    linear-gradient(180deg, #10130f 0%, #0b0e0c 54%, #08090c 100%);
+    radial-gradient(circle at 18% -12%, rgba(255, 255, 255, 0.025), transparent 32%),
+    radial-gradient(circle at 82% -8%, rgba(32, 35, 42, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 115%, rgba(18, 20, 26, 0.28), transparent 42%),
+    linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
   --theme-surface: #111317;
   --theme-card: rgba(23, 26, 32, 0.9);
-  --theme-navbar: rgba(13, 20, 16, 0.95);
-  --theme-footer: #0b100d;
+  --theme-navbar: rgba(12, 19, 38, 0.94);
+  --theme-footer: #0a1020;
   --theme-border: rgba(57, 255, 106, 0.28);
   --theme-glow: rgba(57, 255, 106, 0.22);
   --theme-overlay: rgba(7, 8, 12, 0.82);
-  --theme-text: #f4fff5;
-  --theme-muted: #b8d5c0;
+  --theme-text: #f3f4f6;
+  --theme-muted: #a1a1aa;
   --theme-accent: #7cff8a;
   --theme-warm: #39ff6a;
-  --theme-shadow: rgba(2, 10, 5, 0.58);
+  --theme-shadow: rgba(2, 9, 21, 0.48);
   --theme-button-start: #39ff6a;
   --theme-button-end: #19c94b;
 }
@@ -1364,16 +1364,16 @@ html[data-game-theme="wrath"] {
     linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
   --theme-surface: #111317;
   --theme-card: rgba(23, 26, 32, 0.9);
-  --theme-navbar: rgba(12, 14, 18, 0.94);
-  --theme-footer: #0b0d11;
+  --theme-navbar: rgba(12, 19, 38, 0.94);
+  --theme-footer: #0a1020;
   --theme-border: rgba(191, 219, 254, 0.26);
   --theme-glow: rgba(96, 165, 250, 0.4);
   --theme-overlay: rgba(7, 8, 12, 0.82);
-  --theme-text: #ebf4ff;
-  --theme-muted: #afc4e7;
+  --theme-text: #f3f4f6;
+  --theme-muted: #a1a1aa;
   --theme-accent: #d2e7ff;
   --theme-warm: #74b6ff;
-  --theme-shadow: rgba(4, 9, 24, 0.58);
+  --theme-shadow: rgba(2, 9, 21, 0.48);
   --theme-button-start: #60a5fa;
   --theme-button-end: #2563eb;
 }
@@ -1387,16 +1387,16 @@ html[data-game-theme="mist-of-pandaria"] {
     linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
   --theme-surface: #111317;
   --theme-card: rgba(23, 26, 32, 0.9);
-  --theme-navbar: rgba(12, 14, 18, 0.94);
-  --theme-footer: #0b0d11;
+  --theme-navbar: rgba(12, 19, 38, 0.94);
+  --theme-footer: #0a1020;
   --theme-border: rgba(95, 225, 182, 0.26);
   --theme-glow: rgba(16, 185, 129, 0.34);
   --theme-overlay: rgba(7, 8, 12, 0.82);
-  --theme-text: #e8fff6;
-  --theme-muted: #abd8cb;
+  --theme-text: #f3f4f6;
+  --theme-muted: #a1a1aa;
   --theme-accent: #ffd25c;
   --theme-warm: #1ed99a;
-  --theme-shadow: rgba(3, 11, 9, 0.55);
+  --theme-shadow: rgba(2, 9, 21, 0.48);
   --theme-button-start: #10b981;
   --theme-button-end: #0f766e;
 }
@@ -1410,16 +1410,16 @@ html[data-game-theme="diablo"] {
     linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
   --theme-surface: #111317;
   --theme-card: rgba(23, 26, 32, 0.9);
-  --theme-navbar: rgba(12, 14, 18, 0.94);
-  --theme-footer: #0b0d11;
+  --theme-navbar: rgba(12, 19, 38, 0.94);
+  --theme-footer: #0a1020;
   --theme-border: rgba(248, 113, 113, 0.26);
   --theme-glow: rgba(239, 68, 68, 0.36);
   --theme-overlay: rgba(7, 8, 12, 0.82);
-  --theme-text: #ffeaea;
-  --theme-muted: #e0afaf;
+  --theme-text: #f3f4f6;
+  --theme-muted: #a1a1aa;
   --theme-accent: #ff8a38;
   --theme-warm: #ff5353;
-  --theme-shadow: rgba(15, 3, 3, 0.6);
+  --theme-shadow: rgba(2, 9, 21, 0.48);
   --theme-button-start: #ef4444;
   --theme-button-end: #991b1b;
 }
@@ -1433,16 +1433,16 @@ html[data-game-theme="runescape"] {
     linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
   --theme-surface: #111317;
   --theme-card: rgba(23, 26, 32, 0.9);
-  --theme-navbar: rgba(12, 14, 18, 0.94);
-  --theme-footer: #0b0d11;
+  --theme-navbar: rgba(12, 19, 38, 0.94);
+  --theme-footer: #0a1020;
   --theme-border: rgba(243, 201, 107, 0.24);
   --theme-glow: rgba(184, 135, 70, 0.33);
   --theme-overlay: rgba(7, 8, 12, 0.82);
-  --theme-text: #fff1dc;
-  --theme-muted: #d8bea0;
+  --theme-text: #f3f4f6;
+  --theme-muted: #a1a1aa;
   --theme-accent: #ffd88a;
   --theme-warm: #c99852;
-  --theme-shadow: rgba(14, 9, 5, 0.58);
+  --theme-shadow: rgba(2, 9, 21, 0.48);
   --theme-button-start: #b88746;
   --theme-button-end: #7c4f28;
 }
@@ -1456,16 +1456,16 @@ html[data-game-theme="gta"] {
     linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
   --theme-surface: #111317;
   --theme-card: rgba(23, 26, 32, 0.9);
-  --theme-navbar: rgba(12, 14, 18, 0.94);
-  --theme-footer: #0b0d11;
+  --theme-navbar: rgba(12, 19, 38, 0.94);
+  --theme-footer: #0a1020;
   --theme-border: rgba(110, 231, 183, 0.24);
   --theme-glow: rgba(34, 197, 94, 0.34);
   --theme-overlay: rgba(7, 8, 12, 0.82);
-  --theme-text: #ecfff2;
-  --theme-muted: #aed1bd;
+  --theme-text: #f3f4f6;
+  --theme-muted: #a1a1aa;
   --theme-accent: #95ffb8;
   --theme-warm: #31de70;
-  --theme-shadow: rgba(6, 10, 9, 0.58);
+  --theme-shadow: rgba(2, 9, 21, 0.48);
   --theme-button-start: #22c55e;
   --theme-button-end: #166534;
 }
@@ -1529,14 +1529,25 @@ body {
 }
 
 .theme-navbar-shell {
-  background: linear-gradient(180deg, rgba(18, 20, 24, 0.96), rgba(10, 12, 16, 0.94)) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  background: linear-gradient(180deg, rgba(16, 24, 48, 0.95), rgba(10, 16, 32, 0.92)) !important;
+  border-bottom-color: rgba(80, 140, 255, 0.18) !important;
+  box-shadow: 0 6px 24px rgba(59, 168, 255, 0.12);
 }
 
 .theme-footer-shell {
-  background: linear-gradient(180deg, #13161b, #0b0d11) !important;
-  border-top-color: rgba(255, 255, 255, 0.07) !important;
+  background: linear-gradient(180deg, #101b35, #0a1020) !important;
+  border-top-color: rgba(80, 140, 255, 0.15) !important;
+}
+
+.theme-nav-active {
+  border-color: color-mix(in srgb, var(--theme-accent) 40%, transparent) !important;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-warm) 16%, transparent),
+    color-mix(in srgb, var(--theme-accent) 12%, transparent)
+  ) !important;
+  color: color-mix(in srgb, var(--theme-accent) 78%, #ffffff) !important;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--theme-glow) 72%, transparent) !important;
 }
 
 .loot-panel,
@@ -1565,7 +1576,7 @@ body {
   transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease, background 180ms ease !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 8px 16px rgba(37, 99, 235, 0.1) !important;
+    0 8px 16px color-mix(in srgb, var(--theme-glow) 58%, transparent) !important;
 }
 
 .gm-button-primary:hover,
@@ -1578,7 +1589,7 @@ body {
   filter: brightness(1.03) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 10px 18px rgba(37, 99, 235, 0.14) !important;
+    0 10px 18px color-mix(in srgb, var(--theme-glow) 72%, transparent) !important;
 }
 
 .gm-button-secondary,
@@ -1601,8 +1612,8 @@ body {
 .pandaria-secondary-button:hover {
   transform: translateY(-1px) !important;
   background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(80, 140, 255, 0.2) !important;
-  box-shadow: 0 8px 16px rgba(59, 168, 255, 0.12) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 34%, transparent) !important;
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--theme-glow) 60%, transparent) !important;
 }
 
 .theme-progress-track {
@@ -1619,127 +1630,41 @@ body {
   box-shadow: 0 0 22px color-mix(in srgb, var(--theme-glow) 75%, transparent) !important;
 }
 
-html[data-game-theme="tbc-anniversary"] .theme-ambient-overlay {
-  background:
-    radial-gradient(circle at 12% 2%, rgba(57, 255, 106, 0.14), transparent 32%),
-    radial-gradient(circle at 86% 8%, rgba(25, 201, 75, 0.1), transparent 30%),
-    radial-gradient(circle at 50% 100%, rgba(13, 26, 16, 0.24), transparent 38%);
-  opacity: 0.42;
-}
-
-html[data-game-theme="tbc-anniversary"] .theme-top-highlight {
+html[data-game-theme]:not([data-game-theme="default"]) .theme-top-highlight {
   background-image: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(57, 255, 106, 0.54) 38%,
-    rgba(124, 255, 138, 0.5) 72%,
+    color-mix(in srgb, var(--theme-warm) 42%, transparent) 38%,
+    color-mix(in srgb, var(--theme-accent) 38%, transparent) 72%,
     transparent 100%
   );
 }
 
-html[data-game-theme="tbc-anniversary"] .theme-navbar-shell {
-  background: linear-gradient(180deg, rgba(14, 23, 17, 0.96), rgba(10, 15, 12, 0.94)) !important;
-  border-bottom-color: rgba(57, 255, 106, 0.2) !important;
+html[data-game-theme]:not([data-game-theme="default"]) .theme-footer-link:hover {
+  color: color-mix(in srgb, var(--theme-accent) 72%, #ffffff);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--theme-glow) 62%, transparent);
+}
+
+html[data-game-theme]:not([data-game-theme="default"]) .gm-panel,
+html[data-game-theme]:not([data-game-theme="default"]) .loot-panel,
+html[data-game-theme]:not([data-game-theme="default"]) .gm-glass {
+  border-width: 2px !important;
+  border-color: color-mix(in srgb, var(--theme-border) 82%, rgba(255, 255, 255, 0.08)) !important;
+}
+
+html[data-game-theme]:not([data-game-theme="default"]) .gm-panel-hover:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 38%, rgba(255, 255, 255, 0.18)) !important;
   box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.24),
-    0 0 16px rgba(57, 255, 106, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 22px color-mix(in srgb, var(--theme-glow) 48%, transparent),
+    0 12px 24px rgba(0, 0, 0, 0.22) !important;
 }
 
-html[data-game-theme="tbc-anniversary"] .theme-footer-shell {
-  background: linear-gradient(180deg, #121915, #0b100d) !important;
-  border-top-color: rgba(57, 255, 106, 0.18) !important;
-  box-shadow: inset 0 1px 0 rgba(124, 255, 138, 0.06);
-}
-
-html[data-game-theme="tbc-anniversary"] .theme-nav-active {
-  background: linear-gradient(180deg, rgba(57, 255, 106, 0.16), rgba(25, 201, 75, 0.12)) !important;
-  border-color: rgba(57, 255, 106, 0.34) !important;
-  color: #7cff8a !important;
-  box-shadow: 0 0 18px rgba(57, 255, 106, 0.14) !important;
-}
-
-html[data-game-theme="tbc-anniversary"] .theme-nav-active:hover {
-  background: linear-gradient(180deg, rgba(57, 255, 106, 0.2), rgba(25, 201, 75, 0.15)) !important;
-  box-shadow: 0 0 20px rgba(57, 255, 106, 0.17) !important;
-}
-
-html[data-game-theme="tbc-anniversary"] .gm-button-primary,
-html[data-game-theme="tbc-anniversary"] .loot-gold-button,
-html[data-game-theme="tbc-anniversary"] .tbc-gold-button,
-html[data-game-theme="tbc-anniversary"] .midnight-gold-button,
-html[data-game-theme="tbc-anniversary"] .classic-gold-button,
-html[data-game-theme="tbc-anniversary"] .pandaria-gold-button {
-  background: linear-gradient(180deg, #39ff6a, #19c94b) !important;
-  border-color: rgba(124, 255, 138, 0.18) !important;
-  color: #f4fff5 !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 0 18px rgba(57, 255, 106, 0.18) !important;
-}
-
-html[data-game-theme="tbc-anniversary"] .gm-button-primary:hover,
-html[data-game-theme="tbc-anniversary"] .loot-gold-button:hover,
-html[data-game-theme="tbc-anniversary"] .tbc-gold-button:hover,
-html[data-game-theme="tbc-anniversary"] .midnight-gold-button:hover,
-html[data-game-theme="tbc-anniversary"] .classic-gold-button:hover,
-html[data-game-theme="tbc-anniversary"] .pandaria-gold-button:hover {
-  transform: translateY(-1px) !important;
-  filter: brightness(1.04) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 0 22px rgba(57, 255, 106, 0.22) !important;
-}
-
-html[data-game-theme="tbc-anniversary"] .gm-button-secondary,
-html[data-game-theme="tbc-anniversary"] .loot-secondary-button,
-html[data-game-theme="tbc-anniversary"] .tbc-secondary-button,
-html[data-game-theme="tbc-anniversary"] .midnight-secondary-button,
-html[data-game-theme="tbc-anniversary"] .classic-secondary-button,
-html[data-game-theme="tbc-anniversary"] .pandaria-secondary-button {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border-color: rgba(57, 255, 106, 0.14) !important;
-  color: #e5ffe9 !important;
-}
-
-html[data-game-theme="tbc-anniversary"] .gm-button-secondary:hover,
-html[data-game-theme="tbc-anniversary"] .loot-secondary-button:hover,
-html[data-game-theme="tbc-anniversary"] .tbc-secondary-button:hover,
-html[data-game-theme="tbc-anniversary"] .midnight-secondary-button:hover,
-html[data-game-theme="tbc-anniversary"] .classic-secondary-button:hover,
-html[data-game-theme="tbc-anniversary"] .pandaria-secondary-button:hover {
-  background: rgba(57, 255, 106, 0.08) !important;
-  border-color: rgba(124, 255, 138, 0.34) !important;
-  box-shadow: 0 8px 16px rgba(57, 255, 106, 0.12) !important;
-}
-
-html[data-game-theme="tbc-anniversary"] .gm-panel,
-html[data-game-theme="tbc-anniversary"] .loot-panel,
-html[data-game-theme="tbc-anniversary"] .gm-glass {
-  border-color: rgba(57, 255, 106, 0.18) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(124, 255, 138, 0.06),
-    0 0 24px rgba(57, 255, 106, 0.08),
-    0 12px 24px rgba(0, 0, 0, 0.24) !important;
-}
-
-html[data-game-theme="tbc-anniversary"] .gm-panel-hover:hover {
-  border-color: rgba(124, 255, 138, 0.34) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(124, 255, 138, 0.08),
-    0 0 32px rgba(57, 255, 106, 0.14),
-    0 14px 26px rgba(0, 0, 0, 0.28) !important;
-}
-
-html[data-game-theme="tbc-anniversary"] .gm-kicker,
-html[data-game-theme="tbc-anniversary"] .loot-kicker,
-html[data-game-theme="tbc-anniversary"] .gm-badge,
-html[data-game-theme="tbc-anniversary"] .loot-badge,
-html[data-game-theme="tbc-anniversary"] .loot-badge-blue {
-  color: #7cff8a !important;
-  border-color: rgba(57, 255, 106, 0.24) !important;
-}
-
-html[data-game-theme="tbc-anniversary"] .reward-progress-glow {
-  background: linear-gradient(90deg, #39ff6a 0%, #7cff8a 56%, #19c94b 100%) !important;
-  box-shadow: 0 0 22px rgba(57, 255, 106, 0.2) !important;
+html[data-game-theme]:not([data-game-theme="default"]) .gm-kicker,
+html[data-game-theme]:not([data-game-theme="default"]) .loot-kicker,
+html[data-game-theme]:not([data-game-theme="default"]) .gm-badge,
+html[data-game-theme]:not([data-game-theme="default"]) .loot-badge,
+html[data-game-theme]:not([data-game-theme="default"]) .loot-badge-blue {
+  color: color-mix(in srgb, var(--theme-accent) 74%, #ffffff) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 36%, transparent) !important;
 }
