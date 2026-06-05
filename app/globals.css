@@ -1335,24 +1335,24 @@ html[data-game-theme="classic-era"] {
 html[data-game-theme="tbc-anniversary"] {
   --theme-bg: #08090c;
   --theme-gradient:
-    radial-gradient(circle at 18% -12%, rgba(255, 255, 255, 0.025), transparent 32%),
-    radial-gradient(circle at 82% -8%, rgba(32, 35, 42, 0.18), transparent 30%),
-    radial-gradient(circle at 50% 115%, rgba(18, 20, 26, 0.28), transparent 42%),
-    linear-gradient(180deg, #111317 0%, #0d0f13 54%, #08090c 100%);
+    radial-gradient(circle at 12% -8%, rgba(57, 255, 106, 0.12), transparent 30%),
+    radial-gradient(circle at 86% 0%, rgba(25, 201, 75, 0.08), transparent 30%),
+    radial-gradient(circle at 50% 115%, rgba(13, 26, 16, 0.4), transparent 44%),
+    linear-gradient(180deg, #10130f 0%, #0b0e0c 54%, #08090c 100%);
   --theme-surface: #111317;
   --theme-card: rgba(23, 26, 32, 0.9);
-  --theme-navbar: rgba(12, 14, 18, 0.94);
-  --theme-footer: #0b0d11;
-  --theme-border: rgba(134, 239, 172, 0.28);
-  --theme-glow: rgba(74, 222, 128, 0.4);
+  --theme-navbar: rgba(13, 20, 16, 0.95);
+  --theme-footer: #0b100d;
+  --theme-border: rgba(57, 255, 106, 0.28);
+  --theme-glow: rgba(57, 255, 106, 0.22);
   --theme-overlay: rgba(7, 8, 12, 0.82);
-  --theme-text: #ebffef;
-  --theme-muted: #b6e9c7;
-  --theme-accent: #9dffbe;
-  --theme-warm: #5cf48f;
-  --theme-shadow: rgba(2, 12, 6, 0.56);
-  --theme-button-start: #4ade80;
-  --theme-button-end: #15803d;
+  --theme-text: #f4fff5;
+  --theme-muted: #b8d5c0;
+  --theme-accent: #7cff8a;
+  --theme-warm: #39ff6a;
+  --theme-shadow: rgba(2, 10, 5, 0.58);
+  --theme-button-start: #39ff6a;
+  --theme-button-end: #19c94b;
 }
 
 html[data-game-theme="wrath"] {
@@ -1617,4 +1617,129 @@ body {
     color-mix(in srgb, var(--theme-accent) 72%, #ffffff) 100%
   ) !important;
   box-shadow: 0 0 22px color-mix(in srgb, var(--theme-glow) 75%, transparent) !important;
+}
+
+html[data-game-theme="tbc-anniversary"] .theme-ambient-overlay {
+  background:
+    radial-gradient(circle at 12% 2%, rgba(57, 255, 106, 0.14), transparent 32%),
+    radial-gradient(circle at 86% 8%, rgba(25, 201, 75, 0.1), transparent 30%),
+    radial-gradient(circle at 50% 100%, rgba(13, 26, 16, 0.24), transparent 38%);
+  opacity: 0.42;
+}
+
+html[data-game-theme="tbc-anniversary"] .theme-top-highlight {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(57, 255, 106, 0.54) 38%,
+    rgba(124, 255, 138, 0.5) 72%,
+    transparent 100%
+  );
+}
+
+html[data-game-theme="tbc-anniversary"] .theme-navbar-shell {
+  background: linear-gradient(180deg, rgba(14, 23, 17, 0.96), rgba(10, 15, 12, 0.94)) !important;
+  border-bottom-color: rgba(57, 255, 106, 0.2) !important;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.24),
+    0 0 16px rgba(57, 255, 106, 0.1);
+}
+
+html[data-game-theme="tbc-anniversary"] .theme-footer-shell {
+  background: linear-gradient(180deg, #121915, #0b100d) !important;
+  border-top-color: rgba(57, 255, 106, 0.18) !important;
+  box-shadow: inset 0 1px 0 rgba(124, 255, 138, 0.06);
+}
+
+html[data-game-theme="tbc-anniversary"] .theme-nav-active {
+  background: linear-gradient(180deg, rgba(57, 255, 106, 0.16), rgba(25, 201, 75, 0.12)) !important;
+  border-color: rgba(57, 255, 106, 0.34) !important;
+  color: #7cff8a !important;
+  box-shadow: 0 0 18px rgba(57, 255, 106, 0.14) !important;
+}
+
+html[data-game-theme="tbc-anniversary"] .theme-nav-active:hover {
+  background: linear-gradient(180deg, rgba(57, 255, 106, 0.2), rgba(25, 201, 75, 0.15)) !important;
+  box-shadow: 0 0 20px rgba(57, 255, 106, 0.17) !important;
+}
+
+html[data-game-theme="tbc-anniversary"] .gm-button-primary,
+html[data-game-theme="tbc-anniversary"] .loot-gold-button,
+html[data-game-theme="tbc-anniversary"] .tbc-gold-button,
+html[data-game-theme="tbc-anniversary"] .midnight-gold-button,
+html[data-game-theme="tbc-anniversary"] .classic-gold-button,
+html[data-game-theme="tbc-anniversary"] .pandaria-gold-button {
+  background: linear-gradient(180deg, #39ff6a, #19c94b) !important;
+  border-color: rgba(124, 255, 138, 0.18) !important;
+  color: #f4fff5 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 18px rgba(57, 255, 106, 0.18) !important;
+}
+
+html[data-game-theme="tbc-anniversary"] .gm-button-primary:hover,
+html[data-game-theme="tbc-anniversary"] .loot-gold-button:hover,
+html[data-game-theme="tbc-anniversary"] .tbc-gold-button:hover,
+html[data-game-theme="tbc-anniversary"] .midnight-gold-button:hover,
+html[data-game-theme="tbc-anniversary"] .classic-gold-button:hover,
+html[data-game-theme="tbc-anniversary"] .pandaria-gold-button:hover {
+  transform: translateY(-1px) !important;
+  filter: brightness(1.04) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 22px rgba(57, 255, 106, 0.22) !important;
+}
+
+html[data-game-theme="tbc-anniversary"] .gm-button-secondary,
+html[data-game-theme="tbc-anniversary"] .loot-secondary-button,
+html[data-game-theme="tbc-anniversary"] .tbc-secondary-button,
+html[data-game-theme="tbc-anniversary"] .midnight-secondary-button,
+html[data-game-theme="tbc-anniversary"] .classic-secondary-button,
+html[data-game-theme="tbc-anniversary"] .pandaria-secondary-button {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(57, 255, 106, 0.14) !important;
+  color: #e5ffe9 !important;
+}
+
+html[data-game-theme="tbc-anniversary"] .gm-button-secondary:hover,
+html[data-game-theme="tbc-anniversary"] .loot-secondary-button:hover,
+html[data-game-theme="tbc-anniversary"] .tbc-secondary-button:hover,
+html[data-game-theme="tbc-anniversary"] .midnight-secondary-button:hover,
+html[data-game-theme="tbc-anniversary"] .classic-secondary-button:hover,
+html[data-game-theme="tbc-anniversary"] .pandaria-secondary-button:hover {
+  background: rgba(57, 255, 106, 0.08) !important;
+  border-color: rgba(124, 255, 138, 0.34) !important;
+  box-shadow: 0 8px 16px rgba(57, 255, 106, 0.12) !important;
+}
+
+html[data-game-theme="tbc-anniversary"] .gm-panel,
+html[data-game-theme="tbc-anniversary"] .loot-panel,
+html[data-game-theme="tbc-anniversary"] .gm-glass {
+  border-color: rgba(57, 255, 106, 0.18) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(124, 255, 138, 0.06),
+    0 0 24px rgba(57, 255, 106, 0.08),
+    0 12px 24px rgba(0, 0, 0, 0.24) !important;
+}
+
+html[data-game-theme="tbc-anniversary"] .gm-panel-hover:hover {
+  border-color: rgba(124, 255, 138, 0.34) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(124, 255, 138, 0.08),
+    0 0 32px rgba(57, 255, 106, 0.14),
+    0 14px 26px rgba(0, 0, 0, 0.28) !important;
+}
+
+html[data-game-theme="tbc-anniversary"] .gm-kicker,
+html[data-game-theme="tbc-anniversary"] .loot-kicker,
+html[data-game-theme="tbc-anniversary"] .gm-badge,
+html[data-game-theme="tbc-anniversary"] .loot-badge,
+html[data-game-theme="tbc-anniversary"] .loot-badge-blue {
+  color: #7cff8a !important;
+  border-color: rgba(57, 255, 106, 0.24) !important;
+}
+
+html[data-game-theme="tbc-anniversary"] .reward-progress-glow {
+  background: linear-gradient(90deg, #39ff6a 0%, #7cff8a 56%, #19c94b 100%) !important;
+  box-shadow: 0 0 22px rgba(57, 255, 106, 0.2) !important;
 }
