@@ -176,6 +176,9 @@ export async function POST(request: Request): Promise<Response> {
         status: "completed",
         tags: ["crafting", "crafted", output.rarity],
         metadata: {
+          actionLabel: "Crafted Item",
+          sourceLabel: "Crafting System",
+          resultLabel: `${output.name} x${output.quantity}`,
           recipeId: recipe.id,
           materialsConsumed: totalMaterialsConsumed,
         },
@@ -190,9 +193,14 @@ export async function POST(request: Request): Promise<Response> {
         description: `Consumed ${totalMaterialsConsumed} crafting materials for ${recipe.title}.`,
         quantity: totalMaterialsConsumed,
         origin: "crafting:craft",
-        status: "completed",
+        status: "consumed",
         tags: ["crafting", "materials"],
-        metadata: Object.fromEntries(recipe.materials.map((material) => [material.itemId, material.quantity * quantity])),
+        metadata: {
+          actionLabel: "Materials Consumed",
+          sourceLabel: "Inventory",
+          resultLabel: `${totalMaterialsConsumed} materials used`,
+          ...Object.fromEntries(recipe.materials.map((material) => [material.itemId, material.quantity * quantity])),
+        },
       });
 
       return {

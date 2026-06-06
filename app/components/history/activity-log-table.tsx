@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, CheckCircle2, CircleDashed, Shield, Sparkles, Store } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CircleDashed, Shield, Sparkles, Store, Wrench } from "lucide-react";
 
 import type { ActivityCategory, ActivityHistoryLog } from "@/lib/activity-history-types";
 
@@ -11,46 +11,89 @@ type ActivityLogTableProps = {
   showUserColumn?: boolean;
 };
 
-function formatDate(value: string | null) {
+type RowSemantic = {
+  action: string;
+  source: string;
+  result: string;
+};
+
+function formatDateTime(value: string | null) {
   if (!value) {
-    return "--";
+    return { day: "--/--/----", hour: "--:--" };
   }
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return "--";
+    return { day: "--/--/----", hour: "--:--" };
   }
 
-  return date.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return {
+    day: date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }),
+    hour: date.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
 }
 
-function formatLabel(value: string) {
+function titleCase(value: string) {
   return value
     .replace(/_/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function getReceivedFrom(item: ActivityHistoryLog) {
-  const origin = item.origin.toLowerCase();
-
-  if (item.category === "marketplace" || origin.includes("marketplace")) return "Marketplace";
-  if (item.category === "chests" || origin.includes("chest")) return "Chest Opening";
-  if (item.category === "crafting" || origin.includes("craft")) return "Crafting";
-  if (item.category === "admin" || item.actorRole === "admin" || origin.includes("admin")) return "Admin";
-  if (item.actionType.includes("purchase")) return "Purchase";
-  if (item.actionType.includes("reward")) return "Reward";
-  if (item.actorRole === "system") return "System";
-  if (item.category === "progression") return "Progression";
-  return "Wallet";
+function readMetaLabel(item: ActivityHistoryLog, key: string): string | null {
+  const value = item.metadata?.[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function getName(item: ActivityHistoryLog) {
+function deriveAction(item: ActivityHistoryLog): string {
+  const meta = readMetaLabel(item, "actionLabel");
+  if (meta) {
+    return meta;
+  }
+
+  const action = item.actionType.toLowerCase();
+
+  if (action === "chest_opened") return "Opened Chest";
+  if (action === "chest_used") return "Chest Used";
+  if (action === "craft_completed") return "Crafted Item";
+  if (action === "craft_materials_consumed") return "Materials Consumed";
+  if (action === "marketplace_item_bought") return "Marketplace Purchase";
+  if (action === "marketplace_item_sold") return "Sold Item";
+  if (action === "marketplace_item_listed") return "Sold Item";
+  if (action === "marketplace_listing_removed") return "Listing Removed";
+  if (action === "marketplace_fee_charged") return "Marketplace Fee";
+  if (action.startsWith("admin_")) return "Admin Granted";
+  if (action.includes("reward")) return "Daily Reward";
+
+  return titleCase(item.actionType);
+}
+
+function deriveSource(item: ActivityHistoryLog): string {
+  const meta = readMetaLabel(item, "sourceLabel");
+  if (meta) {
+    return meta;
+  }
+
+  if (item.origin.includes("marketplace")) return "Marketplace";
+  if (item.origin.includes("craft")) return "Crafting System";
+  if (item.origin.includes("chests")) return item.itemName ?? "Chest";
+  if (item.origin.includes("admin")) return "Admin Panel";
+  if (item.category === "inventory") return "Inventory";
+  return titleCase(item.origin.replace(/:/g, " "));
+}
+
+function deriveResult(item: ActivityHistoryLog): string {
+  const meta = readMetaLabel(item, "resultLabel");
+  if (meta) {
+    return meta;
+  }
+
   if (item.itemName && item.quantity && item.quantity > 1) {
     return `${item.itemName} x${item.quantity}`;
   }
@@ -59,45 +102,37 @@ function getName(item: ActivityHistoryLog) {
     return item.itemName;
   }
 
+  if (typeof item.value === "number" && item.valueUnit === "loot") {
+    return `${item.value.toLocaleString("en-US", { maximumFractionDigits: 2 })} Loot Coins`;
+  }
+
   return item.description;
 }
 
-function getTypeLabel(item: ActivityHistoryLog) {
-  const action = item.actionType.toLowerCase();
-  if (action.includes("buy") || action.includes("purchase")) return "BUY";
-  if (action.includes("sell")) return "SELL";
-  if (action.includes("open")) return "OPEN";
-  if (action.includes("craft")) return "CRAFT";
-  if (item.category === "admin" || item.actorRole === "admin") return "ADMIN";
-  if (action.includes("reward") || item.category === "progression") return "REWARD";
-  return "SYSTEM";
+function deriveSemantic(item: ActivityHistoryLog): RowSemantic {
+  return {
+    action: deriveAction(item),
+    source: deriveSource(item),
+    result: deriveResult(item),
+  };
 }
 
-function getAmountTone(item: ActivityHistoryLog) {
+function isNegativeFlow(item: ActivityHistoryLog): boolean {
   const action = item.actionType.toLowerCase();
-  const isLoss =
-    action.includes("withdraw") ||
+  return (
+    item.status === "failed" ||
+    item.status === "rejected" ||
+    item.status === "consumed" ||
     action.includes("fee") ||
     action.includes("consumed") ||
-    action.includes("removed") ||
-    action.includes("buy") ||
     action.includes("listed") ||
-    item.status === "failed";
-
-  return isLoss ? "text-rose-300" : "text-emerald-300";
+    action.includes("buy") ||
+    action.includes("withdraw")
+  );
 }
 
-function getAmountText(item: ActivityHistoryLog) {
-  const action = item.actionType.toLowerCase();
-  const isLoss =
-    action.includes("withdraw") ||
-    action.includes("fee") ||
-    action.includes("consumed") ||
-    action.includes("removed") ||
-    action.includes("buy") ||
-    action.includes("listed");
-
-  const sign = isLoss ? "-" : "+";
+function getAmountText(item: ActivityHistoryLog): string {
+  const sign = isNegativeFlow(item) ? "-" : "+";
 
   if (typeof item.value === "number" && item.valueUnit) {
     if (item.valueUnit === "loot") {
@@ -117,39 +152,84 @@ function getAmountText(item: ActivityHistoryLog) {
     return `${sign}${item.quantity ?? 1} ${item.itemName}`;
   }
 
+  if (typeof item.quantity === "number") {
+    return `${sign}${item.quantity}`;
+  }
+
   return "--";
 }
 
-function getTypeTone(type: string, category: ActivityCategory) {
-  if (type === "BUY") return "border-rose-400/25 bg-rose-500/12 text-rose-100";
-  if (type === "SELL") return "border-emerald-400/25 bg-emerald-500/12 text-emerald-100";
-  if (type === "OPEN") return "border-sky-400/25 bg-sky-500/12 text-sky-100";
-  if (type === "CRAFT") return "border-fuchsia-400/25 bg-fuchsia-500/12 text-fuchsia-100";
-  if (type === "ADMIN" || category === "admin") return "border-amber-400/25 bg-amber-500/12 text-amber-100";
-  return "border-slate-300/15 bg-slate-200/10 text-slate-100";
+function getCategoryTheme(category: ActivityCategory, action: string) {
+  const normalizedAction = action.toLowerCase();
+
+  if (normalizedAction.includes("opened chest") || category === "chests") {
+    return {
+      accent: "before:bg-cyan-400/85",
+      badge: "border-cyan-300/35 bg-cyan-500/16 text-cyan-100",
+      icon: Sparkles,
+    };
+  }
+
+  if (normalizedAction.includes("used") || normalizedAction.includes("consumed") || category === "inventory") {
+    return {
+      accent: "before:bg-rose-400/85",
+      badge: "border-rose-300/35 bg-rose-500/16 text-rose-100",
+      icon: ArrowUpRight,
+    };
+  }
+
+  if (category === "marketplace") {
+    return {
+      accent: "before:bg-violet-400/85",
+      badge: "border-violet-300/35 bg-violet-500/16 text-violet-100",
+      icon: Store,
+    };
+  }
+
+  if (category === "admin") {
+    return {
+      accent: "before:bg-amber-300/85",
+      badge: "border-amber-300/40 bg-amber-500/18 text-amber-100",
+      icon: Shield,
+    };
+  }
+
+  if (category === "crafting") {
+    return {
+      accent: "before:bg-orange-400/85",
+      badge: "border-orange-300/35 bg-orange-500/16 text-orange-100",
+      icon: Wrench,
+    };
+  }
+
+  if (category === "economy" || category === "progression") {
+    return {
+      accent: "before:bg-emerald-400/85",
+      badge: "border-emerald-300/35 bg-emerald-500/16 text-emerald-100",
+      icon: ArrowDownLeft,
+    };
+  }
+
+  return {
+    accent: "before:bg-slate-300/45",
+    badge: "border-slate-300/25 bg-slate-500/16 text-slate-100",
+    icon: CircleDashed,
+  };
 }
 
 function getStatusTone(status: string) {
-  if (status === "completed" || status === "approved") return "border-emerald-400/25 bg-emerald-500/12 text-emerald-100";
-  if (status === "pending") return "border-amber-400/25 bg-amber-500/12 text-amber-100";
-  if (status === "failed" || status === "rejected") return "border-rose-500/30 bg-rose-600/14 text-rose-100";
-  if (status === "cancelled") return "border-slate-300/15 bg-slate-200/10 text-slate-100";
-  return "border-sky-400/25 bg-sky-500/12 text-sky-100";
+  if (status === "completed" || status === "approved") return "border-emerald-300/35 bg-emerald-500/16 text-emerald-100";
+  if (status === "consumed") return "border-rose-300/35 bg-rose-500/16 text-rose-100";
+  if (status === "admin_action") return "border-amber-300/45 bg-amber-500/18 text-amber-100";
+  if (status === "pending") return "border-yellow-300/35 bg-yellow-500/16 text-yellow-100";
+  if (status === "failed" || status === "rejected") return "border-red-400/42 bg-red-600/20 text-red-100";
+  if (status === "cancelled") return "border-slate-300/25 bg-slate-500/16 text-slate-100";
+  return "border-sky-300/35 bg-sky-500/16 text-sky-100";
 }
 
-function getRowAccent(category: ActivityCategory) {
-  if (category === "marketplace") return "before:bg-sky-400/70";
-  if (category === "crafting") return "before:bg-fuchsia-400/70";
-  if (category === "admin") return "before:bg-amber-400/70";
-  if (category === "economy") return "before:bg-emerald-400/70";
-  return "before:bg-white/25";
-}
-
-function getCategoryIcon(category: ActivityCategory) {
-  if (category === "marketplace") return Store;
-  if (category === "admin") return Shield;
-  if (category === "chests") return Sparkles;
-  return CheckCircle2;
+function formatStatus(status: string): string {
+  if (status === "admin_action") return "Admin Action";
+  return titleCase(status);
 }
 
 export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No records found.", showUserColumn = false }: ActivityLogTableProps) {
@@ -162,60 +242,90 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
   }
 
   return (
-    <div className="overflow-hidden rounded-[1.6rem] border border-white/12 bg-[#07111a]/90 shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
-      <div className="max-h-[70vh] overflow-auto">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="sticky top-0 z-10 bg-[linear-gradient(180deg,rgba(11,20,32,0.98),rgba(9,16,26,0.96))] backdrop-blur">
-            <tr className="border-b border-white/10 text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#8fb0d2]">
+    <div className="overflow-hidden rounded-[1.7rem] border border-white/12 bg-[#060f1a]/95 shadow-[0_22px_64px_rgba(0,0,0,0.32)]">
+      <div className="max-h-[72vh] overflow-auto">
+        <table className="min-w-full table-fixed border-collapse text-left text-sm">
+          <colgroup>
+            <col className="w-[150px]" />
+            {showUserColumn ? <col className="w-[220px]" /> : null}
+            <col className="w-[180px]" />
+            <col className="w-[180px]" />
+            <col className="w-[260px]" />
+            <col className="w-[170px]" />
+            <col className="w-[150px]" />
+            <col className="w-[145px]" />
+          </colgroup>
+          <thead className="sticky top-0 z-10 bg-[linear-gradient(180deg,rgba(10,19,32,0.98),rgba(8,15,27,0.97))] backdrop-blur">
+            <tr className="border-b border-white/10 text-[0.64rem] font-black uppercase tracking-[0.18em] text-[#8fb0d2]">
               <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Received From</th>
               {showUserColumn ? <th className="px-4 py-3">User</th> : null}
-              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Action</th>
+              <th className="px-4 py-3">Source</th>
+              <th className="px-4 py-3">Result</th>
               <th className="px-4 py-3">Reference</th>
               <th className="px-4 py-3 text-right">Amount</th>
-              <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Status</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item) => {
-              const typeLabel = getTypeLabel(item);
-              const Icon = getCategoryIcon(item.category);
+              const semantic = deriveSemantic(item);
+              const date = formatDateTime(item.createdAt);
+              const theme = getCategoryTheme(item.category, semantic.action);
+              const ActionIcon = theme.icon;
+              const negative = isNegativeFlow(item);
 
               return (
                 <tr
                   key={item.id}
-                  className={`group relative border-b border-white/6 transition hover:bg-white/[0.045] ${getRowAccent(item.category)} before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:content-['']`}
+                  className={`group relative h-[66px] border-b border-white/7 align-middle transition hover:bg-white/[0.05] ${theme.accent} before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:content-['']`}
                 >
-                  <td className="whitespace-nowrap px-4 py-3 font-medium text-[#dbe8f8]">{formatDate(item.createdAt)}</td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <span className="inline-flex items-center gap-2 text-[#b9cce3]">
-                      <Icon className="h-3.5 w-3.5" />
-                      {getReceivedFrom(item)}
-                    </span>
+                  <td className="px-4 py-2 align-middle">
+                    <div className="flex flex-col leading-tight">
+                      <span className="font-semibold text-[#dbe8f8]">{date.day}</span>
+                      <span className="text-xs font-semibold text-[#8fb0d2]">{date.hour}</span>
+                    </div>
                   </td>
+
                   {showUserColumn ? (
-                    <td className="max-w-[220px] px-4 py-3 text-[#dbe8f8]">
-                      <div className="truncate font-semibold">{item.relatedUserName ?? item.userUid}</div>
-                      {item.relatedUserName ? <div className="truncate font-mono text-[0.68rem] text-[#8fb0d2]">{item.userUid}</div> : null}
+                    <td className="px-4 py-2 align-middle">
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold text-[#e6f1ff]">{item.relatedUserName ?? item.userUid}</div>
+                        <div className="truncate font-mono text-[0.67rem] text-[#8fb0d2]">{item.userUid}</div>
+                      </div>
                     </td>
                   ) : null}
-                  <td className="max-w-[260px] truncate px-4 py-3 text-[#f4f8fc]">{getName(item)}</td>
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-[#8fb0d2]">{item.reference}</td>
-                  <td className={`whitespace-nowrap px-4 py-3 text-right font-black ${getAmountTone(item)}`}>
-                    <span className="inline-flex items-center gap-1">
-                      {getAmountTone(item).includes("emerald") ? <ArrowDownLeft className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
+
+                  <td className="px-4 py-2 align-middle">
+                    <span className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] ${theme.badge}`}>
+                      <ActionIcon className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{semantic.action}</span>
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-2 align-middle">
+                    <div className="truncate font-semibold text-[#c7daef]">{semantic.source}</div>
+                  </td>
+
+                  <td className="px-4 py-2 align-middle">
+                    <div className="truncate font-semibold text-[#f3f8ff]">{semantic.result}</div>
+                    <div className="truncate text-[0.67rem] font-semibold text-[#8da8c8]">{item.description}</div>
+                  </td>
+
+                  <td className="px-4 py-2 align-middle">
+                    <div className="truncate rounded-md border border-white/12 bg-black/25 px-2 py-1 font-mono text-[0.67rem] text-[#9bb8d8]">{item.reference}</div>
+                  </td>
+
+                  <td className={`px-4 py-2 text-right align-middle font-black ${negative ? "text-rose-300" : "text-emerald-300"}`}>
+                    <span className="inline-flex items-center justify-end gap-1">
+                      {negative ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownLeft className="h-3.5 w-3.5" />}
                       {getAmountText(item)}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex rounded-full border px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] ${getTypeTone(typeLabel, item.category)}`}>
-                      {typeLabel}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
+
+                  <td className="px-4 py-2 align-middle">
                     <span className={`inline-flex rounded-full border px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] ${getStatusTone(item.status)}`}>
-                      {formatLabel(item.status)}
+                      {formatStatus(item.status)}
                     </span>
                   </td>
                 </tr>

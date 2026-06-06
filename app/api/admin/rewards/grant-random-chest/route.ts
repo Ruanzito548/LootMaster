@@ -108,9 +108,12 @@ export async function POST(request: Request): Promise<Response> {
         quantity: 1,
         rarity: selectedChest.id,
         origin: "admin:grant-random-chest",
-        status: "completed",
+        status: "admin_action",
         tags: ["admin", "chest", selectedChest.id],
         metadata: {
+          actionLabel: "Admin Granted",
+          sourceLabel: "Admin Panel",
+          resultLabel: selectedChest.title,
           chestId: selectedChestId,
         },
         mirrorToAdminAudit: true,

@@ -215,7 +215,9 @@ export function mapActivityHistoryLog(snapshot: QueryDocumentSnapshot<DocumentDa
       data.status === "cancelled" ||
       data.status === "rejected" ||
       data.status === "approved" ||
-      data.status === "system"
+      data.status === "system" ||
+      data.status === "consumed" ||
+      data.status === "admin_action"
         ? data.status
         : "completed",
     createdAtMs: typeof data.createdAtMs === "number" && Number.isFinite(data.createdAtMs) ? data.createdAtMs : 0,

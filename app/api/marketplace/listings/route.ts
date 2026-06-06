@@ -224,9 +224,12 @@ export async function POST(request: Request): Promise<Response> {
         valueUnit: "loot",
         rarity: targetItem.rarity,
         origin: "marketplace:create-listing",
-        status: "completed",
+        status: "consumed",
         tags: ["marketplace", "listing", targetItem.rarity],
         metadata: {
+          actionLabel: "Sold Item",
+          sourceLabel: "Inventory",
+          resultLabel: `${targetItem.name} listed`,
           listingId: listingRef.id,
           fee,
           sellerReceives,

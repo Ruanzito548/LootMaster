@@ -16,6 +16,8 @@ export const ACTIVITY_STATUSES = [
   "rejected",
   "approved",
   "system",
+  "consumed",
+  "admin_action",
 ] as const;
 
 export const ACTIVITY_VALUE_UNITS = ["loot", "usd", "brl", "xp", "item"] as const;

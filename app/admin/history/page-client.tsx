@@ -268,6 +268,8 @@ export function AdminHistoryClient() {
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "all" | ActivityStatus)} className="rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-sm text-green-100 outline-none focus:border-green-700">
               <option value="all">All status</option>
               <option value="completed">Completed</option>
+              <option value="consumed">Consumed</option>
+              <option value="admin_action">Admin Action</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
