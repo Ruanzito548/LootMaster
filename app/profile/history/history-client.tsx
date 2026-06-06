@@ -197,7 +197,7 @@ export default function HistoryClient() {
   if (status === "loading" || loading) {
     return (
       <div className="loot-shell">
-        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+        <main className="flex w-full flex-1 flex-col gap-6 pb-20 pt-8">
           <section className="loot-panel rounded-[2rem] p-8">
             <div className="h-6 w-40 animate-pulse rounded-full bg-white/10" />
             <div className="mt-4 h-12 w-80 animate-pulse rounded-2xl bg-white/10" />
@@ -218,7 +218,7 @@ export default function HistoryClient() {
   if (status === "unauthenticated" || !profile) {
     return (
       <div className="loot-shell">
-        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
+        <main className="flex w-full flex-1 flex-col pb-20 pt-12">
           <section className="loot-panel rounded-[1.75rem] p-8">
             <h1 className="loot-title text-3xl font-black">Login required</h1>
             <p className="loot-muted mt-3 text-sm">Sign in to view your account history.</p>
@@ -233,7 +233,7 @@ export default function HistoryClient() {
 
   return (
     <div className="loot-shell">
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+      <main className="flex w-full flex-1 flex-col gap-6 pb-20 pt-8">
         <section className="loot-panel rounded-[2rem] border border-white/12 p-6 sm:p-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
