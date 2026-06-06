@@ -3,28 +3,30 @@
 import Link from "next/link";
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Search, Shield, SlidersHorizontal, TableProperties } from "lucide-react";
+import type { User } from "firebase/auth";
 
 import { ActivityLogTable } from "@/app/components/history/activity-log-table";
 import type { ActivityCategory, ActivityHistoryLog, ActivityStatus } from "@/lib/activity-history-types";
-import { auth } from "@/lib/firebase";
+import { useProfileSession } from "@/app/profile/use-profile-session";
 
 const PAGE_SIZE = 30;
 
-async function getAuthorizationHeader() {
-  const token = await auth?.currentUser?.getIdToken();
+async function getAuthorizationHeader(user: User | null) {
+  const token = await user?.getIdToken();
   return token ? { Authorization: `Bearer ${token}` } : null;
 }
 
 async function fetchAdminHistoryPage(input: {
+  user: User | null;
   cursor?: string | null;
   userUid?: string;
   category?: string;
   actionType?: string;
   status?: string;
 }) {
-  const headers = await getAuthorizationHeader();
+  const headers = await getAuthorizationHeader(input.user);
   if (!headers) {
-    throw new Error("Unauthorized request.");
+    throw new Error("Your session is not ready. Please wait a few seconds and try again.");
   }
 
   const url = new URL("/api/admin/history", window.location.origin);
@@ -74,6 +76,7 @@ function normalizeSearch(item: ActivityHistoryLog) {
 }
 
 export function AdminHistoryClient() {
+  const { status: sessionStatus, user } = useProfileSession();
   const [items, setItems] = useState<ActivityHistoryLog[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,11 +95,24 @@ export function AdminHistoryClient() {
   }, [items]);
 
   const reload = useCallback(async () => {
+    if (sessionStatus === "loading") {
+      return;
+    }
+
+    if (!user) {
+      setLoading(false);
+      setErrorMessage("Sign in required to access admin history.");
+      setItems([]);
+      setNextCursor(null);
+      return;
+    }
+
     setLoading(true);
     setErrorMessage(null);
 
     try {
       const page = await fetchAdminHistoryPage({
+        user,
         userUid: userUid.trim(),
         category,
         actionType: typeFilter,
@@ -110,7 +126,7 @@ export function AdminHistoryClient() {
     } finally {
       setLoading(false);
     }
-  }, [category, statusFilter, typeFilter, userUid]);
+  }, [category, sessionStatus, statusFilter, typeFilter, user, userUid]);
 
   useEffect(() => {
     void reload();
@@ -132,6 +148,7 @@ export function AdminHistoryClient() {
           setLoadingMore(true);
           try {
             const page = await fetchAdminHistoryPage({
+              user,
               cursor: nextCursor,
               userUid: userUid.trim(),
               category,
@@ -158,7 +175,7 @@ export function AdminHistoryClient() {
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [category, loading, loadingMore, nextCursor, statusFilter, typeFilter, userUid]);
+  }, [category, loading, loadingMore, nextCursor, statusFilter, typeFilter, user, userUid]);
 
   const filteredItems = useMemo(() => {
     const normalized = deferredSearch.trim().toLowerCase();
