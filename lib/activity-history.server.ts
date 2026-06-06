@@ -34,6 +34,37 @@ function toSortKey(createdAtMs: number, id: string): string {
   return `${String(createdAtMs).padStart(13, "0")}_${id}`;
 }
 
+function toReferencePrefix(input: Pick<ActivityHistoryLogInput, "category" | "actionType">): string {
+  if (input.actionType.includes("marketplace") || input.category === "marketplace") {
+    return "MKT";
+  }
+
+  if (input.actionType.includes("craft") || input.category === "crafting") {
+    return "CRAFT";
+  }
+
+  if (input.actionType.includes("chest") || input.category === "chests") {
+    return "CHEST";
+  }
+
+  if (input.actionType.includes("admin") || input.category === "admin") {
+    return "ADM";
+  }
+
+  if (input.actionType.includes("level") || input.actionType.includes("xp") || input.category === "progression") {
+    return "PRG";
+  }
+
+  return "TX";
+}
+
+function toReference(input: Pick<ActivityHistoryLogInput, "category" | "actionType">, createdAtMs: number, id: string): string {
+  const prefix = toReferencePrefix(input);
+  const numeric = String(createdAtMs).slice(-7);
+  const suffix = id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase().padEnd(4, "X");
+  return `${prefix}-${numeric}${suffix}`;
+}
+
 function sanitizeStringArray(values: string[] | undefined): string[] {
   if (!Array.isArray(values)) {
     return [];
@@ -74,9 +105,11 @@ function mapStoredMetadata(metadata: unknown): Record<string, string | number | 
 
 function buildPayload(id: string, input: ActivityHistoryLogInput) {
   const createdAtMs = Date.now();
+  const reference = toReference(input, createdAtMs, id);
 
   return {
     id,
+    reference,
     userUid: input.userUid,
     actorUid: input.actorUid ?? null,
     actorRole: input.actorRole ?? "user",
@@ -127,9 +160,27 @@ export function writeActivityLog(tx: Transaction, adminDb: Firestore, input: Act
 
 export function mapActivityHistoryLog(snapshot: QueryDocumentSnapshot<DocumentData>): ActivityHistoryLog {
   const data = snapshot.data() as Record<string, unknown>;
+  const inferredReference = toReference(
+    {
+      category:
+        data.category === "economy" ||
+        data.category === "marketplace" ||
+        data.category === "inventory" ||
+        data.category === "chests" ||
+        data.category === "crafting" ||
+        data.category === "admin" ||
+        data.category === "progression"
+          ? data.category
+          : "economy",
+      actionType: typeof data.actionType === "string" ? data.actionType : "unknown",
+    },
+    typeof data.createdAtMs === "number" && Number.isFinite(data.createdAtMs) ? data.createdAtMs : 0,
+    snapshot.id,
+  );
 
   return {
     id: typeof data.id === "string" ? data.id : snapshot.id,
+    reference: typeof data.reference === "string" ? data.reference : inferredReference,
     userUid: typeof data.userUid === "string" ? data.userUid : "",
     actorUid: typeof data.actorUid === "string" ? data.actorUid : null,
     actorRole: data.actorRole === "admin" || data.actorRole === "system" ? data.actorRole : "user",
@@ -172,6 +223,54 @@ export function mapActivityHistoryLog(snapshot: QueryDocumentSnapshot<DocumentDa
     sortKey: typeof data.sortKey === "string" ? data.sortKey : toSortKey(0, snapshot.id),
     tags: Array.isArray(data.tags) ? data.tags.filter((value): value is string => typeof value === "string") : [],
     metadata: mapStoredMetadata(data.metadata),
+  };
+}
+
+type ActivityHistoryQueryInput = {
+  cursor?: string | null;
+  limit?: number;
+  userUid?: string | null;
+  category?: string | null;
+  actionType?: string | null;
+  status?: string | null;
+};
+
+export async function fetchGlobalActivityHistoryPage(
+  adminDb: Firestore,
+  input: ActivityHistoryQueryInput = {},
+): Promise<ActivityHistoryPage> {
+  const safeLimit = Math.max(1, Math.min(60, Math.floor(input.limit ?? 30)));
+  let query: FirebaseFirestore.Query<DocumentData> = adminDb.collectionGroup("activity-logs").orderBy("sortKey", "desc");
+
+  if (input.userUid) {
+    query = query.where("userUid", "==", input.userUid);
+  }
+
+  if (input.category) {
+    query = query.where("category", "==", input.category);
+  }
+
+  if (input.actionType) {
+    query = query.where("actionType", "==", input.actionType);
+  }
+
+  if (input.status) {
+    query = query.where("status", "==", input.status);
+  }
+
+  query = query.limit(safeLimit);
+
+  if (input.cursor) {
+    query = query.startAfter(input.cursor);
+  }
+
+  const snapshot = await query.get();
+  const items = snapshot.docs.map(mapActivityHistoryLog);
+  const nextCursor = snapshot.docs.length === safeLimit ? items[items.length - 1]?.sortKey ?? null : null;
+
+  return {
+    items,
+    nextCursor,
   };
 }
 

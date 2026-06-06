@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type ComponentType, useEffect, useRef, useState } from "react";
+import { type ComponentType, useEffect, useEffectEvent, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Bell,
@@ -42,8 +42,8 @@ const profileItems: NavItem[] = [
   { href: "/profile", label: "My Profile", icon: UserRound },
   { href: "/rewards", label: "Rewards", icon: Gift },
   { href: "/profile/inventory", label: "Inventory", icon: Package },
-  { href: "/profile/history", label: "Orders", icon: LayoutDashboard },
-  { href: "/profile/wallet-history", label: "Settings", icon: Wallet },
+  { href: "/profile/history", label: "History", icon: LayoutDashboard },
+  { href: "/profile/wallet-history", label: "Wallet", icon: Wallet },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -64,9 +64,12 @@ export function Navbar() {
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
   const avatar = profile?.photoURL || "/lootmasterlogo.png";
+  const closeProfileMenu = useEffectEvent(() => {
+    setIsProfileOpen(false);
+  });
 
   useEffect(() => {
-    setIsProfileOpen(false);
+    closeProfileMenu();
   }, [pathname]);
 
   useEffect(() => {

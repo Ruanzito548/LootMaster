@@ -29,6 +29,7 @@ export type ActivityMetadataValue = string | number | boolean | null;
 
 export type ActivityHistoryLog = {
   id: string;
+  reference: string;
   userUid: string;
   actorUid: string | null;
   actorRole: ActivityActorRole;
