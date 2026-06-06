@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Search, Shield, SlidersHorizontal, TableProperties } from "lucide-react";
+import { Search, Shield, SlidersHorizontal, TableProperties } from "lucide-react";
 import type { User } from "firebase/auth";
 
 import { ActivityLogTable } from "@/app/components/history/activity-log-table";
@@ -290,14 +290,10 @@ export function AdminHistoryClient() {
             </button>
           </div>
 
-          <div className="mt-5 flex items-center justify-between gap-3">
+          <div className="mt-5 flex items-center gap-3">
             <div className="inline-flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-green-600">
               <TableProperties className="h-4 w-4" />
               Admin spreadsheet mode
-            </div>
-            <div className="inline-flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-rose-200">
-              <AlertTriangle className="h-4 w-4" />
-              Failed and rejected rows are highlighted by their status badge
             </div>
           </div>
 

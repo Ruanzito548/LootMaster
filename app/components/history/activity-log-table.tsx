@@ -288,26 +288,38 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
     <div className="overflow-hidden rounded-[1.7rem] border border-white/12 bg-[#060f1a]/95 shadow-[0_22px_64px_rgba(0,0,0,0.32)]">
       <div className="max-h-[72vh] overflow-auto">
         <table className="min-w-full table-fixed border-collapse text-left text-sm">
-          <colgroup>
-            <col className="w-[130px]" />
-            {showUserColumn ? <col className="w-[210px]" /> : null}
-            <col className="w-[170px]" />
-            <col className="w-[160px]" />
-            <col className="w-[250px]" />
-            <col className="w-[170px]" />
-            <col className="w-[130px]" />
-            <col className="w-[130px]" />
-          </colgroup>
+          {showUserColumn ? (
+            <colgroup>
+              <col className="w-[130px]" />
+              <col className="w-[220px]" />
+              <col className="w-[190px]" />
+              <col className="w-[170px]" />
+              <col className="w-[280px]" />
+              <col className="w-[180px]" />
+              <col className="w-[140px]" />
+              <col className="w-[140px]" />
+            </colgroup>
+          ) : (
+            <colgroup>
+              <col className="w-[130px]" />
+              <col className="w-[220px]" />
+              <col className="w-[170px]" />
+              <col className="w-[360px]" />
+              <col className="w-[180px]" />
+              <col className="w-[160px]" />
+              <col className="w-[140px]" />
+            </colgroup>
+          )}
           <thead className="sticky top-0 z-10 bg-[linear-gradient(180deg,rgba(10,19,32,0.98),rgba(8,15,27,0.97))] backdrop-blur">
             <tr className="border-b border-white/10 text-[0.64rem] font-black uppercase tracking-[0.18em] text-[#8fb0d2]">
-              <th className="px-4 py-3">Date</th>
-              {showUserColumn ? <th className="px-4 py-3">User</th> : null}
-              <th className="px-4 py-3">Action</th>
-              <th className="px-4 py-3">Source</th>
-              <th className="px-4 py-3">Result</th>
-              <th className="px-4 py-3">Reference</th>
-              <th className="px-4 py-3 text-right">Amount</th>
-              <th className="px-4 py-3 text-center">Status</th>
+              <th className="px-4 py-3 whitespace-nowrap">Date</th>
+              {showUserColumn ? <th className="px-4 py-3 whitespace-nowrap">User</th> : null}
+              <th className="px-4 py-3 whitespace-nowrap">Action</th>
+              <th className="px-4 py-3 whitespace-nowrap">Source</th>
+              <th className="px-4 py-3 whitespace-nowrap">Result</th>
+              <th className="px-4 py-3 whitespace-nowrap">Reference</th>
+              <th className="px-5 py-3 text-right whitespace-nowrap">Amount</th>
+              <th className="px-4 py-3 text-center whitespace-nowrap">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -359,7 +371,7 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
                     <div className="truncate rounded-md border border-white/12 bg-black/25 px-2 py-1 font-mono text-[0.67rem] text-[#9bb8d8]">{item.reference}</div>
                   </td>
 
-                  <td className={`px-4 py-2 text-right align-middle font-black ${negative ? "text-rose-300" : "text-emerald-300"}`}>
+                  <td className={`px-5 py-2 text-right align-middle font-black whitespace-nowrap ${negative ? "text-rose-300" : "text-emerald-300"}`}>
                     <span className="inline-flex items-center justify-end gap-1">
                       {negative ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownLeft className="h-3.5 w-3.5" />}
                       {getAmountText(item)}
