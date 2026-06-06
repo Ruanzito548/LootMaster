@@ -70,17 +70,17 @@ function deriveAction(item: ActivityHistoryLog): string {
   const meta = readMetaLabel(item, "actionLabel");
   if (meta) {
     const normalizedMeta = meta.toLowerCase();
-    if (normalizedMeta === "opened chest") return "Bau Aberto";
-    if (normalizedMeta === "chest used") return "Bau Consumido";
-    if (normalizedMeta === "crafted item") return "Item Criado";
-    if (normalizedMeta === "materials consumed") return "Materiais Consumidos";
-    if (normalizedMeta === "marketplace purchase") return "Compra no Marketplace";
-    if (normalizedMeta === "sold item") return "Item Vendido";
-    if (normalizedMeta === "listing removed") return "Anuncio Removido";
-    if (normalizedMeta === "marketplace fee") return "Taxa do Marketplace";
-    if (normalizedMeta === "admin granted") return "Concedido por Admin";
+    if (normalizedMeta === "opened chest") return "Opened Chest";
+    if (normalizedMeta === "chest used") return "Chest Used";
+    if (normalizedMeta === "crafted item") return "Crafted Item";
+    if (normalizedMeta === "materials consumed") return "Materials Consumed";
+    if (normalizedMeta === "marketplace purchase") return "Marketplace Purchase";
+    if (normalizedMeta === "sold item") return "Sold Item";
+    if (normalizedMeta === "listing removed") return "Listing Removed";
+    if (normalizedMeta === "marketplace fee") return "Marketplace Fee";
+    if (normalizedMeta === "admin granted") return "Admin Granted";
     if (normalizedMeta === "daily reward") {
-      return isChestRelatedEvent(item) ? "Recebido de Bau" : "Recompensa Diaria";
+      return isChestRelatedEvent(item) ? "Received from Chest" : "Daily Reward";
     }
 
     return meta;
@@ -88,17 +88,17 @@ function deriveAction(item: ActivityHistoryLog): string {
 
   const action = item.actionType.toLowerCase();
 
-  if (action === "chest_opened") return "Bau Aberto";
-  if (action === "chest_used") return "Bau Consumido";
-  if (action === "craft_completed") return "Item Criado";
-  if (action === "craft_materials_consumed") return "Materiais Consumidos";
-  if (action === "marketplace_item_bought") return "Compra no Marketplace";
-  if (action === "marketplace_item_sold") return "Item Vendido";
-  if (action === "marketplace_item_listed") return "Item Anunciado";
-  if (action === "marketplace_listing_removed") return "Anuncio Removido";
-  if (action === "marketplace_fee_charged") return "Taxa do Marketplace";
-  if (action.startsWith("admin_")) return "Concedido por Admin";
-  if (action.includes("reward")) return isChestRelatedEvent(item) ? "Recebido de Bau" : "Recompensa Diaria";
+  if (action === "chest_opened") return "Opened Chest";
+  if (action === "chest_used") return "Chest Used";
+  if (action === "craft_completed") return "Crafted Item";
+  if (action === "craft_materials_consumed") return "Materials Consumed";
+  if (action === "marketplace_item_bought") return "Marketplace Purchase";
+  if (action === "marketplace_item_sold") return "Sold Item";
+  if (action === "marketplace_item_listed") return "Item Listed";
+  if (action === "marketplace_listing_removed") return "Listing Removed";
+  if (action === "marketplace_fee_charged") return "Marketplace Fee";
+  if (action.startsWith("admin_")) return "Admin Granted";
+  if (action.includes("reward")) return isChestRelatedEvent(item) ? "Received from Chest" : "Daily Reward";
 
   return titleCase(item.actionType);
 }
@@ -107,17 +107,17 @@ function deriveSource(item: ActivityHistoryLog): string {
   const meta = readMetaLabel(item, "sourceLabel");
   if (meta) {
     const normalizedMeta = meta.toLowerCase();
-    if (normalizedMeta === "inventory") return "Inventario";
-    if (normalizedMeta === "admin panel") return "Painel Admin";
-    if (normalizedMeta === "crafting system") return "Sistema de Craft";
+    if (normalizedMeta === "inventory") return "Inventory";
+    if (normalizedMeta === "admin panel") return "Admin Panel";
+    if (normalizedMeta === "crafting system") return "Crafting System";
     return meta;
   }
 
   if (item.origin.includes("marketplace")) return "Marketplace";
-  if (item.origin.includes("craft")) return "Sistema de Craft";
-  if (item.origin.includes("chests")) return item.itemName ?? "Bau";
-  if (item.origin.includes("admin")) return "Painel Admin";
-  if (item.category === "inventory") return "Inventario";
+  if (item.origin.includes("craft")) return "Crafting System";
+  if (item.origin.includes("chests")) return item.itemName ?? "Chest";
+  if (item.origin.includes("admin")) return "Admin Panel";
+  if (item.category === "inventory") return "Inventory";
   return titleCase(item.origin.replace(/:/g, " "));
 }
 
@@ -157,6 +157,7 @@ function isNegativeFlow(item: ActivityHistoryLog): boolean {
     item.status === "rejected" ||
     item.status === "consumed" ||
     action.includes("fee") ||
+    action.includes("chest_opened") ||
     action.includes("consumed") ||
     action.includes("listed") ||
     action.includes("buy") ||
@@ -261,19 +262,19 @@ function getStatusTone(status: string) {
 }
 
 function formatStatus(status: string): string {
-  if (status === "admin_action") return "Acao Admin";
-  if (status === "completed") return "Concluido";
-  if (status === "consumed") return "Consumido";
-  if (status === "pending") return "Pendente";
-  if (status === "approved") return "Aprovado";
-  if (status === "rejected") return "Rejeitado";
-  if (status === "failed") return "Falhou";
-  if (status === "cancelled") return "Cancelado";
-  if (status === "system") return "Sistema";
+  if (status === "admin_action") return "Admin Action";
+  if (status === "completed") return "Completed";
+  if (status === "consumed") return "Consumed";
+  if (status === "pending") return "Pending";
+  if (status === "approved") return "Approved";
+  if (status === "rejected") return "Rejected";
+  if (status === "failed") return "Failed";
+  if (status === "cancelled") return "Cancelled";
+  if (status === "system") return "System";
   return titleCase(status);
 }
 
-export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "Nenhum registro encontrado.", showUserColumn = false }: ActivityLogTableProps) {
+export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No records found.", showUserColumn = false }: ActivityLogTableProps) {
   if (items.length === 0) {
     return (
       <div className="rounded-[1.5rem] border border-dashed border-white/12 bg-black/20 px-6 py-10 text-center text-sm font-semibold text-[#9db7d4]">
@@ -298,13 +299,13 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "Nen
           </colgroup>
           <thead className="sticky top-0 z-10 bg-[linear-gradient(180deg,rgba(10,19,32,0.98),rgba(8,15,27,0.97))] backdrop-blur">
             <tr className="border-b border-white/10 text-[0.64rem] font-black uppercase tracking-[0.18em] text-[#8fb0d2]">
-              <th className="px-4 py-3">Data</th>
-              {showUserColumn ? <th className="px-4 py-3">Usuario</th> : null}
-              <th className="px-4 py-3">Acao</th>
-              <th className="px-4 py-3">Origem</th>
-              <th className="px-4 py-3">Resultado</th>
-              <th className="px-4 py-3">Referencia</th>
-              <th className="px-4 py-3 text-right">Valor</th>
+              <th className="px-4 py-3">Date</th>
+              {showUserColumn ? <th className="px-4 py-3">User</th> : null}
+              <th className="px-4 py-3">Action</th>
+              <th className="px-4 py-3">Source</th>
+              <th className="px-4 py-3">Result</th>
+              <th className="px-4 py-3">Reference</th>
+              <th className="px-4 py-3 text-right">Amount</th>
               <th className="px-4 py-3">Status</th>
             </tr>
           </thead>
@@ -379,7 +380,7 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "Nen
       <div className="flex items-center justify-center border-t border-white/8 px-4 py-3">
         <span className="inline-flex items-center gap-2 text-[0.66rem] font-bold uppercase tracking-[0.16em] text-[#8ea9c8]">
           <CircleDashed className="h-3.5 w-3.5" />
-          {loadingMore ? "Carregando mais linhas" : `${items.length} linhas carregadas`}
+          {loadingMore ? "Loading more rows" : `${items.length} rows loaded`}
         </span>
       </div>
     </div>
