@@ -249,6 +249,8 @@ const defaultTransactions: ProfileTransaction[] = [
   },
 ];
 
+const ENABLE_STARTER_INVENTORY = false;
+
 export const defaultCoverURL = "/wow/wow-classic-era/classic-era-wallpaper.avif";
 export const defaultPhotoURL = "/lootmasterlogo.png";
 
@@ -335,7 +337,7 @@ function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" |
     lootCoins: 1250,
     tickets: 12,
     keys: 4,
-    inventory: defaultInventory,
+    inventory: ENABLE_STARTER_INVENTORY ? defaultInventory : [],
     transactions: defaultTransactions,
     totalSpentCents: progress.totalSpentCents,
     level: progress.level,
