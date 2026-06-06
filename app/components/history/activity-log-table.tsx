@@ -17,6 +17,21 @@ type RowSemantic = {
   result: string;
 };
 
+function isChestRelatedEvent(item: ActivityHistoryLog): boolean {
+  const origin = item.origin.toLowerCase();
+  const description = item.description.toLowerCase();
+  const tags = item.tags.join(" ").toLowerCase();
+  const itemCategory = (item.itemCategory ?? "").toLowerCase();
+
+  return (
+    origin.includes("chest") ||
+    description.includes("chest") ||
+    description.includes("bau") ||
+    tags.includes("chest") ||
+    itemCategory === "chest"
+  );
+}
+
 function formatDateTime(value: string | null) {
   if (!value) {
     return { day: "--/--/----", hour: "--:--" };
@@ -54,22 +69,36 @@ function readMetaLabel(item: ActivityHistoryLog, key: string): string | null {
 function deriveAction(item: ActivityHistoryLog): string {
   const meta = readMetaLabel(item, "actionLabel");
   if (meta) {
+    const normalizedMeta = meta.toLowerCase();
+    if (normalizedMeta === "opened chest") return "Bau Aberto";
+    if (normalizedMeta === "chest used") return "Bau Consumido";
+    if (normalizedMeta === "crafted item") return "Item Criado";
+    if (normalizedMeta === "materials consumed") return "Materiais Consumidos";
+    if (normalizedMeta === "marketplace purchase") return "Compra no Marketplace";
+    if (normalizedMeta === "sold item") return "Item Vendido";
+    if (normalizedMeta === "listing removed") return "Anuncio Removido";
+    if (normalizedMeta === "marketplace fee") return "Taxa do Marketplace";
+    if (normalizedMeta === "admin granted") return "Concedido por Admin";
+    if (normalizedMeta === "daily reward") {
+      return isChestRelatedEvent(item) ? "Recebido de Bau" : "Recompensa Diaria";
+    }
+
     return meta;
   }
 
   const action = item.actionType.toLowerCase();
 
-  if (action === "chest_opened") return "Opened Chest";
-  if (action === "chest_used") return "Chest Used";
-  if (action === "craft_completed") return "Crafted Item";
-  if (action === "craft_materials_consumed") return "Materials Consumed";
-  if (action === "marketplace_item_bought") return "Marketplace Purchase";
-  if (action === "marketplace_item_sold") return "Sold Item";
-  if (action === "marketplace_item_listed") return "Sold Item";
-  if (action === "marketplace_listing_removed") return "Listing Removed";
-  if (action === "marketplace_fee_charged") return "Marketplace Fee";
-  if (action.startsWith("admin_")) return "Admin Granted";
-  if (action.includes("reward")) return "Daily Reward";
+  if (action === "chest_opened") return "Bau Aberto";
+  if (action === "chest_used") return "Bau Consumido";
+  if (action === "craft_completed") return "Item Criado";
+  if (action === "craft_materials_consumed") return "Materiais Consumidos";
+  if (action === "marketplace_item_bought") return "Compra no Marketplace";
+  if (action === "marketplace_item_sold") return "Item Vendido";
+  if (action === "marketplace_item_listed") return "Item Anunciado";
+  if (action === "marketplace_listing_removed") return "Anuncio Removido";
+  if (action === "marketplace_fee_charged") return "Taxa do Marketplace";
+  if (action.startsWith("admin_")) return "Concedido por Admin";
+  if (action.includes("reward")) return isChestRelatedEvent(item) ? "Recebido de Bau" : "Recompensa Diaria";
 
   return titleCase(item.actionType);
 }
@@ -77,14 +106,18 @@ function deriveAction(item: ActivityHistoryLog): string {
 function deriveSource(item: ActivityHistoryLog): string {
   const meta = readMetaLabel(item, "sourceLabel");
   if (meta) {
+    const normalizedMeta = meta.toLowerCase();
+    if (normalizedMeta === "inventory") return "Inventario";
+    if (normalizedMeta === "admin panel") return "Painel Admin";
+    if (normalizedMeta === "crafting system") return "Sistema de Craft";
     return meta;
   }
 
   if (item.origin.includes("marketplace")) return "Marketplace";
-  if (item.origin.includes("craft")) return "Crafting System";
-  if (item.origin.includes("chests")) return item.itemName ?? "Chest";
-  if (item.origin.includes("admin")) return "Admin Panel";
-  if (item.category === "inventory") return "Inventory";
+  if (item.origin.includes("craft")) return "Sistema de Craft";
+  if (item.origin.includes("chests")) return item.itemName ?? "Bau";
+  if (item.origin.includes("admin")) return "Painel Admin";
+  if (item.category === "inventory") return "Inventario";
   return titleCase(item.origin.replace(/:/g, " "));
 }
 
@@ -103,7 +136,7 @@ function deriveResult(item: ActivityHistoryLog): string {
   }
 
   if (typeof item.value === "number" && item.valueUnit === "loot") {
-    return `${item.value.toLocaleString("en-US", { maximumFractionDigits: 2 })} Loot Coins`;
+    return `${item.value.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} Loot Coins`;
   }
 
   return item.description;
@@ -136,7 +169,7 @@ function getAmountText(item: ActivityHistoryLog): string {
 
   if (typeof item.value === "number" && item.valueUnit) {
     if (item.valueUnit === "loot") {
-      return `${sign}${item.value.toLocaleString("en-US", { maximumFractionDigits: 2 })} LC`;
+      return `${sign}${item.value.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} LC`;
     }
 
     if (item.valueUnit === "usd") {
@@ -228,11 +261,19 @@ function getStatusTone(status: string) {
 }
 
 function formatStatus(status: string): string {
-  if (status === "admin_action") return "Admin Action";
+  if (status === "admin_action") return "Acao Admin";
+  if (status === "completed") return "Concluido";
+  if (status === "consumed") return "Consumido";
+  if (status === "pending") return "Pendente";
+  if (status === "approved") return "Aprovado";
+  if (status === "rejected") return "Rejeitado";
+  if (status === "failed") return "Falhou";
+  if (status === "cancelled") return "Cancelado";
+  if (status === "system") return "Sistema";
   return titleCase(status);
 }
 
-export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No records found.", showUserColumn = false }: ActivityLogTableProps) {
+export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "Nenhum registro encontrado.", showUserColumn = false }: ActivityLogTableProps) {
   if (items.length === 0) {
     return (
       <div className="rounded-[1.5rem] border border-dashed border-white/12 bg-black/20 px-6 py-10 text-center text-sm font-semibold text-[#9db7d4]">
@@ -246,24 +287,24 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
       <div className="max-h-[72vh] overflow-auto">
         <table className="min-w-full table-fixed border-collapse text-left text-sm">
           <colgroup>
-            <col className="w-[150px]" />
-            {showUserColumn ? <col className="w-[220px]" /> : null}
-            <col className="w-[180px]" />
-            <col className="w-[180px]" />
-            <col className="w-[260px]" />
+            <col className="w-[130px]" />
+            {showUserColumn ? <col className="w-[210px]" /> : null}
             <col className="w-[170px]" />
-            <col className="w-[150px]" />
-            <col className="w-[145px]" />
+            <col className="w-[160px]" />
+            <col className="w-[250px]" />
+            <col className="w-[170px]" />
+            <col className="w-[130px]" />
+            <col className="w-[130px]" />
           </colgroup>
           <thead className="sticky top-0 z-10 bg-[linear-gradient(180deg,rgba(10,19,32,0.98),rgba(8,15,27,0.97))] backdrop-blur">
             <tr className="border-b border-white/10 text-[0.64rem] font-black uppercase tracking-[0.18em] text-[#8fb0d2]">
-              <th className="px-4 py-3">Date</th>
-              {showUserColumn ? <th className="px-4 py-3">User</th> : null}
-              <th className="px-4 py-3">Action</th>
-              <th className="px-4 py-3">Source</th>
-              <th className="px-4 py-3">Result</th>
-              <th className="px-4 py-3">Reference</th>
-              <th className="px-4 py-3 text-right">Amount</th>
+              <th className="px-4 py-3">Data</th>
+              {showUserColumn ? <th className="px-4 py-3">Usuario</th> : null}
+              <th className="px-4 py-3">Acao</th>
+              <th className="px-4 py-3">Origem</th>
+              <th className="px-4 py-3">Resultado</th>
+              <th className="px-4 py-3">Referencia</th>
+              <th className="px-4 py-3 text-right">Valor</th>
               <th className="px-4 py-3">Status</th>
             </tr>
           </thead>
@@ -338,7 +379,7 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
       <div className="flex items-center justify-center border-t border-white/8 px-4 py-3">
         <span className="inline-flex items-center gap-2 text-[0.66rem] font-bold uppercase tracking-[0.16em] text-[#8ea9c8]">
           <CircleDashed className="h-3.5 w-3.5" />
-          {loadingMore ? "Loading more rows" : `${items.length} rows loaded`}
+          {loadingMore ? "Carregando mais linhas" : `${items.length} linhas carregadas`}
         </span>
       </div>
     </div>

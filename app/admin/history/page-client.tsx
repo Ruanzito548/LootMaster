@@ -26,7 +26,7 @@ async function fetchAdminHistoryPage(input: {
 }) {
   const headers = await getAuthorizationHeader(input.user);
   if (!headers) {
-    throw new Error("Your session is not ready. Please wait a few seconds and try again.");
+    throw new Error("Sua sessao ainda nao esta pronta. Aguarde alguns segundos e tente novamente.");
   }
 
   const url = new URL("/api/admin/history", window.location.origin);
@@ -51,7 +51,7 @@ async function fetchAdminHistoryPage(input: {
   };
 
   if (!response.ok) {
-    throw new Error(payload.error ?? "Could not load admin history.");
+    throw new Error(payload.error ?? "Nao foi possivel carregar o historico admin.");
   }
 
   return {
@@ -101,7 +101,7 @@ export function AdminHistoryClient() {
 
     if (!user) {
       setLoading(false);
-      setErrorMessage("Sign in required to access admin history.");
+      setErrorMessage("Voce precisa estar autenticado para acessar o historico admin.");
       setItems([]);
       setNextCursor(null);
       return;
@@ -122,7 +122,7 @@ export function AdminHistoryClient() {
       setItems(page.items);
       setNextCursor(page.nextCursor);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not load admin history.");
+      setErrorMessage(error instanceof Error ? error.message : "Nao foi possivel carregar o historico admin.");
     } finally {
       setLoading(false);
     }
@@ -164,7 +164,7 @@ export function AdminHistoryClient() {
               setNextCursor(page.nextCursor);
             });
           } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : "Could not load more admin rows.");
+            setErrorMessage(error instanceof Error ? error.message : "Nao foi possivel carregar mais linhas do historico admin.");
           } finally {
             setLoadingMore(false);
           }
@@ -192,28 +192,28 @@ export function AdminHistoryClient() {
 
   return (
     <div className="min-h-screen bg-black text-green-400">
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-6 pb-20 pt-12 lg:px-8">
+      <main className="flex w-full flex-1 flex-col gap-6 pb-20 pt-12">
         <section className="rounded-[2rem] border border-green-900 bg-green-950/20 p-6 sm:p-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.28em] text-green-600">Admin</p>
-              <h1 className="mt-3 text-4xl font-black text-green-300 sm:text-5xl">Global History Table</h1>
+              <h1 className="mt-3 text-4xl font-black text-green-300 sm:text-5xl">Tabela Global de Historico</h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-green-600">
-                Compact spreadsheet view for all users, transaction references, admin actions and suspicious movements.
+                Visao compacta em formato planilha com usuarios, referencias de transacao, acoes administrativas e movimentos suspeitos.
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-green-900 bg-black/20 px-4 py-3">
-                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-green-600">Loaded rows</p>
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-green-600">Linhas carregadas</p>
                 <p className="mt-2 text-2xl font-black text-green-300">{items.length}</p>
               </div>
               <div className="rounded-2xl border border-green-900 bg-black/20 px-4 py-3">
-                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-green-600">Visible rows</p>
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-green-600">Linhas visiveis</p>
                 <p className="mt-2 text-2xl font-black text-green-300">{filteredItems.length}</p>
               </div>
               <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3">
-                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-rose-200">Suspicious</p>
+                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-rose-200">Suspeitas</p>
                 <p className="mt-2 text-2xl font-black text-rose-100">{suspiciousCount}</p>
               </div>
             </div>
@@ -233,7 +233,7 @@ export function AdminHistoryClient() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search user, reference, item, action"
+                placeholder="Buscar usuario, referencia, item, acao"
                 className="w-full rounded-xl border border-green-900 bg-black/30 py-3 pl-10 pr-4 text-sm text-green-100 outline-none focus:border-green-700"
               />
             </label>
@@ -241,23 +241,23 @@ export function AdminHistoryClient() {
             <input
               value={userUid}
               onChange={(event) => setUserUid(event.target.value)}
-              placeholder="Filter by user UID"
+              placeholder="Filtrar por UID do usuario"
               className="rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-sm text-green-100 outline-none focus:border-green-700"
             />
 
             <select value={category} onChange={(event) => setCategory(event.target.value as "all" | ActivityCategory)} className="rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-sm text-green-100 outline-none focus:border-green-700">
-              <option value="all">All categories</option>
-              <option value="economy">Economy</option>
+              <option value="all">Todas as categorias</option>
+              <option value="economy">Economia</option>
               <option value="marketplace">Marketplace</option>
-              <option value="inventory">Inventory</option>
-              <option value="chests">Chest Opening</option>
+              <option value="inventory">Inventario</option>
+              <option value="chests">Abertura de Bau</option>
               <option value="crafting">Crafting</option>
               <option value="admin">Admin</option>
-              <option value="progression">Progression</option>
+              <option value="progression">Progressao</option>
             </select>
 
             <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-sm text-green-100 outline-none focus:border-green-700">
-              <option value="all">All actions</option>
+              <option value="all">Todas as acoes</option>
               {actionTypeOptions.filter((option) => option !== "all").map((option) => (
                 <option key={option} value={option}>
                   {option.replace(/_/g, " ").toUpperCase()}
@@ -266,15 +266,15 @@ export function AdminHistoryClient() {
             </select>
 
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "all" | ActivityStatus)} className="rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-sm text-green-100 outline-none focus:border-green-700">
-              <option value="all">All status</option>
-              <option value="completed">Completed</option>
-              <option value="consumed">Consumed</option>
-              <option value="admin_action">Admin Action</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="failed">Failed</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="all">Todos os status</option>
+              <option value="completed">Concluido</option>
+              <option value="consumed">Consumido</option>
+              <option value="admin_action">Acao Admin</option>
+              <option value="pending">Pendente</option>
+              <option value="approved">Aprovado</option>
+              <option value="rejected">Rejeitado</option>
+              <option value="failed">Falhou</option>
+              <option value="cancelled">Cancelado</option>
               <option value="system">System</option>
             </select>
 
@@ -284,35 +284,35 @@ export function AdminHistoryClient() {
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-green-700 bg-green-950 px-4 py-3 text-sm font-semibold text-green-200 transition hover:bg-green-900"
             >
               <SlidersHorizontal className="h-4 w-4" />
-              Apply
+              Aplicar
             </button>
           </div>
 
           <div className="mt-5 flex items-center justify-between gap-3">
             <div className="inline-flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-green-600">
               <TableProperties className="h-4 w-4" />
-              Admin spreadsheet mode
+              Modo planilha admin
             </div>
             <div className="inline-flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-rose-200">
               <AlertTriangle className="h-4 w-4" />
-              Failed and rejected rows highlighted by status badge
+              Linhas com falha e rejeicao destacadas pelo status
             </div>
           </div>
 
           <div className="mt-5">
-            <ActivityLogTable items={filteredItems} loadingMore={loadingMore} emptyLabel="No admin logs matched the current filters." showUserColumn />
+            <ActivityLogTable items={filteredItems} loadingMore={loadingMore} emptyLabel="Nenhum log admin corresponde aos filtros atuais." showUserColumn />
           </div>
 
           <div ref={loadMoreRef} className="mt-4 flex justify-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-green-900 bg-black/25 px-4 py-2 text-[0.66rem] font-bold uppercase tracking-[0.14em] text-green-600">
-              {nextCursor ? "Scroll to load more rows" : "No more rows"}
+              {nextCursor ? "Role para carregar mais linhas" : "Sem mais linhas"}
             </span>
           </div>
         </section>
 
         <div className="flex flex-wrap gap-3">
           <Link href="/admin" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
-            Back to admin
+            Voltar para admin
           </Link>
           <Link href="/admin/dashboard" className="inline-flex items-center gap-2 rounded-md border border-green-700 bg-green-950 px-5 py-3 text-sm font-semibold text-green-300 transition hover:bg-green-900">
             <Shield className="h-4 w-4" />
