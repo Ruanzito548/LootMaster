@@ -63,15 +63,50 @@ function statusFromErrorMessage(message: string): number {
   return 500;
 }
 
+function isMissingIndexError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const text = error.message.toLowerCase();
+  return text.includes("failed_precondition") || text.includes("requires an index");
+}
+
 export async function GET(request: Request): Promise<Response> {
   try {
     await requireAuthenticatedUserRequest(request);
     const adminDb = getAdminDb();
 
-    const [activeSnapshot, latestSalesSnapshot] = await Promise.all([
-      adminDb.collection("marketplace-listings").where("status", "==", "active").orderBy("createdAtMs", "desc").limit(120).get(),
-      adminDb.collection("marketplace-sales").orderBy("createdAtMs", "desc").limit(80).get(),
-    ]);
+    const latestSalesPromise = adminDb.collection("marketplace-sales").orderBy("createdAtMs", "desc").limit(80).get();
+
+    let activeSnapshot;
+
+    try {
+      activeSnapshot = await adminDb
+        .collection("marketplace-listings")
+        .where("status", "==", "active")
+        .orderBy("createdAtMs", "desc")
+        .limit(120)
+        .get();
+    } catch (error) {
+      if (!isMissingIndexError(error)) {
+        throw error;
+      }
+
+      // Fallback path for environments where the composite index is not created yet.
+      // This keeps the marketplace usable while still returning recent active listings.
+      const broadSnapshot = await adminDb.collection("marketplace-listings").orderBy("createdAtMs", "desc").limit(320).get();
+
+      const filteredDocs = broadSnapshot.docs
+        .filter((doc) => (doc.data() as Record<string, unknown>).status === "active")
+        .slice(0, 120);
+
+      activeSnapshot = {
+        docs: filteredDocs,
+      } as { docs: typeof filteredDocs };
+    }
+
+    const latestSalesSnapshot = await latestSalesPromise;
 
     const listings = activeSnapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }));
     const salesHistory = latestSalesSnapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }));
