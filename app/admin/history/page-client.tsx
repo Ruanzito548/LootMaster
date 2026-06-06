@@ -297,7 +297,7 @@ export function AdminHistoryClient() {
             </div>
             <div className="inline-flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-rose-200">
               <AlertTriangle className="h-4 w-4" />
-              Failed and rejected rows are highlighted by status badge
+              Failed and rejected rows are highlighted by their status badge
             </div>
           </div>
 

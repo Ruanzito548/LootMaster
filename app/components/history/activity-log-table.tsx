@@ -307,7 +307,7 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
               <th className="px-4 py-3">Result</th>
               <th className="px-4 py-3">Reference</th>
               <th className="px-4 py-3 text-right">Amount</th>
-              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3 text-center">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -366,7 +366,7 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
                     </span>
                   </td>
 
-                  <td className="px-4 py-2 align-middle">
+                  <td className="px-4 py-2 text-center align-middle">
                     <span className={`inline-flex rounded-full border px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] ${getStatusTone(item.status)}`}>
                       {formatStatus(item.status)}
                     </span>
