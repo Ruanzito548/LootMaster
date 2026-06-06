@@ -14,7 +14,6 @@ type ActivityLogTableProps = {
 type RowSemantic = {
   action: string;
   source: string;
-  result: string;
 };
 
 type DisplayRow = ActivityHistoryLog & {
@@ -127,32 +126,10 @@ function deriveSource(item: ActivityHistoryLog): string {
   return titleCase(item.origin.replace(/:/g, " "));
 }
 
-function deriveResult(item: ActivityHistoryLog): string {
-  const meta = readMetaLabel(item, "resultLabel");
-  if (meta) {
-    return meta;
-  }
-
-  if (item.itemName && item.quantity && item.quantity > 1) {
-    return `${item.itemName} x${item.quantity}`;
-  }
-
-  if (item.itemName) {
-    return item.itemName;
-  }
-
-  if (typeof item.value === "number" && item.valueUnit === "loot") {
-    return `${item.value.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} Loot Coins`;
-  }
-
-  return item.description;
-}
-
 function deriveSemantic(item: ActivityHistoryLog): RowSemantic {
   return {
     action: deriveAction(item),
     source: deriveSource(item),
-    result: deriveResult(item),
   };
 }
 
@@ -171,36 +148,9 @@ function isNegativeFlow(item: ActivityHistoryLog): boolean {
   );
 }
 
-function getAmountText(item: ActivityHistoryLog): string {
-  const sign = isNegativeFlow(item) ? "-" : "+";
-
-  if (typeof item.value === "number" && item.valueUnit) {
-    if (item.valueUnit === "loot") {
-      return `${sign}${item.value.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} LC`;
-    }
-
-    if (item.valueUnit === "usd") {
-      return `${sign}$${item.value.toFixed(2)}`;
-    }
-
-    if (item.valueUnit === "xp") {
-      return `${sign}${item.value.toFixed(2)} XP`;
-    }
-  }
-
-  if (item.itemName) {
-    return `${sign}${item.quantity ?? 1} ${item.itemName}`;
-  }
-
-  if (typeof item.quantity === "number") {
-    return `${sign}${item.quantity}`;
-  }
-
-  return "--";
-}
-
 function buildFlowFromItem(item: ActivityHistoryLog): { added: string | null; removed: string | null } {
   const action = item.actionType.toLowerCase();
+  const rewardTitle = typeof item.metadata?.rewardTitle === "string" && item.metadata.rewardTitle.trim() ? item.metadata.rewardTitle.trim() : null;
   const valueText =
     typeof item.value === "number" && item.valueUnit === "loot"
       ? `${item.value.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} LC`
@@ -235,7 +185,7 @@ function buildFlowFromItem(item: ActivityHistoryLog): { added: string | null; re
 
   if (action === "chest_opened") {
     return {
-      added: valueText ? `+${valueText}` : itemText ? `+${itemText}` : null,
+      added: valueText ? `+${valueText}` : rewardTitle ? `+${rewardTitle}` : null,
       removed: null,
     };
   }
@@ -405,9 +355,9 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
               <col className="w-[220px]" />
               <col className="w-[190px]" />
               <col className="w-[170px]" />
-              <col className="w-[280px]" />
               <col className="w-[180px]" />
-              <col className="w-[230px]" />
+              <col className="w-[190px]" />
+              <col className="w-[190px]" />
               <col className="w-[140px]" />
             </colgroup>
           ) : (
@@ -415,9 +365,9 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
               <col className="w-[130px]" />
               <col className="w-[220px]" />
               <col className="w-[170px]" />
-              <col className="w-[360px]" />
               <col className="w-[180px]" />
-              <col className="w-[240px]" />
+              <col className="w-[200px]" />
+              <col className="w-[200px]" />
               <col className="w-[140px]" />
             </colgroup>
           )}
@@ -427,9 +377,9 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
               {showUserColumn ? <th className="px-4 py-3 whitespace-nowrap">User</th> : null}
               <th className="px-4 py-3 whitespace-nowrap">Action</th>
               <th className="px-4 py-3 whitespace-nowrap">Source</th>
-              <th className="px-4 py-3 whitespace-nowrap">Result</th>
               <th className="px-4 py-3 whitespace-nowrap">Reference</th>
-              <th className="px-5 py-3 text-right whitespace-nowrap">Added / Removed</th>
+              <th className="px-5 py-3 text-right whitespace-nowrap">Added</th>
+              <th className="px-5 py-3 text-right whitespace-nowrap">Removed</th>
               <th className="px-4 py-3 text-center whitespace-nowrap">Status</th>
             </tr>
           </thead>
@@ -473,30 +423,29 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
                   </td>
 
                   <td className="px-4 py-2 align-middle">
-                    <div className="truncate font-semibold text-[#f3f8ff]">{semantic.result}</div>
-                    <div className="truncate text-[0.67rem] font-semibold text-[#8da8c8]">{item.description}</div>
-                  </td>
-
-                  <td className="px-4 py-2 align-middle">
                     <div className="truncate rounded-md border border-white/12 bg-black/25 px-2 py-1 font-mono text-[0.67rem] text-[#9bb8d8]">{item.reference}</div>
                   </td>
 
                   <td className="px-5 py-2 text-right align-middle">
-                    <div className="inline-flex min-w-[180px] flex-col items-end gap-1 text-[0.78rem] font-black leading-tight whitespace-nowrap">
-                      {item.flowAdded ? (
-                        <span className="inline-flex items-center justify-end gap-1 text-emerald-300">
-                          <ArrowDownLeft className="h-3.5 w-3.5" />
-                          Added {item.flowAdded}
-                        </span>
-                      ) : null}
-                      {item.flowRemoved ? (
-                        <span className="inline-flex items-center justify-end gap-1 text-rose-300">
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                          Removed {item.flowRemoved}
-                        </span>
-                      ) : null}
-                      {!item.flowAdded && !item.flowRemoved ? <span className="text-[#8fb0d2]">--</span> : null}
-                    </div>
+                    {item.flowAdded ? (
+                      <span className="inline-flex items-center justify-end gap-1 whitespace-nowrap text-[0.78rem] font-black text-emerald-300">
+                        <ArrowDownLeft className="h-3.5 w-3.5" />
+                        {item.flowAdded}
+                      </span>
+                    ) : (
+                      <span className="text-[0.78rem] font-black text-[#8fb0d2]">--</span>
+                    )}
+                  </td>
+
+                  <td className="px-5 py-2 text-right align-middle">
+                    {item.flowRemoved ? (
+                      <span className="inline-flex items-center justify-end gap-1 whitespace-nowrap text-[0.78rem] font-black text-rose-300">
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                        {item.flowRemoved}
+                      </span>
+                    ) : (
+                      <span className="text-[0.78rem] font-black text-[#8fb0d2]">--</span>
+                    )}
                   </td>
 
                   <td className="px-4 py-2 text-center align-middle">
