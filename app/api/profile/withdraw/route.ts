@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 type RequestBody = {
@@ -123,6 +124,25 @@ export async function POST(request: Request): Promise<Response> {
         source: "site-profile",
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "user",
+        actionType: "withdrawal_requested",
+        category: "economy",
+        description: `Requested withdrawal of ${normalizedAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Loot Coins via ${payoutMethod.toUpperCase()}.`,
+        quantity: 1,
+        value: normalizedAmount,
+        valueUnit: "loot",
+        origin: "profile:withdraw",
+        status: "pending",
+        tags: ["economy", "withdrawal", payoutMethod],
+        metadata: {
+          requestId: withdrawRef.id,
+          payoutMethod,
+        },
       });
 
       return {

@@ -6,6 +6,7 @@ import {
   DEFAULT_AGENT_FEE_SHARE_PERCENT,
   DEFAULT_PLATFORM_FEE_PERCENT,
 } from "@/lib/agency";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { syncPaidOrderToWalletBackend } from "@/lib/wallet-backend";
@@ -312,6 +313,26 @@ async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<voi
       },
       { merge: true },
     );
+
+    if (customerAgent.customerUid && feeBreakdown.platformFeeCents > 0) {
+      writeActivityLog(tx, adminDb, {
+        userUid: customerAgent.customerUid,
+        actorRole: "system",
+        actionType: "platform_fee_charged",
+        category: "marketplace",
+        description: `Platform fee charged for order ${session.id}.`,
+        value: feeBreakdown.platformFeeCents / 100,
+        valueUnit: "usd",
+        origin: "stripe:webhook:fee-transfer",
+        status: "completed",
+        tags: ["economy", "fee", "order"],
+        metadata: {
+          orderId: session.id,
+          commissionPercent,
+        },
+        mirrorToAdminAudit: true,
+      });
+    }
   });
 }
 
@@ -453,6 +474,82 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
       },
       { merge: true },
     );
+
+    writeActivityLog(tx, adminDb, {
+      userUid: customerUid,
+      actorRole: "system",
+      actionType: "purchase_completed",
+      category: "economy",
+      description: `Purchased ${meta.categoryTitle ?? "service"} for ${spendUsd.toLocaleString("en-US", { style: "currency", currency: "USD" })}.`,
+      value: spendUsd,
+      valueUnit: "usd",
+      origin: "stripe:webhook:checkout-session-completed",
+      status: "completed",
+      tags: ["economy", "purchase", "stripe"],
+      metadata: {
+        orderId: session.id,
+        gameTitle: meta.gameTitle ?? "",
+        categoryTitle: meta.categoryTitle ?? "",
+      },
+    });
+
+    writeActivityLog(tx, adminDb, {
+      userUid: customerUid,
+      actorRole: "system",
+      actionType: "xp_received",
+      category: "progression",
+      description: `Received ${gainedXp.toFixed(2)} XP from completed purchase.`,
+      value: gainedXp,
+      valueUnit: "xp",
+      origin: "stripe:webhook:level-rewards",
+      status: "completed",
+      tags: ["progression", "xp"],
+      metadata: {
+        orderId: session.id,
+      },
+    });
+
+    if (nextProgress.level > currentProgress.level) {
+      writeActivityLog(tx, adminDb, {
+        userUid: customerUid,
+        actorRole: "system",
+        actionType: "level_up",
+        category: "progression",
+        description: `Reached level ${nextProgress.level}.`,
+        value: nextProgress.level,
+        valueUnit: "item",
+        origin: "stripe:webhook:level-rewards",
+        status: "completed",
+        tags: ["progression", "level-up"],
+        metadata: {
+          previousLevel: currentProgress.level,
+          nextLevel: nextProgress.level,
+          orderId: session.id,
+        },
+      });
+    }
+
+    for (const reward of rewardLevels) {
+      writeActivityLog(tx, adminDb, {
+        userUid: customerUid,
+        actorRole: "system",
+        actionType: "reward_item_received",
+        category: "progression",
+        description: `Unlocked level ${reward.level} reward: ${reward.inventoryItem.name}.`,
+        itemId: reward.inventoryItem.id,
+        itemName: reward.inventoryItem.name,
+        itemCategory: reward.inventoryItem.category,
+        quantity: reward.inventoryItem.quantity,
+        rarity: reward.inventoryItem.rarity,
+        origin: "stripe:webhook:level-rewards",
+        status: "completed",
+        tags: ["progression", "reward", reward.inventoryItem.rarity],
+        metadata: {
+          orderId: session.id,
+          level: reward.level,
+        },
+      });
+    }
   });
 }
 

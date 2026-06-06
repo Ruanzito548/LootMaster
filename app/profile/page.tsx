@@ -173,6 +173,9 @@ export default function ProfilePage() {
               <Link href="/profile/wallet-history" className="loot-secondary-button rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em]">
                 Wallet
               </Link>
+              <Link href="/profile/history" className="loot-secondary-button rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em]">
+                History
+              </Link>
               <button
                 type="button"
                 onClick={() => void signOutUser()}

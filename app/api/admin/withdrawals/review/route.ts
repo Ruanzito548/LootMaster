@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 type RequestBody = {
@@ -122,6 +123,28 @@ export async function POST(request: Request): Promise<Response> {
           { merge: true },
         );
       }
+
+      writeActivityLog(tx, adminDb, {
+        userUid: uid,
+        actorUid: adminToken.uid,
+        actorRole: "admin",
+        actionType: action === "approve" ? "withdrawal_approved" : "withdrawal_rejected",
+        category: "admin",
+        description:
+          action === "approve"
+            ? `Admin approved withdrawal request of ${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Loot Coins.`
+            : `Admin rejected withdrawal request of ${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Loot Coins and refunded the balance.`,
+        value: amount,
+        valueUnit: "loot",
+        origin: "admin:withdrawals-review",
+        status: action === "approve" ? "approved" : "rejected",
+        tags: ["admin", "withdrawal", action],
+        metadata: {
+          requestId,
+          reason: reason || null,
+        },
+        mirrorToAdminAudit: true,
+      });
 
       return {
         alreadyProcessed: false,

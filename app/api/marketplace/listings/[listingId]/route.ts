@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
 import { getInventorySlotLimitFromLevel, mergeItemIntoInventory, normalizeInventory } from "@/lib/rpg-system";
@@ -124,6 +125,26 @@ export async function DELETE(request: Request, { params }: Params): Promise<Resp
         },
         { merge: true },
       );
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "user",
+        actionType: "marketplace_listing_removed",
+        category: "marketplace",
+        description: `Removed marketplace listing and returned ${item.name} x${item.quantity} to inventory.`,
+        itemId: item.id,
+        itemName: item.name,
+        itemCategory: item.category,
+        quantity: item.quantity,
+        rarity: item.rarity,
+        origin: "marketplace:cancel-listing",
+        status: "cancelled",
+        tags: ["marketplace", "cancelled", item.rarity],
+        metadata: {
+          listingId: id,
+        },
+      });
 
       return {
         ok: true,

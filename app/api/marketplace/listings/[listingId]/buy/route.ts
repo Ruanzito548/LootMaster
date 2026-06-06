@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
 import { applyXpGain, getInventorySlotLimitFromLevel, mergeItemIntoInventory, normalizeInventory } from "@/lib/rpg-system";
@@ -173,6 +174,79 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
         totalPrice,
         createdAtMs: Date.now(),
         createdAt: FieldValue.serverTimestamp(),
+      });
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "user",
+        actionType: "marketplace_item_bought",
+        category: "marketplace",
+        description: `Bought ${item.name} x${item.quantity} from ${seller.username} for ${totalPrice.toLocaleString("en-US")} Loot Coins.`,
+        itemId: item.id,
+        itemName: item.name,
+        itemCategory: item.category,
+        quantity: item.quantity,
+        value: totalPrice,
+        valueUnit: "loot",
+        relatedUserUid: sellerUid,
+        relatedUserName: seller.username,
+        rarity: item.rarity,
+        origin: "marketplace:buy-listing",
+        status: "completed",
+        tags: ["marketplace", "buy", item.rarity],
+        metadata: {
+          listingId: id,
+        },
+      });
+
+      writeActivityLog(tx, adminDb, {
+        userUid: sellerUid,
+        actorUid: decodedToken.uid,
+        actorRole: "user",
+        actionType: "marketplace_item_sold",
+        category: "marketplace",
+        description: `Sold ${item.name} x${item.quantity} to ${buyer.username} for ${totalPrice.toLocaleString("en-US")} Loot Coins and received ${sellerReceives.toLocaleString("en-US")} after fees.`,
+        itemId: item.id,
+        itemName: item.name,
+        itemCategory: item.category,
+        quantity: item.quantity,
+        value: sellerReceives,
+        valueUnit: "loot",
+        relatedUserUid: decodedToken.uid,
+        relatedUserName: buyer.username,
+        rarity: item.rarity,
+        origin: "marketplace:buy-listing",
+        status: "completed",
+        tags: ["marketplace", "sale", item.rarity],
+        metadata: {
+          grossValue: totalPrice,
+          listingId: id,
+        },
+      });
+
+      writeActivityLog(tx, adminDb, {
+        userUid: sellerUid,
+        actorUid: decodedToken.uid,
+        actorRole: "user",
+        actionType: "marketplace_fee_charged",
+        category: "marketplace",
+        description: `Marketplace fee charged on sale of ${item.name}.`,
+        itemId: item.id,
+        itemName: item.name,
+        itemCategory: item.category,
+        quantity: item.quantity,
+        value: Math.max(0, totalPrice - sellerReceives),
+        valueUnit: "loot",
+        relatedUserUid: decodedToken.uid,
+        relatedUserName: buyer.username,
+        rarity: item.rarity,
+        origin: "marketplace:buy-listing",
+        status: "completed",
+        tags: ["marketplace", "fee"],
+        metadata: {
+          listingId: id,
+        },
       });
 
       return {

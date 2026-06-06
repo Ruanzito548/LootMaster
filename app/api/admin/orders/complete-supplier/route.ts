@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { sendSupplierPayoutMessage } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
 
@@ -176,6 +177,25 @@ export async function POST(request: Request): Promise<Response> {
         },
         { merge: true },
       );
+
+      writeActivityLog(tx, adminDb, {
+        userUid: supplierUid,
+        actorUid: body.paidByUid ?? null,
+        actorRole: "admin",
+        actionType: "supplier_payout_credited",
+        category: "economy",
+        description: `Supplier payout credited for order ${body.orderId}.`,
+        value: payoutLootCoins,
+        valueUnit: "loot",
+        origin: "admin:complete-supplier",
+        status: "completed",
+        tags: ["economy", "supplier", "payout"],
+        metadata: {
+          orderId: body.orderId,
+          payoutReference,
+        },
+        mirrorToAdminAudit: true,
+      });
 
       return true;
     });

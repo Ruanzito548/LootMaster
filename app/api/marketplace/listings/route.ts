@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
 import {
@@ -8,7 +9,6 @@ import {
   calculateMarketplaceFee,
   calculateMarketplaceReceive,
   MARKETPLACE_MIN_PRICE,
-  mergeItemIntoInventory,
   normalizeInventory,
   removeItemQuantity,
 } from "@/lib/rpg-system";
@@ -208,6 +208,31 @@ export async function POST(request: Request): Promise<Response> {
         },
         { merge: true },
       );
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "user",
+        actionType: "marketplace_item_listed",
+        category: "marketplace",
+        description: `Listed ${targetItem.name} x${quantity} on the marketplace for ${totalPrice.toLocaleString("en-US")} Loot Coins.`,
+        itemId: targetItem.id,
+        itemName: targetItem.name,
+        itemCategory: targetItem.category,
+        quantity,
+        value: totalPrice,
+        valueUnit: "loot",
+        rarity: targetItem.rarity,
+        origin: "marketplace:create-listing",
+        status: "completed",
+        tags: ["marketplace", "listing", targetItem.rarity],
+        metadata: {
+          listingId: listingRef.id,
+          fee,
+          sellerReceives,
+          unitPrice,
+        },
+      });
 
       return {
         ok: true,

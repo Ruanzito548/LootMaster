@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
 import {
@@ -153,6 +154,45 @@ export async function POST(request: Request): Promise<Response> {
         quantity,
         xpGain,
         createdAt: FieldValue.serverTimestamp(),
+      });
+
+      const totalMaterialsConsumed = recipe.materials.reduce((sum, material) => sum + material.quantity * quantity, 0);
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "user",
+        actionType: "craft_completed",
+        category: "crafting",
+        description: `Crafted ${output.name} x${output.quantity} from recipe ${recipe.title}.`,
+        itemId: output.id,
+        itemName: output.name,
+        itemCategory: output.category,
+        quantity: output.quantity,
+        value: xpGain,
+        valueUnit: "xp",
+        rarity: output.rarity,
+        origin: "crafting:craft",
+        status: "completed",
+        tags: ["crafting", "crafted", output.rarity],
+        metadata: {
+          recipeId: recipe.id,
+          materialsConsumed: totalMaterialsConsumed,
+        },
+      });
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "user",
+        actionType: "craft_materials_consumed",
+        category: "crafting",
+        description: `Consumed ${totalMaterialsConsumed} crafting materials for ${recipe.title}.`,
+        quantity: totalMaterialsConsumed,
+        origin: "crafting:craft",
+        status: "completed",
+        tags: ["crafting", "materials"],
+        metadata: Object.fromEntries(recipe.materials.map((material) => [material.itemId, material.quantity * quantity])),
       });
 
       return {

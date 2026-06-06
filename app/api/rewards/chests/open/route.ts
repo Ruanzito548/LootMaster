@@ -3,6 +3,7 @@ import { randomInt } from "node:crypto";
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { CHEST_DEFINITIONS, CHEST_IDS, getChestDefinition, type ChestDefinition, type ChestId, type ChestRewardType } from "@/lib/chests";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
@@ -120,58 +121,6 @@ function chestRarityToInventoryRarity(rarity: ChestDefinition["rarity"]): Invent
   }
 
   return rarity;
-}
-
-function mergeInventoryItem(inventory: InventoryItem[], nextItem: InventoryItem): InventoryItem[] {
-  const index = inventory.findIndex(
-    (item) => item.name === nextItem.name && item.category === nextItem.category && item.rarity === nextItem.rarity,
-  );
-
-  if (index === -1) {
-    return [...inventory, nextItem];
-  }
-
-  return inventory.map((item, itemIndex) => {
-    if (itemIndex !== index) {
-      return item;
-    }
-
-    return {
-      ...item,
-      quantity: clampQuantity(item.quantity) + clampQuantity(nextItem.quantity),
-    };
-  });
-}
-
-function incrementChest(inventory: InventoryItem[], chestId: ChestId, quantity = 1): InventoryItem[] {
-  const chestDefinition = CHEST_DEFINITIONS[chestId];
-  const index = inventory.findIndex((item) => item.id === chestDefinition.inventoryItemId);
-
-  if (index === -1) {
-    return [
-      ...inventory,
-      {
-        id: chestDefinition.inventoryItemId,
-        name: chestDefinition.inventoryItemName,
-        category: "Chest",
-        description: `${chestDefinition.title} used in rewards opening.`,
-        quantity: clampQuantity(quantity),
-        rarity: chestRarityToInventoryRarity(chestDefinition.rarity),
-        iconPath: "/itens/general/ticket.png",
-      },
-    ];
-  }
-
-  return inventory.map((item, itemIndex) => {
-    if (itemIndex !== index) {
-      return item;
-    }
-
-    return {
-      ...item,
-      quantity: clampQuantity(item.quantity) + clampQuantity(quantity),
-    };
-  });
 }
 
 function decrementChest(inventory: InventoryItem[], chestDefinition: ChestDefinition): InventoryItem[] {
@@ -474,6 +423,52 @@ export async function POST(request: Request): Promise<Response> {
         reward,
         requestId,
         createdAt: FieldValue.serverTimestamp(),
+      });
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "user",
+        actionType: "chest_opened",
+        category: "chests",
+        description: `Opened ${chestDefinition.title} and received ${reward.title}.`,
+        itemId: chestDefinition.inventoryItemId,
+        itemName: chestDefinition.inventoryItemName,
+        itemCategory: "Chest",
+        quantity: 1,
+        rarity: chestDefinition.rarity,
+        origin: "chests:open",
+        status: "completed",
+        tags: ["chest", "opened", chestDefinition.rarity],
+        metadata: {
+          requestId,
+          rewardType: reward.type,
+          rewardTitle: reward.title,
+          xpGain,
+        },
+      });
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "user",
+        actionType: "chest_reward_received",
+        category: reward.type === "coins" ? "economy" : "chests",
+        description: `Received ${reward.title} from ${chestDefinition.title}.`,
+        itemId: reward.inventoryItem?.id ?? reward.chestId ?? null,
+        itemName: reward.inventoryItem?.name ?? reward.title,
+        itemCategory: reward.inventoryItem?.category ?? (reward.type === "chest" ? "Chest" : null),
+        quantity: reward.amount ?? reward.inventoryItem?.quantity ?? 1,
+        value: reward.type === "coins" ? reward.amount ?? null : null,
+        valueUnit: reward.type === "coins" ? "loot" : null,
+        rarity: reward.rarity,
+        origin: "chests:open",
+        status: "completed",
+        tags: ["chest", "reward", reward.rarity],
+        metadata: {
+          chestId: chestDefinition.id,
+          rewardType: reward.type,
+        },
       });
 
       return responsePayload;

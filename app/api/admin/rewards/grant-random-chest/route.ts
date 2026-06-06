@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { CHEST_IDS, CHEST_DEFINITIONS, type ChestId } from "@/lib/chests";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
@@ -93,6 +94,27 @@ export async function POST(request: Request): Promise<Response> {
         },
         { merge: true },
       );
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "admin",
+        actionType: "admin_granted_chest",
+        category: "admin",
+        description: `Admin command granted ${selectedChest.title} x1.`,
+        itemId: selectedChest.inventoryItemId,
+        itemName: selectedChest.inventoryItemName,
+        itemCategory: "Chest",
+        quantity: 1,
+        rarity: selectedChest.id,
+        origin: "admin:grant-random-chest",
+        status: "completed",
+        tags: ["admin", "chest", selectedChest.id],
+        metadata: {
+          chestId: selectedChestId,
+        },
+        mirrorToAdminAudit: true,
+      });
 
       return {
         ok: true,
