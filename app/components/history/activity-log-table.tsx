@@ -332,8 +332,8 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
                   {showUserColumn ? (
                     <td className="px-4 py-2 align-middle">
                       <div className="min-w-0">
-                        <div className="truncate font-semibold text-[#e6f1ff]">{item.relatedUserName ?? item.userUid}</div>
-                        <div className="truncate font-mono text-[0.67rem] text-[#8fb0d2]">{item.userUid}</div>
+                        <div className="truncate font-semibold text-[#e6f1ff]">{item.userDisplayName ?? item.relatedUserName ?? "Unknown User"}</div>
+                        <div className="truncate font-mono text-[0.67rem] text-[#8fb0d2]">{item.userShortId ? `USER #${item.userShortId}` : item.userUid}</div>
                       </div>
                     </td>
                   ) : null}

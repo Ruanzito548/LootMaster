@@ -33,6 +33,8 @@ export type ActivityHistoryLog = {
   id: string;
   reference: string;
   userUid: string;
+  userShortId: string | null;
+  userDisplayName: string | null;
   actorUid: string | null;
   actorRole: ActivityActorRole;
   actionType: string;

@@ -64,6 +64,8 @@ function normalizeSearch(item: ActivityHistoryLog) {
   return [
     item.reference,
     item.userUid,
+    item.userShortId,
+    item.userDisplayName,
     item.description,
     item.itemName,
     item.origin,
@@ -241,7 +243,7 @@ export function AdminHistoryClient() {
             <input
               value={userUid}
               onChange={(event) => setUserUid(event.target.value)}
-              placeholder="Filter by user UID"
+              placeholder="Filter by user UID or 5-digit ID"
               className="rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-sm text-green-100 outline-none focus:border-green-700"
             />
 

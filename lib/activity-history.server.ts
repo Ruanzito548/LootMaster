@@ -182,6 +182,8 @@ export function mapActivityHistoryLog(snapshot: QueryDocumentSnapshot<DocumentDa
     id: typeof data.id === "string" ? data.id : snapshot.id,
     reference: typeof data.reference === "string" ? data.reference : inferredReference,
     userUid: typeof data.userUid === "string" ? data.userUid : "",
+    userShortId: null,
+    userDisplayName: null,
     actorUid: typeof data.actorUid === "string" ? data.actorUid : null,
     actorRole: data.actorRole === "admin" || data.actorRole === "system" ? data.actorRole : "user",
     actionType: typeof data.actionType === "string" ? data.actionType : "unknown",
