@@ -17,6 +17,11 @@ type RowSemantic = {
   result: string;
 };
 
+type DisplayRow = ActivityHistoryLog & {
+  flowAdded?: string | null;
+  flowRemoved?: string | null;
+};
+
 function isChestRelatedEvent(item: ActivityHistoryLog): boolean {
   const origin = item.origin.toLowerCase();
   const description = item.description.toLowerCase();
@@ -194,6 +199,110 @@ function getAmountText(item: ActivityHistoryLog): string {
   return "--";
 }
 
+function buildFlowFromItem(item: ActivityHistoryLog): { added: string | null; removed: string | null } {
+  const action = item.actionType.toLowerCase();
+  const valueText =
+    typeof item.value === "number" && item.valueUnit === "loot"
+      ? `${item.value.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} LC`
+      : typeof item.value === "number" && item.valueUnit === "usd"
+        ? `$${item.value.toFixed(2)}`
+        : typeof item.value === "number" && item.valueUnit === "xp"
+          ? `${item.value.toFixed(2)} XP`
+          : null;
+
+  const itemText = item.itemName ? `${item.quantity ?? 1} ${item.itemName}` : typeof item.quantity === "number" ? String(item.quantity) : null;
+
+  if (action === "marketplace_item_bought") {
+    return {
+      added: itemText ? `+${itemText}` : null,
+      removed: valueText ? `-${valueText}` : null,
+    };
+  }
+
+  if (action === "marketplace_item_sold") {
+    return {
+      added: valueText ? `+${valueText}` : null,
+      removed: null,
+    };
+  }
+
+  if (action === "marketplace_fee_charged" || action === "marketplace_item_listed" || item.status === "consumed") {
+    return {
+      added: null,
+      removed: itemText ? `-${itemText}` : valueText ? `-${valueText}` : null,
+    };
+  }
+
+  if (action === "chest_opened") {
+    return {
+      added: valueText ? `+${valueText}` : itemText ? `+${itemText}` : null,
+      removed: null,
+    };
+  }
+
+  const negative = isNegativeFlow(item);
+  if (negative) {
+    return {
+      added: null,
+      removed: itemText ? `-${itemText}` : valueText ? `-${valueText}` : null,
+    };
+  }
+
+  return {
+    added: itemText ? `+${itemText}` : valueText ? `+${valueText}` : null,
+    removed: null,
+  };
+}
+
+function mergeDisplayRows(items: ActivityHistoryLog[]): DisplayRow[] {
+  const usedIds = new Set<string>();
+  const merged: DisplayRow[] = [];
+
+  for (let index = 0; index < items.length; index += 1) {
+    const item = items[index]!;
+    if (usedIds.has(item.id)) {
+      continue;
+    }
+
+    if (item.actionType === "chest_opened") {
+      const pair = items.find((candidate) => {
+        if (candidate.id === item.id || usedIds.has(candidate.id)) {
+          return false;
+        }
+
+        return (
+          candidate.actionType === "chest_used" &&
+          candidate.userUid === item.userUid &&
+          candidate.itemId === item.itemId &&
+          Math.abs(candidate.createdAtMs - item.createdAtMs) <= 15000
+        );
+      });
+
+      if (pair) {
+        usedIds.add(pair.id);
+        const openedFlow = buildFlowFromItem(item);
+        const removedText = pair.itemName ? `-${pair.quantity ?? 1} ${pair.itemName}` : openedFlow.removed;
+
+        merged.push({
+          ...item,
+          flowAdded: openedFlow.added,
+          flowRemoved: removedText,
+        });
+        continue;
+      }
+    }
+
+    const flow = buildFlowFromItem(item);
+    merged.push({
+      ...item,
+      flowAdded: flow.added,
+      flowRemoved: flow.removed,
+    });
+  }
+
+  return merged;
+}
+
 function getCategoryTheme(category: ActivityCategory, action: string) {
   const normalizedAction = action.toLowerCase();
 
@@ -276,6 +385,8 @@ function formatStatus(status: string): string {
 }
 
 export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No records found.", showUserColumn = false }: ActivityLogTableProps) {
+  const displayItems = mergeDisplayRows(items);
+
   if (items.length === 0) {
     return (
       <div className="rounded-[1.5rem] border border-dashed border-white/12 bg-black/20 px-6 py-10 text-center text-sm font-semibold text-[#9db7d4]">
@@ -296,7 +407,7 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
               <col className="w-[170px]" />
               <col className="w-[280px]" />
               <col className="w-[180px]" />
-              <col className="w-[140px]" />
+              <col className="w-[230px]" />
               <col className="w-[140px]" />
             </colgroup>
           ) : (
@@ -306,7 +417,7 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
               <col className="w-[170px]" />
               <col className="w-[360px]" />
               <col className="w-[180px]" />
-              <col className="w-[160px]" />
+              <col className="w-[240px]" />
               <col className="w-[140px]" />
             </colgroup>
           )}
@@ -318,17 +429,16 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
               <th className="px-4 py-3 whitespace-nowrap">Source</th>
               <th className="px-4 py-3 whitespace-nowrap">Result</th>
               <th className="px-4 py-3 whitespace-nowrap">Reference</th>
-              <th className="px-5 py-3 text-right whitespace-nowrap">Amount</th>
+              <th className="px-5 py-3 text-right whitespace-nowrap">Added / Removed</th>
               <th className="px-4 py-3 text-center whitespace-nowrap">Status</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => {
+            {displayItems.map((item) => {
               const semantic = deriveSemantic(item);
               const date = formatDateTime(item.createdAt);
               const theme = getCategoryTheme(item.category, semantic.action);
               const ActionIcon = theme.icon;
-              const negative = isNegativeFlow(item);
 
               return (
                 <tr
@@ -371,11 +481,22 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
                     <div className="truncate rounded-md border border-white/12 bg-black/25 px-2 py-1 font-mono text-[0.67rem] text-[#9bb8d8]">{item.reference}</div>
                   </td>
 
-                  <td className={`px-5 py-2 text-right align-middle font-black whitespace-nowrap ${negative ? "text-rose-300" : "text-emerald-300"}`}>
-                    <span className="inline-flex items-center justify-end gap-1">
-                      {negative ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownLeft className="h-3.5 w-3.5" />}
-                      {getAmountText(item)}
-                    </span>
+                  <td className="px-5 py-2 text-right align-middle">
+                    <div className="inline-flex min-w-[180px] flex-col items-end gap-1 text-[0.78rem] font-black leading-tight whitespace-nowrap">
+                      {item.flowAdded ? (
+                        <span className="inline-flex items-center justify-end gap-1 text-emerald-300">
+                          <ArrowDownLeft className="h-3.5 w-3.5" />
+                          Added {item.flowAdded}
+                        </span>
+                      ) : null}
+                      {item.flowRemoved ? (
+                        <span className="inline-flex items-center justify-end gap-1 text-rose-300">
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                          Removed {item.flowRemoved}
+                        </span>
+                      ) : null}
+                      {!item.flowAdded && !item.flowRemoved ? <span className="text-[#8fb0d2]">--</span> : null}
+                    </div>
                   </td>
 
                   <td className="px-4 py-2 text-center align-middle">
@@ -393,7 +514,7 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
       <div className="flex items-center justify-center border-t border-white/8 px-4 py-3">
         <span className="inline-flex items-center gap-2 text-[0.66rem] font-bold uppercase tracking-[0.16em] text-[#8ea9c8]">
           <CircleDashed className="h-3.5 w-3.5" />
-          {loadingMore ? "Loading more rows" : `${items.length} rows loaded`}
+          {loadingMore ? "Loading more rows" : `${displayItems.length} rows loaded`}
         </span>
       </div>
     </div>
