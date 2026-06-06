@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased" data-game-theme="tbc-anniversary">
       <body className="relative flex min-h-full flex-col overflow-x-hidden theme-transition-surface">
         <GameThemeProvider>
           <div aria-hidden className="theme-ambient-overlay pointer-events-none fixed inset-0 z-0" />

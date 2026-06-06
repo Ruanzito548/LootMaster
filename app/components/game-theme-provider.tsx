@@ -1,9 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { createContext, useContext, useEffect, useMemo } from "react";
 
-import { GAME_THEME_STORAGE_KEY, resolveThemeFromPath, type GameThemeKey } from "../../lib/game-theme";
+import { GAME_THEME_STORAGE_KEY, type GameThemeKey } from "../../lib/game-theme";
 
 type GameThemeContextValue = {
   theme: GameThemeKey;
@@ -16,28 +15,29 @@ type GameThemeProviderProps = {
   children: React.ReactNode;
 };
 
+const GLOBAL_THEME: GameThemeKey = "tbc-anniversary";
+
 function applyThemeToDom(theme: GameThemeKey) {
   document.documentElement.dataset.gameTheme = theme;
 }
 
 export function GameThemeProvider({ children }: GameThemeProviderProps) {
-  const pathname = usePathname();
-  const [manualTheme, setManualTheme] = useState<GameThemeKey | null>(null);
-
-  const inferredTheme = resolveThemeFromPath(pathname ?? "");
-
-  const theme = manualTheme ?? inferredTheme ?? "default";
+  const theme = GLOBAL_THEME;
 
   useEffect(() => {
     applyThemeToDom(theme);
     window.localStorage.setItem(GAME_THEME_STORAGE_KEY, theme);
   }, [theme]);
 
-  const setTheme = (nextTheme: GameThemeKey) => {
-    setManualTheme(nextTheme);
-  };
-
-  const value = useMemo(() => ({ theme, setTheme }), [theme]);
+  const value = useMemo(
+    () => ({
+      theme,
+      setTheme: (_nextTheme: GameThemeKey) => {
+        // Global theme is fixed to TBC for the whole site.
+      },
+    }),
+    [theme],
+  );
 
   return <GameThemeContext.Provider value={value}>{children}</GameThemeContext.Provider>;
 }
