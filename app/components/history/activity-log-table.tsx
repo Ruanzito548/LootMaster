@@ -199,7 +199,7 @@ function getCategoryTheme(category: ActivityCategory, action: string) {
 
   if (normalizedAction.includes("opened chest") || category === "chests") {
     return {
-      accent: "before:bg-cyan-400/85",
+      accentBorder: "border-cyan-400/85",
       badge: "border-cyan-300/35 bg-cyan-500/16 text-cyan-100",
       icon: Sparkles,
     };
@@ -207,7 +207,7 @@ function getCategoryTheme(category: ActivityCategory, action: string) {
 
   if (normalizedAction.includes("used") || normalizedAction.includes("consumed") || category === "inventory") {
     return {
-      accent: "before:bg-rose-400/85",
+      accentBorder: "border-rose-400/85",
       badge: "border-rose-300/35 bg-rose-500/16 text-rose-100",
       icon: ArrowUpRight,
     };
@@ -215,7 +215,7 @@ function getCategoryTheme(category: ActivityCategory, action: string) {
 
   if (category === "marketplace") {
     return {
-      accent: "before:bg-violet-400/85",
+      accentBorder: "border-violet-400/85",
       badge: "border-violet-300/35 bg-violet-500/16 text-violet-100",
       icon: Store,
     };
@@ -223,7 +223,7 @@ function getCategoryTheme(category: ActivityCategory, action: string) {
 
   if (category === "admin") {
     return {
-      accent: "before:bg-amber-300/85",
+      accentBorder: "border-amber-300/85",
       badge: "border-amber-300/40 bg-amber-500/18 text-amber-100",
       icon: Shield,
     };
@@ -231,7 +231,7 @@ function getCategoryTheme(category: ActivityCategory, action: string) {
 
   if (category === "crafting") {
     return {
-      accent: "before:bg-orange-400/85",
+      accentBorder: "border-orange-400/85",
       badge: "border-orange-300/35 bg-orange-500/16 text-orange-100",
       icon: Wrench,
     };
@@ -239,14 +239,14 @@ function getCategoryTheme(category: ActivityCategory, action: string) {
 
   if (category === "economy" || category === "progression") {
     return {
-      accent: "before:bg-emerald-400/85",
+      accentBorder: "border-emerald-400/85",
       badge: "border-emerald-300/35 bg-emerald-500/16 text-emerald-100",
       icon: ArrowDownLeft,
     };
   }
 
   return {
-    accent: "before:bg-slate-300/45",
+    accentBorder: "border-slate-300/45",
     badge: "border-slate-300/25 bg-slate-500/16 text-slate-100",
     icon: CircleDashed,
   };
@@ -333,9 +333,9 @@ export function ActivityLogTable({ items, loadingMore = false, emptyLabel = "No 
               return (
                 <tr
                   key={item.id}
-                  className={`group relative h-[66px] border-b border-white/7 align-middle transition hover:bg-white/[0.05] ${theme.accent} before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:content-['']`}
+                  className="group h-[66px] border-b border-white/7 align-middle transition hover:bg-white/[0.05]"
                 >
-                  <td className="px-4 py-2 align-middle">
+                  <td className={`border-l-[3px] px-4 py-2 align-middle ${theme.accentBorder}`}>
                     <div className="flex flex-col leading-tight">
                       <span className="font-semibold text-[#dbe8f8]">{date.day}</span>
                       <span className="text-xs font-semibold text-[#8fb0d2]">{date.hour}</span>
