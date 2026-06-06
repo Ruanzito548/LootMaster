@@ -208,27 +208,45 @@ function mergeDisplayRows(items: ActivityHistoryLog[]): DisplayRow[] {
   const usedIds = new Set<string>();
   const merged: DisplayRow[] = [];
 
+  const findChestPair = (base: ActivityHistoryLog, expectedActionType: "chest_opened" | "chest_used") => {
+    return items.find((candidate) => {
+      if (candidate.id === base.id || usedIds.has(candidate.id)) {
+        return false;
+      }
+
+      const sameItem =
+        (candidate.itemId && base.itemId && candidate.itemId === base.itemId) ||
+        (candidate.itemName && base.itemName && candidate.itemName === base.itemName);
+
+      return (
+        candidate.actionType === expectedActionType &&
+        candidate.userUid === base.userUid &&
+        sameItem &&
+        Math.abs(candidate.createdAtMs - base.createdAtMs) <= 20000
+      );
+    });
+  };
+
   for (let index = 0; index < items.length; index += 1) {
     const item = items[index]!;
     if (usedIds.has(item.id)) {
       continue;
     }
 
-    if (item.actionType === "chest_opened") {
-      const pair = items.find((candidate) => {
-        if (candidate.id === item.id || usedIds.has(candidate.id)) {
-          return false;
-        }
+    if (item.actionType === "chest_used") {
+      const openedPair = findChestPair(item, "chest_opened");
+      if (openedPair) {
+        // Skip standalone rendering for chest_used; the paired chest_opened row will render both flows.
+        usedIds.add(item.id);
+        continue;
+      }
+    }
 
-        return (
-          candidate.actionType === "chest_used" &&
-          candidate.userUid === item.userUid &&
-          candidate.itemId === item.itemId &&
-          Math.abs(candidate.createdAtMs - item.createdAtMs) <= 15000
-        );
-      });
+    if (item.actionType === "chest_opened") {
+      const pair = findChestPair(item, "chest_used");
 
       if (pair) {
+        usedIds.add(item.id);
         usedIds.add(pair.id);
         const openedFlow = buildFlowFromItem(item);
         const removedText = pair.itemName ? `-${pair.quantity ?? 1} ${pair.itemName}` : openedFlow.removed;
