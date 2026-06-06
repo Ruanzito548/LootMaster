@@ -76,6 +76,7 @@ function deriveAction(item: ActivityHistoryLog): string {
     if (normalizedMeta === "materials consumed") return "Materials Consumed";
     if (normalizedMeta === "marketplace purchase") return "Marketplace Purchase";
     if (normalizedMeta === "sold item") return "Sold Item";
+    if (normalizedMeta === "item posted on marketplace") return "Item Posted on Marketplace";
     if (normalizedMeta === "listing removed") return "Listing Removed";
     if (normalizedMeta === "marketplace fee") return "Marketplace Fee";
     if (normalizedMeta === "admin granted") return "Admin Granted";
@@ -94,7 +95,7 @@ function deriveAction(item: ActivityHistoryLog): string {
   if (action === "craft_materials_consumed") return "Materials Consumed";
   if (action === "marketplace_item_bought") return "Marketplace Purchase";
   if (action === "marketplace_item_sold") return "Sold Item";
-  if (action === "marketplace_item_listed") return "Item Listed";
+  if (action === "marketplace_item_listed") return "Item Posted on Marketplace";
   if (action === "marketplace_listing_removed") return "Listing Removed";
   if (action === "marketplace_fee_charged") return "Marketplace Fee";
   if (action.startsWith("admin_")) return "Admin Granted";
