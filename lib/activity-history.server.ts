@@ -235,43 +235,104 @@ type ActivityHistoryQueryInput = {
   status?: string | null;
 };
 
+function isMissingCollectionGroupIndexError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("failed_precondition") ||
+    message.includes("requires an index") ||
+    message.includes("collection_group_desc")
+  );
+}
+
+function applyGlobalHistoryFilters(items: ActivityHistoryLog[], input: ActivityHistoryQueryInput): ActivityHistoryLog[] {
+  let filtered = items;
+
+  if (input.userUid) {
+    filtered = filtered.filter((item) => item.userUid === input.userUid);
+  }
+
+  if (input.category) {
+    filtered = filtered.filter((item) => item.category === input.category);
+  }
+
+  if (input.actionType) {
+    filtered = filtered.filter((item) => item.actionType === input.actionType);
+  }
+
+  if (input.status) {
+    filtered = filtered.filter((item) => item.status === input.status);
+  }
+
+  if (input.cursor) {
+    filtered = filtered.filter((item) => item.sortKey < input.cursor!);
+  }
+
+  return filtered;
+}
+
 export async function fetchGlobalActivityHistoryPage(
   adminDb: Firestore,
   input: ActivityHistoryQueryInput = {},
 ): Promise<ActivityHistoryPage> {
   const safeLimit = Math.max(1, Math.min(60, Math.floor(input.limit ?? 30)));
-  let query: FirebaseFirestore.Query<DocumentData> = adminDb.collectionGroup("activity-logs").orderBy("sortKey", "desc");
+  try {
+    let query: FirebaseFirestore.Query<DocumentData> = adminDb.collectionGroup("activity-logs").orderBy("sortKey", "desc");
 
-  if (input.userUid) {
-    query = query.where("userUid", "==", input.userUid);
+    if (input.userUid) {
+      query = query.where("userUid", "==", input.userUid);
+    }
+
+    if (input.category) {
+      query = query.where("category", "==", input.category);
+    }
+
+    if (input.actionType) {
+      query = query.where("actionType", "==", input.actionType);
+    }
+
+    if (input.status) {
+      query = query.where("status", "==", input.status);
+    }
+
+    query = query.limit(safeLimit);
+
+    if (input.cursor) {
+      query = query.startAfter(input.cursor);
+    }
+
+    const snapshot = await query.get();
+    const items = snapshot.docs.map(mapActivityHistoryLog);
+    const nextCursor = snapshot.docs.length === safeLimit ? items[items.length - 1]?.sortKey ?? null : null;
+
+    return {
+      items,
+      nextCursor,
+    };
+  } catch (error) {
+    if (!isMissingCollectionGroupIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for projects that do not have collection-group descending indexes configured.
+    // We read a broader window and apply filters/sorting in memory to keep admin/history available.
+    const fallbackSnapshot = await adminDb.collectionGroup("activity-logs").limit(600).get();
+    const fallbackItems = fallbackSnapshot.docs.map(mapActivityHistoryLog);
+
+    const filtered = applyGlobalHistoryFilters(fallbackItems, input)
+      .sort((a, b) => b.sortKey.localeCompare(a.sortKey))
+      .slice(0, safeLimit);
+
+    const nextCursor = filtered.length === safeLimit ? filtered[filtered.length - 1]?.sortKey ?? null : null;
+
+    return {
+      items: filtered,
+      nextCursor,
+    };
   }
-
-  if (input.category) {
-    query = query.where("category", "==", input.category);
-  }
-
-  if (input.actionType) {
-    query = query.where("actionType", "==", input.actionType);
-  }
-
-  if (input.status) {
-    query = query.where("status", "==", input.status);
-  }
-
-  query = query.limit(safeLimit);
-
-  if (input.cursor) {
-    query = query.startAfter(input.cursor);
-  }
-
-  const snapshot = await query.get();
-  const items = snapshot.docs.map(mapActivityHistoryLog);
-  const nextCursor = snapshot.docs.length === safeLimit ? items[items.length - 1]?.sortKey ?? null : null;
-
-  return {
-    items,
-    nextCursor,
-  };
 }
 
 export async function fetchActivityHistoryPage(
