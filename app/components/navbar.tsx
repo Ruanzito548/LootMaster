@@ -125,7 +125,7 @@ export function Navbar() {
   }, [isProfileOpen]);
 
   return (
-    <header className="theme-transition-surface theme-navbar-shell static z-50 border-b border-[color:var(--border-color)] bg-[color:var(--navbar-bg)] backdrop-blur-xl">
+    <header className="theme-transition-surface theme-navbar-shell fixed inset-x-0 top-0 z-50 border-b border-[color:var(--border-color)] bg-[color:var(--navbar-bg)] backdrop-blur-xl">
       <div className="theme-top-highlight pointer-events-none absolute inset-x-0 top-0 h-[2px]" />
 
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
