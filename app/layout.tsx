@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "./components/navbar";
 import { Footer } from "./components/footer";
 import { GameThemeProvider } from "./components/game-theme-provider";
+import { RouteScrollReset } from "./components/route-scroll-reset";
 
 export const metadata: Metadata = {
   title: "Loot Master",
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased" data-game-theme="tbc-anniversary">
       <body className="relative flex min-h-full flex-col overflow-x-hidden theme-transition-surface">
         <GameThemeProvider>
+          <RouteScrollReset />
           <div aria-hidden className="theme-ambient-overlay pointer-events-none fixed inset-0 z-0" />
           <div className="relative z-10 flex min-h-full flex-col">
             <Navbar />
