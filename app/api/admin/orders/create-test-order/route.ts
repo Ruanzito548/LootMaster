@@ -1,5 +1,6 @@
 import { getAdminDb } from "@/lib/firebase-admin";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
+import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 
 const games = [
   { gameId: "tbc-anniversary", gameTitle: "WoW TBC Anniversary", categoryId: "gold", categoryTitle: "Gold" },
@@ -32,8 +33,10 @@ function resolveTestChannelId(gameId: string, categoryId: string): string | null
   return channelMap[key] ?? process.env.DISCORD_CHANNEL_DEFAULT ?? null;
 }
 
-export async function POST(): Promise<Response> {
+export async function POST(request: Request): Promise<Response> {
   try {
+    await requireAuthenticatedAdminRequest(request);
+
     const now = new Date();
     const game = pickOne(games);
     const goldAmount = randomInt(1000, 20000);

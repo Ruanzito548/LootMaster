@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Script from "next/script";
 import "./globals.css";
+import { AuthSessionSync } from "./components/auth-session-sync";
 import { Navbar } from "./components/navbar";
 import { Footer } from "./components/footer";
 import { GameThemeProvider } from "./components/game-theme-provider";
@@ -23,7 +25,10 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased" data-game-theme="tbc-anniversary">
       <body className="relative flex min-h-full flex-col overflow-x-hidden theme-transition-surface">
         <GameThemeProvider>
-          <RouteScrollReset />
+          <AuthSessionSync />
+          <Suspense>
+            <RouteScrollReset />
+          </Suspense>
           <div aria-hidden className="theme-ambient-overlay pointer-events-none fixed inset-0 z-0" />
           <div className="relative z-10 flex min-h-full flex-col">
             <Navbar />

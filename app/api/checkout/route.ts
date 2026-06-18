@@ -1,5 +1,9 @@
 import Stripe from "stripe";
 
+import { defaultGoldConfigEntry } from "@/app/data/gold-config";
+import { getServersByGameId } from "@/app/data/games";
+import { getAdminDb } from "@/lib/firebase-admin";
+
 type CheckoutBody = {
   gameId: string;
   gameTitle: string;
@@ -23,6 +27,55 @@ function computeFinalAmount(price: number, paymentMethod: string): number {
   return Math.round(price * 100);
 }
 
+function toPositiveInt(value: unknown, fallback: number): number {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return Math.round(value);
+  }
+
+  return fallback;
+}
+
+function parseGoldConfigEntry(data: Record<string, unknown>) {
+  const minGold = toPositiveInt(data.minGold, defaultGoldConfigEntry.minGold);
+  const maxGold = toPositiveInt(data.maxGold, defaultGoldConfigEntry.maxGold);
+
+  return {
+    pricePerThousand: toPositiveInt(data.pricePerThousand, defaultGoldConfigEntry.pricePerThousand),
+    minGold,
+    maxGold: Math.max(maxGold, minGold),
+  };
+}
+
+function buildScopeKeys(gameId: string, serverId: string, faction: string) {
+  const keys: string[] = [];
+
+  if (serverId && faction) {
+    keys.push(`${gameId}|${serverId}|${faction}`);
+  }
+
+  if (serverId) {
+    keys.push(`${gameId}|${serverId}`);
+  }
+
+  keys.push(gameId);
+
+  return keys;
+}
+
+async function resolvePricingConfig(gameId: string, serverId: string, faction: string) {
+  const adminDb = getAdminDb();
+  const scopeKeys = buildScopeKeys(gameId, serverId, faction);
+
+  for (const key of scopeKeys) {
+    const snapshot = await adminDb.collection("gold-config").doc(key).get();
+    if (snapshot.exists) {
+      return parseGoldConfigEntry(snapshot.data() as Record<string, unknown>);
+    }
+  }
+
+  return defaultGoldConfigEntry;
+}
+
 export async function POST(request: Request): Promise<Response> {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) {
@@ -44,7 +97,6 @@ export async function POST(request: Request): Promise<Response> {
     gameTitle,
     categoryTitle,
     goldAmount,
-    pricePerThousand,
     paymentMethod,
     nickname,
     serverId,
@@ -62,7 +114,6 @@ export async function POST(request: Request): Promise<Response> {
     !gameTitle?.trim() ? "gameTitle" : null,
     !categoryTitle?.trim() ? "categoryTitle" : null,
     !Number.isFinite(goldAmount) || goldAmount <= 0 ? "goldAmount" : null,
-    !Number.isFinite(pricePerThousand) || pricePerThousand <= 0 ? "pricePerThousand" : null,
     !email?.trim() ? "email" : null,
     !nickname?.trim() ? "nickname" : null,
     !deliveryMethod?.trim() ? "deliveryMethod" : null,
@@ -83,7 +134,47 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "Faction is required for this game." }, { status: 422 });
   }
 
-  const basePrice = (goldAmount / 1000) * pricePerThousand;
+  const knownServers = getServersByGameId(gameId);
+  const requiresServer = knownServers.length > 0;
+
+  if (requiresServer && !serverId?.trim()) {
+    return Response.json({ error: "Server is required for this game." }, { status: 422 });
+  }
+
+  const resolvedServer = knownServers.find((entry) => entry.id === serverId);
+  if (requiresServer && !resolvedServer) {
+    return Response.json({ error: "Invalid server for selected game." }, { status: 422 });
+  }
+
+  if (requiresServer && requiresFaction) {
+    const knownFactions = resolvedServer?.factions ?? [];
+    if (!knownFactions.includes(faction)) {
+      return Response.json({ error: "Invalid faction for selected server." }, { status: 422 });
+    }
+  }
+
+  let authoritativeConfig;
+
+  try {
+    authoritativeConfig = await resolvePricingConfig(
+      gameId,
+      serverId?.trim() ?? "",
+      requiresFaction ? faction?.trim() ?? "" : "",
+    );
+  } catch {
+    return Response.json({ error: "Could not load price configuration." }, { status: 503 });
+  }
+
+  const validatedGoldAmount = Math.min(
+    Math.max(Math.round(goldAmount), authoritativeConfig.minGold),
+    authoritativeConfig.maxGold,
+  );
+
+  if (validatedGoldAmount !== Math.round(goldAmount)) {
+    return Response.json({ error: "Gold amount is outside allowed range." }, { status: 422 });
+  }
+
+  const basePrice = (validatedGoldAmount / 1000) * authoritativeConfig.pricePerThousand;
   const baseAmountCents = Math.round(basePrice * 100);
   const unitAmount = computeFinalAmount(basePrice, paymentMethod);
 
@@ -101,8 +192,8 @@ export async function POST(request: Request): Promise<Response> {
     gameId,
     gameTitle,
     categoryTitle,
-    goldAmount: String(goldAmount),
-    pricePerThousand: String(pricePerThousand),
+    goldAmount: String(validatedGoldAmount),
+    pricePerThousand: String(authoritativeConfig.pricePerThousand),
     baseAmountCents: String(baseAmountCents),
     finalAmountCents: String(unitAmount),
     serverId,

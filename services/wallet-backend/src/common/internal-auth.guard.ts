@@ -7,7 +7,7 @@ export class InternalAuthGuard implements CanActivate {
     const expected = process.env.WALLET_BACKEND_TOKEN?.trim();
 
     if (!expected) {
-      return true;
+      throw new UnauthorizedException("WALLET_BACKEND_TOKEN is not configured.");
     }
 
     const authorization = request.headers.authorization;

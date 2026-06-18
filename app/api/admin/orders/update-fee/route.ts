@@ -1,4 +1,5 @@
 import { getAdminDb } from "@/lib/firebase-admin";
+import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 
 type RequestBody = {
   orderId?: string;
@@ -16,9 +17,10 @@ export async function POST(request: Request): Promise<Response> {
   let body: RequestBody;
 
   try {
+    await requireAuthenticatedAdminRequest(request);
     body = (await request.json()) as RequestBody;
   } catch {
-    return Response.json({ error: "Invalid request body." }, { status: 400 });
+    return Response.json({ error: "Unauthorized request." }, { status: 401 });
   }
 
   const orderId = typeof body.orderId === "string" ? body.orderId.trim() : "";

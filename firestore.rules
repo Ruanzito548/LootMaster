@@ -7,71 +7,115 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
     function isPublicRead() {
       return true;
     }
 
     // USERS
     match /users/{userId} {
-      allow read, write: if isSignedIn();
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update, delete: if isOwner(userId) || isAdmin();
     }
 
     // NEWS
     match /news/{newsId} {
-      allow read, write: if isSignedIn();
+      allow read: if isPublicRead();
+      allow create, update, delete: if isAdmin();
     }
 
     // APP CONFIG (homepage, hots)
     match /app-config/homepage {
       allow read: if isPublicRead();
-      allow create, update, delete: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     match /app-config/{configId} {
       allow read: if isPublicRead();
-      allow create, update, delete: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     // GOLD CONFIG — um documento por escopo (gameId, gameId|serverId, gameId|serverId|faction)
     match /gold-config/{scopeKey} {
       allow read: if isPublicRead();
-      allow create, update, delete: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     // ACCOUNTS MARKET — listagens de contas para venda
     match /accounts-market/{accountId} {
       allow read: if isPublicRead();
-      allow create, update, delete: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     // AGENT SIGNUPS — cadastro publico com atribuicao de agente
     match /agent-signups/{signupId} {
       allow create: if isPublicRead();
-      allow read, update, delete: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     // INVENTORY ITEMS — catalog used by profile inventory grid
     match /inventory-items/{itemId} {
       allow read: if isPublicRead();
-      allow create, update, delete: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     // ORDER APPLICATIONS — suppliers applying to fulfill paid orders
     match /order-applications/{applicationId} {
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
-      allow read: if isSignedIn();
-      allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
     }
 
     // ORDER DISPATCHES — selected supplier and Discord thread details for each order
     match /order-dispatches/{orderId} {
-      allow read, create, update, delete: if isSignedIn();
+      allow read, create, update, delete: if isAdmin();
     }
 
     // ORDER CHECKOUTS — paid Stripe sessions mirrored to Firestore via webhook (Admin SDK)
     match /order-checkouts/{orderId} {
-      allow read: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && resource.data.customerUid == request.auth.uid);
       allow create, update, delete: if false;
+    }
+
+    // FEES / PAYOUTS / WITHDRAWALS / MARKETPLACE CORE
+    match /fee-transfers/{docId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /order-payouts/{docId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /withdraw-requests/{requestId} {
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /marketplace-listings/{listingId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.sellerUid == request.auth.uid;
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.sellerUid == request.auth.uid);
+    }
+
+    match /marketplace-sales/{saleId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Internal/system counters and audit collections are admin-only.
+    match /_system/{docId} {
+      allow read, create, update, delete: if isAdmin();
     }
 
   }
