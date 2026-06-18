@@ -62,6 +62,8 @@ export type AccountListing = {
   className: AccountClass;
   level: number;
   price: number;
+  chestDropEnabled?: boolean;
+  chestDropWeight?: number;
   professionOne: string;
   professionTwo: string;
   highlights: string[];

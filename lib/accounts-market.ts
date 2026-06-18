@@ -6,6 +6,7 @@ import {
   getDocs,
   onSnapshot,
   query,
+  updateDoc,
   where,
   type Unsubscribe,
 } from "firebase/firestore";
@@ -62,6 +63,8 @@ function parseListing(id: string, data: Record<string, unknown>): AccountListing
     className: asClass(data.className),
     level: asPositiveInt(data.level, 70),
     price: asPositiveInt(data.price, 1),
+    chestDropEnabled: data.chestDropEnabled === true,
+    chestDropWeight: asPositiveInt(data.chestDropWeight, 1),
     professionOne:
       typeof data.professionOne === "string" && data.professionOne.trim() !== ""
         ? data.professionOne
@@ -107,6 +110,8 @@ export async function addAccountToMarket(input: NewAccountInput): Promise<string
 
   const ref = await addDoc(accountsCol, {
     ...input,
+    chestDropEnabled: input.chestDropEnabled === true,
+    chestDropWeight: asPositiveInt(input.chestDropWeight, 1),
     createdAt: new Date().toISOString(),
   });
 
@@ -129,4 +134,18 @@ export async function deleteAccountFromMarket(accountId: string): Promise<void> 
   }
 
   await deleteDoc(doc(accountsCol, accountId));
+}
+
+export async function updateAccountChestDropSettings(
+  accountId: string,
+  settings: { enabled: boolean; weight: number }
+): Promise<void> {
+  if (!accountsCol) {
+    throw new Error("Firebase not configured.");
+  }
+
+  await updateDoc(doc(accountsCol, accountId), {
+    chestDropEnabled: settings.enabled,
+    chestDropWeight: asPositiveInt(settings.weight, 1),
+  });
 }

@@ -19,6 +19,7 @@ import {
   clearAccountsMarket,
   deleteAccountFromMarket,
   subscribeToAccountsMarket,
+  updateAccountChestDropSettings,
   type NewAccountInput,
 } from "../../lib/accounts-market";
 
@@ -41,6 +42,8 @@ type FormState = {
   price: number;
   serverId: string;
   faction: "Horde" | "Alliance";
+  chestDropEnabled: boolean;
+  chestDropWeight: number;
   professionOne: string;
   professionTwo: string;
   extras: string;
@@ -56,6 +59,8 @@ function defaultForm(serverId: string): FormState {
     price: 100,
     serverId,
     faction: "Horde",
+    chestDropEnabled: false,
+    chestDropWeight: 1,
     professionOne: "",
     professionTwo: "",
     extras: "",
@@ -141,6 +146,8 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
         className: form.className,
         level: Math.max(1, Math.round(form.level)),
         price: Math.max(1, Math.round(form.price)),
+        chestDropEnabled: form.chestDropEnabled,
+        chestDropWeight: Math.max(1, Math.round(form.chestDropWeight)),
         professionOne: form.professionOne.trim() || "-",
         professionTwo: form.professionTwo.trim() || "-",
         highlights,
@@ -351,6 +358,29 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
                     </select>
                   </label>
                 </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="flex items-center gap-3 rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-xs font-bold uppercase tracking-[0.18em] text-green-500">
+                    <input
+                      type="checkbox"
+                      checked={form.chestDropEnabled}
+                      onChange={(event) => onChange("chestDropEnabled", event.target.checked)}
+                      className="h-4 w-4 accent-green-500"
+                    />
+                    Eligible for Legendary Chest Drop
+                  </label>
+
+                  <label className="grid gap-2 text-xs font-bold uppercase tracking-[0.18em] text-green-600">
+                    Drop weight
+                    <input
+                      type="number"
+                      min={1}
+                      value={form.chestDropWeight}
+                      onChange={(event) => onChange("chestDropWeight", Math.max(1, Number(event.target.value) || 1))}
+                      className="rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600"
+                    />
+                  </label>
+                </div>
               </div>
 
               <div className="grid gap-4">
@@ -456,6 +486,43 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
                       >
                         {deletingId === item.id ? "Deleting..." : "Delete"}
                       </button>
+                    </div>
+
+                    <div className="mt-3 grid gap-2 rounded-xl border border-green-900 bg-black/30 p-3 sm:grid-cols-[1fr_120px_120px] sm:items-center">
+                      <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-green-500">
+                        <input
+                          type="checkbox"
+                          checked={item.chestDropEnabled === true}
+                          onChange={(event) => {
+                            void updateAccountChestDropSettings(item.id, {
+                              enabled: event.target.checked,
+                              weight: Math.max(1, item.chestDropWeight ?? 1),
+                            });
+                          }}
+                          className="h-4 w-4 accent-green-500"
+                        />
+                        Enable Chest Drop
+                      </label>
+
+                      <label className="grid gap-1 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-green-600">
+                        Weight
+                        <input
+                          type="number"
+                          min={1}
+                          value={Math.max(1, item.chestDropWeight ?? 1)}
+                          onChange={(event) => {
+                            void updateAccountChestDropSettings(item.id, {
+                              enabled: item.chestDropEnabled === true,
+                              weight: Math.max(1, Number(event.target.value) || 1),
+                            });
+                          }}
+                          className="rounded-md border border-green-800 bg-black px-2 py-1 text-xs font-semibold text-green-200 outline-none focus:border-green-600"
+                        />
+                      </label>
+
+                      <p className="text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-green-600">
+                        {item.chestDropEnabled ? "Drop ON" : "Drop OFF"}
+                      </p>
                     </div>
                   </article>
                 ))}

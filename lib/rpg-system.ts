@@ -10,6 +10,7 @@ export type CraftRecipe = {
   title: string;
   description: string;
   outputType: CraftOutputType;
+  coinCost?: number;
   outputItem: {
     id: string;
     name: string;
@@ -286,19 +287,19 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
   {
     id: "craft-gift-card",
     title: "Gift Card",
-    description: "Fuse fragments into a full Gift Card reward.",
+    description: "Craft a random branded Gift Card from fragments.",
     outputType: "item",
+    coinCost: 1,
     outputItem: {
       id: "gift-card",
-      name: "Gift Card",
+      name: "Gift Card (Random Brand)",
       category: "Gift Card",
       rarity: "epic",
       quantity: 1,
       iconPath: "/itens/general/ticket.png",
     },
     materials: [
-      { itemId: "gift-card-fragment", quantity: 12, name: "Gift Card Fragment" },
-      { itemId: "rune-rare", quantity: 1, name: "Rare Rune" },
+      { itemId: "gift-card-fragment", quantity: 5, name: "Gift Card Fragment" },
     ],
     xpGain: 88,
   },

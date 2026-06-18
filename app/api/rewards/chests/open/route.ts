@@ -1,11 +1,12 @@
 import { randomInt } from "node:crypto";
 
 import { FieldValue } from "firebase-admin/firestore";
+import type { Transaction } from "firebase-admin/firestore";
 
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { getLiveChestSystemConfig } from "@/lib/chest-config";
-import { CHEST_DEFINITIONS, CHEST_IDS, getChestDefinition, type ChestDefinition, type ChestId, type ChestRewardType } from "@/lib/chests";
+import { CHEST_DEFINITIONS, getChestDefinition, type ChestDefinition, type ChestId, type ChestRewardType } from "@/lib/chests";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
 import { applyXpGain, getInventorySlotLimitFromLevel, mergeItemIntoInventory } from "@/lib/rpg-system";
@@ -39,31 +40,7 @@ type OpenChestResponse = {
 
 const REQUEST_ID_PATTERN = /^[a-zA-Z0-9_-]{8,64}$/;
 
-const COSMETIC_POOL: Array<{ name: string; rarity: InventoryItem["rarity"]; iconPath: string }> = [
-  { name: "Nebula Banner", rarity: "epic", iconPath: "/itens/general/ticket.png" },
-  { name: "Astral Emblem", rarity: "legendary", iconPath: "/itens/general/ticket.png" },
-  { name: "Void Crest", rarity: "artifact", iconPath: "/itens/general/ticket.png" },
-  { name: "Eclipse Frame", rarity: "heirloom", iconPath: "/itens/general/ticket.png" },
-];
-
-const ACCOUNT_REWARD_POOL: Array<{ name: string; rarity: InventoryItem["rarity"] }> = [
-  { name: "WoW Retail Elite Account", rarity: "legendary" },
-  { name: "WoW Classic Legacy Account", rarity: "legendary" },
-  { name: "Albion Veteran Account", rarity: "artifact" },
-  { name: "Runescape Mythic Account", rarity: "artifact" },
-  { name: "Pandaria Collector Account", rarity: "heirloom" },
-];
-
-const ITEM_NAME_BY_RARITY: Record<InventoryItem["rarity"], string[]> = {
-  poor: ["Damaged Supply Pack"],
-  common: ["Scout Supply", "Traveler Cache", "Basic Rune"],
-  uncommon: ["Expedition Relic", "Green Sigil", "Ranger Token"],
-  rare: ["Arcane Sigil", "Royal Voucher", "Rare Enchantment"],
-  epic: ["Storm Glyph", "Heroic Insignia", "Epic Core"],
-  legendary: ["Eternal Sigil", "Phoenix Crest", "Legend Core"],
-  artifact: ["Ancient Relic", "Artifact Matrix", "Titan Fragment"],
-  heirloom: ["Heirloom Rune", "Ancestral Mark", "Dynasty Core"],
-};
+const GIFT_CARD_BRANDS = ["League of Legends", "Blizzard", "Steam", "Valorant", "PSN", "Xbox"] as const;
 
 function isInventoryItem(value: unknown): value is InventoryItem {
   if (!value || typeof value !== "object") {
@@ -124,14 +101,6 @@ function clampQuantity(quantity: number): number {
   return Math.max(0, Math.floor(Number.isFinite(quantity) ? quantity : 0));
 }
 
-function chestRarityToInventoryRarity(rarity: ChestDefinition["rarity"]): InventoryItem["rarity"] {
-  if (rarity === "mythic") {
-    return "artifact";
-  }
-
-  return rarity;
-}
-
 function decrementChest(inventory: InventoryItem[], chestDefinition: ChestDefinition): InventoryItem[] {
   const index = inventory.findIndex((item) => item.id === chestDefinition.inventoryItemId);
 
@@ -162,20 +131,24 @@ function decrementChest(inventory: InventoryItem[], chestDefinition: ChestDefini
   });
 }
 
-function rollItemReward(chestDefinition: ChestDefinition, itemRarityWeights: ChestDefinition["itemRarityWeights"]): InventoryItem {
-  const rarityResult = pickWeighted(itemRarityWeights);
-  const itemNames = ITEM_NAME_BY_RARITY[rarityResult.rarity] ?? ITEM_NAME_BY_RARITY.common;
-  const pickedName = itemNames[roll(itemNames.length)] ?? "Loot Item";
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
-  const slug = pickedName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+function rollBrandedGiftCard(quantity: number): InventoryItem {
+  const brand = GIFT_CARD_BRANDS[roll(GIFT_CARD_BRANDS.length)] ?? "Steam";
+  const slug = slugify(brand);
 
   return {
-    id: `loot-${slug || "item"}-${rarityResult.rarity}`,
-    name: pickedName,
-    category: "Loot",
-    description: `Dropped from ${chestDefinition.title}.`,
-    quantity: 1,
-    rarity: rarityResult.rarity,
+    id: `gift-card-${slug}`,
+    name: `Gift Card - ${brand}`,
+    category: "Gift Card",
+    description: `${brand} Gift Card obtained from chest rewards.`,
+    quantity,
+    rarity: quantity >= 2 ? "legendary" : "epic",
     iconPath: "/itens/general/ticket.png",
   };
 }
@@ -194,55 +167,35 @@ function rollGiftCardFragment(min: number, max: number): InventoryItem {
   };
 }
 
-function rollAccountReward(): InventoryItem {
-  const picked = ACCOUNT_REWARD_POOL[roll(ACCOUNT_REWARD_POOL.length)] ?? ACCOUNT_REWARD_POOL[0]!;
+async function rollAccountRewardFromMarket(tx: Transaction, adminDb: ReturnType<typeof getAdminDb>): Promise<InventoryItem | null> {
+  const eligibleQuery = adminDb.collection("accounts-market").where("chestDropEnabled", "==", true).limit(80);
+  const eligibleSnapshot = await tx.get(eligibleQuery);
 
-  return {
-    id: `reward-account-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-    name: picked.name,
-    category: "Account",
-    description: "Premium account reward received from high-tier chest opening.",
-    quantity: 1,
-    rarity: picked.rarity,
-    iconPath: "/itens/general/ticket.png",
-  };
-}
+  if (eligibleSnapshot.empty) {
+    return null;
+  }
 
-function rollChestReward(currentChest: ChestId): ChestId {
-  const entries = CHEST_IDS.map((id) => {
-    const currentIndex = CHEST_IDS.indexOf(currentChest);
-    const targetIndex = CHEST_IDS.indexOf(id);
-    const distance = targetIndex - currentIndex;
-
-    if (distance >= 2) {
-      return { id, weight: 4 };
-    }
-
-    if (distance === 1) {
-      return { id, weight: 13 };
-    }
-
-    if (distance === 0) {
-      return { id, weight: 49 };
-    }
-
-    return { id, weight: 10 };
+  const weighted = eligibleSnapshot.docs.map((doc) => {
+    const data = doc.data() as Record<string, unknown>;
+    return {
+      id: doc.id,
+      title: typeof data.title === "string" && data.title.trim() ? data.title : "Game Account",
+      gameId: typeof data.gameId === "string" ? data.gameId : "unknown",
+      serverName: typeof data.serverName === "string" ? data.serverName : "Global",
+      weight: Math.max(1, Number.isFinite(data.chestDropWeight) ? Math.floor(Number(data.chestDropWeight)) : 1),
+    };
   });
 
-  return pickWeighted(entries).id;
-}
-
-function rollCosmeticReward(): InventoryItem {
-  const picked = COSMETIC_POOL[roll(COSMETIC_POOL.length)] ?? COSMETIC_POOL[0]!;
+  const picked = pickWeighted(weighted);
 
   return {
-    id: `reward-cosmetic-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-    name: picked.name,
-    category: "Cosmetic",
-    description: "Exclusive cosmetic unlocked from chest opening.",
+    id: `reward-account-${picked.id}`,
+    name: `Game Account - ${picked.title}`,
+    category: "Account",
+    description: `Marketplace account reward (${picked.gameId} / ${picked.serverName}).`,
     quantity: 1,
-    rarity: picked.rarity,
-    iconPath: picked.iconPath,
+    rarity: "heirloom",
+    iconPath: "/itens/general/ticket.png",
   };
 }
 
@@ -338,74 +291,71 @@ export async function POST(request: Request): Promise<Response> {
           rarity: chestDefinition.rarity,
           amount,
         };
-      } else if (rewardType === "item") {
-        const accountRollEnabled = configProfile.accountDrop.enabled;
-        const accountDropWon = accountRollEnabled && roll(100) < configProfile.accountDrop.chancePercent;
-        const fragmentDropWon = !accountDropWon && roll(100) < configProfile.giftCardFragment.chancePercent;
-
-        let item: InventoryItem;
-
-        if (accountDropWon) {
-          item = rollAccountReward();
-        } else if (fragmentDropWon) {
-          item = rollGiftCardFragment(configProfile.giftCardFragment.min, configProfile.giftCardFragment.max);
-        } else {
-          item = rollItemReward(chestDefinition, configProfile.itemRarityWeights);
-        }
-
-        const merged = mergeItemIntoInventory(nextInventory, item, slotLimit);
-        if (!merged.ok) {
-          throw new Error(merged.error ?? "Inventory is full.");
-        }
-        nextInventory = merged.inventory;
-
-        reward = {
-          type: "item",
-          title: item.name,
-          rarity: item.rarity,
-          inventoryItem: item,
-        };
-      } else if (rewardType === "chest") {
-        const bonusChest = rollChestReward(chestDefinition.id);
-        const bonus = CHEST_DEFINITIONS[bonusChest];
-        const merged = mergeItemIntoInventory(
-          nextInventory,
-          {
-            id: bonus.inventoryItemId,
-            name: bonus.inventoryItemName,
-            category: "Chest",
-            description: `${bonus.title} used in rewards opening.`,
-            quantity: 1,
-            rarity: chestRarityToInventoryRarity(bonus.rarity),
-            iconPath: "/itens/general/ticket.png",
-          },
-          slotLimit,
-        );
-        if (!merged.ok) {
-          throw new Error(merged.error ?? "Inventory is full.");
-        }
-        nextInventory = merged.inventory;
-
-        reward = {
-          type: "chest",
-          title: `${CHEST_DEFINITIONS[bonusChest].title} x1`,
-          rarity: CHEST_DEFINITIONS[bonusChest].rarity,
-          chestId: bonusChest,
-        };
       } else {
-        const cosmetic = rollCosmeticReward();
-        const merged = mergeItemIntoInventory(nextInventory, cosmetic, slotLimit);
-        if (!merged.ok) {
-          throw new Error(merged.error ?? "Inventory is full.");
-        }
-        nextInventory = merged.inventory;
+        let item: InventoryItem | null = null;
 
-        reward = {
-          type: "cosmetic",
-          title: cosmetic.name,
-          rarity: cosmetic.rarity,
-          inventoryItem: cosmetic,
-        };
+        if (chestDefinition.id === "rare") {
+          item = rollGiftCardFragment(
+            Math.max(1, configProfile.giftCardFragment.min || 1),
+            Math.max(1, configProfile.giftCardFragment.max || 1),
+          );
+        } else if (chestDefinition.id === "epic") {
+          item = rollGiftCardFragment(
+            Math.max(1, configProfile.giftCardFragment.min || 1),
+            Math.max(1, configProfile.giftCardFragment.max || 3),
+          );
+        } else if (chestDefinition.id === "legendary") {
+          const qty = randomInRange(
+            Math.max(1, configProfile.fullGiftCard.min || 1),
+            Math.max(1, configProfile.fullGiftCard.max || 1),
+          );
+          item = rollBrandedGiftCard(qty);
+        } else if (chestDefinition.id === "mythic") {
+          const accountRollEnabled = configProfile.accountDrop.enabled;
+          const accountDropWon = accountRollEnabled && roll(100) < configProfile.accountDrop.chancePercent;
+
+          if (accountDropWon) {
+            item = await rollAccountRewardFromMarket(tx, adminDb);
+          }
+
+          if (!item) {
+            const qty = randomInRange(
+              Math.max(1, configProfile.fullGiftCard.min || 2),
+              Math.max(1, configProfile.fullGiftCard.max || 2),
+            );
+            item = rollBrandedGiftCard(qty);
+          }
+        } else {
+          const fragmentDropWon = roll(100) < configProfile.giftCardFragment.chancePercent;
+          if (fragmentDropWon && configProfile.giftCardFragment.max > 0) {
+            item = rollGiftCardFragment(configProfile.giftCardFragment.min, configProfile.giftCardFragment.max);
+          }
+        }
+
+        if (!item) {
+          const amount = randomInRange(configProfile.coinRange.min, configProfile.coinRange.max);
+          nextLootCoins = Math.round((nextLootCoins + amount) * 100) / 100;
+
+          reward = {
+            type: "coins",
+            title: `${amount.toLocaleString("pt-BR")} Loot Coins`,
+            rarity: chestDefinition.rarity,
+            amount,
+          };
+        } else {
+          const merged = mergeItemIntoInventory(nextInventory, item, slotLimit);
+          if (!merged.ok) {
+            throw new Error(merged.error ?? "Inventory is full.");
+          }
+          nextInventory = merged.inventory;
+
+          reward = {
+            type: "item",
+            title: item.name,
+            rarity: item.rarity,
+            inventoryItem: item,
+          };
+        }
       }
 
       const responsePayload: OpenChestResponse = {

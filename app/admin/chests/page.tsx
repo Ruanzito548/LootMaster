@@ -17,6 +17,7 @@ type ChestProfileConfig = {
   itemRarityWeights: Array<{ rarity: string; weight: number }>;
   xpGain: number;
   giftCardFragment: { chancePercent: number; min: number; max: number };
+  fullGiftCard: { chancePercent: number; min: number; max: number };
   accountDrop: { enabled: boolean; chancePercent: number };
 };
 

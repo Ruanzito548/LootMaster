@@ -20,6 +20,11 @@ export type ChestDropProfile = {
     min: number;
     max: number;
   };
+  fullGiftCard: {
+    chancePercent: number;
+    min: number;
+    max: number;
+  };
   accountDrop: {
     enabled: boolean;
     chancePercent: number;
@@ -32,7 +37,9 @@ export type ChestSystemConfig = {
   byChest: Record<ChestId, ChestDropProfile>;
 };
 
-const VALID_REWARD_TYPES: ChestRewardType[] = ["coins", "item", "chest", "cosmetic"];
+const CHEST_CONFIG_SCHEMA_VERSION = 2;
+
+const VALID_REWARD_TYPES: ChestRewardType[] = ["coins", "item"];
 
 const VALID_INVENTORY_RARITIES: InventoryItem["rarity"][] = [
   "poor",
@@ -153,62 +160,65 @@ function defaultXpGain(chestId: ChestId): number {
 function getDefaultProfile(definition: ChestDefinition): ChestDropProfile {
   const rewardOddsByChest: Record<ChestId, ChestRewardOddsEntry[]> = {
     common: [
-      { type: "coins", weight: 70 },
-      { type: "item", weight: 23 },
-      { type: "chest", weight: 5 },
-      { type: "cosmetic", weight: 2 },
+      { type: "coins", weight: 100 },
     ],
     rare: [
-      { type: "coins", weight: 55 },
-      { type: "item", weight: 30 },
-      { type: "chest", weight: 10 },
-      { type: "cosmetic", weight: 5 },
+      { type: "coins", weight: 72 },
+      { type: "item", weight: 28 },
     ],
     epic: [
-      { type: "coins", weight: 40 },
-      { type: "item", weight: 35 },
-      { type: "chest", weight: 15 },
-      { type: "cosmetic", weight: 10 },
+      { type: "coins", weight: 64 },
+      { type: "item", weight: 36 },
     ],
     legendary: [
-      { type: "coins", weight: 28 },
-      { type: "item", weight: 33 },
-      { type: "chest", weight: 22 },
-      { type: "cosmetic", weight: 17 },
+      { type: "coins", weight: 58 },
+      { type: "item", weight: 42 },
     ],
     mythic: [
-      { type: "coins", weight: 18 },
-      { type: "item", weight: 32 },
-      { type: "chest", weight: 24 },
-      { type: "cosmetic", weight: 26 },
+      { type: "coins", weight: 52 },
+      { type: "item", weight: 48 },
     ],
   };
 
   const fragmentByChest: Record<ChestId, ChestDropProfile["giftCardFragment"]> = {
-    common: { chancePercent: 18, min: 1, max: 2 },
-    rare: { chancePercent: 28, min: 1, max: 3 },
-    epic: { chancePercent: 38, min: 2, max: 4 },
-    legendary: { chancePercent: 52, min: 3, max: 6 },
-    mythic: { chancePercent: 70, min: 5, max: 9 },
+    common: { chancePercent: 0, min: 0, max: 0 },
+    rare: { chancePercent: 100, min: 1, max: 1 },
+    epic: { chancePercent: 100, min: 1, max: 3 },
+    legendary: { chancePercent: 0, min: 0, max: 0 },
+    mythic: { chancePercent: 0, min: 0, max: 0 },
+  };
+
+  const fullGiftCardByChest: Record<ChestId, ChestDropProfile["fullGiftCard"]> = {
+    common: { chancePercent: 0, min: 0, max: 0 },
+    rare: { chancePercent: 0, min: 0, max: 0 },
+    epic: { chancePercent: 0, min: 0, max: 0 },
+    legendary: { chancePercent: 100, min: 1, max: 1 },
+    mythic: { chancePercent: 100, min: 2, max: 2 },
   };
 
   const accountByChest: Record<ChestId, ChestDropProfile["accountDrop"]> = {
     common: { enabled: false, chancePercent: 0 },
     rare: { enabled: false, chancePercent: 0 },
     epic: { enabled: false, chancePercent: 0 },
-    legendary: { enabled: true, chancePercent: 7 },
-    mythic: { enabled: true, chancePercent: 12 },
+    legendary: { enabled: false, chancePercent: 0 },
+    mythic: { enabled: true, chancePercent: 2 },
+  };
+
+  const coinRangeByChest: Record<ChestId, { min: number; max: number }> = {
+    common: { min: 0, max: 1 },
+    rare: { min: 0, max: 3 },
+    epic: { min: 0, max: 10 },
+    legendary: { min: 0, max: 25 },
+    mythic: { min: 0, max: 50 },
   };
 
   return {
     rewardOdds: rewardOddsByChest[definition.id],
-    coinRange: {
-      min: definition.coinRange.min,
-      max: definition.coinRange.max,
-    },
+    coinRange: coinRangeByChest[definition.id],
     itemRarityWeights: definition.itemRarityWeights,
     xpGain: defaultXpGain(definition.id),
     giftCardFragment: fragmentByChest[definition.id],
+    fullGiftCard: fullGiftCardByChest[definition.id],
     accountDrop: accountByChest[definition.id],
   };
 }
@@ -220,7 +230,7 @@ export function buildDefaultChestSystemConfig(): ChestSystemConfig {
   }, {} as Record<ChestId, ChestDropProfile>);
 
   return {
-    schemaVersion: 1,
+    schemaVersion: CHEST_CONFIG_SCHEMA_VERSION,
     updatedAtMs: Date.now(),
     byChest,
   };
@@ -234,6 +244,10 @@ export function sanitizeChestSystemConfig(source: unknown): ChestSystemConfig {
   }
 
   const parsed = source as Partial<ChestSystemConfig>;
+  if (parsed.schemaVersion !== CHEST_CONFIG_SCHEMA_VERSION) {
+    return fallback;
+  }
+
   const parsedByChest = parsed.byChest && typeof parsed.byChest === "object" ? parsed.byChest : null;
 
   const byChest = CHEST_IDS.reduce((acc, chestId) => {
@@ -247,12 +261,16 @@ export function sanitizeChestSystemConfig(source: unknown): ChestSystemConfig {
 
     const profile = raw as Partial<ChestDropProfile>;
 
-    const minCoins = asBoundedInt(profile.coinRange?.min, fallbackProfile.coinRange.min, 1, 1000000);
+    const minCoins = asBoundedInt(profile.coinRange?.min, fallbackProfile.coinRange.min, 0, 1000000);
     const maxCoins = asBoundedInt(profile.coinRange?.max, fallbackProfile.coinRange.max, minCoins, 1000000);
 
     const fragmentChance = asBoundedInt(profile.giftCardFragment?.chancePercent, fallbackProfile.giftCardFragment.chancePercent, 0, 100);
-    const fragmentMin = asBoundedInt(profile.giftCardFragment?.min, fallbackProfile.giftCardFragment.min, 1, 1000);
+    const fragmentMin = asBoundedInt(profile.giftCardFragment?.min, fallbackProfile.giftCardFragment.min, 0, 1000);
     const fragmentMax = asBoundedInt(profile.giftCardFragment?.max, fallbackProfile.giftCardFragment.max, fragmentMin, 1000);
+
+    const fullGiftCardChance = asBoundedInt(profile.fullGiftCard?.chancePercent, fallbackProfile.fullGiftCard.chancePercent, 0, 100);
+    const fullGiftCardMin = asBoundedInt(profile.fullGiftCard?.min, fallbackProfile.fullGiftCard.min, 0, 1000);
+    const fullGiftCardMax = asBoundedInt(profile.fullGiftCard?.max, fallbackProfile.fullGiftCard.max, fullGiftCardMin, 1000);
 
     acc[chestId] = {
       rewardOdds: normalizeRewardOdds(profile.rewardOdds, fallbackProfile.rewardOdds),
@@ -267,6 +285,11 @@ export function sanitizeChestSystemConfig(source: unknown): ChestSystemConfig {
         min: fragmentMin,
         max: fragmentMax,
       },
+      fullGiftCard: {
+        chancePercent: fullGiftCardChance,
+        min: fullGiftCardMin,
+        max: fullGiftCardMax,
+      },
       accountDrop: {
         enabled: Boolean(profile.accountDrop?.enabled),
         chancePercent: asBoundedInt(profile.accountDrop?.chancePercent, fallbackProfile.accountDrop.chancePercent, 0, 100),
@@ -277,7 +300,7 @@ export function sanitizeChestSystemConfig(source: unknown): ChestSystemConfig {
   }, {} as Record<ChestId, ChestDropProfile>);
 
   return {
-    schemaVersion: asBoundedInt(parsed.schemaVersion, 1, 1, 100),
+    schemaVersion: CHEST_CONFIG_SCHEMA_VERSION,
     updatedAtMs: asBoundedInt(parsed.updatedAtMs, Date.now(), 0, Number.MAX_SAFE_INTEGER),
     byChest,
   };

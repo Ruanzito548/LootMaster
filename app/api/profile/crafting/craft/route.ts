@@ -20,6 +20,30 @@ type CraftBody = {
   quantity?: number;
 };
 
+const GIFT_CARD_BRANDS = ["League of Legends", "Blizzard", "Steam", "Valorant", "PSN", "Xbox"] as const;
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function buildGiftCardOutput(quantity: number): InventoryItem {
+  const brand = GIFT_CARD_BRANDS[Math.floor(Math.random() * GIFT_CARD_BRANDS.length)] ?? "Steam";
+  const slug = slugify(brand);
+
+  return {
+    id: `gift-card-${slug}`,
+    name: `Gift Card - ${brand}`,
+    category: "Gift Card",
+    description: `${brand} Gift Card crafted at the workshop forge.`,
+    quantity,
+    rarity: "epic",
+    iconPath: "/itens/general/ticket.png",
+  };
+}
+
 function isInventoryItem(value: unknown): value is InventoryItem {
   if (!value || typeof value !== "object") {
     return false;
@@ -109,6 +133,11 @@ export async function POST(request: Request): Promise<Response> {
         }
       }
 
+      const totalCoinCost = Math.max(0, Math.floor((recipe.coinCost ?? 0) * quantity));
+      if ((profile.lootCoins ?? 0) < totalCoinCost) {
+        throw new Error("Insufficient loot coins for crafting cost.");
+      }
+
       for (const material of recipe.materials) {
         const required = material.quantity * quantity;
         const removed = removeItemQuantity(nextInventory, material.itemId, required);
@@ -118,11 +147,14 @@ export async function POST(request: Request): Promise<Response> {
         nextInventory = removed.inventory;
       }
 
-      const output: InventoryItem = {
-        ...recipe.outputItem,
-        quantity: recipe.outputItem.quantity * quantity,
-        description: `${recipe.title} crafted at the forge.`,
-      };
+      const output: InventoryItem =
+        recipe.id === "craft-gift-card"
+          ? buildGiftCardOutput(recipe.outputItem.quantity * quantity)
+          : {
+              ...recipe.outputItem,
+              quantity: recipe.outputItem.quantity * quantity,
+              description: `${recipe.title} crafted at the forge.`,
+            };
 
       const slotLimit = Math.max(profile.inventorySlotLimit, getInventorySlotLimitFromLevel(profile.rpgLevel || 1));
       const merged = mergeItemIntoInventory(nextInventory, output, slotLimit);
@@ -139,6 +171,7 @@ export async function POST(request: Request): Promise<Response> {
         userRef,
         {
           inventory: nextInventory,
+          lootCoins: Math.max(0, Math.floor((profile.lootCoins ?? 0) - totalCoinCost)),
           rpgXp: progression.xp,
           rpgLevel: progression.level,
           inventorySlotLimit: progression.slotLimit,
@@ -181,6 +214,7 @@ export async function POST(request: Request): Promise<Response> {
           resultLabel: `${output.name} x${output.quantity}`,
           recipeId: recipe.id,
           materialsConsumed: totalMaterialsConsumed,
+          coinCost: totalCoinCost,
         },
       });
 
@@ -209,6 +243,7 @@ export async function POST(request: Request): Promise<Response> {
         recipeTitle: recipe.title,
         quantity,
         xpGain,
+        coinCost: totalCoinCost,
         level: progression.level,
         inventory: nextInventory,
       };
