@@ -27,6 +27,7 @@ type NavItem = {
   href: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
+  requiresAdmin?: boolean;
 };
 
 const navItems: NavItem[] = [
@@ -34,8 +35,7 @@ const navItems: NavItem[] = [
   { href: "/games", label: "Games", icon: Gamepad2 },
   { href: "/rewards", label: "Rewards", icon: Gift },
   { href: "/profile/inventory", label: "Inventory", icon: Package },
-  { href: "/profile", label: "Profile", icon: UserRound },
-  { href: "/admin", label: "Admin", icon: Shield },
+  { href: "/admin", label: "Admin", icon: Shield, requiresAdmin: true },
 ];
 
 const profileItems: NavItem[] = [
@@ -64,6 +64,8 @@ export function Navbar() {
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
   const avatar = profile?.photoURL || "/lootmasterlogo.png";
+  const isAdminMember = profile?.isAdmin === true;
+  const visibleNavItems = navItems.filter((item) => !item.requiresAdmin || isAdminMember);
   const closeProfileMenu = useEffectEvent(() => {
     setIsProfileOpen(false);
   });
@@ -149,7 +151,7 @@ export function Navbar() {
         </div>
 
         <nav className="hidden items-center gap-2 lg:flex">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(pathname, item.href);
 
@@ -281,7 +283,7 @@ export function Navbar() {
             </div>
 
             <div className="mt-4 grid gap-2">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(pathname, item.href);
 
