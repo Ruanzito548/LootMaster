@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
 import { writeActivityLog } from "@/lib/activity-history.server";
+import { getLiveChestSystemConfig } from "@/lib/chest-config";
 import { CHEST_DEFINITIONS, CHEST_IDS, getChestDefinition, type ChestDefinition, type ChestId, type ChestRewardType } from "@/lib/chests";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
@@ -43,6 +44,14 @@ const COSMETIC_POOL: Array<{ name: string; rarity: InventoryItem["rarity"]; icon
   { name: "Astral Emblem", rarity: "legendary", iconPath: "/itens/general/ticket.png" },
   { name: "Void Crest", rarity: "artifact", iconPath: "/itens/general/ticket.png" },
   { name: "Eclipse Frame", rarity: "heirloom", iconPath: "/itens/general/ticket.png" },
+];
+
+const ACCOUNT_REWARD_POOL: Array<{ name: string; rarity: InventoryItem["rarity"] }> = [
+  { name: "WoW Retail Elite Account", rarity: "legendary" },
+  { name: "WoW Classic Legacy Account", rarity: "legendary" },
+  { name: "Albion Veteran Account", rarity: "artifact" },
+  { name: "Runescape Mythic Account", rarity: "artifact" },
+  { name: "Pandaria Collector Account", rarity: "heirloom" },
 ];
 
 const ITEM_NAME_BY_RARITY: Record<InventoryItem["rarity"], string[]> = {
@@ -153,8 +162,8 @@ function decrementChest(inventory: InventoryItem[], chestDefinition: ChestDefini
   });
 }
 
-function rollItemReward(chestDefinition: ChestDefinition): InventoryItem {
-  const rarityResult = pickWeighted(chestDefinition.itemRarityWeights);
+function rollItemReward(chestDefinition: ChestDefinition, itemRarityWeights: ChestDefinition["itemRarityWeights"]): InventoryItem {
+  const rarityResult = pickWeighted(itemRarityWeights);
   const itemNames = ITEM_NAME_BY_RARITY[rarityResult.rarity] ?? ITEM_NAME_BY_RARITY.common;
   const pickedName = itemNames[roll(itemNames.length)] ?? "Loot Item";
 
@@ -167,6 +176,34 @@ function rollItemReward(chestDefinition: ChestDefinition): InventoryItem {
     description: `Dropped from ${chestDefinition.title}.`,
     quantity: 1,
     rarity: rarityResult.rarity,
+    iconPath: "/itens/general/ticket.png",
+  };
+}
+
+function rollGiftCardFragment(min: number, max: number): InventoryItem {
+  const amount = randomInRange(Math.max(1, min), Math.max(min, max));
+
+  return {
+    id: "gift-card-fragment",
+    name: "Gift Card Fragment",
+    category: "Gift Card",
+    description: "Fragment used to craft a full Gift Card.",
+    quantity: amount,
+    rarity: amount >= 6 ? "epic" : amount >= 3 ? "rare" : "uncommon",
+    iconPath: "/itens/general/ticket.png",
+  };
+}
+
+function rollAccountReward(): InventoryItem {
+  const picked = ACCOUNT_REWARD_POOL[roll(ACCOUNT_REWARD_POOL.length)] ?? ACCOUNT_REWARD_POOL[0]!;
+
+  return {
+    id: `reward-account-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+    name: picked.name,
+    category: "Account",
+    description: "Premium account reward received from high-tier chest opening.",
+    quantity: 1,
+    rarity: picked.rarity,
     iconPath: "/itens/general/ticket.png",
   };
 }
@@ -229,26 +266,6 @@ function statusFromErrorMessage(message: string): number {
   return 500;
 }
 
-function getChestXpGain(chestId: ChestId): number {
-  if (chestId === "mythic") {
-    return 44;
-  }
-
-  if (chestId === "legendary") {
-    return 30;
-  }
-
-  if (chestId === "epic") {
-    return 20;
-  }
-
-  if (chestId === "rare") {
-    return 13;
-  }
-
-  return 8;
-}
-
 export async function POST(request: Request): Promise<Response> {
   let decodedToken: Awaited<ReturnType<typeof requireAuthenticatedUserRequest>>;
   let body: OpenChestBody;
@@ -276,6 +293,7 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const adminDb = getAdminDb();
+    const chestSystemConfig = await getLiveChestSystemConfig();
     const userRef = adminDb.collection("users").doc(decodedToken.uid);
     const requestRef = userRef.collection("chest-open-requests").doc(requestId);
     const historyRef = adminDb.collection("reward-history").doc();
@@ -305,12 +323,13 @@ export async function POST(request: Request): Promise<Response> {
       let nextInventory = [...baseInventory];
       nextInventory = decrementChest(nextInventory, chestDefinition);
 
-      const rewardType = pickWeighted(chestDefinition.rewardOdds).type;
+      const configProfile = chestSystemConfig.byChest[chestDefinition.id];
+      const rewardType = pickWeighted(configProfile.rewardOdds).type;
       let nextLootCoins = mappedProfile.lootCoins;
       let reward: OpenChestReward;
 
       if (rewardType === "coins") {
-        const amount = randomInRange(chestDefinition.coinRange.min, chestDefinition.coinRange.max);
+        const amount = randomInRange(configProfile.coinRange.min, configProfile.coinRange.max);
         nextLootCoins = Math.round((nextLootCoins + amount) * 100) / 100;
 
         reward = {
@@ -320,7 +339,20 @@ export async function POST(request: Request): Promise<Response> {
           amount,
         };
       } else if (rewardType === "item") {
-        const item = rollItemReward(chestDefinition);
+        const accountRollEnabled = configProfile.accountDrop.enabled;
+        const accountDropWon = accountRollEnabled && roll(100) < configProfile.accountDrop.chancePercent;
+        const fragmentDropWon = !accountDropWon && roll(100) < configProfile.giftCardFragment.chancePercent;
+
+        let item: InventoryItem;
+
+        if (accountDropWon) {
+          item = rollAccountReward();
+        } else if (fragmentDropWon) {
+          item = rollGiftCardFragment(configProfile.giftCardFragment.min, configProfile.giftCardFragment.max);
+        } else {
+          item = rollItemReward(chestDefinition, configProfile.itemRarityWeights);
+        }
+
         const merged = mergeItemIntoInventory(nextInventory, item, slotLimit);
         if (!merged.ok) {
           throw new Error(merged.error ?? "Inventory is full.");
@@ -389,7 +421,7 @@ export async function POST(request: Request): Promise<Response> {
         inventorySlotLimit: mappedProfile.inventorySlotLimit,
       };
 
-      const xpGain = getChestXpGain(chestDefinition.id);
+      const xpGain = configProfile.xpGain;
       const progression = applyXpGain(mappedProfile.rpgXp ?? 0, xpGain);
 
       responsePayload.xpGain = xpGain;

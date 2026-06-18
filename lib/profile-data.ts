@@ -96,6 +96,15 @@ const defaultInventory: InventoryItem[] = [
     iconPath: "/itens/general/ticket.png",
   },
   {
+    id: "gift-card-fragment",
+    name: "Gift Card Fragment",
+    category: "Gift Card",
+    description: "Collect fragments to craft a complete Gift Card.",
+    quantity: 14,
+    rarity: "rare",
+    iconPath: "/itens/general/ticket.png",
+  },
+  {
     id: "material-wood",
     name: "Wood",
     category: "Material",

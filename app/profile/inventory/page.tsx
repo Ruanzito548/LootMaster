@@ -29,6 +29,15 @@ type OpenChestApiResponse = {
 
 type CraftRecipe = (typeof CRAFT_RECIPES)[number];
 
+type ChestConfigResponse = {
+  ok: true;
+  config: {
+    byChest: Record<ChestId, { rewardOdds: Array<{ type: string; weight: number }> }>;
+  };
+};
+
+type RewardOddsByChest = Record<ChestId, Array<{ type: string; weight: number }>>;
+
 type ToastState = {
   id: number;
   kind: "success" | "error" | "info";
@@ -146,6 +155,13 @@ export default function InventoryPage() {
 
   const [craftRecipes, setCraftRecipes] = useState<CraftRecipe[]>(CRAFT_RECIPES);
   const [craftBusyId, setCraftBusyId] = useState<string | null>(null);
+  const [rewardOddsByChest, setRewardOddsByChest] = useState<RewardOddsByChest>(() => ({
+    common: CHEST_DEFINITIONS.common.rewardOdds,
+    rare: CHEST_DEFINITIONS.rare.rewardOdds,
+    epic: CHEST_DEFINITIONS.epic.rewardOdds,
+    legendary: CHEST_DEFINITIONS.legendary.rewardOdds,
+    mythic: CHEST_DEFINITIONS.mythic.rewardOdds,
+  }));
 
   const [isOpening, setIsOpening] = useState(false);
   const [openSequence, setOpenSequence] = useState(0);
@@ -207,6 +223,43 @@ export default function InventoryPage() {
       cancelled = true;
     };
   }, [user]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadChestConfig = async () => {
+      try {
+        const response = await fetch("/api/rewards/chests/config", { cache: "no-store" });
+        const payload = (await response.json()) as ChestConfigResponse;
+
+        if (!cancelled && response.ok && payload?.config?.byChest) {
+          setRewardOddsByChest({
+            common: payload.config.byChest.common?.rewardOdds ?? CHEST_DEFINITIONS.common.rewardOdds,
+            rare: payload.config.byChest.rare?.rewardOdds ?? CHEST_DEFINITIONS.rare.rewardOdds,
+            epic: payload.config.byChest.epic?.rewardOdds ?? CHEST_DEFINITIONS.epic.rewardOdds,
+            legendary: payload.config.byChest.legendary?.rewardOdds ?? CHEST_DEFINITIONS.legendary.rewardOdds,
+            mythic: payload.config.byChest.mythic?.rewardOdds ?? CHEST_DEFINITIONS.mythic.rewardOdds,
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setRewardOddsByChest({
+            common: CHEST_DEFINITIONS.common.rewardOdds,
+            rare: CHEST_DEFINITIONS.rare.rewardOdds,
+            epic: CHEST_DEFINITIONS.epic.rewardOdds,
+            legendary: CHEST_DEFINITIONS.legendary.rewardOdds,
+            mythic: CHEST_DEFINITIONS.mythic.rewardOdds,
+          });
+        }
+      }
+    };
+
+    void loadChestConfig();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const resetOpenFlow = useCallback(() => {
     setIsOpening(false);
@@ -675,7 +728,7 @@ export default function InventoryPage() {
               <h3 className="mt-2 text-2xl font-black text-white">{CHEST_DEFINITIONS[chestMenu.chestId].title}</h3>
 
               <div className="mt-4 grid gap-2">
-                {CHEST_DEFINITIONS[chestMenu.chestId].rewardOdds.map((entry) => (
+                {(rewardOddsByChest[chestMenu.chestId] ?? CHEST_DEFINITIONS[chestMenu.chestId].rewardOdds).map((entry) => (
                   <div key={entry.type} className="rounded-xl border border-white/12 bg-black/25 p-3">
                     <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.14em] text-[#c7daf0]">
                       <span>{entry.type}</span>
@@ -701,8 +754,8 @@ export default function InventoryPage() {
 
             <motion.section className="absolute left-1/2 top-1/2 max-h-[86vh] w-[min(96vw,760px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-white/16 bg-[linear-gradient(180deg,rgba(12,22,36,0.98),rgba(7,13,24,0.98))] p-6" initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}>
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#9ad6ff]">Crafting Forge</p>
-              <h3 className="mt-2 text-3xl font-black text-white">Create Chests and Upgrades</h3>
-              <p className="mt-2 text-sm text-[#b9d1ea]">Crafting grants XP and supports rune-based rarity progression.</p>
+              <h3 className="mt-2 text-3xl font-black text-white">Gift Card Workshop</h3>
+              <p className="mt-2 text-sm text-[#b9d1ea]">Fuse Gift Card Fragments into a complete Gift Card and gain RPG XP.</p>
 
               <div className="mt-5 grid gap-3">
                 {craftRecipes.map((recipe) => (
