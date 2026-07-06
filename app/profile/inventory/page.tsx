@@ -567,6 +567,7 @@ export default function InventoryPage() {
 
               const rarityClass = RARITY_GLOW[item.rarity] ?? "border-white/25";
               const itemIsChest = isChestItem(item);
+              const itemIconSrc = itemIsChest ? "/chest.png" : item.iconPath || "/itens/general/ticket.png";
 
               return (
                 <motion.button
@@ -592,7 +593,7 @@ export default function InventoryPage() {
                   }}
                 >
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_22%,rgba(255,255,255,0.16),transparent_60%)]" />
-                  <Image src={item.iconPath || "/itens/general/ticket.png"} alt={item.name} width={88} height={88} className="relative mx-auto h-[70%] w-[70%] object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)]" />
+                  <Image src={itemIconSrc} alt={item.name} width={88} height={88} className="relative mx-auto h-[70%] w-[70%] object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)]" />
                   <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between">
                     <span className="truncate rounded bg-black/55 px-1.5 py-0.5 text-[0.56rem] font-bold uppercase tracking-[0.1em] text-[#d7e7ff]">{item.name}</span>
                     <span className="rounded bg-black/65 px-1.5 py-0.5 text-[0.56rem] font-black text-white">{item.quantity}</span>
