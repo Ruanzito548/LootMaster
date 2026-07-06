@@ -95,7 +95,7 @@ const LOOT_BUNDLES: Record<ChestId, LootBundle[]> = {
     { weight: 24, drops: [{ kind: "coins", quantity: 1 }, { kind: "gift-fragment", quantity: 1 }] },
     { weight: 18, drops: [{ kind: "coins", quantity: 1 }, { kind: "chest-fragment", chest: "rare", quantity: 1 }] },
     { weight: 12, drops: [{ kind: "gift-fragment", quantity: 1 }, { kind: "chest-fragment", chest: "rare", quantity: 1 }] },
-    { weight: 8, drops: [{ kind: "coupon", coupon: "off-10", quantity: 1 }] },
+    { weight: 8, drops: [{ kind: "coins", quantity: 1 }, { kind: "coupon", coupon: "off-5", quantity: 1 }] },
   ],
   rare: [
     { weight: 22, drops: [{ kind: "coins", quantity: 3 }, { kind: "gift-fragment", quantity: 2 }] },
