@@ -172,6 +172,11 @@ export async function POST(request: Request): Promise<Response> {
         {
           inventory: nextInventory,
           lootCoins: Math.max(0, Math.floor((profile.lootCoins ?? 0) - totalCoinCost)),
+          lootCoinsSpent: Math.max(0, Math.floor((profile.lootCoinsSpent ?? 0) + totalCoinCost)),
+          giftCardsCrafted:
+            recipe.id === "craft-gift-card"
+              ? Math.max(0, Math.floor((profile.giftCardsCrafted ?? 0) + quantity))
+              : profile.giftCardsCrafted ?? 0,
           rpgXp: progression.xp,
           rpgLevel: progression.level,
           inventorySlotLimit: progression.slotLimit,

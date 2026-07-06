@@ -41,12 +41,12 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
   return (
     <div className="w-full max-w-full overflow-hidden pb-3">
       <div className="w-full max-w-full overflow-x-auto overflow-y-visible pb-2">
-        <div className="relative inline-flex min-w-max items-start gap-4 px-2">
-          <div className="theme-progress-track pointer-events-none absolute left-8 right-8 top-16 h-[5px] rounded-full" />
+        <div className="relative inline-flex min-w-max items-start gap-5 px-3 pt-2">
+          <div className="pointer-events-none absolute left-8 right-8 top-[4.05rem] h-[6px] rounded-full bg-[linear-gradient(90deg,rgba(120,207,255,0.24),rgba(255,203,129,0.24),rgba(255,137,164,0.24))]" />
           {nodes.map((node) => {
             const styles = rarityStyles[node.reward.rarity] ?? rarityStyles.common;
             const isClaimed = node.state === "claimed";
-            const isCurrent = node.state === "current";
+            const isAvailable = node.state === "available";
             const isLocked = node.state === "locked";
 
             return (
@@ -57,19 +57,19 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                 <div
                   className={`z-10 rounded-full border-2 ${styles.border} ${styles.dot} ${styles.glow} ${
                     node.isMilestone ? "h-8 w-8" : "h-6 w-6"
-                  } ${isCurrent ? "ring-4 ring-[color:var(--accent)]" : ""} ${isLocked ? "opacity-55" : "opacity-95"}`}
+                  } ${isAvailable ? "ring-4 ring-cyan-300/65" : ""} ${isLocked ? "opacity-45 grayscale" : "opacity-100"}`}
                 />
 
                 <div
-                  className={`theme-surface-soft w-full rounded-2xl border-2 p-4 transition-all duration-300 ${styles.border} ${
-                    isCurrent ? "reward-node-current" : ""
+                  className={`w-full rounded-2xl border-2 p-4 transition-all duration-300 ${styles.border} ${
+                    isAvailable ? "reward-node-current" : ""
                   } ${
                     isClaimed
-                      ? "opacity-75"
+                      ? "opacity-85"
                       : isLocked
-                      ? "opacity-68"
+                      ? "opacity-62"
                       : "opacity-100"
-                  } ${node.isMilestone ? "min-h-[196px]" : "min-h-[184px]"} hover:-translate-y-1.5 hover:opacity-100`}
+                  } ${node.isMilestone ? "min-h-[202px]" : "min-h-[188px]"} bg-[linear-gradient(170deg,rgba(12,20,35,0.95),rgba(6,10,22,0.95))] hover:-translate-y-1.5 hover:opacity-100`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-2xl leading-none">{node.reward.icon}</span>
@@ -89,12 +89,12 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                       className={`rounded-full px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.14em] ${
                         isClaimed
                           ? "theme-status-claimed"
-                          : isCurrent
+                          : isAvailable
                           ? "theme-status-current"
                           : "theme-status-locked"
                       }`}
                     >
-                      {isClaimed ? "claimed" : isCurrent ? "current" : "locked"}
+                      {isClaimed ? "claimed" : isAvailable ? "available" : "locked"}
                     </span>
                     {node.isPremium || node.isMilestone ? (
                       <span className="rounded-full bg-[#ef4444]/20 px-2 py-1 text-[0.55rem] font-black uppercase tracking-[0.14em] text-[#ff9f9f]">
@@ -104,9 +104,9 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                   </div>
                 </div>
 
-                {isCurrent ? (
+                {isAvailable ? (
                   <span className="pointer-events-none absolute -top-1 right-3 rounded-full bg-[color:var(--accent)]/18 px-2 py-1 text-[0.55rem] font-black uppercase tracking-[0.14em] text-[color:var(--accent)]">
-                    You are here
+                    next unlock
                   </span>
                 ) : null}
 

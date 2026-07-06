@@ -39,6 +39,8 @@ export type UserProfile = {
   photoURL: string;
   coverURL: string;
   lootCoins: number;
+  lootCoinsEarned: number;
+  lootCoinsSpent: number;
   tickets: number;
   keys: number;
   inventory: InventoryItem[];
@@ -63,6 +65,9 @@ export type UserProfile = {
   marketplaceSales: number;
   marketplaceBuys: number;
   marketplaceVolume: number;
+  lifetimeXp: number;
+  giftCardsCrafted: number;
+  totalRewardsClaimed: number;
   discordId?: string;
   discordUsername?: string;
 };
@@ -346,6 +351,8 @@ function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" |
     photoURL: user.photoURL || defaultPhotoURL,
     coverURL: defaultCoverURL,
     lootCoins: 1250,
+    lootCoinsEarned: 0,
+    lootCoinsSpent: 0,
     tickets: 12,
     keys: 4,
     inventory: ENABLE_STARTER_INVENTORY ? defaultInventory : [],
@@ -370,6 +377,9 @@ function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" |
     marketplaceSales: 0,
     marketplaceBuys: 0,
     marketplaceVolume: 0,
+    lifetimeXp: progress.totalXp,
+    giftCardsCrafted: 0,
+    totalRewardsClaimed: 0,
   };
 }
 
@@ -394,6 +404,8 @@ export function mapUserProfile(uid: string, source: Record<string, unknown>): Us
     photoURL: getString(source.photoURL, fallback.photoURL),
     coverURL: getString(source.coverURL, fallback.coverURL),
     lootCoins: getNumber(source.lootCoins, fallback.lootCoins),
+    lootCoinsEarned: getNumber(source.lootCoinsEarned, fallback.lootCoinsEarned),
+    lootCoinsSpent: getNumber(source.lootCoinsSpent, fallback.lootCoinsSpent),
     tickets: getNumber(source.tickets, fallback.tickets),
     keys: getNumber(source.keys, fallback.keys),
     inventory: inventory.length > 0 ? inventory : fallback.inventory,
@@ -418,6 +430,9 @@ export function mapUserProfile(uid: string, source: Record<string, unknown>): Us
     marketplaceSales: getNumber(source.marketplaceSales, fallback.marketplaceSales),
     marketplaceBuys: getNumber(source.marketplaceBuys, fallback.marketplaceBuys),
     marketplaceVolume: getNumber(source.marketplaceVolume, fallback.marketplaceVolume),
+    lifetimeXp: getNumber(source.lifetimeXp, progress.totalXp),
+    giftCardsCrafted: getNumber(source.giftCardsCrafted, fallback.giftCardsCrafted),
+    totalRewardsClaimed: getNumber(source.totalRewardsClaimed, fallback.totalRewardsClaimed),
     ...(typeof source.discordId === "string" && { discordId: source.discordId }),
     ...(typeof source.discordUsername === "string" && { discordUsername: source.discordUsername }),
   };

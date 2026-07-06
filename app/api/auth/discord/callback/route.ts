@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
+import { calculateLevelProgress } from "@/lib/level-rewards";
 import { consumeDiscordLinkTokenWithWalletBackend } from "@/lib/wallet-backend";
 
 type DiscordTokenResponse = {
@@ -114,6 +115,8 @@ export async function GET(request: NextRequest) {
   const snapshot = await userRef.get();
 
   if (!snapshot.exists) {
+    const initialProgress = calculateLevelProgress(0);
+
     await userRef.set({
       uid: firebaseUid,
       username: displayName,
@@ -128,9 +131,9 @@ export async function GET(request: NextRequest) {
       inventory: [],
       transactions: [],
       totalSpentCents: 0,
-      level: 1,
-      levelXpCents: 0,
-      nextLevelXpCents: 150,
+      level: initialProgress.level,
+      levelXpCents: initialProgress.xpCents,
+      nextLevelXpCents: initialProgress.nextLevelXpCents,
       highestRewardedLevel: 1,
       recentUnlocks: [],
       lastXpGain: 0,
@@ -141,6 +144,11 @@ export async function GET(request: NextRequest) {
       dailyStreak: 1,
       seasonTrackTier: 1,
       achievementPoints: 0,
+      lootCoinsEarned: 0,
+      lootCoinsSpent: 0,
+      lifetimeXp: initialProgress.totalXp,
+      giftCardsCrafted: 0,
+      totalRewardsClaimed: 0,
       authProvider: "discord",
       createdAt: new Date().toISOString(),
     });

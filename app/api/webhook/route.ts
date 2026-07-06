@@ -10,7 +10,7 @@ import { writeActivityLog } from "@/lib/activity-history.server";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { syncPaidOrderToWalletBackend } from "@/lib/wallet-backend";
-import { buildLevelRewards, buildUnlockHistoryItem, calculateLevelProgress, calculateTotalXp } from "../../../lib/level-rewards";
+import { LOOT_COINS_PER_USD, buildLevelRewards, buildUnlockHistoryItem, calculateLevelProgress, calculateTotalXp } from "../../../lib/level-rewards";
 
 /**
  * Stripe webhook endpoint.
@@ -373,6 +373,7 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
   const spendCents = Math.max(0, Math.round((session.amount_total ?? 0)));
   const spendUsd = Math.round((spendCents / 100) * 100) / 100;
   const gainedXp = calculateTotalXp(spendCents);
+  const progressionLootCoins = Math.max(0, Math.round(spendUsd * LOOT_COINS_PER_USD));
 
   if (spendCents <= 0) {
     return;
@@ -406,6 +407,18 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
       typeof userData.highestRewardedLevel === "number" && Number.isFinite(userData.highestRewardedLevel)
         ? userData.highestRewardedLevel
         : currentProgress.level;
+    const currentLootCoins =
+      typeof userData.lootCoins === "number" && Number.isFinite(userData.lootCoins)
+        ? userData.lootCoins
+        : 0;
+    const currentLootCoinsEarned =
+      typeof userData.lootCoinsEarned === "number" && Number.isFinite(userData.lootCoinsEarned)
+        ? userData.lootCoinsEarned
+        : 0;
+    const currentRewardsClaimed =
+      typeof userData.totalRewardsClaimed === "number" && Number.isFinite(userData.totalRewardsClaimed)
+        ? userData.totalRewardsClaimed
+        : 0;
 
     const nextInventory = Array.isArray(userData.inventory)
       ? [...(userData.inventory as unknown[])]
@@ -426,21 +439,6 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
 
     for (const reward of rewardLevels) {
       nextInventory.push(reward.inventoryItem);
-
-      if (reward.bonusDrop) {
-        nextInventory.push({
-          id: `bonus-${session.id}-${reward.level}`,
-          name: reward.bonusDrop.title,
-          category: "Reward",
-          description: `${reward.bonusDrop.rarity} bonus drop from milestone level ${reward.level}.`,
-          quantity: 1,
-          rarity:
-            reward.bonusDrop.rarity === "mythic"
-              ? "artifact"
-              : reward.bonusDrop.rarity,
-          iconPath: "/itens/general/ticket.png",
-        });
-      }
     }
 
     tx.set(
@@ -451,8 +449,12 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
         levelXpCents: nextProgress.xpCents,
         nextLevelXpCents: nextProgress.nextLevelXpCents,
         highestRewardedLevel: Math.max(currentRewardLevel, nextProgress.level),
+        lifetimeXp: nextProgress.totalXp,
+        lootCoins: Math.round(currentLootCoins + progressionLootCoins),
+        lootCoinsEarned: Math.round(currentLootCoinsEarned + progressionLootCoins),
         inventory: nextInventory,
         recentUnlocks: nextUnlockHistory,
+        totalRewardsClaimed: currentRewardsClaimed + rewardLevels.length,
         lastXpGain: gainedXp,
         lastSpendUsd: spendUsd,
         lastLevelUpLevel: nextProgress.level > currentProgress.level ? nextProgress.level : 0,
@@ -506,6 +508,7 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
       tags: ["progression", "xp"],
       metadata: {
         orderId: session.id,
+          lootCoinsAwarded: progressionLootCoins,
       },
     });
 
