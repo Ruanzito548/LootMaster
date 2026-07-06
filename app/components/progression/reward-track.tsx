@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { type RewardTrackNode } from "../../../lib/level-rewards";
 
 const rarityStyles: Record<string, { dot: string; border: string; glow: string; text: string }> = {
@@ -78,7 +80,10 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                   } ${node.isMilestone ? "min-h-[202px]" : "min-h-[188px]"} bg-[linear-gradient(170deg,rgba(12,20,35,0.95),rgba(6,10,22,0.95))] hover:-translate-y-1.5 hover:opacity-100`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-2xl leading-none">{node.reward.icon}</span>
+                    <div className="flex items-center gap-2">
+                      <Image src="/chest.png" alt="Chest" width={28} height={28} className="h-7 w-7 object-contain" />
+                      <span className="text-xl leading-none">{node.reward.icon}</span>
+                    </div>
                     <span className={`text-[0.62rem] font-bold uppercase tracking-[0.14em] ${styles.text}`}>
                       {node.reward.badge}
                     </span>
