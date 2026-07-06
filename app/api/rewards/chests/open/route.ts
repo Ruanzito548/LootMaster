@@ -208,8 +208,8 @@ export async function POST(request: Request): Promise<Response> {
         type: rolledLoot.drops.length === 1 && rolledLoot.drops[0]?.kind === "coins" ? "coins" : "item",
         title: rewardParts.join(" + "),
         rarity: chestDefinition.rarity,
-        amount: totalCoins > 0 ? totalCoins : undefined,
-        inventoryItem: singleInventoryReward,
+        ...(totalCoins > 0 ? { amount: totalCoins } : {}),
+        ...(singleInventoryReward ? { inventoryItem: singleInventoryReward } : {}),
       };
 
       const xpGain = XP_GAIN_BY_CHEST[chestDefinition.id];
