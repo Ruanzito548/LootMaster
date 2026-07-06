@@ -1,4 +1,4 @@
-import { type LevelProgress, formatMoneyUsd } from "../../../lib/level-rewards";
+import { type LevelProgress } from "../../../lib/level-rewards";
 
 type HeroLevelCardProps = {
   username: string;
@@ -32,9 +32,6 @@ export function HeroLevelCard({ username, email, avatarUrl, coverUrl, progress }
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="theme-pill-accent rounded-full px-4 py-2 text-sm font-black">
               Level {progress.level}
-            </div>
-            <div className="theme-pill-warn rounded-full px-4 py-2 text-sm font-black">
-              ${formatMoneyUsd(progress.totalSpentUsd)} spent
             </div>
           </div>
 
