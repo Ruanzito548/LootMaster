@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { HeroLevelCard } from "../components/progression/hero-level-card";
-import { MainStatsGrid } from "../components/progression/main-stats-grid";
 import { buildLevelReward, calculateLevelProgress, formatMoneyUsd } from "../../lib/level-rewards";
 import { defaultCoverURL, defaultPhotoURL } from "../../lib/profile-data";
 import { useProfileSession } from "./use-profile-session";
@@ -21,7 +20,6 @@ export default function ProfilePage() {
   const resolvedPhoto = photoDraft ?? profile?.photoURL ?? defaultPhotoURL;
   const resolvedCover = coverDraft ?? profile?.coverURL ?? defaultCoverURL;
   const progress = calculateLevelProgress(profile?.totalSpentCents ?? 0);
-  const nextReward = buildLevelReward(progress.nextLevel, `${profile?.uid ?? "profile"}-preview`);
   const levelUpReward = profile?.lastLevelUpLevel ? buildLevelReward(profile.lastLevelUpLevel, `${profile.uid}-level-up`) : null;
 
   const saveAppearance = async () => {
@@ -114,10 +112,7 @@ export default function ProfilePage() {
           avatarUrl={resolvedPhoto || defaultPhotoURL}
           coverUrl={resolvedCover || defaultCoverURL}
           progress={progress}
-          nextReward={nextReward}
         />
-
-        <MainStatsGrid progress={progress} lootCoins={profile.lootCoins} rewardsUnlocked={profile.highestRewardedLevel - 1} />
 
         <section className="loot-panel rounded-[2rem] p-6 sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
