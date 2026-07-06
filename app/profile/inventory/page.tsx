@@ -93,6 +93,17 @@ const RARITY_GLOW: Record<string, string> = {
   heirloom: "shadow-[0_0_26px_rgba(0,204,255,0.45)] border-[#00ccff]/62",
 };
 
+const RARITY_TEXT: Record<string, string> = {
+  poor: "text-[#9d9d9d]",
+  common: "text-[#dfe4ef]",
+  uncommon: "text-[#1eff00]",
+  rare: "text-[#4da3ff]",
+  epic: "text-[#c67bff]",
+  legendary: "text-[#ffb347]",
+  artifact: "text-[#f0d98c]",
+  heirloom: "text-[#6ee7ff]",
+};
+
 const DROP_HINT_BY_RARITY: Record<string, string> = {
   common: "Common+, low chance Rare",
   rare: "Rare+ chance, possible Epic",
@@ -543,7 +554,10 @@ export default function InventoryPage() {
           <div className="relative mt-5 flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => setShowCraftMenu(true)}
+              onClick={() => {
+                setOpenCraftCategory(null);
+                setShowCraftMenu(true);
+              }}
               className="loot-gold-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]"
             >
               Craft
@@ -830,7 +844,7 @@ export default function InventoryPage() {
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Gift Card</p>
-                                <h4 className="mt-1 text-lg font-black text-white">{recipe.title}</h4>
+                                <h4 className={`mt-1 text-lg font-black ${RARITY_TEXT[recipe.outputItem.rarity] ?? "text-white"}`}>{recipe.title}</h4>
                                 <p className="mt-1 text-sm text-[#bed4ec]">{recipe.description}</p>
                               </div>
                             </div>
@@ -873,27 +887,11 @@ export default function InventoryPage() {
                     className="flex w-full items-center justify-between px-4 py-3 text-left"
                   >
                     <span className="text-sm font-black uppercase tracking-[0.14em] text-white">{openCraftCategory === "chests" ? "▼" : "▶"} Chests</span>
-                    <span className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#9fbad8]">{chestRecipes.length + 1} entries</span>
+                    <span className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#9fbad8]">{chestRecipes.length} entries</span>
                   </button>
 
                   {openCraftCategory === "chests" ? (
                     <div className="grid gap-3 border-t border-white/10 p-4 sm:grid-cols-2 xl:grid-cols-3">
-                      <article className="rounded-2xl border border-white/12 bg-[linear-gradient(160deg,rgba(7,13,24,0.9),rgba(12,22,36,0.82))] p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-white/12 bg-black/35 p-2">
-                            <Image src="/chest.png" alt="Common Chest" fill className="object-contain" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Chest</p>
-                            <h4 className="mt-1 text-lg font-black text-white">Common Chest</h4>
-                            <p className="mt-2 text-sm text-[#bed4ec]">Cannot be crafted. Obtained only through Battle Pass.</p>
-                          </div>
-                        </div>
-                        <button type="button" disabled className="mt-4 w-full cursor-not-allowed rounded-full border border-white/15 bg-white/6 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#9fbad8]">
-                          Not Craftable
-                        </button>
-                      </article>
-
                       {chestRecipes.map((recipe) => {
                         const recipeCraftable = canCraft(recipe);
                         const recipeIconSrc = recipe.outputItem.iconPath ?? "/chest.png";
@@ -906,7 +904,7 @@ export default function InventoryPage() {
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Chest</p>
-                                <h4 className="mt-1 text-lg font-black text-white">{recipe.title}</h4>
+                                <h4 className={`mt-1 text-lg font-black ${RARITY_TEXT[recipe.outputItem.rarity] ?? "text-white"}`}>{recipe.title}</h4>
                                 <p className="mt-1 text-sm text-[#bed4ec]">{recipe.description}</p>
                               </div>
                             </div>
