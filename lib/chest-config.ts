@@ -162,6 +162,10 @@ function getDefaultProfile(definition: ChestDefinition): ChestDropProfile {
     common: [
       { type: "coins", weight: 100 },
     ],
+    uncommon: [
+      { type: "coins", weight: 72 },
+      { type: "item", weight: 28 },
+    ],
     rare: [
       { type: "coins", weight: 72 },
       { type: "item", weight: 28 },
@@ -182,6 +186,7 @@ function getDefaultProfile(definition: ChestDefinition): ChestDropProfile {
 
   const fragmentByChest: Record<ChestId, ChestDropProfile["giftCardFragment"]> = {
     common: { chancePercent: 0, min: 0, max: 0 },
+    uncommon: { chancePercent: 100, min: 1, max: 1 },
     rare: { chancePercent: 100, min: 1, max: 1 },
     epic: { chancePercent: 100, min: 1, max: 3 },
     legendary: { chancePercent: 0, min: 0, max: 0 },
@@ -190,6 +195,7 @@ function getDefaultProfile(definition: ChestDefinition): ChestDropProfile {
 
   const fullGiftCardByChest: Record<ChestId, ChestDropProfile["fullGiftCard"]> = {
     common: { chancePercent: 0, min: 0, max: 0 },
+    uncommon: { chancePercent: 0, min: 0, max: 0 },
     rare: { chancePercent: 0, min: 0, max: 0 },
     epic: { chancePercent: 0, min: 0, max: 0 },
     legendary: { chancePercent: 100, min: 1, max: 1 },
@@ -198,6 +204,7 @@ function getDefaultProfile(definition: ChestDefinition): ChestDropProfile {
 
   const accountByChest: Record<ChestId, ChestDropProfile["accountDrop"]> = {
     common: { enabled: false, chancePercent: 0 },
+    uncommon: { enabled: false, chancePercent: 0 },
     rare: { enabled: false, chancePercent: 0 },
     epic: { enabled: false, chancePercent: 0 },
     legendary: { enabled: false, chancePercent: 0 },
@@ -206,6 +213,7 @@ function getDefaultProfile(definition: ChestDefinition): ChestDropProfile {
 
   const coinRangeByChest: Record<ChestId, { min: number; max: number }> = {
     common: { min: 0, max: 1 },
+    uncommon: { min: 0, max: 3 },
     rare: { min: 0, max: 3 },
     epic: { min: 0, max: 10 },
     legendary: { min: 0, max: 25 },

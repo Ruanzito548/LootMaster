@@ -258,6 +258,7 @@ export function removeItemQuantity(
 export function buildChestInventoryItem(chestId: ChestId): InventoryItem {
   const rarityByChest: Record<ChestId, InventoryItem["rarity"]> = {
     common: "common",
+    uncommon: "uncommon",
     rare: "rare",
     epic: "epic",
     legendary: "legendary",
@@ -266,6 +267,7 @@ export function buildChestInventoryItem(chestId: ChestId): InventoryItem {
 
   const titleByChest: Record<ChestId, string> = {
     common: "Common Chest",
+    uncommon: "Uncommon Chest",
     rare: "Rare Chest",
     epic: "Epic Chest",
     legendary: "Legendary Chest",
@@ -286,13 +288,12 @@ export function buildChestInventoryItem(chestId: ChestId): InventoryItem {
 export const CRAFT_RECIPES: CraftRecipe[] = [
   {
     id: "craft-gift-card",
-    title: "Gift Card",
-    description: "Craft a random branded Gift Card from fragments.",
+    title: "Gift Card $10",
+    description: "Combine fragments to craft one Gift Card of $10.",
     outputType: "item",
-    coinCost: 1,
     outputItem: {
-      id: "gift-card",
-      name: "Gift Card (Random Brand)",
+      id: "gift-card-10usd",
+      name: "Gift Card $10",
       category: "Gift Card",
       rarity: "epic",
       quantity: 1,
@@ -301,7 +302,87 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     materials: [
       { itemId: "gift-card-fragment", quantity: 5, name: "Gift Card Fragment" },
     ],
-    xpGain: 88,
+    xpGain: 42,
+  },
+  {
+    id: "craft-uncommon-chest",
+    title: "Uncommon Chest",
+    description: "Craft one Uncommon Chest using Uncommon Chest Fragments.",
+    outputType: "chest",
+    outputItem: {
+      id: "chest-uncommon",
+      name: "Uncommon Chest",
+      category: "Chest",
+      rarity: "uncommon",
+      quantity: 1,
+      iconPath: "/itens/general/ticket.png",
+    },
+    materials: [{ itemId: "fragment-chest-uncommon", quantity: 20, name: "Uncommon Chest Fragment" }],
+    xpGain: 20,
+  },
+  {
+    id: "craft-rare-chest",
+    title: "Rare Chest",
+    description: "Craft one Rare Chest using Rare Chest Fragments.",
+    outputType: "chest",
+    outputItem: {
+      id: "chest-rare",
+      name: "Rare Chest",
+      category: "Chest",
+      rarity: "rare",
+      quantity: 1,
+      iconPath: "/itens/general/ticket.png",
+    },
+    materials: [{ itemId: "fragment-chest-rare", quantity: 20, name: "Rare Chest Fragment" }],
+    xpGain: 26,
+  },
+  {
+    id: "craft-epic-chest",
+    title: "Epic Chest",
+    description: "Craft one Epic Chest using Epic Chest Fragments.",
+    outputType: "chest",
+    outputItem: {
+      id: "chest-epic",
+      name: "Epic Chest",
+      category: "Chest",
+      rarity: "epic",
+      quantity: 1,
+      iconPath: "/itens/general/ticket.png",
+    },
+    materials: [{ itemId: "fragment-chest-epic", quantity: 20, name: "Epic Chest Fragment" }],
+    xpGain: 34,
+  },
+  {
+    id: "craft-legendary-chest",
+    title: "Legendary Chest",
+    description: "Craft one Legendary Chest using Legendary Chest Fragments.",
+    outputType: "chest",
+    outputItem: {
+      id: "chest-legendary",
+      name: "Legendary Chest",
+      category: "Chest",
+      rarity: "legendary",
+      quantity: 1,
+      iconPath: "/itens/general/ticket.png",
+    },
+    materials: [{ itemId: "fragment-chest-legendary", quantity: 20, name: "Legendary Chest Fragment" }],
+    xpGain: 44,
+  },
+  {
+    id: "craft-mythic-chest",
+    title: "Mythic Chest",
+    description: "Craft one Mythic Chest using Mythic Chest Fragments.",
+    outputType: "chest",
+    outputItem: {
+      id: "chest-mythic",
+      name: "Mythic Chest",
+      category: "Chest",
+      rarity: "artifact",
+      quantity: 1,
+      iconPath: "/itens/general/ticket.png",
+    },
+    materials: [{ itemId: "fragment-chest-mythic", quantity: 20, name: "Mythic Chest Fragment" }],
+    xpGain: 58,
   },
 ];
 

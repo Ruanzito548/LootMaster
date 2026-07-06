@@ -48,6 +48,7 @@ export default function RewardsPage() {
   const completionPercent = Math.min(100, Math.max(0, (progress.level / LEVEL_CAP) * 100));
   const currentLevelFloor = getXpThresholdForLevel(progress.level);
   const nextLevelFloor = getXpThresholdForLevel(progress.nextLevel);
+  const nextMilestone = [10, 15, 20].find((level) => level > progress.level) ?? 20;
 
   return (
     <div className="loot-shell">
@@ -58,9 +59,9 @@ export default function RewardsPage() {
           <div className="relative grid gap-6 lg:grid-cols-[1.15fr_1.05fr_0.9fr] lg:items-stretch">
             <div className="space-y-4">
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[color:var(--accent)]">Loyalty Progression</p>
-              <h1 className="loot-title text-3xl font-black leading-none sm:text-5xl">Reward Road RPG</h1>
+              <h1 className="loot-title text-3xl font-black leading-none sm:text-5xl">Permanent Battle Pass</h1>
               <p className="max-w-xl text-sm leading-7 text-[color:var(--text-muted)]">
-                Evolve sua conta como um personagem de MMO: cada compra gera XP, sobe seu nível e abre novas recompensas de longo prazo.
+                Evolve your account like an MMO character: each purchase grants XP, advances your level, and unlocks long-term rewards.
               </p>
 
               <div className="flex flex-wrap gap-2">
@@ -102,6 +103,8 @@ export default function RewardsPage() {
                 <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">Next Floor: {nextLevelFloor.toLocaleString("en-US")}</p>
                 <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">XP Remaining: {progress.xpToNextLevel.toFixed(0)}</p>
                 <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">$1 = {XP_PER_USD} XP</p>
+                <p className="rounded-xl border border-[#ffcf67]/30 bg-[#ffcf67]/8 px-3 py-2 text-[#ffe3b0]">Next Major Milestone: Level {nextMilestone}</p>
+                <p className="rounded-xl border border-[#ffcf67]/30 bg-[#ffcf67]/8 px-3 py-2 text-[#ffe3b0]">Milestone Road: 10 • 15 • 20</p>
               </div>
             </div>
 
@@ -129,11 +132,11 @@ export default function RewardsPage() {
         <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
           <article className="loot-panel overflow-hidden rounded-[1.8rem] p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="loot-title text-2xl font-black sm:text-3xl">Reward Road</h2>
+              <h2 className="loot-title text-2xl font-black sm:text-3xl">Battle Pass Track</h2>
               <span className="theme-pill-accent rounded-full px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.14em]">Battle Pass Timeline</span>
             </div>
             <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
-              Estados: locked, available, claimed. Passe o mouse para ver detalhes da recompensa.
+              States: locked, available, claimed. Hover to inspect reward details.
             </p>
             <div className="mt-4">
               <RewardTrack nodes={nodes} />
@@ -178,6 +181,29 @@ export default function RewardsPage() {
             <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Completion %</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{completionPercent.toFixed(1)}%</p></article>
             <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Next Reward</p><p className="mt-2 text-base font-black text-[color:var(--text-main)]">{nextReward.shortLabel}</p></article>
           </div>
+        </section>
+
+        <section className="loot-panel rounded-[1.8rem] p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="loot-title text-2xl font-black sm:text-3xl">Unlocked Reward History</h2>
+            <span className="theme-pill-accent rounded-full px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.14em]">Recent Unlocks</span>
+          </div>
+
+          {(profile?.recentUnlocks ?? []).length > 0 ? (
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {(profile?.recentUnlocks ?? []).slice(0, 12).map((entry) => (
+                <article key={entry.id} className="theme-surface-soft rounded-xl border border-white/10 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-black text-[color:var(--text-main)]">{entry.icon} {entry.title}</p>
+                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[color:var(--accent)]">Lvl {entry.level}</p>
+                  </div>
+                  <p className="mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--text-muted)]">{entry.rarity}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm font-semibold text-[color:var(--text-muted)]">No unlocked rewards yet. Keep progressing in the Battle Pass.</p>
+          )}
         </section>
 
         <div className="flex flex-wrap gap-2 pt-1">

@@ -1,6 +1,6 @@
 import type { InventoryItem } from "./profile-data";
 
-export type ChestRarity = "common" | "rare" | "epic" | "legendary" | "mythic";
+export type ChestRarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "mythic";
 export type ChestId = ChestRarity;
 
 export type ChestRewardType = "coins" | "item" | "chest" | "cosmetic";
@@ -55,6 +55,28 @@ export const CHEST_DEFINITIONS: Record<ChestId, ChestDefinition> = {
       { rarity: "common", weight: 73 },
       { rarity: "uncommon", weight: 22 },
       { rarity: "rare", weight: 5 },
+    ],
+  },
+  uncommon: {
+    id: "uncommon",
+    rarity: "uncommon",
+    title: "Uncommon Chest",
+    shortLabel: "Uncommon",
+    description: "Green-tier chest with improved progression fragments.",
+    inventoryItemId: "chest-uncommon",
+    inventoryItemName: "Uncommon Chest",
+    borderClass: "border-[#1eff00]/46",
+    glowClass: "shadow-[0_0_30px_rgba(30,255,0,0.22)]",
+    badgeClass: "bg-[#1eff00]/16 text-[#b9ffb2] border-[#1eff00]/40",
+    rewardOdds: [
+      { type: "coins", weight: 68 },
+      { type: "item", weight: 32 },
+    ],
+    coinRange: { min: 8, max: 54 },
+    itemRarityWeights: [
+      { rarity: "common", weight: 52 },
+      { rarity: "uncommon", weight: 35 },
+      { rarity: "rare", weight: 13 },
     ],
   },
   rare: {
@@ -155,7 +177,7 @@ export const CHEST_DEFINITIONS: Record<ChestId, ChestDefinition> = {
   },
 };
 
-export const CHEST_IDS: ChestId[] = ["common", "rare", "epic", "legendary", "mythic"];
+export const CHEST_IDS: ChestId[] = ["common", "uncommon", "rare", "epic", "legendary", "mythic"];
 
 export function getChestDefinition(chestId: string): ChestDefinition | null {
   if (chestId in CHEST_DEFINITIONS) {

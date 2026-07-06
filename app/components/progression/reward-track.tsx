@@ -7,6 +7,12 @@ const rarityStyles: Record<string, { dot: string; border: string; glow: string; 
     glow: "shadow-[0_0_16px_rgba(156,163,175,0.22)]",
     text: "text-[#d2d6de]",
   },
+  uncommon: {
+    dot: "bg-[#1eff00]",
+    border: "border-[#1eff00]/50",
+    glow: "shadow-[0_0_18px_rgba(30,255,0,0.3)]",
+    text: "text-[#bbffb3]",
+  },
   rare: {
     dot: "bg-[#3b82f6]",
     border: "border-[#3b82f6]/50",

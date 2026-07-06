@@ -90,8 +90,6 @@ const DROP_HINT_BY_RARITY: Record<string, string> = {
   mythic: "Mythic table with premium outcomes",
 };
 
-const GIFT_CARD_BRANDS = ["League of Legends", "Blizzard", "Steam", "Valorant", "PSN", "Xbox"] as const;
-
 function getChestIdByInventoryItem(item: InventoryItem): ChestId | null {
   const normalized = item.id.trim().toLowerCase();
 
@@ -159,6 +157,7 @@ export default function InventoryPage() {
   const [craftBusyId, setCraftBusyId] = useState<string | null>(null);
   const [rewardOddsByChest, setRewardOddsByChest] = useState<RewardOddsByChest>(() => ({
     common: CHEST_DEFINITIONS.common.rewardOdds,
+    uncommon: CHEST_DEFINITIONS.uncommon.rewardOdds,
     rare: CHEST_DEFINITIONS.rare.rewardOdds,
     epic: CHEST_DEFINITIONS.epic.rewardOdds,
     legendary: CHEST_DEFINITIONS.legendary.rewardOdds,
@@ -237,6 +236,7 @@ export default function InventoryPage() {
         if (!cancelled && response.ok && payload?.config?.byChest) {
           setRewardOddsByChest({
             common: payload.config.byChest.common?.rewardOdds ?? CHEST_DEFINITIONS.common.rewardOdds,
+            uncommon: payload.config.byChest.uncommon?.rewardOdds ?? CHEST_DEFINITIONS.uncommon.rewardOdds,
             rare: payload.config.byChest.rare?.rewardOdds ?? CHEST_DEFINITIONS.rare.rewardOdds,
             epic: payload.config.byChest.epic?.rewardOdds ?? CHEST_DEFINITIONS.epic.rewardOdds,
             legendary: payload.config.byChest.legendary?.rewardOdds ?? CHEST_DEFINITIONS.legendary.rewardOdds,
@@ -247,6 +247,7 @@ export default function InventoryPage() {
         if (!cancelled) {
           setRewardOddsByChest({
             common: CHEST_DEFINITIONS.common.rewardOdds,
+            uncommon: CHEST_DEFINITIONS.uncommon.rewardOdds,
             rare: CHEST_DEFINITIONS.rare.rewardOdds,
             epic: CHEST_DEFINITIONS.epic.rewardOdds,
             legendary: CHEST_DEFINITIONS.legendary.rewardOdds,
@@ -410,14 +411,14 @@ export default function InventoryPage() {
         body: JSON.stringify({ recipeId, quantity: 1 }),
       });
 
-      const payload = (await response.json()) as { error?: string; recipeTitle?: string; xpGain?: number; coinCost?: number };
+      const payload = (await response.json()) as { error?: string; recipeTitle?: string; xpGain?: number };
 
       if (!response.ok) {
         pushToast("error", payload.error ?? "Craft failed.");
         return;
       }
 
-      pushToast("success", `Craft complete: ${payload.recipeTitle ?? "item"} (+${payload.xpGain ?? 0} XP, -${payload.coinCost ?? 0} LC)`);
+      pushToast("success", `Craft complete: ${payload.recipeTitle ?? "item"} (+${payload.xpGain ?? 0} XP)`);
       reload();
     } catch {
       pushToast("error", "Craft service unavailable.");
@@ -757,18 +758,7 @@ export default function InventoryPage() {
             <motion.section className="absolute left-1/2 top-1/2 max-h-[86vh] w-[min(96vw,760px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-white/16 bg-[linear-gradient(180deg,rgba(12,22,36,0.98),rgba(7,13,24,0.98))] p-6" initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}>
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#9ad6ff]">Crafting Forge</p>
               <h3 className="mt-2 text-3xl font-black text-white">Gift Card Workshop</h3>
-              <p className="mt-2 text-sm text-[#b9d1ea]">Use 5 fragments + 1 LC to craft a random branded Gift Card.</p>
-
-              <div className="mt-4 rounded-2xl border border-cyan-300/30 bg-[linear-gradient(135deg,rgba(27,68,106,0.35),rgba(5,17,31,0.75))] p-4">
-                <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#9ad6ff]">Available Gift Cards</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {GIFT_CARD_BRANDS.map((brand) => (
-                    <span key={brand} className="rounded-full border border-cyan-300/35 bg-cyan-500/10 px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.13em] text-[#d8f4ff]">
-                      {brand}
-                    </span>
-                  ))}
-                </div>
-              </div>
+              <p className="mt-2 text-sm text-[#b9d1ea]">Craft Gift Cards and higher-tier Chests using the fragments dropped in Loot Chests.</p>
 
               <div className="mt-5 grid gap-3">
                 {craftRecipes.map((recipe) => (
@@ -781,7 +771,6 @@ export default function InventoryPage() {
                       </div>
                       <div className="flex gap-2">
                         <span className="rounded-full border border-white/14 bg-white/8 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#d5e7fb]">+{recipe.xpGain} XP</span>
-                        <span className="rounded-full border border-[#ffcf67]/40 bg-[#ffcf67]/12 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#ffe2a8]">-{recipe.coinCost ?? 0} LC</span>
                       </div>
                     </div>
 

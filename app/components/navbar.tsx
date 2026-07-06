@@ -33,6 +33,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/games", label: "Games", icon: Gamepad2 },
+  { href: "/crafting", label: "Crafting", icon: Crown },
   { href: "/rewards", label: "Rewards", icon: Gift },
   { href: "/profile/inventory", label: "Inventory", icon: Package },
   { href: "/admin", label: "Admin", icon: Shield, requiresAdmin: true },
@@ -176,7 +177,7 @@ export function Navbar() {
           <div className="gm-glass hidden items-center gap-2 rounded-xl px-3 py-2 sm:flex">
             <Crown className="h-4 w-4 text-[color:var(--accent)]" />
             <span className="text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--text-main)]">
-              {profile ? `${profile.lootCoins.toLocaleString("pt-BR")} LC` : "0 LC"}
+              {profile ? `${profile.lootCoins.toLocaleString("en-US")} LC` : "0 LC"}
             </span>
           </div>
 

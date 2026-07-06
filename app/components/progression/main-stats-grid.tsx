@@ -11,7 +11,7 @@ export function MainStatsGrid({ progress, lootCoins, rewardsUnlocked }: MainStat
     { label: "Level", value: String(progress.level), tone: "text-[#8dd0ff]" },
     { label: "Current XP", value: progress.xpCents.toFixed(2), tone: "text-[#dff7ff]" },
     { label: "Total Spent", value: `$${formatMoneyUsd(progress.totalSpentUsd)}`, tone: "text-[#ffcf57]" },
-    { label: "Loot Coins", value: lootCoins.toLocaleString("pt-BR"), tone: "text-[#88ffd5]" },
+    { label: "Loot Coins", value: lootCoins.toLocaleString("en-US"), tone: "text-[#88ffd5]" },
     { label: "Rewards Unlocked", value: String(rewardsUnlocked), tone: "text-[#f6a7ff]" },
   ];
 
