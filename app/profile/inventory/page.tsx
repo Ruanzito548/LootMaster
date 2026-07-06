@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { ChestOpeningAnimation } from "@/app/components/chests/ChestOpeningAnimation";
 import { useProfileSession } from "@/app/profile/use-profile-session";
+import { getLootOddsForPreview } from "@/lib/chest-loot";
 import { CHEST_DEFINITIONS, CHEST_IDS, type ChestId } from "@/lib/chests";
 import { type InventoryItem } from "@/lib/profile-data";
 import { CRAFT_RECIPES, MARKETPLACE_MIN_PRICE, calculateMarketplaceFee, calculateMarketplaceReceive, getXpIntoCurrentLevel } from "@/lib/rpg-system";
@@ -47,6 +48,15 @@ type ToastState = {
 type ChestMenuState = {
   item: InventoryItem;
   chestId: ChestId;
+};
+
+const DEFAULT_REWARD_ODDS_BY_CHEST: RewardOddsByChest = {
+  common: getLootOddsForPreview("common"),
+  uncommon: getLootOddsForPreview("uncommon"),
+  rare: getLootOddsForPreview("rare"),
+  epic: getLootOddsForPreview("epic"),
+  legendary: getLootOddsForPreview("legendary"),
+  mythic: getLootOddsForPreview("mythic"),
 };
 
 const RARITY_ORDER: Record<string, number> = {
@@ -154,14 +164,7 @@ export default function InventoryPage() {
 
   const [craftRecipes, setCraftRecipes] = useState<CraftRecipe[]>(CRAFT_RECIPES);
   const [craftBusyId, setCraftBusyId] = useState<string | null>(null);
-  const [rewardOddsByChest, setRewardOddsByChest] = useState<RewardOddsByChest>(() => ({
-    common: CHEST_DEFINITIONS.common.rewardOdds,
-    uncommon: CHEST_DEFINITIONS.uncommon.rewardOdds,
-    rare: CHEST_DEFINITIONS.rare.rewardOdds,
-    epic: CHEST_DEFINITIONS.epic.rewardOdds,
-    legendary: CHEST_DEFINITIONS.legendary.rewardOdds,
-    mythic: CHEST_DEFINITIONS.mythic.rewardOdds,
-  }));
+  const [rewardOddsByChest, setRewardOddsByChest] = useState<RewardOddsByChest>(() => DEFAULT_REWARD_ODDS_BY_CHEST);
 
   const [isOpening, setIsOpening] = useState(false);
   const [openSequence, setOpenSequence] = useState(0);
@@ -251,24 +254,17 @@ export default function InventoryPage() {
 
         if (!cancelled && response.ok && payload?.config?.byChest) {
           setRewardOddsByChest({
-            common: payload.config.byChest.common?.rewardOdds ?? CHEST_DEFINITIONS.common.rewardOdds,
-            uncommon: payload.config.byChest.uncommon?.rewardOdds ?? CHEST_DEFINITIONS.uncommon.rewardOdds,
-            rare: payload.config.byChest.rare?.rewardOdds ?? CHEST_DEFINITIONS.rare.rewardOdds,
-            epic: payload.config.byChest.epic?.rewardOdds ?? CHEST_DEFINITIONS.epic.rewardOdds,
-            legendary: payload.config.byChest.legendary?.rewardOdds ?? CHEST_DEFINITIONS.legendary.rewardOdds,
-            mythic: payload.config.byChest.mythic?.rewardOdds ?? CHEST_DEFINITIONS.mythic.rewardOdds,
+            common: payload.config.byChest.common?.rewardOdds ?? DEFAULT_REWARD_ODDS_BY_CHEST.common,
+            uncommon: payload.config.byChest.uncommon?.rewardOdds ?? DEFAULT_REWARD_ODDS_BY_CHEST.uncommon,
+            rare: payload.config.byChest.rare?.rewardOdds ?? DEFAULT_REWARD_ODDS_BY_CHEST.rare,
+            epic: payload.config.byChest.epic?.rewardOdds ?? DEFAULT_REWARD_ODDS_BY_CHEST.epic,
+            legendary: payload.config.byChest.legendary?.rewardOdds ?? DEFAULT_REWARD_ODDS_BY_CHEST.legendary,
+            mythic: payload.config.byChest.mythic?.rewardOdds ?? DEFAULT_REWARD_ODDS_BY_CHEST.mythic,
           });
         }
       } catch {
         if (!cancelled) {
-          setRewardOddsByChest({
-            common: CHEST_DEFINITIONS.common.rewardOdds,
-            uncommon: CHEST_DEFINITIONS.uncommon.rewardOdds,
-            rare: CHEST_DEFINITIONS.rare.rewardOdds,
-            epic: CHEST_DEFINITIONS.epic.rewardOdds,
-            legendary: CHEST_DEFINITIONS.legendary.rewardOdds,
-            mythic: CHEST_DEFINITIONS.mythic.rewardOdds,
-          });
+          setRewardOddsByChest(DEFAULT_REWARD_ODDS_BY_CHEST);
         }
       }
     };

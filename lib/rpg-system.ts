@@ -289,7 +289,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
   {
     id: "craft-gift-card",
     title: "Gift Card $10",
-    description: "Combine fragments to craft one Gift Card of $10.",
+    description: "Combine 10 fragments to craft one Gift Card of $10.",
     outputType: "item",
     outputItem: {
       id: "gift-card-10usd",
@@ -300,7 +300,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       iconPath: "/itens/general/ticket.png",
     },
     materials: [
-      { itemId: "gift-card-fragment", quantity: 5, name: "Gift Card Fragment" },
+      { itemId: "gift-card-fragment", quantity: 10, name: "Gift Card Fragment" },
     ],
     xpGain: 42,
   },

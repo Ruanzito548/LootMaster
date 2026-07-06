@@ -1,10 +1,9 @@
-import { randomInt } from "node:crypto";
-
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { getChestDefinition, type ChestId } from "@/lib/chests";
+import { CHEST_EXPECTED_VALUE_USD, rollChestLoot } from "@/lib/chest-loot";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
 import { applyXpGain, getInventorySlotLimitFromLevel, mergeItemIntoInventory } from "@/lib/rpg-system";
@@ -36,16 +35,6 @@ type OpenChestResponse = {
 };
 
 const REQUEST_ID_PATTERN = /^[a-zA-Z0-9_-]{8,64}$/;
-const LC_PER_USD = 20;
-
-const CHEST_EXPECTED_VALUE_USD: Record<ChestId, number> = {
-  common: 1,
-  uncommon: 2,
-  rare: 5,
-  epic: 10,
-  legendary: 20,
-  mythic: 50,
-};
 
 const XP_GAIN_BY_CHEST: Record<ChestId, number> = {
   common: 4,
@@ -54,55 +43,6 @@ const XP_GAIN_BY_CHEST: Record<ChestId, number> = {
   epic: 14,
   legendary: 18,
   mythic: 24,
-};
-
-type LootEntry =
-  | { kind: "coins"; weight: number; lcMin: number; lcMax: number }
-  | { kind: "gift-fragment"; weight: number; min: number; max: number }
-  | { kind: "chest-fragment"; weight: number; fragmentId: string; fragmentName: string; rarity: InventoryItem["rarity"]; min: number; max: number }
-  | { kind: "coupon"; weight: number; maxPercent: number; rarity: InventoryItem["rarity"] };
-
-const LOOT_TABLES: Record<ChestId, LootEntry[]> = {
-  common: [
-    { kind: "coins", weight: 55, lcMin: 8, lcMax: 26 },
-    { kind: "gift-fragment", weight: 25, min: 1, max: 2 },
-    { kind: "chest-fragment", weight: 14, fragmentId: "fragment-chest-uncommon", fragmentName: "Uncommon Chest Fragment", rarity: "common", min: 1, max: 2 },
-    { kind: "coupon", weight: 5, maxPercent: 5, rarity: "uncommon" },
-    { kind: "chest-fragment", weight: 1, fragmentId: "fragment-chest-rare", fragmentName: "Rare Chest Fragment", rarity: "rare", min: 1, max: 1 },
-  ],
-  uncommon: [
-    { kind: "coins", weight: 48, lcMin: 20, lcMax: 46 },
-    { kind: "gift-fragment", weight: 25, min: 2, max: 3 },
-    { kind: "chest-fragment", weight: 18, fragmentId: "fragment-chest-rare", fragmentName: "Rare Chest Fragment", rarity: "rare", min: 1, max: 2 },
-    { kind: "coupon", weight: 7, maxPercent: 5, rarity: "rare" },
-    { kind: "chest-fragment", weight: 2, fragmentId: "fragment-chest-epic", fragmentName: "Epic Chest Fragment", rarity: "epic", min: 1, max: 1 },
-  ],
-  rare: [
-    { kind: "coins", weight: 45, lcMin: 56, lcMax: 112 },
-    { kind: "gift-fragment", weight: 25, min: 3, max: 5 },
-    { kind: "chest-fragment", weight: 20, fragmentId: "fragment-chest-epic", fragmentName: "Epic Chest Fragment", rarity: "epic", min: 1, max: 2 },
-    { kind: "coupon", weight: 8, maxPercent: 10, rarity: "epic" },
-    { kind: "chest-fragment", weight: 2, fragmentId: "fragment-chest-legendary", fragmentName: "Legendary Chest Fragment", rarity: "legendary", min: 1, max: 1 },
-  ],
-  epic: [
-    { kind: "coins", weight: 40, lcMin: 120, lcMax: 240 },
-    { kind: "gift-fragment", weight: 26, min: 5, max: 8 },
-    { kind: "chest-fragment", weight: 22, fragmentId: "fragment-chest-legendary", fragmentName: "Legendary Chest Fragment", rarity: "legendary", min: 1, max: 2 },
-    { kind: "coupon", weight: 9, maxPercent: 15, rarity: "legendary" },
-    { kind: "chest-fragment", weight: 3, fragmentId: "fragment-chest-mythic", fragmentName: "Mythic Chest Fragment", rarity: "artifact", min: 1, max: 1 },
-  ],
-  legendary: [
-    { kind: "coins", weight: 38, lcMin: 260, lcMax: 480 },
-    { kind: "gift-fragment", weight: 30, min: 8, max: 12 },
-    { kind: "chest-fragment", weight: 20, fragmentId: "fragment-chest-mythic", fragmentName: "Mythic Chest Fragment", rarity: "artifact", min: 2, max: 3 },
-    { kind: "coupon", weight: 12, maxPercent: 20, rarity: "legendary" },
-  ],
-  mythic: [
-    { kind: "coins", weight: 34, lcMin: 700, lcMax: 1200 },
-    { kind: "gift-fragment", weight: 32, min: 15, max: 24 },
-    { kind: "chest-fragment", weight: 22, fragmentId: "fragment-chest-mythic", fragmentName: "Mythic Chest Fragment", rarity: "artifact", min: 4, max: 8 },
-    { kind: "coupon", weight: 12, maxPercent: 25, rarity: "artifact" },
-  ],
 };
 
 function isInventoryItem(value: unknown): value is InventoryItem {
@@ -127,38 +67,6 @@ function isInventoryItem(value: unknown): value is InventoryItem {
       parsed.rarity === "artifact" ||
       parsed.rarity === "heirloom")
   );
-}
-
-function roll(range: number): number {
-  return randomInt(0, range);
-}
-
-function randomInRange(min: number, max: number): number {
-  if (max <= min) {
-    return min;
-  }
-
-  return min + roll(max - min + 1);
-}
-
-function pickWeighted<T extends { weight: number }>(pool: T[]): T {
-  const total = pool.reduce((sum, item) => sum + Math.max(0, item.weight), 0);
-
-  if (total <= 0) {
-    return pool[0]!;
-  }
-
-  const target = roll(total);
-  let cursor = 0;
-
-  for (const entry of pool) {
-    cursor += Math.max(0, entry.weight);
-    if (target < cursor) {
-      return entry;
-    }
-  }
-
-  return pool[pool.length - 1]!;
 }
 
 function clampQuantity(quantity: number): number {
@@ -193,52 +101,6 @@ function decrementChest(inventory: InventoryItem[], chestItemId: string): Invent
       quantity: currentQuantity - 1,
     };
   });
-}
-
-function buildItemFromEntry(entry: LootEntry): InventoryItem {
-  if (entry.kind === "gift-fragment") {
-    const amount = randomInRange(entry.min, entry.max);
-
-    return {
-      id: "gift-card-fragment",
-      name: "Gift Card Fragment",
-      category: "Gift Card",
-      description: "Fragment used to craft one Gift Card.",
-      quantity: amount,
-      rarity: amount >= 8 ? "epic" : amount >= 4 ? "rare" : "uncommon",
-      iconPath: "/itens/general/ticket.png",
-    };
-  }
-
-  if (entry.kind === "chest-fragment") {
-    const amount = randomInRange(entry.min, entry.max);
-
-    return {
-      id: entry.fragmentId,
-      name: entry.fragmentName,
-      category: "Chest Fragment",
-      description: "Collect 20 to craft the corresponding chest tier.",
-      quantity: amount,
-      rarity: entry.rarity,
-      iconPath: "/itens/general/ticket.png",
-    };
-  }
-
-  if (entry.kind !== "coupon") {
-    throw new Error("Invalid loot table entry.");
-  }
-
-  const couponPercent = randomInRange(Math.max(2, Math.floor(entry.maxPercent / 2)), entry.maxPercent);
-
-  return {
-    id: `coupon-off-${couponPercent}`,
-    name: `${couponPercent}% OFF Coupon`,
-    category: "Coupon",
-    description: "Discount coupon obtained from chest opening.",
-    quantity: 1,
-    rarity: entry.rarity,
-    iconPath: "/itens/general/ticket.png",
-  };
 }
 
 function statusFromErrorMessage(message: string): number {
@@ -315,37 +177,40 @@ export async function POST(request: Request): Promise<Response> {
 
       let nextInventory = decrementChest(strictInventory, chestDefinition.inventoryItemId);
 
-      const lootEntry = pickWeighted(LOOT_TABLES[chestDefinition.id]);
+      const rolledLoot = rollChestLoot(chestDefinition.id);
       let nextLootCoins = mappedProfile.lootCoins;
-      let reward: OpenChestReward;
+      const rewardParts: string[] = [];
+      let totalCoins = 0;
+      let singleInventoryReward: InventoryItem | undefined;
 
-      if (lootEntry.kind === "coins") {
-        const amount = randomInRange(lootEntry.lcMin, lootEntry.lcMax);
-        nextLootCoins = Math.round((nextLootCoins + amount) * 100) / 100;
+      for (const drop of rolledLoot.drops) {
+        if (drop.kind === "coins") {
+          totalCoins += drop.amount;
+          nextLootCoins = Math.round((nextLootCoins + drop.amount) * 100) / 100;
+          rewardParts.push(`${drop.amount.toLocaleString("en-US")} LC`);
+          continue;
+        }
 
-        reward = {
-          type: "coins",
-          title: `${amount.toLocaleString("en-US")} Loot Coins`,
-          rarity: chestDefinition.rarity,
-          amount,
-        };
-      } else {
-        const item = buildItemFromEntry(lootEntry);
-        const merged = mergeItemIntoInventory(nextInventory, item, slotLimit);
+        const merged = mergeItemIntoInventory(nextInventory, drop.item, slotLimit);
 
         if (!merged.ok) {
           throw new Error(merged.error ?? "Inventory is full.");
         }
 
         nextInventory = merged.inventory;
-
-        reward = {
-          type: "item",
-          title: item.name,
-          rarity: item.rarity,
-          inventoryItem: item,
-        };
+        rewardParts.push(`${drop.item.quantity}x ${drop.item.name}`);
+        if (rolledLoot.drops.length === 1) {
+          singleInventoryReward = drop.item;
+        }
       }
+
+      const reward: OpenChestReward = {
+        type: rolledLoot.drops.length === 1 && rolledLoot.drops[0]?.kind === "coins" ? "coins" : "item",
+        title: rewardParts.join(" + "),
+        rarity: chestDefinition.rarity,
+        amount: totalCoins > 0 ? totalCoins : undefined,
+        inventoryItem: singleInventoryReward,
+      };
 
       const xpGain = XP_GAIN_BY_CHEST[chestDefinition.id];
       const progression = applyXpGain(mappedProfile.rpgXp ?? 0, xpGain);
@@ -409,6 +274,8 @@ export async function POST(request: Request): Promise<Response> {
         tags: ["chest", "opened", chestDefinition.rarity],
         metadata: {
           requestId,
+          dropCount: rolledLoot.itemCount,
+          rewardValueUsd: rolledLoot.totalValueUsd,
           rewardType: reward.type,
           rewardTitle: reward.title,
           chestExpectedUsd: CHEST_EXPECTED_VALUE_USD[chestDefinition.id],
