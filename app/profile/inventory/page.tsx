@@ -578,7 +578,7 @@ export default function InventoryPage() {
 
               const rarityClass = RARITY_GLOW[item.rarity] ?? "border-white/25";
               const itemIsChest = isChestItem(item);
-              const itemIconSrc = itemIsChest ? "/chest.jpg" : item.iconPath || "/itens/general/ticket.png";
+              const itemIconSrc = itemIsChest ? "/chest.png" : item.iconPath || "/itens/general/ticket.png";
 
               return (
                 <motion.button
@@ -881,7 +881,7 @@ export default function InventoryPage() {
                       <article className="rounded-2xl border border-white/12 bg-[linear-gradient(160deg,rgba(7,13,24,0.9),rgba(12,22,36,0.82))] p-4">
                         <div className="flex items-start gap-3">
                           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-white/12 bg-black/35 p-2">
-                            <Image src="/chest.jpg" alt="Common Chest" fill className="object-contain" />
+                            <Image src="/chest.png" alt="Common Chest" fill className="object-contain" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Chest</p>
@@ -896,7 +896,7 @@ export default function InventoryPage() {
 
                       {chestRecipes.map((recipe) => {
                         const recipeCraftable = canCraft(recipe);
-                        const recipeIconSrc = recipe.outputItem.iconPath ?? "/chest.jpg";
+                        const recipeIconSrc = recipe.outputItem.iconPath ?? "/chest.png";
 
                         return (
                           <article key={recipe.id} className="rounded-2xl border border-cyan-200/22 bg-[linear-gradient(160deg,rgba(4,14,28,0.9),rgba(10,23,41,0.78))] p-4">
