@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { HeroLevelCard } from "../components/progression/hero-level-card";
 import { MainStatsGrid } from "../components/progression/main-stats-grid";
-import { RecentUnlocks } from "../components/progression/recent-unlocks";
-import { RewardTrack } from "../components/progression/reward-track";
-import { buildLevelReward, buildRewardTrack, calculateLevelProgress, formatMoneyUsd } from "../../lib/level-rewards";
+import { buildLevelReward, calculateLevelProgress, formatMoneyUsd } from "../../lib/level-rewards";
 import { defaultCoverURL, defaultPhotoURL } from "../../lib/profile-data";
 import { useProfileSession } from "./use-profile-session";
 
@@ -25,11 +23,6 @@ export default function ProfilePage() {
   const progress = calculateLevelProgress(profile?.totalSpentCents ?? 0);
   const nextReward = buildLevelReward(progress.nextLevel, `${profile?.uid ?? "profile"}-preview`);
   const levelUpReward = profile?.lastLevelUpLevel ? buildLevelReward(profile.lastLevelUpLevel, `${profile.uid}-level-up`) : null;
-
-  const rewardTrackNodes = useMemo(
-    () => buildRewardTrack(progress.level, profile?.highestRewardedLevel ?? 1, 13),
-    [progress.level, profile?.highestRewardedLevel],
-  );
 
   const saveAppearance = async () => {
     setSaving(true);
@@ -125,40 +118,6 @@ export default function ProfilePage() {
         />
 
         <MainStatsGrid progress={progress} lootCoins={profile.lootCoins} rewardsUnlocked={profile.highestRewardedLevel - 1} />
-
-        <section className="loot-panel rounded-[2rem] p-6 sm:p-8">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="loot-title text-2xl font-black sm:text-3xl">Reward Track</h2>
-            <span className="theme-pill-accent rounded-full px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.16em]">
-              Level {progress.level}
-            </span>
-          </div>
-          <div className="mt-6">
-            <RewardTrack nodes={rewardTrackNodes} />
-          </div>
-        </section>
-
-        <RecentUnlocks items={profile.recentUnlocks} />
-
-        <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
-          <article className="loot-panel rounded-2xl p-5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--accent)]">Daily streak</p>
-            <p className="mt-3 text-3xl font-black text-[color:var(--accent)]">{profile.dailyStreak} days</p>
-            <p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Next bonus: +20 XP</p>
-          </article>
-
-          <article className="loot-panel rounded-2xl p-5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--button-hover)]">Season track</p>
-            <p className="mt-3 text-3xl font-black text-[color:var(--button-hover)]">Tier {profile.seasonTrackTier}</p>
-            <p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">2 premium nodes ahead</p>
-          </article>
-
-          <article className="loot-panel rounded-2xl p-5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-main)]">Achievements</p>
-            <p className="mt-3 text-3xl font-black text-[color:var(--text-main)]">{profile.achievementPoints}</p>
-            <p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Integrated with profile progression</p>
-          </article>
-        </section>
 
         <section className="loot-panel rounded-[2rem] p-6 sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
