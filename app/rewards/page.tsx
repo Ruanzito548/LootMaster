@@ -10,29 +10,9 @@ import {
   XP_PER_USD,
   buildLevelReward,
   calculateLevelProgress,
-  calculateTotalXp,
-  formatMoneyUsd,
   type RewardTrackNode,
 } from "../../lib/level-rewards";
 import { useProfileSession } from "../profile/use-profile-session";
-
-const rarityLegend = [
-  { label: "Common", color: "bg-[#9ca3af]" },
-  { label: "Rare", color: "bg-[#3b82f6]" },
-  { label: "Epic", color: "bg-[#a855f7]" },
-  { label: "Legendary", color: "bg-[#f59e0b]" },
-  { label: "Mythic", color: "bg-[#ef4444]" },
-];
-
-function getInventoryQuantityById(inventory: Array<{ id: string; quantity: number }> | undefined, itemId: string): number {
-  if (!Array.isArray(inventory)) {
-    return 0;
-  }
-
-  return inventory
-    .filter((item) => item.id === itemId)
-    .reduce((sum, item) => sum + Math.max(0, Math.floor(item.quantity || 0)), 0);
-}
 
 export default function RewardsPage() {
   const { profile, user, reload } = useProfileSession();
@@ -59,12 +39,6 @@ export default function RewardsPage() {
   const nextReward = buildLevelReward(nextClaimLevel, "next-claim-preview");
   const hasRemainingClaims = highestRewardedLevel < LEVEL_CAP;
   const canClaimNextReward = hasRemainingClaims && progress.level >= nextClaimLevel;
-
-  const giftCardFragments = getInventoryQuantityById(profile?.inventory, "gift-card-fragment");
-  const lifetimeSpentUsd = (profile?.totalSpentCents ?? 0) / 100;
-  const lifetimeXp = profile?.lifetimeXp ?? calculateTotalXp(profile?.totalSpentCents ?? 0);
-  const rewardsClaimed = profile?.totalRewardsClaimed ?? Math.max(0, (profile?.highestRewardedLevel ?? progress.level) - 1);
-  const completionPercent = Math.min(100, Math.max(0, (progress.level / LEVEL_CAP) * 100));
 
   const claimNextReward = async () => {
     if (!user || claimBusy || !canClaimNextReward) {
@@ -203,58 +177,6 @@ export default function RewardsPage() {
               <RewardTrack nodes={nodes} />
             </div>
           </article>
-        </section>
-
-        <section className="loot-panel rounded-[1.8rem] p-5 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="loot-title text-2xl font-black sm:text-3xl">Progress Dashboard</h2>
-            <div className="flex flex-wrap gap-2">
-              {rarityLegend.map((item) => (
-                <span key={item.label} className="theme-surface-soft inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--text-main)]">
-                  <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
-                  {item.label}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Current Level</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{progress.level}</p></article>
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Current XP</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{Math.floor(progress.totalXp).toLocaleString("en-US")}</p></article>
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">XP Until Next</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{progress.xpToNextLevel.toFixed(0)}</p></article>
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Lifetime Spent</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">${formatMoneyUsd(lifetimeSpentUsd)}</p></article>
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Lifetime XP</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{Math.floor(lifetimeXp).toLocaleString("en-US")}</p></article>
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Loot Coins Earned</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{Math.floor(profile?.lootCoinsEarned ?? 0).toLocaleString("en-US")}</p></article>
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Loot Coins Spent</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{Math.floor(profile?.lootCoinsSpent ?? 0).toLocaleString("en-US")}</p></article>
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Gift Card Fragments</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{giftCardFragments.toLocaleString("en-US")}</p></article>
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Gift Cards Crafted</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{Math.floor(profile?.giftCardsCrafted ?? 0).toLocaleString("en-US")}</p></article>
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Total Rewards Claimed</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{Math.floor(rewardsClaimed).toLocaleString("en-US")}</p></article>
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Completion %</p><p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{completionPercent.toFixed(1)}%</p></article>
-            <article className="theme-surface-soft rounded-2xl border border-white/10 p-4"><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">Next Reward</p><p className="mt-2 text-base font-black text-[color:var(--text-main)]">{nextReward.shortLabel}</p></article>
-          </div>
-        </section>
-
-        <section className="loot-panel rounded-[1.8rem] p-5 sm:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="loot-title text-2xl font-black sm:text-3xl">Unlocked Reward History</h2>
-            <span className="theme-pill-accent rounded-full px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.14em]">Recent Unlocks</span>
-          </div>
-
-          {(profile?.recentUnlocks ?? []).length > 0 ? (
-            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {(profile?.recentUnlocks ?? []).slice(0, 12).map((entry) => (
-                <article key={entry.id} className="theme-surface-soft rounded-xl border border-white/10 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-black text-[color:var(--text-main)]">{entry.icon} {entry.title}</p>
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[color:var(--accent)]">Lvl {entry.level}</p>
-                  </div>
-                  <p className="mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--text-muted)]">{entry.rarity}</p>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-4 text-sm font-semibold text-[color:var(--text-muted)]">No unlocked rewards yet. Keep progressing in the Battle Pass.</p>
-          )}
         </section>
 
         <div className="flex flex-wrap gap-2 pt-1">
