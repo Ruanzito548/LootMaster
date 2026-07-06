@@ -10,7 +10,7 @@ import { writeActivityLog } from "@/lib/activity-history.server";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { syncPaidOrderToWalletBackend } from "@/lib/wallet-backend";
-import { buildLevelRewards, buildUnlockHistoryItem, calculateLevelProgress, calculateTotalXp } from "../../../lib/level-rewards";
+import { calculateLevelProgress, calculateTotalXp } from "../../../lib/level-rewards";
 
 /**
  * Stripe webhook endpoint.
@@ -411,28 +411,10 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
         ? userData.totalRewardsClaimed
         : 0;
 
-    const nextInventory = Array.isArray(userData.inventory)
-      ? [...(userData.inventory as unknown[])]
+    const unlockedLevels = nextProgress.level > currentRewardLevel
+      ? Array.from({ length: nextProgress.level - currentRewardLevel }, (_, index) => currentRewardLevel + index + 1)
       : [];
-
-    const rewardLevels = nextProgress.level > currentRewardLevel
-      ? buildLevelRewards(currentRewardLevel + 1, nextProgress.level)
-      : [];
-
     const nowIso = new Date().toISOString();
-    const storedUnlocks = Array.isArray(userData.recentUnlocks)
-      ? [...(userData.recentUnlocks as unknown[])]
-      : [];
-    const nextUnlockHistory = [
-      ...rewardLevels.map((reward) => buildUnlockHistoryItem(reward, session.id, nowIso)),
-      ...storedUnlocks,
-    ].slice(0, 24);
-
-    for (const reward of rewardLevels) {
-      for (const item of reward.grantedItems) {
-        nextInventory.push(item);
-      }
-    }
 
     tx.set(
       userRef,
@@ -441,11 +423,9 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
         level: nextProgress.level,
         levelXpCents: nextProgress.xpCents,
         nextLevelXpCents: nextProgress.nextLevelXpCents,
-        highestRewardedLevel: Math.max(currentRewardLevel, nextProgress.level),
+        highestRewardedLevel: currentRewardLevel,
         lifetimeXp: nextProgress.totalXp,
-        inventory: nextInventory,
-        recentUnlocks: nextUnlockHistory,
-        totalRewardsClaimed: currentRewardsClaimed + rewardLevels.length,
+        totalRewardsClaimed: currentRewardsClaimed,
         lastXpGain: gainedXp,
         lastSpendUsd: spendUsd,
         lastLevelUpLevel: nextProgress.level > currentProgress.level ? nextProgress.level : 0,
@@ -462,7 +442,7 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
         orderId: session.id,
         customerUid,
         spendCents,
-        levelsGranted: rewardLevels.map((reward) => reward.level),
+        levelsUnlocked: unlockedLevels,
         createdAt: new Date().toISOString(),
       },
       { merge: true },
@@ -522,24 +502,20 @@ async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Prom
       });
     }
 
-    for (const reward of rewardLevels) {
+    if (unlockedLevels.length > 0) {
       writeActivityLog(tx, adminDb, {
         userUid: customerUid,
         actorRole: "system",
-        actionType: "reward_item_received",
+        actionType: "progression_updated",
         category: "progression",
-        description: `Unlocked level ${reward.level} reward: ${reward.inventoryItem.name}.`,
-        itemId: reward.inventoryItem.id,
-        itemName: reward.inventoryItem.name,
-        itemCategory: reward.inventoryItem.category,
-        quantity: reward.inventoryItem.quantity,
-        rarity: reward.inventoryItem.rarity,
+        description: `Rewards became available for levels ${unlockedLevels.join(", ")}. Claim them in Battle Pass.`,
         origin: "stripe:webhook:level-rewards",
         status: "completed",
-        tags: ["progression", "reward", reward.inventoryItem.rarity],
+        tags: ["progression", "reward", "claim-available"],
         metadata: {
           orderId: session.id,
-          level: reward.level,
+          unlockedLevels: unlockedLevels.join(","),
+          unlockedLevelCount: unlockedLevels.length,
         },
       });
     }

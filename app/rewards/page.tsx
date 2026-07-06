@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { CalendarClock, Crown, Gem, Gift, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { CalendarClock } from "lucide-react";
 
 import { RewardTrack } from "../components/progression/reward-track";
 import {
@@ -35,20 +37,57 @@ function getInventoryQuantityById(inventory: Array<{ id: string; quantity: numbe
 }
 
 export default function RewardsPage() {
-  const { profile } = useProfileSession();
+  const { profile, user, reload } = useProfileSession();
+  const [claimBusy, setClaimBusy] = useState(false);
+  const [claimFeedback, setClaimFeedback] = useState<string | null>(null);
 
   const progress = calculateLevelProgress(profile?.totalSpentCents ?? 0);
-  const nextReward = buildLevelReward(progress.nextLevel, "next-preview");
   const nodes = buildRewardTrack(progress.level, profile?.highestRewardedLevel ?? 1, 17);
+  const highestRewardedLevel = Math.max(1, Math.floor(profile?.highestRewardedLevel ?? 1));
+  const nextClaimLevel = Math.min(LEVEL_CAP, highestRewardedLevel + 1);
+  const nextReward = buildLevelReward(nextClaimLevel, "next-claim-preview");
+  const hasRemainingClaims = highestRewardedLevel < LEVEL_CAP;
+  const canClaimNextReward = hasRemainingClaims && progress.level >= nextClaimLevel;
 
   const giftCardFragments = getInventoryQuantityById(profile?.inventory, "gift-card-fragment");
   const lifetimeSpentUsd = (profile?.totalSpentCents ?? 0) / 100;
   const lifetimeXp = profile?.lifetimeXp ?? calculateTotalXp(profile?.totalSpentCents ?? 0);
   const rewardsClaimed = profile?.totalRewardsClaimed ?? Math.max(0, (profile?.highestRewardedLevel ?? progress.level) - 1);
   const completionPercent = Math.min(100, Math.max(0, (progress.level / LEVEL_CAP) * 100));
-  const currentLevelFloor = getXpThresholdForLevel(progress.level);
-  const nextLevelFloor = getXpThresholdForLevel(progress.nextLevel);
-  const nextMilestone = [10, 15, 20].find((level) => level > progress.level) ?? 20;
+
+  const claimNextReward = async () => {
+    if (!user || claimBusy || !canClaimNextReward) {
+      return;
+    }
+
+    setClaimBusy(true);
+    setClaimFeedback(null);
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/profile/rewards/claim-next", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = (await response.json()) as { error?: string; claimedLevel?: number; rewardTitle?: string };
+
+      if (!response.ok) {
+        setClaimFeedback(payload.error ?? "Could not claim reward.");
+        return;
+      }
+
+      setClaimFeedback(`Claimed level ${payload.claimedLevel ?? nextClaimLevel}: ${payload.rewardTitle ?? "reward"}.`);
+      reload();
+    } catch {
+      setClaimFeedback("Could not claim reward right now.");
+    } finally {
+      setClaimBusy(false);
+    }
+  };
 
   return (
     <div className="loot-shell">
@@ -72,10 +111,11 @@ export default function RewardsPage() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-[rgba(8,14,28,0.72)] p-4">
-                <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Next Reward</p>
+                <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Next Claim Reward</p>
                 <div className="mt-2 flex items-center gap-3">
                   <span className="text-3xl leading-none">{nextReward.icon}</span>
                   <div>
+                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Level {nextClaimLevel}</p>
                     <p className="text-sm font-black text-[color:var(--text-main)]">{nextReward.shortLabel}</p>
                     <p className="text-[0.62rem] font-bold uppercase tracking-[0.15em] text-[color:var(--accent)]">{nextReward.badge}</p>
                   </div>
@@ -97,35 +137,45 @@ export default function RewardsPage() {
                 <div className="h-full rounded-full bg-[linear-gradient(90deg,#58b6ff,#6ee7f7,#a78bfa,#f59e0b)] shadow-[0_0_26px_rgba(88,182,255,0.45)] transition-all duration-700" style={{ width: `${progress.progressPercent}%` }} />
                 <div className="pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]" />
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--text-muted)]">
-                <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">XP Floor: {currentLevelFloor.toLocaleString("en-US")}</p>
-                <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">Next Floor: {nextLevelFloor.toLocaleString("en-US")}</p>
-                <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">XP Remaining: {progress.xpToNextLevel.toFixed(0)}</p>
-                <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">$1 = {XP_PER_USD} XP</p>
-                <p className="rounded-xl border border-[#ffcf67]/30 bg-[#ffcf67]/8 px-3 py-2 text-[#ffe3b0]">Next Major Milestone: Level {nextMilestone}</p>
-                <p className="rounded-xl border border-[#ffcf67]/30 bg-[#ffcf67]/8 px-3 py-2 text-[#ffe3b0]">Milestone Road: 10 • 15 • 20</p>
+            <article className="rounded-2xl border border-white/10 bg-[rgba(8,14,28,0.72)] p-4">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Next Level Chests</p>
+              <p className="mt-1 text-sm font-semibold text-[color:var(--text-muted)]">Level {nextClaimLevel} reward bundle</p>
+
+              <div className="mt-4 grid gap-2">
+                {nextReward.grantedItems.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                    <Image src="/chest.png" alt="Chest" width={22} height={22} className="h-5 w-5 object-contain" />
+                    <p className="text-[0.7rem] font-bold uppercase tracking-[0.12em] text-[color:var(--text-main)]">{item.quantity}x {item.name}</p>
+                  </div>
+                ))}
               </div>
-            </div>
 
-            <div className="grid gap-2">
-              <article className="theme-surface-soft rounded-2xl border border-white/10 px-4 py-3">
-                <div className="flex items-center gap-2 text-[color:var(--accent)]"><Crown className="h-4 w-4" /><p className="text-[0.6rem] font-bold uppercase tracking-[0.16em]">Current Level</p></div>
-                <p className="mt-2 text-2xl font-black text-[color:var(--text-main)]">{progress.level}</p>
-              </article>
-              <article className="theme-surface-soft rounded-2xl border border-white/10 px-4 py-3">
-                <div className="flex items-center gap-2 text-[color:var(--accent)]"><TrendingUp className="h-4 w-4" /><p className="text-[0.6rem] font-bold uppercase tracking-[0.16em]">Lifetime XP</p></div>
-                <p className="mt-2 text-lg font-black text-[color:var(--text-main)]">{Math.floor(lifetimeXp).toLocaleString("en-US")}</p>
-              </article>
-              <article className="theme-surface-soft rounded-2xl border border-white/10 px-4 py-3">
-                <div className="flex items-center gap-2 text-[color:var(--accent)]"><Gem className="h-4 w-4" /><p className="text-[0.6rem] font-bold uppercase tracking-[0.16em]">Loot Coins</p></div>
-                <p className="mt-2 text-lg font-black text-[color:var(--text-main)]">{Math.floor(profile?.lootCoins ?? 0).toLocaleString("en-US")}</p>
-              </article>
-              <article className="theme-surface-soft rounded-2xl border border-white/10 px-4 py-3">
-                <div className="flex items-center gap-2 text-[color:var(--accent)]"><Gift className="h-4 w-4" /><p className="text-[0.6rem] font-bold uppercase tracking-[0.16em]">Gift Fragments</p></div>
-                <p className="mt-2 text-lg font-black text-[color:var(--text-main)]">{giftCardFragments.toLocaleString("en-US")}</p>
-              </article>
-            </div>
+              <button
+                type="button"
+                onClick={() => void claimNextReward()}
+                disabled={!canClaimNextReward || claimBusy || !user}
+                className="loot-gold-button mt-4 w-full rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.14em] disabled:cursor-not-allowed"
+              >
+                {claimBusy
+                  ? "Claiming..."
+                  : canClaimNextReward
+                    ? `Claim Level ${nextClaimLevel} Reward`
+                    : hasRemainingClaims
+                      ? `Reach Level ${nextClaimLevel} to Claim`
+                      : "All Rewards Claimed"}
+              </button>
+
+              <p className="mt-2 text-[0.68rem] font-semibold text-[color:var(--text-muted)]">
+                {hasRemainingClaims
+                  ? `Each US$1 spent gives ${XP_PER_USD} XP. Reach level ${nextClaimLevel} to unlock this claim.`
+                  : "You have claimed all rewards up to level 20."}
+              </p>
+              {claimFeedback ? (
+                <p className="mt-2 text-[0.68rem] font-semibold text-[color:var(--accent)]">{claimFeedback}</p>
+              ) : null}
+            </article>
           </div>
         </section>
 
