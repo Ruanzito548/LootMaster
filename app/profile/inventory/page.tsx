@@ -839,13 +839,12 @@ export default function InventoryPage() {
                         return (
                           <article key={recipe.id} className="rounded-2xl border border-cyan-200/22 bg-[linear-gradient(160deg,rgba(4,14,28,0.9),rgba(10,23,41,0.78))] p-4">
                             <div className="flex items-start gap-3">
-                              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-white/12 bg-black/35 p-2">
+                              <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-white/12 bg-black/35 p-2">
                                 <Image src={recipeIconSrc} alt={recipe.title} fill className="object-contain" />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Gift Card</p>
                                 <h4 className={`mt-1 text-lg font-black ${RARITY_TEXT[recipe.outputItem.rarity] ?? "text-white"}`}>{recipe.title}</h4>
-                                <p className="mt-1 text-sm text-[#bed4ec]">{recipe.description}</p>
                               </div>
                             </div>
 
@@ -905,7 +904,6 @@ export default function InventoryPage() {
                               <div className="min-w-0 flex-1">
                                 <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Chest</p>
                                 <h4 className={`mt-1 text-lg font-black ${RARITY_TEXT[recipe.outputItem.rarity] ?? "text-white"}`}>{recipe.title}</h4>
-                                <p className="mt-1 text-sm text-[#bed4ec]">{recipe.description}</p>
                               </div>
                             </div>
 
