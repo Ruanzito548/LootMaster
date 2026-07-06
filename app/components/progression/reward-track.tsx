@@ -46,6 +46,15 @@ type RewardTrackProps = {
 };
 
 export function RewardTrack({ nodes }: RewardTrackProps) {
+  const squareTintByRarity: Record<string, string> = {
+    common: "bg-[#9ca3af]/18",
+    uncommon: "bg-[#1eff00]/16",
+    rare: "bg-[#3b82f6]/16",
+    epic: "bg-[#8b5cf6]/16",
+    legendary: "bg-[#f59e0b]/16",
+    mythic: "bg-[#ef4444]/16",
+  };
+
   return (
     <div className="w-full max-w-full overflow-hidden pb-3">
       <div className="w-full max-w-full overflow-x-auto overflow-y-visible pb-2">
@@ -56,6 +65,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
             const isClaimed = node.state === "claimed";
             const isAvailable = node.state === "available";
             const isLocked = node.state === "locked";
+            const chestEntries = Object.entries(node.reward.chestBundle ?? {}).filter(([, qty]) => (qty ?? 0) > 0);
 
             return (
               <article
@@ -80,9 +90,32 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                   } ${node.isMilestone ? "min-h-[202px]" : "min-h-[188px]"} bg-[linear-gradient(170deg,rgba(12,20,35,0.95),rgba(6,10,22,0.95))] hover:-translate-y-1.5 hover:opacity-100`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Image src="/chest.png" alt="Chest" width={28} height={28} className="h-7 w-7 object-contain" />
-                      <span className="text-xl leading-none">{node.reward.icon}</span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {chestEntries.length > 0 ? (
+                        chestEntries.map(([chestRarity, qty]) => {
+                          const chestStyles = rarityStyles[chestRarity] ?? rarityStyles.common;
+                          const squareTint = squareTintByRarity[chestRarity] ?? squareTintByRarity.common;
+
+                          return (
+                            <div
+                              key={`${node.level}-${chestRarity}`}
+                              className={`relative flex h-8 w-8 items-center justify-center rounded-md border ${chestStyles.border} ${squareTint}`}
+                              title={`${qty}x ${chestRarity} chest`}
+                            >
+                              <Image src="/chest.png" alt="Chest" width={22} height={22} className="h-5 w-5 object-contain" />
+                              {(qty ?? 0) > 1 ? (
+                                <span className="absolute -bottom-1 -right-1 rounded-full border border-black/40 bg-black/80 px-1 text-[0.52rem] font-black text-white">
+                                  x{qty}
+                                </span>
+                              ) : null}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className={`relative flex h-8 w-8 items-center justify-center rounded-md border ${styles.border} ${squareTintByRarity[node.reward.rarity] ?? squareTintByRarity.common}`}>
+                          <Image src="/chest.png" alt="Chest" width={22} height={22} className="h-5 w-5 object-contain" />
+                        </div>
+                      )}
                     </div>
                     <span className={`text-[0.62rem] font-bold uppercase tracking-[0.14em] ${styles.text}`}>
                       {node.reward.badge}
