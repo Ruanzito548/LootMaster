@@ -147,7 +147,6 @@ export default function InventoryPage() {
 
   const [showMarketModal, setShowMarketModal] = useState(false);
   const [showRewardsModal, setShowRewardsModal] = useState(false);
-  const [showCraftModal, setShowCraftModal] = useState(false);
 
   const [listingPrice, setListingPrice] = useState(1000);
   const [listingQuantity, setListingQuantity] = useState(1);
@@ -174,6 +173,23 @@ export default function InventoryPage() {
   const [lastReveal, setLastReveal] = useState<{ title: string; rarity: string; type: string; xpGain: number } | null>(null);
 
   const inventory = useMemo(() => sortInventory(profile?.inventory ?? []), [profile?.inventory]);
+  const inventoryById = useMemo(() => {
+    const map = new Map<string, number>();
+
+    for (const item of profile?.inventory ?? []) {
+      map.set(item.id, (map.get(item.id) ?? 0) + Math.max(0, Math.floor(item.quantity || 0)));
+    }
+
+    return map;
+  }, [profile?.inventory]);
+
+  const canCraft = useCallback(
+    (recipe: CraftRecipe): boolean => {
+      return recipe.materials.every((material) => (inventoryById.get(material.itemId) ?? 0) >= material.quantity);
+    },
+    [inventoryById],
+  );
+
   const slotLimit = Math.max(20, profile?.inventorySlotLimit ?? 20);
   const usedSlots = inventory.length;
   const fillPercent = Math.min(100, (usedSlots / slotLimit) * 100);
@@ -484,7 +500,7 @@ export default function InventoryPage() {
 
             <div className="grid min-w-[220px] gap-2 rounded-2xl border border-white/14 bg-black/25 p-4">
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#99b6d7]">Wallet</p>
-              <p className="text-3xl font-black text-[#ffcf67]">{profile.lootCoins.toLocaleString("pt-BR")}</p>
+              <p className="text-3xl font-black text-[#ffcf67]">{profile.lootCoins.toLocaleString("en-US")}</p>
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#99b6d7]">Title</p>
               <p className="text-sm font-black uppercase tracking-[0.14em] text-[#d8e9ff]">Level {rpgLevel}</p>
             </div>
@@ -518,13 +534,9 @@ export default function InventoryPage() {
           </div>
 
           <div className="relative mt-5 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => setShowCraftModal(true)}
-              className="loot-gold-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]"
-            >
+            <a href="#crafting-workshop" className="loot-gold-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]">
               Craft
-            </button>
+            </a>
             <Link href="/marketplace" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]">
               Marketplace
             </Link>
@@ -704,9 +716,9 @@ export default function InventoryPage() {
               </div>
 
               <div className="mt-4 rounded-2xl border border-white/12 bg-black/25 p-3 text-sm text-[#d4e6fa]">
-                <p>Gross: {(listingPrice * listingQuantity).toLocaleString("pt-BR")}</p>
-                <p>Marketplace Fee (5%): {calculateMarketplaceFee(listingPrice * listingQuantity).toLocaleString("pt-BR")}</p>
-                <p>You Receive: {calculateMarketplaceReceive(listingPrice * listingQuantity).toLocaleString("pt-BR")}</p>
+                <p>Gross: {(listingPrice * listingQuantity).toLocaleString("en-US")}</p>
+                <p>Marketplace Fee (5%): {calculateMarketplaceFee(listingPrice * listingQuantity).toLocaleString("en-US")}</p>
+                <p>You Receive: {calculateMarketplaceReceive(listingPrice * listingQuantity).toLocaleString("en-US")}</p>
               </div>
 
               <div className="mt-5 flex gap-2">
@@ -750,58 +762,68 @@ export default function InventoryPage() {
         ) : null}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showCraftModal ? (
-          <motion.div className="fixed inset-0 z-[165]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <button type="button" className="absolute inset-0 bg-black/70 backdrop-blur-[5px]" onClick={() => setShowCraftModal(false)} aria-label="Close craft modal" />
+      <section id="crafting-workshop" className="loot-panel rounded-[2rem] border border-white/14 p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#9ad6ff]">Crafting</p>
+              <h2 className="mt-2 text-3xl font-black text-white">Crafting Workshop</h2>
+              <p className="mt-2 text-sm text-[#b9d1ea]">Craft Gift Cards and higher-tier Chests with fragments obtained from chest openings.</p>
+            </div>
+          </div>
 
-            <motion.section className="absolute left-1/2 top-1/2 max-h-[86vh] w-[min(96vw,760px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-white/16 bg-[linear-gradient(180deg,rgba(12,22,36,0.98),rgba(7,13,24,0.98))] p-6" initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}>
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#9ad6ff]">Crafting Forge</p>
-              <h3 className="mt-2 text-3xl font-black text-white">Gift Card Workshop</h3>
-              <p className="mt-2 text-sm text-[#b9d1ea]">Craft Gift Cards and higher-tier Chests using the fragments dropped in Loot Chests.</p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {craftRecipes.map((recipe) => {
+              const recipeCraftable = canCraft(recipe);
 
-              <div className="mt-5 grid gap-3">
-                {craftRecipes.map((recipe) => (
-                  <article key={recipe.id} className="rounded-2xl border border-cyan-200/22 bg-[linear-gradient(160deg,rgba(4,14,28,0.9),rgba(10,23,41,0.78))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.35)]">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">{recipe.outputType}</p>
-                        <h4 className="mt-1 text-xl font-black text-white">{recipe.title}</h4>
-                        <p className="mt-2 text-sm text-[#bed4ec]">{recipe.description}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="rounded-full border border-white/14 bg-white/8 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#d5e7fb]">+{recipe.xpGain} XP</span>
-                      </div>
+              return (
+                <article key={recipe.id} className="rounded-2xl border border-cyan-200/22 bg-[linear-gradient(160deg,rgba(4,14,28,0.9),rgba(10,23,41,0.78))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.35)]">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">{recipe.outputType}</p>
+                      <h3 className="mt-1 text-xl font-black text-white">{recipe.title}</h3>
+                      <p className="mt-2 text-sm text-[#bed4ec]">{recipe.description}</p>
                     </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {recipe.materials.map((material) => {
-                        const owned = inventory.find((item) => item.id === material.itemId)?.quantity ?? 0;
-                        const enough = owned >= material.quantity;
-
-                        return (
-                          <span key={`${recipe.id}-${material.itemId}`} className={`rounded-full border px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.13em] ${enough ? "border-emerald-300/38 bg-emerald-500/14 text-emerald-100" : "border-rose-300/38 bg-rose-500/14 text-rose-100"}`}>
-                            {material.name} {owned}/{material.quantity}
-                          </span>
-                        );
-                      })}
+                    <div className="flex gap-2">
+                      <span className="rounded-full border border-white/14 bg-white/8 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#d5e7fb]">+{recipe.xpGain} XP</span>
                     </div>
+                  </div>
 
+                  <div className="mt-3 grid gap-2">
+                    {recipe.materials.map((material) => {
+                      const owned = inventoryById.get(material.itemId) ?? 0;
+                      const enough = owned >= material.quantity;
+
+                      return (
+                        <p
+                          key={`${recipe.id}-${material.itemId}`}
+                          className={`rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] ${
+                            enough
+                              ? "border-emerald-300/35 bg-emerald-500/12 text-emerald-100"
+                              : "border-rose-300/35 bg-rose-500/12 text-rose-100"
+                          }`}
+                        >
+                          {material.name}: {owned}/{material.quantity}
+                        </p>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">{recipeCraftable ? "Ready" : "Missing Materials"}</p>
                     <button
                       type="button"
                       onClick={() => void craftRecipe(recipe.id)}
-                      disabled={craftBusyId !== null}
-                      className="loot-gold-button mt-4 rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.14em] disabled:cursor-not-allowed"
+                      disabled={craftBusyId !== null || !recipeCraftable}
+                      className="loot-gold-button rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.14em] disabled:cursor-not-allowed"
                     >
-                      {craftBusyId === recipe.id ? "Crafting..." : `Craft ${recipe.outputItem.name}`}
+                      {craftBusyId === recipe.id ? "Crafting..." : "Craft"}
                     </button>
-                  </article>
-                ))}
-              </div>
-            </motion.section>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+      </section>
 
       <AnimatePresence>
         {toast ? (
