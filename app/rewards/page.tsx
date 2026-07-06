@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarClock, Crown, Gem, Gift, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
+import { CalendarClock, Crown, Gem, Gift, TrendingUp } from "lucide-react";
 
 import { RewardTrack } from "../components/progression/reward-track";
 import {
@@ -146,10 +146,7 @@ export default function RewardsPage() {
           <article className="loot-panel rounded-[1.8rem] p-5 sm:p-6">
             <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">System Intel</p>
             <div className="mt-4 grid gap-3">
-              <div className="theme-surface-soft rounded-xl border border-white/10 p-3"><div className="flex items-center gap-2 text-[color:var(--accent)]"><Sparkles className="h-4 w-4" /><p className="text-[0.62rem] font-bold uppercase tracking-[0.15em]">XP Formula</p></div><p className="mt-2 text-lg font-black text-[color:var(--text-main)]">$1 = 1 XP</p></div>
-              <div className="theme-surface-soft rounded-xl border border-white/10 p-3"><div className="flex items-center gap-2 text-[color:var(--accent)]"><ShieldCheck className="h-4 w-4" /><p className="text-[0.62rem] font-bold uppercase tracking-[0.15em]">Level Curve</p></div><p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Progressive exponential curve up to level {LEVEL_CAP}.</p></div>
-              <div className="theme-surface-soft rounded-xl border border-white/10 p-3"><div className="flex items-center gap-2 text-[color:var(--accent)]"><Gift className="h-4 w-4" /><p className="text-[0.62rem] font-bold uppercase tracking-[0.15em]">Milestones</p></div><p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Every 5 levels: boosted rewards. Every 10 levels: premium drops.</p></div>
-              <div className="theme-surface-soft rounded-xl border border-white/10 p-3"><div className="flex items-center gap-2 text-[color:var(--accent)]"><CalendarClock className="h-4 w-4" /><p className="text-[0.62rem] font-bold uppercase tracking-[0.15em]">Season Status</p></div><p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Progression season active.</p></div>
+              <div className="theme-surface-soft rounded-xl border border-white/10 p-3"><div className="flex items-center gap-2 text-[color:var(--accent)]"><CalendarClock className="h-4 w-4" /><p className="text-[0.62rem] font-bold uppercase tracking-[0.15em]">Season Status</p></div><p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Battle Pass is active. Every US$1 spent grants 1 XP in the pass progression.</p></div>
             </div>
           </article>
         </section>
