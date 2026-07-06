@@ -3,18 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { CalendarClock } from "lucide-react";
 
 import { RewardTrack } from "../components/progression/reward-track";
 import {
   LEVEL_CAP,
   XP_PER_USD,
   buildLevelReward,
-  buildRewardTrack,
   calculateLevelProgress,
   calculateTotalXp,
   formatMoneyUsd,
-  getXpThresholdForLevel,
+  type RewardTrackNode,
 } from "../../lib/level-rewards";
 import { useProfileSession } from "../profile/use-profile-session";
 
@@ -42,8 +40,21 @@ export default function RewardsPage() {
   const [claimFeedback, setClaimFeedback] = useState<string | null>(null);
 
   const progress = calculateLevelProgress(profile?.totalSpentCents ?? 0);
-  const nodes = buildRewardTrack(progress.level, profile?.highestRewardedLevel ?? 1, 17);
   const highestRewardedLevel = Math.max(1, Math.floor(profile?.highestRewardedLevel ?? 1));
+  const nodes: RewardTrackNode[] = Array.from({ length: LEVEL_CAP }, (_, index) => {
+    const level = index + 1;
+    const reward = buildLevelReward(level, `track-${level}`);
+    const state = level <= highestRewardedLevel ? "claimed" : level <= progress.level ? "available" : "locked";
+
+    return {
+      level,
+      reward,
+      state,
+      isMilestone: level === 10 || level === 15 || level === 20,
+      isPremium: level === 10 || level === 15 || level === 20,
+    };
+  });
+
   const nextClaimLevel = Math.min(LEVEL_CAP, highestRewardedLevel + 1);
   const nextReward = buildLevelReward(nextClaimLevel, "next-claim-preview");
   const hasRemainingClaims = highestRewardedLevel < LEVEL_CAP;
@@ -179,7 +190,7 @@ export default function RewardsPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
+        <section>
           <article className="loot-panel overflow-hidden rounded-[1.8rem] p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <h2 className="loot-title text-2xl font-black sm:text-3xl">Battle Pass Track</h2>
@@ -190,13 +201,6 @@ export default function RewardsPage() {
             </p>
             <div className="mt-4">
               <RewardTrack nodes={nodes} />
-            </div>
-          </article>
-
-          <article className="loot-panel rounded-[1.8rem] p-5 sm:p-6">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">System Intel</p>
-            <div className="mt-4 grid gap-3">
-              <div className="theme-surface-soft rounded-xl border border-white/10 p-3"><div className="flex items-center gap-2 text-[color:var(--accent)]"><CalendarClock className="h-4 w-4" /><p className="text-[0.62rem] font-bold uppercase tracking-[0.15em]">Season Status</p></div><p className="mt-2 text-sm font-semibold text-[color:var(--text-muted)]">Battle Pass is active. Every US$1 spent grants 1 XP in the pass progression.</p></div>
             </div>
           </article>
         </section>

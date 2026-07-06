@@ -59,7 +59,6 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
     <div className="w-full max-w-full overflow-hidden pb-3">
       <div className="w-full max-w-full overflow-x-auto overflow-y-visible pb-2">
         <div className="relative inline-flex min-w-max items-start gap-5 px-3 pt-2">
-          <div className="pointer-events-none absolute left-8 right-8 top-[4.05rem] h-[6px] rounded-full bg-[linear-gradient(90deg,rgba(120,207,255,0.24),rgba(255,203,129,0.24),rgba(255,137,164,0.24))]" />
           {nodes.map((node) => {
             const styles = rarityStyles[node.reward.rarity] ?? rarityStyles.common;
             const isClaimed = node.state === "claimed";
