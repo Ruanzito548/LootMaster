@@ -1,0 +1,14 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="256" height="256" rx="36" fill="#101825"/>
+  <rect x="18" y="18" width="220" height="220" rx="28" fill="url(#paint0_linear)" stroke="rgba(255,255,255,0.14)"/>
+  <path d="M72 95L128 64L184 95V161L128 192L72 161V95Z" fill="#214B7A" stroke="#8FD0FF" stroke-width="8"/>
+  <path d="M92 111L128 89L164 111V145L128 167L92 145V111Z" fill="#F5FAFF" opacity="0.18"/>
+  <path d="M96 178H160" stroke="#8FD0FF" stroke-width="8" stroke-linecap="round"/>
+  <text x="128" y="214" fill="#EAF4FF" font-family="Arial, sans-serif" font-size="22" font-weight="700" text-anchor="middle">BLIZZARD</text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="18" y1="18" x2="238" y2="238" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#13213A"/>
+      <stop offset="1" stop-color="#08101A"/>
+    </linearGradient>
+  </defs>
+</svg>

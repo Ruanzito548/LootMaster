@@ -159,7 +159,7 @@ export default function InventoryPage() {
   const [showMarketModal, setShowMarketModal] = useState(false);
   const [showRewardsModal, setShowRewardsModal] = useState(false);
   const [showCraftMenu, setShowCraftMenu] = useState(false);
-  const [openCraftCategory, setOpenCraftCategory] = useState<RecipeCategory>("gift-cards");
+  const [openCraftCategory, setOpenCraftCategory] = useState<RecipeCategory | null>("gift-cards");
 
   const [listingPrice, setListingPrice] = useState(1000);
   const [listingQuantity, setListingQuantity] = useState(1);
@@ -809,7 +809,7 @@ export default function InventoryPage() {
                 <article className="rounded-2xl border border-white/12 bg-black/20">
                   <button
                     type="button"
-                    onClick={() => setOpenCraftCategory("gift-cards")}
+                    onClick={() => setOpenCraftCategory((current) => (current === "gift-cards" ? null : "gift-cards"))}
                     className="flex w-full items-center justify-between px-4 py-3 text-left"
                   >
                     <span className="text-sm font-black uppercase tracking-[0.14em] text-white">{openCraftCategory === "gift-cards" ? "▼" : "▶"} Gift Cards</span>
@@ -820,12 +820,20 @@ export default function InventoryPage() {
                     <div className="grid gap-3 border-t border-white/10 p-4 sm:grid-cols-2 xl:grid-cols-3">
                       {giftCardRecipes.map((recipe) => {
                         const recipeCraftable = canCraft(recipe);
+                        const recipeIconSrc = recipe.outputItem.iconPath ?? "/giftcards/default.svg";
 
                         return (
                           <article key={recipe.id} className="rounded-2xl border border-cyan-200/22 bg-[linear-gradient(160deg,rgba(4,14,28,0.9),rgba(10,23,41,0.78))] p-4">
-                            <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Gift Card</p>
-                            <h4 className="mt-1 text-lg font-black text-white">{recipe.title}</h4>
-                            <p className="mt-1 text-sm text-[#bed4ec]">{recipe.description}</p>
+                            <div className="flex items-start gap-3">
+                              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-white/12 bg-black/35 p-2">
+                                <Image src={recipeIconSrc} alt={recipe.title} fill className="object-contain" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Gift Card</p>
+                                <h4 className="mt-1 text-lg font-black text-white">{recipe.title}</h4>
+                                <p className="mt-1 text-sm text-[#bed4ec]">{recipe.description}</p>
+                              </div>
+                            </div>
 
                             <div className="mt-3 grid gap-2">
                               {recipe.materials.map((material) => {
@@ -861,7 +869,7 @@ export default function InventoryPage() {
                 <article className="rounded-2xl border border-white/12 bg-black/20">
                   <button
                     type="button"
-                    onClick={() => setOpenCraftCategory("chests")}
+                    onClick={() => setOpenCraftCategory((current) => (current === "chests" ? null : "chests"))}
                     className="flex w-full items-center justify-between px-4 py-3 text-left"
                   >
                     <span className="text-sm font-black uppercase tracking-[0.14em] text-white">{openCraftCategory === "chests" ? "▼" : "▶"} Chests</span>
@@ -871,9 +879,16 @@ export default function InventoryPage() {
                   {openCraftCategory === "chests" ? (
                     <div className="grid gap-3 border-t border-white/10 p-4 sm:grid-cols-2 xl:grid-cols-3">
                       <article className="rounded-2xl border border-white/12 bg-[linear-gradient(160deg,rgba(7,13,24,0.9),rgba(12,22,36,0.82))] p-4">
-                        <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Chest</p>
-                        <h4 className="mt-1 text-lg font-black text-white">Common Chest</h4>
-                        <p className="mt-2 text-sm text-[#bed4ec]">Cannot be crafted. Obtained only through Battle Pass.</p>
+                        <div className="flex items-start gap-3">
+                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-white/12 bg-black/35 p-2">
+                            <Image src="/chest.png" alt="Common Chest" fill className="object-contain" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Chest</p>
+                            <h4 className="mt-1 text-lg font-black text-white">Common Chest</h4>
+                            <p className="mt-2 text-sm text-[#bed4ec]">Cannot be crafted. Obtained only through Battle Pass.</p>
+                          </div>
+                        </div>
                         <button type="button" disabled className="mt-4 w-full cursor-not-allowed rounded-full border border-white/15 bg-white/6 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#9fbad8]">
                           Not Craftable
                         </button>
@@ -881,12 +896,20 @@ export default function InventoryPage() {
 
                       {chestRecipes.map((recipe) => {
                         const recipeCraftable = canCraft(recipe);
+                        const recipeIconSrc = recipe.outputItem.iconPath ?? "/chest.png";
 
                         return (
                           <article key={recipe.id} className="rounded-2xl border border-cyan-200/22 bg-[linear-gradient(160deg,rgba(4,14,28,0.9),rgba(10,23,41,0.78))] p-4">
-                            <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Chest</p>
-                            <h4 className="mt-1 text-lg font-black text-white">{recipe.title}</h4>
-                            <p className="mt-1 text-sm text-[#bed4ec]">{recipe.description}</p>
+                            <div className="flex items-start gap-3">
+                              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-white/12 bg-black/35 p-2">
+                                <Image src={recipeIconSrc} alt={recipe.title} fill className="object-contain" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#9ed6ff]">Chest</p>
+                                <h4 className="mt-1 text-lg font-black text-white">{recipe.title}</h4>
+                                <p className="mt-1 text-sm text-[#bed4ec]">{recipe.description}</p>
+                              </div>
+                            </div>
 
                             <div className="mt-3 grid gap-2">
                               {recipe.materials.map((material) => {
