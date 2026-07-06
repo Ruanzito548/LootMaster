@@ -100,7 +100,7 @@ const RARITY_TEXT: Record<string, string> = {
   rare: "text-[#4da3ff]",
   epic: "text-[#c67bff]",
   legendary: "text-[#ffb347]",
-  artifact: "text-[#f0d98c]",
+  artifact: "text-[#ff4d5f]",
   heirloom: "text-[#6ee7ff]",
 };
 
