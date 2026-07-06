@@ -33,6 +33,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/games", label: "Games", icon: Gamepad2 },
+  { href: "/crafting", label: "Crafting", icon: Crown },
   { href: "/rewards", label: "Rewards", icon: Gift },
   { href: "/profile/inventory", label: "Inventory", icon: Package },
   { href: "/admin", label: "Admin", icon: Shield, requiresAdmin: true },
