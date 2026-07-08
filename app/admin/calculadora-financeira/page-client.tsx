@@ -4,6 +4,21 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  ArrowLeft,
+  BadgePercent,
+  Banknote,
+  BarChart3,
+  Clock3,
+  Copy,
+  History,
+  RefreshCcw,
+  Sparkles,
+  TrendingUp,
+  Truck,
+  Wallet,
+} from "lucide-react";
+
+import {
   buildDefaultFinancialCalculatorConfig,
   type FinancialCalculatorConfig,
   type FinancialDistributionCategory,
@@ -13,6 +28,17 @@ import {
 type ConfigResponse = {
   config?: FinancialCalculatorConfig;
   error?: string;
+  history?: FinancialCalculatorHistory;
+};
+
+type FinancialCalculatorHistory = {
+  previousConfig: FinancialCalculatorConfig | null;
+  updatedAt: string | null;
+  updatedBy: string | null;
+  updatedByLabel: string | null;
+  previousUpdatedAt: string | null;
+  previousUpdatedBy: string | null;
+  previousUpdatedByLabel: string | null;
 };
 
 type CategoryVisual = {
@@ -33,6 +59,26 @@ type DistributionCalculation = {
   allocations: Array<LiveCategory & { amount: number }>;
   remainingValue: number | null;
   remainingPercent: number | null;
+};
+
+type FinancialSegment = {
+  key: string;
+  label: string;
+  shortLabel: string;
+  value: number;
+  percent: number;
+  color: string;
+  accentClassName: string;
+};
+
+const HISTORY_FALLBACK: FinancialCalculatorHistory = {
+  previousConfig: null,
+  updatedAt: null,
+  updatedBy: null,
+  updatedByLabel: null,
+  previousUpdatedAt: null,
+  previousUpdatedBy: null,
+  previousUpdatedByLabel: null,
 };
 
 const DEFAULT_CONFIG = buildDefaultFinancialCalculatorConfig();
@@ -109,11 +155,201 @@ function toPercentInputMap(categories: FinancialDistributionCategory[]) {
   });
 }
 
-function summarizeConfig(config: FinancialCalculatorConfig) {
-  return config.categories.map((category) => ({
-    ...category,
-    visual: CATEGORY_VISUALS[category.key],
-  }));
+function useAnimatedNumber(target: number, duration = 420) {
+  const [value, setValue] = useState(target);
+
+  useEffect(() => {
+    let animationFrame = 0;
+    const from = value;
+    const start = performance.now();
+
+    const step = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(from + (target - from) * eased);
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(step);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(step);
+
+    return () => cancelAnimationFrame(animationFrame);
+  }, [duration, target, value]);
+
+  return value;
+}
+
+function formatShortPercent(value: number) {
+  return `${Number(value.toFixed(2)).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+}
+
+function buildSegments(calculation: DistributionCalculation): FinancialSegment[] {
+  return [
+    {
+      key: "profitMargin",
+      label: "Lucro",
+      shortLabel: "Lucro",
+      value: calculation.allocations.find((category) => category.key === "profitMargin")?.amount ?? 0,
+      percent: calculation.allocations.find((category) => category.key === "profitMargin")?.percent ?? 0,
+      color: "#22c55e",
+      accentClassName: "border-emerald-500/40 bg-emerald-950/20 text-emerald-300",
+    },
+    {
+      key: "retentionFund",
+      label: "Retenção",
+      shortLabel: "Retenção",
+      value: calculation.allocations.find((category) => category.key === "retentionFund")?.amount ?? 0,
+      percent: calculation.allocations.find((category) => category.key === "retentionFund")?.percent ?? 0,
+      color: "#eab308",
+      accentClassName: "border-amber-500/40 bg-amber-950/20 text-amber-300",
+    },
+    {
+      key: "platformFee",
+      label: "Plataforma",
+      shortLabel: "Plataforma",
+      value: calculation.allocations.find((category) => category.key === "platformFee")?.amount ?? 0,
+      percent: calculation.allocations.find((category) => category.key === "platformFee")?.percent ?? 0,
+      color: "#a855f7",
+      accentClassName: "border-fuchsia-500/40 bg-fuchsia-950/20 text-fuchsia-300",
+    },
+    {
+      key: "otherCosts",
+      label: "Custos",
+      shortLabel: "Custos",
+      value: calculation.allocations.find((category) => category.key === "otherCosts")?.amount ?? 0,
+      percent: calculation.allocations.find((category) => category.key === "otherCosts")?.percent ?? 0,
+      color: "#f97316",
+      accentClassName: "border-orange-500/40 bg-orange-950/20 text-orange-300",
+    },
+    {
+      key: "supplierPayout",
+      label: "Repasse",
+      shortLabel: "Repasse",
+      value: calculation.remainingValue ?? 0,
+      percent: calculation.remainingPercent ?? 0,
+      color: "#9ca3af",
+      accentClassName: "border-slate-500/40 bg-slate-950/20 text-slate-200",
+    },
+  ];
+}
+
+function DonutChart({ segments, invalid }: { segments: FinancialSegment[]; invalid: boolean }) {
+  const strokeWidth = 24;
+  const radius = 80;
+  const circumference = 2 * Math.PI * radius;
+  const total = segments.reduce((sum, segment) => sum + Math.max(0, segment.percent), 0) || 1;
+  const segmentOffsets = segments.map((segment, index) =>
+    segments.slice(0, index).reduce((sum, previous) => sum + (Math.max(0, previous.percent) / total) * circumference, 0),
+  );
+
+  return (
+    <div className="flex items-center justify-center">
+      <svg viewBox="0 0 220 220" className="h-56 w-56 drop-shadow-[0_20px_35px_rgba(0,0,0,0.35)]">
+        <circle cx="110" cy="110" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeWidth} />
+        {segments.map((segment, index) => {
+          const length = (Math.max(0, segment.percent) / total) * circumference;
+
+          return (
+            <circle
+              key={segment.key}
+              cx="110"
+              cy="110"
+              r={radius}
+              fill="none"
+              stroke={invalid ? "rgba(248,113,113,0.65)" : segment.color}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={`${Math.max(length, 0.001)} ${circumference}`}
+              strokeDashoffset={-segmentOffsets[index]}
+              transform="rotate(-90 110 110)"
+            />
+          );
+        })}
+        <circle cx="110" cy="110" r="54" fill="rgba(4,8,15,0.96)" stroke="rgba(148,163,184,0.12)" />
+        <text x="110" y="103" textAnchor="middle" className="fill-green-100 text-[12px] font-bold uppercase tracking-[0.22em]">
+          Repasse
+        </text>
+        <text x="110" y="128" textAnchor="middle" className="fill-white text-[28px] font-black">
+          {invalid ? "--" : formatShortPercent(segments.find((segment) => segment.key === "supplierPayout")?.percent ?? 0)}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+function MetricCard({
+  title,
+  icon: Icon,
+  value,
+  helper,
+  toneClassName,
+}: {
+  title: string;
+  icon: typeof Banknote;
+  value: string;
+  helper: string;
+  toneClassName: string;
+}) {
+  return (
+    <article className={`rounded-[1.5rem] border p-4 shadow-[0_14px_35px_rgba(0,0,0,0.2)] ${toneClassName}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[0.7rem] font-bold uppercase tracking-[0.2em] text-white/70">{title}</p>
+          <p className="mt-3 text-[1.75rem] font-black leading-none text-white tabular-nums sm:text-[2rem]">{value}</p>
+        </div>
+        <span className="rounded-2xl bg-white/10 p-2 text-white/90 ring-1 ring-white/10">
+          <Icon className="h-5 w-5" />
+        </span>
+      </div>
+      <p className="mt-3 text-xs font-semibold text-white/65">{helper}</p>
+    </article>
+  );
+}
+
+function ConfigRow({
+  label,
+  value,
+  percentInput,
+  onChange,
+  invalid,
+  helper,
+}: {
+  label: string;
+  value: string;
+  percentInput: string;
+  onChange: (next: string) => void;
+  invalid: boolean;
+  helper: string;
+}) {
+  return (
+    <div className={`grid gap-3 rounded-2xl border px-4 py-3 md:grid-cols-[1.2fr_140px_140px] md:items-center ${invalid ? "border-rose-500/50 bg-rose-950/10" : "border-white/10 bg-white/[0.03]"}`}>
+      <div>
+        <p className="font-semibold text-white">{label}</p>
+        <p className="mt-1 text-xs text-slate-400">{helper}</p>
+      </div>
+      <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+        %
+        <input
+          type="number"
+          inputMode="decimal"
+          min="0"
+          max="100"
+          step="0.01"
+          value={percentInput}
+          onChange={(event) => onChange(event.target.value)}
+          className={`rounded-xl border px-3 py-2 text-base font-black outline-none transition tabular-nums ${invalid ? "border-rose-500/60 bg-rose-950/20 text-rose-100 focus:border-rose-400" : "border-white/10 bg-black/30 text-white focus:border-cyan-400"}`}
+        />
+      </label>
+      <div className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+        Valor correspondente
+        <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-base font-black text-cyan-200 tabular-nums">
+          {value}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function buildDistributionCalculation(categories: LiveCategory[], totalSales: number): DistributionCalculation {
@@ -137,41 +373,6 @@ function buildDistributionCalculation(categories: LiveCategory[], totalSales: nu
   };
 }
 
-type ResultCardProps = {
-  label: string;
-  icon: string;
-  value: string;
-  helper: string;
-  className: string;
-  valueClassName: string;
-  valueSizeClassName?: string;
-  helperClassName?: string;
-};
-
-function ResultCard({
-  label,
-  icon,
-  value,
-  helper,
-  className,
-  valueClassName,
-  valueSizeClassName = "text-3xl",
-  helperClassName = "text-xs",
-}: ResultCardProps) {
-  return (
-    <article className={`rounded-[1.5rem] border p-5 ${className}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">{label}</p>
-          <p className={`mt-3 break-words font-black leading-none ${valueSizeClassName} ${valueClassName}`}>{value}</p>
-        </div>
-        <span className="shrink-0 text-2xl">{icon}</span>
-      </div>
-      <p className={`mt-3 font-semibold uppercase tracking-[0.12em] text-green-700 ${helperClassName}`}>{helper}</p>
-    </article>
-  );
-}
-
 export function FinancialCalculatorClient() {
   const [salesInput, setSalesInput] = useState("10000");
   const [salesPerDayInput, setSalesPerDayInput] = useState("12");
@@ -186,6 +387,7 @@ export function FinancialCalculatorClient() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const [history, setHistory] = useState<FinancialCalculatorHistory>(HISTORY_FALLBACK);
 
   useEffect(() => {
     let cancelled = false;
@@ -207,6 +409,7 @@ export function FinancialCalculatorClient() {
         if (!cancelled) {
           setConfig(payload.config);
           setPercentInputs(toPercentInputMap(payload.config.categories));
+          setHistory(payload.history ?? HISTORY_FALLBACK);
         }
       } catch (error) {
         if (!cancelled) {
@@ -242,6 +445,23 @@ export function FinancialCalculatorClient() {
     return buildDistributionCalculation(categories, totalSales);
   }, [categories, totalSales]);
 
+  const profitPercent = useMemo(
+    () => categories.find((category) => category.key === "profitMargin")?.percent ?? 0,
+    [categories],
+  );
+
+  const profitValue = useMemo(
+    () => calculation.allocations.find((category) => category.key === "profitMargin")?.amount ?? 0,
+    [calculation.allocations],
+  );
+
+  const retentionValue = useMemo(
+    () => calculation.allocations.find((category) => category.key === "retentionFund")?.amount ?? 0,
+    [calculation.allocations],
+  );
+
+  const supplierValue = useMemo(() => calculation.remainingValue ?? 0, [calculation.remainingValue]);
+
   const salesPerDay = useMemo(() => parseDecimalInput(salesPerDayInput), [salesPerDayInput]);
   const averageSaleValue = useMemo(() => parseDecimalInput(averageSaleValueInput), [averageSaleValueInput]);
   const activeDays = useMemo(() => Math.max(0, Math.round(parseDecimalInput(activeDaysInput))), [activeDaysInput]);
@@ -257,6 +477,13 @@ export function FinancialCalculatorClient() {
     [monthlySimulation.allocations],
   );
 
+  const monthlyRetention = useMemo(
+    () => monthlySimulation.allocations.find((category) => category.key === "retentionFund")?.amount ?? 0,
+    [monthlySimulation.allocations],
+  );
+
+  const monthlySupplierPayout = useMemo(() => monthlySimulation.remainingValue ?? 0, [monthlySimulation.remainingValue]);
+
   const defaultPercentInputs = useMemo(() => toPercentInputMap(DEFAULT_CONFIG.categories), []);
 
   const hasUnsavedChanges = useMemo(
@@ -264,26 +491,131 @@ export function FinancialCalculatorClient() {
     [config.categories, percentInputs],
   );
 
-  const summaryText = useMemo(() => {
-    const lines = [`Total em vendas: ${formatUsd(totalSales)}`, ""];
-
-    for (const category of calculation.allocations) {
-      lines.push(`${category.shortLabel} (${formatPercent(category.percent)}): ${formatUsd(category.amount)}`);
+  const currentConfigLastUpdatedLabel = useMemo(() => {
+    if (!history.updatedAt) {
+      return "Sem atualizacao registrada";
     }
 
-    lines.push("");
-    lines.push(
-      calculation.isInvalid || calculation.remainingValue === null || calculation.remainingPercent === null
-        ? "Repasse para fornecedores: configuracao invalida"
-        : `Repasse para fornecedores (${formatPercent(calculation.remainingPercent)}): ${formatUsd(calculation.remainingValue)}`,
-    );
+    return new Date(history.updatedAt).toLocaleString("pt-BR");
+  }, [history.updatedAt]);
 
-    return lines.join("\n");
-  }, [calculation.allocations, calculation.isInvalid, calculation.remainingPercent, calculation.remainingValue, totalSales]);
+  const previousConfigLastUpdatedLabel = useMemo(() => {
+    if (!history.previousUpdatedAt) {
+      return "Sem historico anterior";
+    }
 
-  const handlePercentChange = (key: FinancialDistributionCategoryKey, value: string) => {
-    setPercentInputs((current) => ({ ...current, [key]: value }));
+    return new Date(history.previousUpdatedAt).toLocaleString("pt-BR");
+  }, [history.previousUpdatedAt]);
+
+  const summaryText = useMemo(() => {
+    return [
+      `Receita total: ${formatUsd(totalSales)}`,
+      `Lucro: ${formatUsd(profitValue)} (${formatPercent(profitPercent)})`,
+      `Retencao: ${formatUsd(retentionValue)}`,
+      `Repasse aos fornecedores: ${formatUsd(supplierValue)}`,
+      `Margem liquida: ${formatPercent(profitPercent)}`,
+    ].join("\n");
+  }, [profitPercent, profitValue, retentionValue, supplierValue, totalSales]);
+
+  const segments = useMemo(() => buildSegments(calculation), [calculation]);
+
+  const profitNumber = useAnimatedNumber(calculation.isInvalid ? 0 : profitValue);
+  const retentionNumber = useAnimatedNumber(calculation.isInvalid ? 0 : retentionValue);
+  const supplierNumber = useAnimatedNumber(calculation.isInvalid ? 0 : supplierValue);
+  const revenueNumber = useAnimatedNumber(totalSales);
+  const marginNumber = useAnimatedNumber(profitPercent);
+
+  const monthlyRevenueNumber = useAnimatedNumber(estimatedMonthlyRevenue);
+  const monthlyProfitNumber = useAnimatedNumber(monthlySimulation.isInvalid ? 0 : monthlyProfit);
+  const monthlyRetentionNumber = useAnimatedNumber(monthlySimulation.isInvalid ? 0 : monthlyRetention);
+  const monthlySupplierNumber = useAnimatedNumber(monthlySimulation.isInvalid ? 0 : monthlySupplierPayout);
+
+  const insights = useMemo(() => {
+    const items = [
+      `A margem de lucro representa ${formatPercent(profitPercent)} da receita.`,
+      monthlySimulation.isInvalid
+        ? "A projeção mensal está bloqueada porque a soma dos percentuais ultrapassa 100%."
+        : `O fundo de retenção deve acumular aproximadamente ${formatUsd(monthlyRetention)} neste mês.`,
+      monthlySimulation.isInvalid
+        ? ""
+        : `O repasse aos fornecedores será de ${formatUsd(monthlySupplierPayout)} no cenário atual.`,
+      profitPercent >= 15
+        ? "Sua margem operacional atual parece saudável."
+        : "Considere revisar a margem de lucro para aumentar o retorno operacional.",
+    ];
+
+    return items.filter(Boolean);
+  }, [monthlyRetention, monthlySimulation.isInvalid, monthlySupplierPayout, profitPercent]);
+
+  const canRestorePrevious = Boolean(history.previousConfig);
+
+  const saveConfiguration = async (nextConfig: FinancialCalculatorConfig, successLabel: string) => {
+    if (saving) {
+      return;
+    }
+
+    setSaving(true);
+    setErrorMessage(null);
     setSuccessMessage(null);
+
+    try {
+      const response = await fetch("/api/admin/financial-calculator", {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ config: nextConfig }),
+      });
+
+      const payload = (await response.json()) as ConfigResponse;
+
+      if (!response.ok || !payload.config) {
+        throw new Error(payload.error ?? "Could not save calculator settings.");
+      }
+
+      setConfig(payload.config);
+      setPercentInputs(toPercentInputMap(payload.config.categories));
+      setHistory(payload.history ?? HISTORY_FALLBACK);
+      setSuccessMessage(successLabel);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not save calculator settings.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveCurrent = async () => {
+    if (calculation.isInvalid) {
+      return;
+    }
+
+    const nextConfig: FinancialCalculatorConfig = {
+      ...config,
+      updatedAtMs: Date.now(),
+      currency: "USD",
+      categories: categories.map((category) => ({
+        key: category.key,
+        label: category.label,
+        shortLabel: category.shortLabel,
+        percent: Number(category.percent.toFixed(2)),
+      })),
+    };
+
+    await saveConfiguration(nextConfig, "Configuração financeira salva.");
+  };
+
+  const handleRestorePrevious = async () => {
+    if (!history.previousConfig) {
+      return;
+    }
+
+    await saveConfiguration(history.previousConfig, "Configuração anterior restaurada.");
+  };
+
+  const handleRestoreDefaults = () => {
+    setPercentInputs(defaultPercentInputs);
+    setSuccessMessage(null);
+    setCopyMessage(null);
   };
 
   const handleClear = () => {
@@ -301,63 +633,7 @@ export function FinancialCalculatorClient() {
     setCopyMessage(null);
   };
 
-  const handleRestoreDefaults = () => {
-    setPercentInputs(defaultPercentInputs);
-    setSuccessMessage(null);
-    setCopyMessage(null);
-  };
-
-  const handleSave = async () => {
-    if (saving || calculation.isInvalid) {
-      return;
-    }
-
-    setSaving(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    try {
-      const nextConfig: FinancialCalculatorConfig = {
-        ...config,
-        updatedAtMs: Date.now(),
-        currency: "USD",
-        categories: categories.map((category) => ({
-          key: category.key,
-          label: category.label,
-          shortLabel: category.shortLabel,
-          percent: Number(category.percent.toFixed(2)),
-        })),
-      };
-
-      const response = await fetch("/api/admin/financial-calculator", {
-        method: "PUT",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ config: nextConfig }),
-      });
-
-      const payload = (await response.json()) as ConfigResponse;
-
-      if (!response.ok || !payload.config) {
-        throw new Error(payload.error ?? "Could not save calculator settings.");
-      }
-
-      setConfig(payload.config);
-      setPercentInputs(toPercentInputMap(payload.config.categories));
-      setSuccessMessage("Percentuais salvos nas configuracoes do sistema.");
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not save calculator settings.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleCopySummary = async () => {
-    if (calculation.isInvalid) {
-      return;
-    }
-
     try {
       await navigator.clipboard.writeText(summaryText);
       setCopyMessage("Resumo copiado.");
@@ -366,442 +642,329 @@ export function FinancialCalculatorClient() {
     }
   };
 
-  const distributionSegments = useMemo(
-    () => [
-      ...calculation.allocations.map((category) => ({
-        key: category.key,
-        label: category.shortLabel,
-        percent: category.percent,
-        className: category.visual.barClassName,
-      })),
-      {
-        key: "remaining",
-        label: "Repasse fornecedores",
-        percent: calculation.isInvalid || calculation.remainingPercent === null ? 0 : calculation.remainingPercent,
-        className: "bg-[linear-gradient(90deg,#4b5563,#9ca3af)]",
-      },
-    ],
-    [calculation.allocations, calculation.isInvalid, calculation.remainingPercent],
-  );
-
   return (
-    <div className="min-h-screen bg-black text-green-300" style={{ fontFamily: DEFAULT_PAGE_FONT_FAMILY }}>
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
-        <div className="flex flex-wrap items-start justify-between gap-6">
-          <div className="max-w-3xl space-y-3">
-            <p className="text-sm font-bold uppercase tracking-[0.24em] text-green-600">Admin / Financeiro</p>
-            <h1 className="text-4xl font-black leading-tight text-green-200 sm:text-5xl">Calculadora Financeira</h1>
-            <p className="text-sm leading-7 text-green-600 sm:text-base">
-              Simule a distribuicao do faturamento em tempo real, ajuste percentuais persistidos no sistema e acompanhe
-              o repasse para fornecedores antes de aplicar a configuracao no painel.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => void handleSave()}
-              disabled={saving || calculation.isInvalid || !hasUnsavedChanges || loading}
-              className="rounded-md border border-green-600 bg-green-950 px-5 py-3 text-sm font-semibold text-green-200 transition hover:bg-green-900 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {saving ? "Salvando..." : "Salvar configuracoes"}
-            </button>
-            <button
-              type="button"
-              onClick={handleClear}
-              className="rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950"
-            >
-              Limpar
-            </button>
-            <button
-              type="button"
-              onClick={handleRestoreDefaults}
-              className="rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950"
-            >
-              Restaurar valores padrao
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleCopySummary()}
-              disabled={calculation.isInvalid}
-              className="rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Copiar resumo
-            </button>
-            <Link
-              href="/admin"
-              className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950"
-            >
-              Back to admin
-            </Link>
-          </div>
-        </div>
-
-        <section className="mt-8 grid gap-4 xl:grid-cols-[1.3fr_0.9fr]">
-          <article className="rounded-[1.8rem] border border-green-900 bg-green-950/20 p-6">
-            <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-              <label className="space-y-2 text-xs font-bold uppercase tracking-[0.15em] text-green-600">
-                Valor Total em Vendas
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="0.01"
-                  value={salesInput}
-                  onChange={(event) => setSalesInput(event.target.value)}
-                  placeholder="10000"
-                  className="block w-full rounded-2xl border border-green-800 bg-black px-4 py-4 text-2xl font-black text-green-200 outline-none transition focus:border-green-600"
-                />
-                <span className="block text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-green-700">
-                  Visualizacao USD: {formatUsd(totalSales)}
-                </span>
-              </label>
-
-              <div className="rounded-[1.5rem] border border-green-900 bg-black/30 p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Resumo rapido</p>
-                <p className="mt-3 text-4xl font-black text-green-200">{formatPercent(calculation.totalPercent)}</p>
-                <p className="mt-2 text-sm font-semibold text-green-500">Total dos percentuais: {formatPercent(calculation.totalPercent)}</p>
-                <p className="mt-2 text-sm text-green-600">Total dos percentuais configurados em tempo real.</p>
-                <div className="mt-4 h-2 rounded-full bg-green-950">
-                  <div
-                    className={`h-2 rounded-full ${calculation.isInvalid ? "bg-[linear-gradient(90deg,#ef4444,#fca5a5)]" : "bg-[linear-gradient(90deg,#22c55e,#86efac)]"}`}
-                    style={{ width: `${Math.min(calculation.totalPercent, 100)}%` }}
-                  />
-                </div>
-                <p className={`mt-3 text-sm font-semibold ${calculation.isInvalid ? "text-rose-400" : "text-emerald-400"}`}>
-                  {calculation.isInvalid
-                    ? "A soma dos percentuais nao pode ultrapassar 100%."
-                    : "Configuracao valida para simular e salvar."}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {categories.map((category) => {
-                const isInvalid = calculation.isInvalid;
-                return (
-                  <label
-                    key={category.key}
-                    className={`rounded-[1.5rem] border p-4 text-xs font-bold uppercase tracking-[0.14em] ${isInvalid ? "border-rose-500/60 bg-rose-950/10 text-rose-300" : "border-green-900 bg-black/30 text-green-600"}`}
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      <span>{category.label}</span>
-                      <span className="text-lg">{category.visual.icon}</span>
-                    </span>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={percentInputs[category.key] ?? "0"}
-                      onChange={(event) => handlePercentChange(category.key, event.target.value)}
-                      className={`mt-3 block w-full rounded-xl border px-3 py-3 text-lg font-black outline-none transition ${isInvalid ? "border-rose-500/60 bg-rose-950/20 text-rose-100 focus:border-rose-400" : "border-green-800 bg-black text-green-200 focus:border-green-600"}`}
-                    />
-                    <span className={`mt-2 block ${isInvalid ? "text-rose-300/80" : "text-green-700"}`}>
-                      {category.shortLabel}: {formatPercent(category.percent)}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          </article>
-
-          <article className="rounded-[1.8rem] border border-green-900 bg-green-950/20 p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Distribuicao</p>
-                <h2 className="mt-2 text-2xl font-black text-green-200">Barra percentual</h2>
-              </div>
-              <span className="rounded-full border border-green-900 bg-black/40 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-green-500">
-                Total {formatPercent(calculation.totalPercent)}
-              </span>
-            </div>
-
-            <div className="mt-6 overflow-hidden rounded-full border border-green-900 bg-black/50">
-              <div className="flex h-5 w-full">
-                {distributionSegments.map((segment) => (
-                  <div
-                    key={segment.key}
-                    className={`${segment.className} transition-all`}
-                    style={{ width: `${Math.max(segment.percent, 0)}%` }}
-                    title={`${segment.label}: ${formatPercent(segment.percent)}`}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {[...summarizeConfig(config)].map((category) => {
-                const livePercent = categories.find((entry) => entry.key === category.key)?.percent ?? category.percent;
-                return (
-                  <div key={category.key} className="flex items-center justify-between rounded-2xl border border-green-900 bg-black/30 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${category.visual.badgeClassName}`}>
-                        {category.visual.icon}
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-green-200">{category.shortLabel}</p>
-                        <p className="text-xs uppercase tracking-[0.12em] text-green-700">{category.label}</p>
-                      </div>
-                    </div>
-                    <p className={`text-sm font-black ${category.visual.textClassName}`}>{formatPercent(livePercent)}</p>
-                  </div>
-                );
-              })}
-
-              <div className="flex items-center justify-between rounded-2xl border border-slate-500/40 bg-slate-950/20 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-500/15 text-slate-300">💵</span>
-                  <div>
-                    <p className="text-sm font-semibold text-green-200">Repasse fornecedores</p>
-                    <p className="text-xs uppercase tracking-[0.12em] text-green-700">Saldo destinado aos fornecedores</p>
-                  </div>
-                </div>
-                <p className="text-sm font-black text-slate-300">
-                  {calculation.isInvalid || calculation.remainingPercent === null ? "--" : formatPercent(calculation.remainingPercent)}
-                </p>
-              </div>
-            </div>
-          </article>
-        </section>
-
-        {(errorMessage || successMessage || copyMessage || loading) && (
-          <section className="mt-4 rounded-2xl border border-green-900 bg-green-950/20 p-4">
-            {loading ? <p className="text-sm font-semibold text-green-500">Carregando configuracoes...</p> : null}
-            {errorMessage ? <p className="text-sm font-semibold text-rose-400">{errorMessage}</p> : null}
-            {successMessage ? <p className="text-sm font-semibold text-emerald-400">{successMessage}</p> : null}
-            {copyMessage ? <p className="text-sm font-semibold text-sky-400">{copyMessage}</p> : null}
-          </section>
-        )}
-
-        <section className={`mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 ${calculation.isInvalid ? "opacity-80" : ""}`}>
-          <ResultCard
-            label="Total em Vendas"
-            icon="💰"
-            value={formatUsd(totalSales)}
-            helper="Base da simulacao"
-            className="border-green-900 bg-green-950/20"
-            valueClassName="text-green-200"
-          />
-
-          {calculation.allocations.map((category) => (
-            <ResultCard
-              key={category.key}
-              label={category.shortLabel}
-              icon={category.visual.icon}
-              value={formatUsd(category.amount)}
-              helper={`${formatPercent(category.percent)} da receita`}
-              className={category.visual.cardClassName}
-              valueClassName={category.visual.textClassName}
-            />
-          ))}
-
-          <ResultCard
-            label="Repasse Fornecedores"
-            icon="💵"
-            value={calculation.isInvalid || calculation.remainingValue === null ? "--" : formatUsd(calculation.remainingValue)}
-            helper={
-              calculation.isInvalid || calculation.remainingPercent === null
-                ? "Ajuste os percentuais para visualizar"
-                : `${formatPercent(calculation.remainingPercent)} do total para fornecedores`
-            }
-            className="border-slate-500/40 bg-slate-950/20"
-            valueClassName="text-slate-200"
-          />
-        </section>
-
-        <section className="mt-6 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-          <article className="rounded-[1.8rem] border border-green-900 bg-green-950/20 p-6">
-            <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Simulador mensal</p>
-              <h2 className="text-2xl font-black text-green-200">Lucro estimado no mes</h2>
-              <p className="text-sm leading-7 text-green-600">
-                Informe a quantidade media de vendas por dia para projetar o faturamento mensal e calcular o lucro com base nos percentuais atuais.
+    <div className="min-h-screen bg-[#05070d] text-slate-100" style={{ fontFamily: DEFAULT_PAGE_FONT_FAMILY }}>
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pb-14 pt-10 sm:px-6 lg:px-8">
+        <header className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.16),transparent_28%),linear-gradient(180deg,rgba(8,12,20,0.98),rgba(6,9,15,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:p-8">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+            <div className="max-w-3xl space-y-3">
+              <p className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.22em] text-cyan-300">
+                <Sparkles className="h-3.5 w-3.5" />
+                Admin / Financeiro
+              </p>
+              <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">Calculadora Financeira</h1>
+              <p className="max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
+                Dashboard financeiro profissional para acompanhar receita, lucro, retenção e repasse aos fornecedores em tempo real.
               </p>
             </div>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              <label className="space-y-2 text-xs font-bold uppercase tracking-[0.15em] text-green-600">
-                Vendas por dia
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="0.01"
-                  value={salesPerDayInput}
-                  onChange={(event) => setSalesPerDayInput(event.target.value)}
-                  placeholder="12"
-                  className="block w-full rounded-2xl border border-green-800 bg-black px-4 py-4 text-xl font-black text-green-200 outline-none transition focus:border-green-600"
-                />
-              </label>
-
-              <label className="space-y-2 text-xs font-bold uppercase tracking-[0.15em] text-green-600">
-                Ticket medio por venda
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="0.01"
-                  value={averageSaleValueInput}
-                  onChange={(event) => setAverageSaleValueInput(event.target.value)}
-                  placeholder="100"
-                  className="block w-full rounded-2xl border border-green-800 bg-black px-4 py-4 text-xl font-black text-green-200 outline-none transition focus:border-green-600"
-                />
-              </label>
-
-              <label className="space-y-2 text-xs font-bold uppercase tracking-[0.15em] text-green-600">
-                Dias com vendas no mes
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min="0"
-                  max="31"
-                  step="1"
-                  value={activeDaysInput}
-                  onChange={(event) => setActiveDaysInput(event.target.value)}
-                  placeholder="30"
-                  className="block w-full rounded-2xl border border-green-800 bg-black px-4 py-4 text-xl font-black text-green-200 outline-none transition focus:border-green-600"
-                />
-              </label>
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
-              <ResultCard
-                label="Faturamento Mensal"
-                icon="🗓️"
-                value={formatUsd(estimatedMonthlyRevenue)}
-                helper={`${salesPerDay.toFixed(0)} vendas/dia por ${activeDays} dias`}
-                className="border-cyan-500/40 bg-cyan-950/20"
-                valueClassName="text-cyan-300"
-                valueSizeClassName="text-2xl"
-                helperClassName="text-[0.7rem]"
-              />
-              <ResultCard
-                label="Lucro do Mes"
-                icon="💸"
-                value={monthlySimulation.isInvalid ? "--" : formatUsd(monthlyProfit)}
-                helper={`Margem de ${formatPercent(categories.find((category) => category.key === "profitMargin")?.percent ?? 0)}`}
-                className="border-emerald-500/40 bg-emerald-950/20"
-                valueClassName="text-emerald-300"
-                valueSizeClassName="text-2xl"
-                helperClassName="text-[0.7rem]"
-              />
-              <ResultCard
-                label="Retencao Mensal"
-                icon="🎁"
-                value={
-                  monthlySimulation.isInvalid
-                    ? "--"
-                    : formatUsd(monthlySimulation.allocations.find((category) => category.key === "retentionFund")?.amount ?? 0)
-                }
-                helper="Reserva mensal estimada"
-                className="border-sky-500/40 bg-sky-950/20"
-                valueClassName="text-sky-300"
-                valueSizeClassName="text-2xl"
-                helperClassName="text-[0.7rem]"
-              />
-              <ResultCard
-                label="Repasse Fornecedores no Mes"
-                icon="💼"
-                value={monthlySimulation.isInvalid || monthlySimulation.remainingValue === null ? "--" : formatUsd(monthlySimulation.remainingValue)}
-                helper={
-                  monthlySimulation.isInvalid || monthlySimulation.remainingPercent === null
-                    ? "Ajuste os percentuais"
-                    : `${formatPercent(monthlySimulation.remainingPercent)} projetado para fornecedores`
-                }
-                className="border-slate-500/40 bg-slate-950/20"
-                valueClassName="text-slate-200"
-                valueSizeClassName="text-2xl"
-                helperClassName="text-[0.7rem]"
-              />
-            </div>
-          </article>
-
-          <article className="rounded-[1.8rem] border border-green-900 bg-green-950/20 p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Resumo da projeção</p>
-            <h2 className="mt-2 text-2xl font-black text-green-200">Leitura mensal</h2>
-
-            <div className="mt-5 space-y-3">
-              <div className="rounded-[1.4rem] border border-green-900 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Formula</p>
-                <p className="mt-2 text-sm leading-7 text-green-200">
-                  {salesPerDay.toFixed(0)} vendas/dia x {formatUsd(averageSaleValue)} x {activeDays} dias = {formatUsd(estimatedMonthlyRevenue)}
-                </p>
-              </div>
-
-              <div className="rounded-[1.4rem] border border-green-900 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Lucro projetado</p>
-                <p className="mt-2 text-3xl font-black text-emerald-300">
-                  {monthlySimulation.isInvalid ? "--" : formatUsd(monthlyProfit)}
-                </p>
-                <p className="mt-2 text-sm text-green-600">
-                  Calculado com a margem de lucro atual e atualizado automaticamente conforme os percentuais mudam.
-                </p>
-              </div>
-
-              <div className="rounded-[1.4rem] border border-green-900 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Status da projeção</p>
-                <p className={`mt-2 text-sm font-semibold ${monthlySimulation.isInvalid ? "text-rose-400" : "text-emerald-400"}`}>
-                  {monthlySimulation.isInvalid
-                    ? "A projeção mensal fica bloqueada enquanto a soma dos percentuais passar de 100%."
-                    : "A projeção mensal está válida com os percentuais atuais."}
-                </p>
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <section className="mt-6 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-          <article className="rounded-[1.8rem] border border-green-900 bg-green-950/20 p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Resumo automatico</p>
-                <h2 className="mt-2 text-2xl font-black text-green-200">Distribuicao pronta para compartilhar</h2>
-              </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => void handleSaveCurrent()}
+                disabled={saving || calculation.isInvalid || !hasUnsavedChanges || loading}
+                className="inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-cyan-500/15 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <TrendingUp className="h-4 w-4" />
+                {saving ? "Salvando..." : "Salvar"}
+              </button>
               <button
                 type="button"
                 onClick={() => void handleCopySummary()}
-                disabled={calculation.isInvalid}
-                className="rounded-md border border-green-800 px-4 py-2 text-sm font-semibold text-green-400 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
               >
+                <Copy className="h-4 w-4" />
                 Copiar resumo
               </button>
+              <button
+                type="button"
+                onClick={handleRestorePrevious}
+                disabled={!canRestorePrevious}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <History className="h-4 w-4" />
+                Restaurar anterior
+              </button>
+              <button
+                type="button"
+                onClick={handleRestoreDefaults}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Padrão
+              </button>
+              <button
+                type="button"
+                onClick={handleClear}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+              >
+                <ArrowLeft className="h-4 w-4 rotate-180" />
+                Limpar
+              </button>
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Voltar
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <MetricCard
+            title="Receita Total"
+            icon={Banknote}
+            value={revenueNumber === 0 && !salesInput ? "--" : formatUsd(calculation.isInvalid ? 0 : revenueNumber)}
+            helper={calculation.isInvalid ? "Ajuste os percentuais" : "Base da simulação"}
+            toneClassName="border-sky-500/20 bg-gradient-to-br from-sky-500/20 to-sky-950/40"
+          />
+          <MetricCard
+            title="Lucro"
+            icon={TrendingUp}
+            value={calculation.isInvalid ? "--" : formatUsd(profitNumber)}
+            helper={`Margem ${formatShortPercent(marginNumber)}`}
+            toneClassName="border-emerald-500/20 bg-gradient-to-br from-emerald-500/20 to-emerald-950/40"
+          />
+          <MetricCard
+            title="Retenção"
+            icon={Wallet}
+            value={calculation.isInvalid ? "--" : formatUsd(retentionNumber)}
+            helper="Fundo de clientes"
+            toneClassName="border-amber-500/20 bg-gradient-to-br from-amber-500/20 to-amber-950/40"
+          />
+          <MetricCard
+            title="Repasse aos Fornecedores"
+            icon={Truck}
+            value={calculation.isInvalid ? "--" : formatUsd(supplierNumber)}
+            helper={`Saldo ${calculation.isInvalid || calculation.remainingPercent === null ? "--" : formatShortPercent(calculation.remainingPercent)}`}
+            toneClassName="border-slate-500/20 bg-gradient-to-br from-slate-500/20 to-slate-950/40"
+          />
+          <MetricCard
+            title="Margem Líquida (%)"
+            icon={BadgePercent}
+            value={calculation.isInvalid ? "--" : formatShortPercent(marginNumber)}
+            helper="Lucro sobre a receita"
+            toneClassName="border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-500/20 to-fuchsia-950/40"
+          />
+        </section>
+
+        <section className="mt-5 grid gap-5 xl:grid-cols-[1.18fr_0.82fr]">
+          <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Configuração</p>
+                <h2 className="mt-2 text-xl font-black text-white sm:text-2xl">Percentuais e valor correspondente</h2>
+              </div>
+              <div className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] ${calculation.isInvalid ? "border-rose-400/25 bg-rose-500/10 text-rose-300" : "border-emerald-400/25 bg-emerald-500/10 text-emerald-300"}`}>
+                Total dos percentuais: {formatShortPercent(calculation.totalPercent)}
+              </div>
             </div>
 
-            <pre className="mt-5 whitespace-pre-wrap rounded-[1.5rem] border border-green-900 bg-black/40 p-5 text-sm leading-7 text-green-200">
-              {summaryText}
-            </pre>
+            {calculation.isInvalid ? (
+              <div className="mt-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-200">
+                A soma dos percentuais não pode ultrapassar 100%.
+              </div>
+            ) : null}
+
+            <div className="mt-4 space-y-3">
+              {categories.map((category) => {
+                const amount = calculation.isInvalid ? null : calculation.allocations.find((item) => item.key === category.key)?.amount ?? 0;
+
+                return (
+                  <ConfigRow
+                    key={category.key}
+                    label={category.label}
+                    value={amount === null ? "--" : formatUsd(amount)}
+                    percentInput={percentInputs[category.key] ?? "0"}
+                    onChange={(next) => setPercentInputs((current) => ({ ...current, [category.key]: next }))}
+                    invalid={calculation.isInvalid}
+                    helper={`Atualize a percentagem para ${category.shortLabel.toLowerCase()}.`}
+                  />
+                );
+              })}
+            </div>
           </article>
 
-          <article className="rounded-[1.8rem] border border-green-900 bg-green-950/20 p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Estado da configuracao</p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[1.4rem] border border-green-900 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Percentual do repasse</p>
-                <p className="mt-2 text-3xl font-black text-green-200">
-                  {calculation.isInvalid || calculation.remainingPercent === null ? "--" : formatPercent(calculation.remainingPercent)}
-                </p>
+          <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Distribuição Financeira</p>
+                <h2 className="mt-2 text-xl font-black text-white sm:text-2xl">Donut da distribuição</h2>
               </div>
-              <div className="rounded-[1.4rem] border border-green-900 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Valor do repasse</p>
-                <p className="mt-2 text-3xl font-black text-green-200">
-                  {calculation.isInvalid || calculation.remainingValue === null ? "--" : formatUsd(calculation.remainingValue)}
-                </p>
-              </div>
+              <BarChart3 className="h-5 w-5 text-cyan-300" />
             </div>
 
-            <div className="mt-4 rounded-[1.4rem] border border-green-900 bg-black/30 p-4">
-              <p className="text-xs uppercase tracking-[0.14em] text-green-600">Persistencia</p>
-              <p className="mt-2 text-sm leading-7 text-green-600">
-                Os percentuais salvos ficam armazenados em configuracoes do sistema e sao recarregados sempre que o painel administrativo inicia.
-              </p>
-              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-green-700">
-                {hasUnsavedChanges ? "Existem alteracoes nao salvas." : "Configuracao local sincronizada com o banco."}
-              </p>
+            <div className="mt-5 grid gap-4 lg:grid-cols-[220px_1fr] lg:items-center">
+              <div className="rounded-[1.5rem] border border-white/10 bg-black/25 p-3">
+                {calculation.isInvalid ? (
+                  <div className="flex h-56 items-center justify-center rounded-[1.25rem] border border-rose-500/20 bg-rose-500/10 px-6 text-center text-sm font-semibold text-rose-200">
+                    Ajuste os percentuais para visualizar a distribuição.
+                  </div>
+                ) : (
+                  <DonutChart segments={segments} invalid={false} />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                {segments.map((segment) => (
+                  <div key={segment.key} className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${segment.key === "supplierPayout" ? "border-slate-400/20 bg-slate-500/5" : "border-white/10 bg-black/20"}`}>
+                    <div className="flex items-center gap-3">
+                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: segment.color }} />
+                      <div>
+                        <p className="font-semibold text-white">{segment.label}</p>
+                        <p className="text-xs text-slate-400">{formatShortPercent(segment.percent)}</p>
+                      </div>
+                    </div>
+                    <p className="font-black text-white tabular-nums">{calculation.isInvalid && segment.key === "supplierPayout" ? "--" : formatUsd(segment.value)}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </article>
         </section>
+
+        <section className="mt-5 grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+          <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Simulador Mensal</p>
+                <h2 className="mt-2 text-xl font-black text-white sm:text-2xl">Previsão compacta do mês</h2>
+              </div>
+              <Clock3 className="h-5 w-5 text-amber-300" />
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              {[
+                { label: "Vendas por dia", value: salesPerDayInput, onChange: setSalesPerDayInput, placeholder: "12" },
+                { label: "Ticket médio", value: averageSaleValueInput, onChange: setAverageSaleValueInput, placeholder: "100" },
+                { label: "Dias vendidos", value: activeDaysInput, onChange: setActiveDaysInput, placeholder: "30" },
+              ].map((field) => (
+                <label key={field.label} className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  {field.label}
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    value={field.value}
+                    onChange={(event) => field.onChange(event.target.value)}
+                    placeholder={field.placeholder}
+                    className="rounded-xl border border-white/10 bg-black/30 px-3 py-3 text-lg font-black text-white outline-none transition focus:border-cyan-400"
+                  />
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10">
+              <table className="w-full text-left text-sm">
+                <tbody className="divide-y divide-white/10">
+                  <tr className="bg-sky-500/5">
+                    <td className="px-4 py-3 text-slate-300">Receita mensal</td>
+                    <td className="px-4 py-3 text-right text-lg font-black text-sky-300 tabular-nums">
+                      {monthlySimulation.isInvalid ? "--" : formatUsd(monthlyRevenueNumber)}
+                    </td>
+                  </tr>
+                  <tr className="bg-emerald-500/5">
+                    <td className="px-4 py-3 text-slate-300">Lucro mensal</td>
+                    <td className="px-4 py-3 text-right text-lg font-black text-emerald-300 tabular-nums">
+                      {monthlySimulation.isInvalid ? "--" : formatUsd(monthlyProfitNumber)}
+                    </td>
+                  </tr>
+                  <tr className="bg-amber-500/5">
+                    <td className="px-4 py-3 text-slate-300">Retenção mensal</td>
+                    <td className="px-4 py-3 text-right text-lg font-black text-amber-300 tabular-nums">
+                      {monthlySimulation.isInvalid ? "--" : formatUsd(monthlyRetentionNumber)}
+                    </td>
+                  </tr>
+                  <tr className="bg-slate-500/5">
+                    <td className="px-4 py-3 text-slate-300">Repasse mensal</td>
+                    <td className="px-4 py-3 text-right text-lg font-black text-slate-200 tabular-nums">
+                      {monthlySimulation.isInvalid ? "--" : formatUsd(monthlySupplierNumber)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {monthlySimulation.isInvalid ? (
+              <div className="mt-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-200">
+                A soma dos percentuais precisa ficar em até 100% para liberar a projeção mensal.
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-slate-400">
+                {salesPerDay.toFixed(0)} vendas/dia × {formatUsd(averageSaleValue)} × {activeDays} dias = {formatUsd(monthlyRevenueNumber)}
+              </p>
+            )}
+          </article>
+
+          <div className="grid gap-5">
+            <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Insights Financeiros</p>
+                  <h2 className="mt-2 text-xl font-black text-white sm:text-2xl">Leituras automáticas</h2>
+                </div>
+                <Sparkles className="h-5 w-5 text-fuchsia-300" />
+              </div>
+
+              <ul className="mt-4 space-y-3">
+                {insights.map((item) => (
+                  <li key={item} className="flex gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm leading-6 text-slate-300">
+                    <span className="mt-1 h-2.5 w-2.5 rounded-full bg-cyan-300" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Histórico de Configurações</p>
+                  <h2 className="mt-2 text-xl font-black text-white sm:text-2xl">Última alteração</h2>
+                </div>
+                <History className="h-5 w-5 text-slate-300" />
+              </div>
+
+              <div className="mt-4 grid gap-3 text-sm text-slate-300">
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Usuário</p>
+                  <p className="mt-1 font-semibold text-white">{history.updatedByLabel ?? history.updatedBy ?? "Sem registro"}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Data</p>
+                  <p className="mt-1 font-semibold text-white">{currentConfigLastUpdatedLabel}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Configuração anterior</p>
+                  <p className="mt-1 font-semibold text-white">{previousConfigLastUpdatedLabel}</p>
+                  <p className="mt-1 text-xs text-slate-400">{history.previousUpdatedByLabel ?? history.previousUpdatedBy ?? "Sem histórico anterior"}</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleRestorePrevious}
+                disabled={!canRestorePrevious}
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Restaurar configuração anterior
+              </button>
+            </article>
+          </div>
+        </section>
+
+        {(errorMessage || successMessage || copyMessage || loading) && (
+          <section className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm">
+            {loading ? <p className="text-cyan-300">Carregando configurações...</p> : null}
+            {errorMessage ? <p className="text-rose-300">{errorMessage}</p> : null}
+            {successMessage ? <p className="text-emerald-300">{successMessage}</p> : null}
+            {copyMessage ? <p className="text-sky-300">{copyMessage}</p> : null}
+          </section>
+        )}
       </main>
     </div>
   );

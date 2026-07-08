@@ -12,6 +12,64 @@ type PutBody = {
   config?: unknown;
 };
 
+type FinancialCalculatorHistory = {
+  previousConfig: unknown | null;
+  updatedAt: string | null;
+  updatedBy: string | null;
+  updatedByLabel: string | null;
+  previousUpdatedAt: string | null;
+  previousUpdatedBy: string | null;
+  previousUpdatedByLabel: string | null;
+};
+
+function serializeTimestamp(value: unknown): string | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const parsed = value as { toDate?: () => Date };
+  if (typeof parsed.toDate !== "function") {
+    return null;
+  }
+
+  const date = parsed.toDate();
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString();
+}
+
+function getAdminLabel(data: Record<string, unknown> | null, fallbackUid: string) {
+  const label =
+    typeof data?.displayName === "string"
+      ? data.displayName
+      : typeof data?.username === "string"
+        ? data.username
+        : typeof data?.name === "string"
+          ? data.name
+          : typeof data?.email === "string"
+            ? data.email
+            : fallbackUid;
+
+  return label.trim() || fallbackUid;
+}
+
+function buildHistory(snapshotData: Record<string, unknown> | null): FinancialCalculatorHistory {
+  const previousConfig = snapshotData?.previousConfig ? sanitizeFinancialCalculatorConfig(snapshotData.previousConfig) : null;
+
+  return {
+    previousConfig,
+    updatedAt: serializeTimestamp(snapshotData?.updatedAt) ?? null,
+    updatedBy: typeof snapshotData?.updatedBy === "string" ? snapshotData.updatedBy : null,
+    updatedByLabel: typeof snapshotData?.updatedByLabel === "string" ? snapshotData.updatedByLabel : null,
+    previousUpdatedAt: serializeTimestamp(snapshotData?.previousUpdatedAt) ?? null,
+    previousUpdatedBy: typeof snapshotData?.previousUpdatedBy === "string" ? snapshotData.previousUpdatedBy : null,
+    previousUpdatedByLabel:
+      typeof snapshotData?.previousUpdatedByLabel === "string" ? snapshotData.previousUpdatedByLabel : null,
+  };
+}
+
 function statusFromErrorMessage(message: string): number {
   if (message.includes("authorization") || message.includes("token") || message.includes("admin")) {
     return 401;
@@ -30,12 +88,12 @@ export async function GET(request: Request): Promise<Response> {
 
     const adminDb = getAdminDb();
     const snapshot = await adminDb.collection("app-config").doc(FINANCIAL_CALCULATOR_CONFIG_DOC_ID).get();
+    const snapshotData = snapshot.exists ? (snapshot.data() as Record<string, unknown>) : null;
 
-    const config = snapshot.exists
-      ? sanitizeFinancialCalculatorConfig(snapshot.data())
-      : buildDefaultFinancialCalculatorConfig();
+    const config = snapshot.exists ? sanitizeFinancialCalculatorConfig(snapshot.data()) : buildDefaultFinancialCalculatorConfig();
+    const history = buildHistory(snapshotData);
 
-    return Response.json({ ok: true, config });
+    return Response.json({ ok: true, config, history });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not load financial calculator config.";
     return Response.json({ error: message }, { status: statusFromErrorMessage(message) });
@@ -61,6 +119,12 @@ export async function PUT(request: Request): Promise<Response> {
   try {
     const adminDb = getAdminDb();
     const sanitized = sanitizeFinancialCalculatorConfig(body.config);
+    const snapshot = await adminDb.collection("app-config").doc(FINANCIAL_CALCULATOR_CONFIG_DOC_ID).get();
+    const snapshotData = snapshot.exists ? (snapshot.data() as Record<string, unknown>) : null;
+    const currentConfig = snapshot.exists ? sanitizeFinancialCalculatorConfig(snapshot.data()) : null;
+    const adminUserDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
+    const adminUserData = adminUserDoc.exists ? (adminUserDoc.data() as Record<string, unknown>) : null;
+    const adminLabel = getAdminLabel(adminUserData, decodedToken.uid);
 
     await adminDb
       .collection("app-config")
@@ -71,11 +135,28 @@ export async function PUT(request: Request): Promise<Response> {
           updatedAtMs: Date.now(),
           updatedAt: FieldValue.serverTimestamp(),
           updatedBy: decodedToken.uid,
+          updatedByLabel: adminLabel,
+          previousConfig: currentConfig,
+          previousUpdatedAt: snapshotData?.updatedAt ?? null,
+          previousUpdatedBy: typeof snapshotData?.updatedBy === "string" ? snapshotData.updatedBy : null,
+          previousUpdatedByLabel: typeof snapshotData?.updatedByLabel === "string" ? snapshotData.updatedByLabel : null,
         },
         { merge: true },
       );
 
-    return Response.json({ ok: true, config: sanitized });
+    return Response.json({
+      ok: true,
+      config: sanitized,
+      history: {
+        previousConfig: currentConfig,
+        updatedAt: new Date().toISOString(),
+        updatedBy: decodedToken.uid,
+        updatedByLabel: adminLabel,
+        previousUpdatedAt: serializeTimestamp(snapshotData?.updatedAt) ?? null,
+        previousUpdatedBy: typeof snapshotData?.updatedBy === "string" ? snapshotData.updatedBy : null,
+        previousUpdatedByLabel: typeof snapshotData?.updatedByLabel === "string" ? snapshotData.updatedByLabel : null,
+      },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not save financial calculator config.";
     return Response.json({ error: message }, { status: statusFromErrorMessage(message) });
