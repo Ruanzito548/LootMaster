@@ -61,6 +61,12 @@ const adminSections = [
     description: "Balance chest odds, Gift Card Fragment rates, and account drops by rarity.",
     href: "/admin/chests",
   },
+  {
+    id: "11",
+    title: "Calculadora Financeira",
+    description: "Simulate sales distribution, persist percentages, and validate financial splits.",
+    href: "/admin/calculadora-financeira",
+  },
 ];
 
 export default function AdminPage() {
@@ -83,7 +89,7 @@ export default function AdminPage() {
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
           <article className="rounded-2xl border border-green-900 bg-green-950/20 p-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Active modules</p>
-            <p className="mt-2 text-3xl font-black text-green-300">10</p>
+            <p className="mt-2 text-3xl font-black text-green-300">11</p>
           </article>
           <article className="rounded-2xl border border-green-900 bg-green-950/20 p-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Commerce</p>
