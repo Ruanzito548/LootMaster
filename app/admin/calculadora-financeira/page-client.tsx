@@ -143,19 +143,30 @@ type ResultCardProps = {
   helper: string;
   className: string;
   valueClassName: string;
+  valueSizeClassName?: string;
+  helperClassName?: string;
 };
 
-function ResultCard({ label, icon, value, helper, className, valueClassName }: ResultCardProps) {
+function ResultCard({
+  label,
+  icon,
+  value,
+  helper,
+  className,
+  valueClassName,
+  valueSizeClassName = "text-3xl",
+  helperClassName = "text-xs",
+}: ResultCardProps) {
   return (
     <article className={`rounded-[1.5rem] border p-5 ${className}`}>
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">{label}</p>
-          <p className={`mt-3 text-3xl font-black ${valueClassName}`}>{value}</p>
+          <p className={`mt-3 break-words font-black leading-none ${valueSizeClassName} ${valueClassName}`}>{value}</p>
         </div>
-        <span className="text-2xl">{icon}</span>
+        <span className="shrink-0 text-2xl">{icon}</span>
       </div>
-      <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-green-700">{helper}</p>
+      <p className={`mt-3 font-semibold uppercase tracking-[0.12em] text-green-700 ${helperClassName}`}>{helper}</p>
     </article>
   );
 }
@@ -654,7 +665,7 @@ export function FinancialCalculatorClient() {
               </label>
             </div>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
               <ResultCard
                 label="Faturamento Mensal"
                 icon="🗓️"
@@ -662,6 +673,8 @@ export function FinancialCalculatorClient() {
                 helper={`${salesPerDay.toFixed(0)} vendas/dia por ${activeDays} dias`}
                 className="border-cyan-500/40 bg-cyan-950/20"
                 valueClassName="text-cyan-300"
+                valueSizeClassName="text-2xl"
+                helperClassName="text-[0.7rem]"
               />
               <ResultCard
                 label="Lucro do Mes"
@@ -670,6 +683,8 @@ export function FinancialCalculatorClient() {
                 helper={`Margem de ${formatPercent(categories.find((category) => category.key === "profitMargin")?.percent ?? 0)}`}
                 className="border-emerald-500/40 bg-emerald-950/20"
                 valueClassName="text-emerald-300"
+                valueSizeClassName="text-2xl"
+                helperClassName="text-[0.7rem]"
               />
               <ResultCard
                 label="Retencao Mensal"
@@ -682,6 +697,8 @@ export function FinancialCalculatorClient() {
                 helper="Reserva mensal estimada"
                 className="border-sky-500/40 bg-sky-950/20"
                 valueClassName="text-sky-300"
+                valueSizeClassName="text-2xl"
+                helperClassName="text-[0.7rem]"
               />
               <ResultCard
                 label="Repasse Fornecedores no Mes"
@@ -694,6 +711,8 @@ export function FinancialCalculatorClient() {
                 }
                 className="border-slate-500/40 bg-slate-950/20"
                 valueClassName="text-slate-200"
+                valueSizeClassName="text-2xl"
+                helperClassName="text-[0.7rem]"
               />
             </div>
           </article>
