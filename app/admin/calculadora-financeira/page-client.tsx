@@ -374,7 +374,6 @@ function buildDistributionCalculation(categories: LiveCategory[], totalSales: nu
 }
 
 export function FinancialCalculatorClient() {
-  const [salesInput, setSalesInput] = useState("10000");
   const [salesPerDayInput, setSalesPerDayInput] = useState("12");
   const [averageSaleValueInput, setAverageSaleValueInput] = useState("100");
   const [activeDaysInput, setActiveDaysInput] = useState("30");
@@ -439,7 +438,7 @@ export function FinancialCalculatorClient() {
     [config.categories, percentInputs],
   );
 
-  const totalSales = useMemo(() => parseDecimalInput(salesInput), [salesInput]);
+  const totalSales = useMemo(() => estimatedMonthlyRevenue, [estimatedMonthlyRevenue]);
 
   const calculation = useMemo(() => {
     return buildDistributionCalculation(categories, totalSales);
@@ -509,7 +508,7 @@ export function FinancialCalculatorClient() {
 
   const summaryText = useMemo(() => {
     return [
-      `Receita total: ${formatUsd(totalSales)}`,
+      `Receita mensal estimada: ${formatUsd(totalSales)}`,
       `Lucro: ${formatUsd(profitValue)} (${formatPercent(profitPercent)})`,
       `Retencao: ${formatUsd(retentionValue)}`,
       `Repasse aos fornecedores: ${formatUsd(supplierValue)}`,
@@ -619,7 +618,6 @@ export function FinancialCalculatorClient() {
   };
 
   const handleClear = () => {
-    setSalesInput("");
     setSalesPerDayInput("");
     setAverageSaleValueInput("");
     setActiveDaysInput("");
@@ -714,10 +712,10 @@ export function FinancialCalculatorClient() {
 
         <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <MetricCard
-            title="Receita Total"
+            title="Receita Mensal"
             icon={Banknote}
-            value={revenueNumber === 0 && !salesInput ? "--" : formatUsd(calculation.isInvalid ? 0 : revenueNumber)}
-            helper={calculation.isInvalid ? "Ajuste os percentuais" : "Base da simulação"}
+            value={revenueNumber === 0 ? "--" : formatUsd(calculation.isInvalid ? 0 : revenueNumber)}
+            helper="Derivada do simulador mensal"
             toneClassName="border-sky-500/20 bg-gradient-to-br from-sky-500/20 to-sky-950/40"
           />
           <MetricCard
