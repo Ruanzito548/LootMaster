@@ -120,14 +120,7 @@ export default async function AdminOrdersPage() {
       const assignedAgent = assignedAgentId ? agentByUid.get(assignedAgentId) : null;
       const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
       const storedCommissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
-      const financials =
-        typeof data.sellerAmountCents === "number" && typeof data.platformProfitCents === "number"
-          ? {
-              commissionPercent: clampPercent(storedCommissionPercent),
-              sellerAmountCents: data.sellerAmountCents,
-              platformProfitCents: data.platformProfitCents,
-            }
-          : buildFinancials(totalCents, storedCommissionPercent);
+      const financials = buildFinancials(totalCents, storedCommissionPercent);
 
       return {
         id: orderId,

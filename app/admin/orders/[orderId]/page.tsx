@@ -16,6 +16,23 @@ function formatMoney(amountInCents: number | null) {
   }).format(amountInCents / 100);
 }
 
+function clampPercent(value: number): number {
+  if (Number.isNaN(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 100) return 100;
+  return Math.round(value * 100) / 100;
+}
+
+function buildFinancials(totalCents: number, commissionPercentRaw: number) {
+  const commissionPercent = clampPercent(commissionPercentRaw);
+  const sellerAmountCents = Math.round(totalCents * (1 - commissionPercent / 100));
+
+  return {
+    commissionPercent,
+    sellerAmountCents,
+  };
+}
+
 export default async function AdminOrderApplicantsPage(
   props: PageProps<"/admin/orders/[orderId]">
 ) {
@@ -64,10 +81,7 @@ export default async function AdminOrderApplicantsPage(
       const data = orderDoc.data() as Record<string, unknown>;
       const amountTotalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
       const commissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
-      const sellerAmountCents =
-        typeof data.sellerAmountCents === "number"
-          ? data.sellerAmountCents
-          : Math.round(amountTotalCents * (1 - commissionPercent / 100));
+      const financials = buildFinancials(amountTotalCents, commissionPercent);
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
       let agentName = "--";
       let agentEmail = "--";
@@ -98,7 +112,7 @@ export default async function AdminOrderApplicantsPage(
         server: typeof data.server === "string" ? data.server : "-",
         faction: typeof data.faction === "string" ? data.faction : "-",
         totalLabel: formatMoney(amountTotalCents),
-        payoutLabel: formatMoney(sellerAmountCents),
+        payoutLabel: formatMoney(financials.sellerAmountCents),
         agentName,
         agentEmail,
       };

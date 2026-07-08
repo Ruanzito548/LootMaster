@@ -120,10 +120,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const amountTotalCents = toFiniteNumber(checkoutData?.amountTotalCents, 0);
     const commissionPercent = toFiniteNumber(checkoutData?.commissionPercent, 15);
-    const sellerAmountCentsRaw = toFiniteNumber(checkoutData?.sellerAmountCents, Number.NaN);
-    const payoutCents = Number.isFinite(sellerAmountCentsRaw)
-      ? Math.max(0, Math.round(sellerAmountCentsRaw))
-      : Math.max(0, Math.round(amountTotalCents * (1 - commissionPercent / 100)));
+    const payoutCents = Math.max(0, Math.round(amountTotalCents * (1 - commissionPercent / 100)));
     const payoutLootCoins = Math.round((payoutCents / 100) * 100) / 100;
 
     const payoutReference = `order-payout:${body.orderId}`;

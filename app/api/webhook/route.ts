@@ -122,11 +122,9 @@ async function persistPaidOrder(session: Stripe.Checkout.Session): Promise<void>
   const meta = session.metadata ?? {};
   const adminDb = getAdminDb();
   const amountTotalCents = session.amount_total ?? 0;
-  const baseAmountCents = Number(meta.baseAmountCents ?? 0) || 0;
   const commissionPercent = Number(meta.commissionPercent ?? DEFAULT_PLATFORM_FEE_PERCENT) || DEFAULT_PLATFORM_FEE_PERCENT;
-  const commissionBaseCents = baseAmountCents > 0 ? baseAmountCents : amountTotalCents;
-  const sellerAmountCents = Math.round(commissionBaseCents * (1 - commissionPercent / 100));
-  const platformProfitCents = commissionBaseCents - sellerAmountCents;
+  const sellerAmountCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
+  const platformProfitCents = amountTotalCents - sellerAmountCents;
 
   await adminDb.collection("order-checkouts").doc(session.id).set(
     {
@@ -136,7 +134,7 @@ async function persistPaidOrder(session: Stripe.Checkout.Session): Promise<void>
       currency: (session.currency ?? "brl").toLowerCase(),
       customerEmail: session.customer_email ?? "",
       customerUid: meta.customerUid ?? "",
-      baseAmountCents: commissionBaseCents,
+      baseAmountCents: amountTotalCents,
       gameId: meta.gameId ?? "",
       gameTitle: meta.gameTitle ?? "",
       categoryId: meta.categoryId ?? "",
@@ -575,15 +573,13 @@ export async function POST(request: Request): Promise<Response> {
 
       try {
         const amountTotalCents = session.amount_total ?? 0;
-        const baseAmountCents = Number(meta.baseAmountCents ?? 0) || 0;
-        const commissionBaseCents = baseAmountCents > 0 ? baseAmountCents : amountTotalCents;
         const commissionPercent = Number(meta.commissionPercent ?? 15) || 15;
-        const supplierPayoutCents = Math.round(commissionBaseCents * (1 - commissionPercent / 100));
+        const supplierPayoutCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
 
         await syncPaidOrderToWalletBackend({
           orderId: session.id,
           customerId: session.customer_email ?? null,
-          totalAmount: commissionBaseCents / 100,
+          totalAmount: amountTotalCents / 100,
           supplierPayout: supplierPayoutCents / 100,
           currency: (session.currency ?? "usd").toUpperCase(),
           metadata: {
