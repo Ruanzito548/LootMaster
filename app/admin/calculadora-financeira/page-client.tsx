@@ -23,6 +23,18 @@ type CategoryVisual = {
   textClassName: string;
 };
 
+type LiveCategory = FinancialDistributionCategory & {
+  visual: CategoryVisual;
+};
+
+type DistributionCalculation = {
+  totalPercent: number;
+  isInvalid: boolean;
+  allocations: Array<LiveCategory & { amount: number }>;
+  remainingValue: number | null;
+  remainingPercent: number | null;
+};
+
 const DEFAULT_CONFIG = buildDefaultFinancialCalculatorConfig();
 
 const CATEGORY_VISUALS: Record<FinancialDistributionCategoryKey, CategoryVisual> = {
@@ -103,6 +115,27 @@ function summarizeConfig(config: FinancialCalculatorConfig) {
   }));
 }
 
+function buildDistributionCalculation(categories: LiveCategory[], totalSales: number): DistributionCalculation {
+  const totalPercent = categories.reduce((sum, category) => sum + category.percent, 0);
+  const totalPercentRounded = Number(totalPercent.toFixed(2));
+  const isInvalid = totalPercentRounded > 100;
+
+  const allocations = categories.map((category) => ({
+    ...category,
+    amount: totalSales * (category.percent / 100),
+  }));
+
+  const allocatedTotal = allocations.reduce((sum, category) => sum + category.amount, 0);
+
+  return {
+    totalPercent: totalPercentRounded,
+    isInvalid,
+    allocations,
+    remainingValue: isInvalid ? null : Math.max(totalSales - allocatedTotal, 0),
+    remainingPercent: isInvalid ? null : Math.max(100 - totalPercentRounded, 0),
+  };
+}
+
 type ResultCardProps = {
   label: string;
   icon: string;
@@ -129,6 +162,9 @@ function ResultCard({ label, icon, value, helper, className, valueClassName }: R
 
 export function FinancialCalculatorClient() {
   const [salesInput, setSalesInput] = useState("10000");
+  const [salesPerDayInput, setSalesPerDayInput] = useState("12");
+  const [averageSaleValueInput, setAverageSaleValueInput] = useState("100");
+  const [activeDaysInput, setActiveDaysInput] = useState("30");
   const [config, setConfig] = useState<FinancialCalculatorConfig>(DEFAULT_CONFIG);
   const [percentInputs, setPercentInputs] = useState<Record<FinancialDistributionCategoryKey, string>>(
     toPercentInputMap(DEFAULT_CONFIG.categories),
@@ -191,30 +227,23 @@ export function FinancialCalculatorClient() {
   const totalSales = useMemo(() => parseDecimalInput(salesInput), [salesInput]);
 
   const calculation = useMemo(() => {
-    const totalPercent = categories.reduce((sum, category) => sum + category.percent, 0);
-    const totalPercentRounded = Number(totalPercent.toFixed(2));
-    const isInvalid = totalPercentRounded > 100;
-
-    const allocations = categories.map((category) => {
-      const amount = totalSales * (category.percent / 100);
-      return {
-        ...category,
-        amount,
-      };
-    });
-
-    const allocatedTotal = allocations.reduce((sum, category) => sum + category.amount, 0);
-    const remainingValue = isInvalid ? null : Math.max(totalSales - allocatedTotal, 0);
-    const remainingPercent = isInvalid ? null : Math.max(100 - totalPercentRounded, 0);
-
-    return {
-      totalPercent: totalPercentRounded,
-      isInvalid,
-      allocations,
-      remainingValue,
-      remainingPercent,
-    };
+    return buildDistributionCalculation(categories, totalSales);
   }, [categories, totalSales]);
+
+  const salesPerDay = useMemo(() => parseDecimalInput(salesPerDayInput), [salesPerDayInput]);
+  const averageSaleValue = useMemo(() => parseDecimalInput(averageSaleValueInput), [averageSaleValueInput]);
+  const activeDays = useMemo(() => Math.max(0, Math.round(parseDecimalInput(activeDaysInput))), [activeDaysInput]);
+  const estimatedMonthlyRevenue = useMemo(() => salesPerDay * averageSaleValue * activeDays, [activeDays, averageSaleValue, salesPerDay]);
+
+  const monthlySimulation = useMemo(
+    () => buildDistributionCalculation(categories, estimatedMonthlyRevenue),
+    [categories, estimatedMonthlyRevenue],
+  );
+
+  const monthlyProfit = useMemo(
+    () => monthlySimulation.allocations.find((category) => category.key === "profitMargin")?.amount ?? 0,
+    [monthlySimulation.allocations],
+  );
 
   const defaultPercentInputs = useMemo(() => toPercentInputMap(DEFAULT_CONFIG.categories), []);
 
@@ -233,8 +262,8 @@ export function FinancialCalculatorClient() {
     lines.push("");
     lines.push(
       calculation.isInvalid || calculation.remainingValue === null || calculation.remainingPercent === null
-        ? "Valor restante: configuracao invalida"
-        : `Valor restante (${formatPercent(calculation.remainingPercent)}): ${formatUsd(calculation.remainingValue)}`,
+        ? "Repasse para fornecedores: configuracao invalida"
+        : `Repasse para fornecedores (${formatPercent(calculation.remainingPercent)}): ${formatUsd(calculation.remainingValue)}`,
     );
 
     return lines.join("\n");
@@ -247,6 +276,9 @@ export function FinancialCalculatorClient() {
 
   const handleClear = () => {
     setSalesInput("");
+    setSalesPerDayInput("");
+    setAverageSaleValueInput("");
+    setActiveDaysInput("");
     setPercentInputs({
       profitMargin: "0",
       retentionFund: "0",
@@ -332,7 +364,7 @@ export function FinancialCalculatorClient() {
       })),
       {
         key: "remaining",
-        label: "Restante",
+        label: "Repasse fornecedores",
         percent: calculation.isInvalid || calculation.remainingPercent === null ? 0 : calculation.remainingPercent,
         className: "bg-[linear-gradient(90deg,#4b5563,#9ca3af)]",
       },
@@ -349,7 +381,7 @@ export function FinancialCalculatorClient() {
             <h1 className="text-4xl font-black leading-tight text-green-200 sm:text-5xl">Calculadora Financeira</h1>
             <p className="text-sm leading-7 text-green-600 sm:text-base">
               Simule a distribuicao do faturamento em tempo real, ajuste percentuais persistidos no sistema e acompanhe
-              o restante disponivel antes de aplicar a configuracao no painel.
+              o repasse para fornecedores antes de aplicar a configuracao no painel.
             </p>
           </div>
 
@@ -510,8 +542,8 @@ export function FinancialCalculatorClient() {
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-500/15 text-slate-300">💵</span>
                   <div>
-                    <p className="text-sm font-semibold text-green-200">Restante</p>
-                    <p className="text-xs uppercase tracking-[0.12em] text-green-700">Disponivel apos distribuicao</p>
+                    <p className="text-sm font-semibold text-green-200">Repasse fornecedores</p>
+                    <p className="text-xs uppercase tracking-[0.12em] text-green-700">Saldo destinado aos fornecedores</p>
                   </div>
                 </div>
                 <p className="text-sm font-black text-slate-300">
@@ -554,17 +586,150 @@ export function FinancialCalculatorClient() {
           ))}
 
           <ResultCard
-            label="Valor Restante"
+            label="Repasse Fornecedores"
             icon="💵"
             value={calculation.isInvalid || calculation.remainingValue === null ? "--" : formatUsd(calculation.remainingValue)}
             helper={
               calculation.isInvalid || calculation.remainingPercent === null
                 ? "Ajuste os percentuais para visualizar"
-                : `${formatPercent(calculation.remainingPercent)} restante`
+                : `${formatPercent(calculation.remainingPercent)} do total para fornecedores`
             }
             className="border-slate-500/40 bg-slate-950/20"
             valueClassName="text-slate-200"
           />
+        </section>
+
+        <section className="mt-6 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+          <article className="rounded-[1.8rem] border border-green-900 bg-green-950/20 p-6">
+            <div className="space-y-2">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Simulador mensal</p>
+              <h2 className="text-2xl font-black text-green-200">Lucro estimado no mes</h2>
+              <p className="text-sm leading-7 text-green-600">
+                Informe a quantidade media de vendas por dia para projetar o faturamento mensal e calcular o lucro com base nos percentuais atuais.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <label className="space-y-2 text-xs font-bold uppercase tracking-[0.15em] text-green-600">
+                Vendas por dia
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={salesPerDayInput}
+                  onChange={(event) => setSalesPerDayInput(event.target.value)}
+                  placeholder="12"
+                  className="block w-full rounded-2xl border border-green-800 bg-black px-4 py-4 text-xl font-black text-green-200 outline-none transition focus:border-green-600"
+                />
+              </label>
+
+              <label className="space-y-2 text-xs font-bold uppercase tracking-[0.15em] text-green-600">
+                Ticket medio por venda
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={averageSaleValueInput}
+                  onChange={(event) => setAverageSaleValueInput(event.target.value)}
+                  placeholder="100"
+                  className="block w-full rounded-2xl border border-green-800 bg-black px-4 py-4 text-xl font-black text-green-200 outline-none transition focus:border-green-600"
+                />
+              </label>
+
+              <label className="space-y-2 text-xs font-bold uppercase tracking-[0.15em] text-green-600">
+                Dias com vendas no mes
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  max="31"
+                  step="1"
+                  value={activeDaysInput}
+                  onChange={(event) => setActiveDaysInput(event.target.value)}
+                  placeholder="30"
+                  className="block w-full rounded-2xl border border-green-800 bg-black px-4 py-4 text-xl font-black text-green-200 outline-none transition focus:border-green-600"
+                />
+              </label>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <ResultCard
+                label="Faturamento Mensal"
+                icon="🗓️"
+                value={formatUsd(estimatedMonthlyRevenue)}
+                helper={`${salesPerDay.toFixed(0)} vendas/dia por ${activeDays} dias`}
+                className="border-cyan-500/40 bg-cyan-950/20"
+                valueClassName="text-cyan-300"
+              />
+              <ResultCard
+                label="Lucro do Mes"
+                icon="💸"
+                value={monthlySimulation.isInvalid ? "--" : formatUsd(monthlyProfit)}
+                helper={`Margem de ${formatPercent(categories.find((category) => category.key === "profitMargin")?.percent ?? 0)}`}
+                className="border-emerald-500/40 bg-emerald-950/20"
+                valueClassName="text-emerald-300"
+              />
+              <ResultCard
+                label="Retencao Mensal"
+                icon="🎁"
+                value={
+                  monthlySimulation.isInvalid
+                    ? "--"
+                    : formatUsd(monthlySimulation.allocations.find((category) => category.key === "retentionFund")?.amount ?? 0)
+                }
+                helper="Reserva mensal estimada"
+                className="border-sky-500/40 bg-sky-950/20"
+                valueClassName="text-sky-300"
+              />
+              <ResultCard
+                label="Repasse Fornecedores no Mes"
+                icon="💼"
+                value={monthlySimulation.isInvalid || monthlySimulation.remainingValue === null ? "--" : formatUsd(monthlySimulation.remainingValue)}
+                helper={
+                  monthlySimulation.isInvalid || monthlySimulation.remainingPercent === null
+                    ? "Ajuste os percentuais"
+                    : `${formatPercent(monthlySimulation.remainingPercent)} projetado para fornecedores`
+                }
+                className="border-slate-500/40 bg-slate-950/20"
+                valueClassName="text-slate-200"
+              />
+            </div>
+          </article>
+
+          <article className="rounded-[1.8rem] border border-green-900 bg-green-950/20 p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Resumo da projeção</p>
+            <h2 className="mt-2 text-2xl font-black text-green-200">Leitura mensal</h2>
+
+            <div className="mt-5 space-y-3">
+              <div className="rounded-[1.4rem] border border-green-900 bg-black/30 p-4">
+                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Formula</p>
+                <p className="mt-2 text-sm leading-7 text-green-200">
+                  {salesPerDay.toFixed(0)} vendas/dia x {formatUsd(averageSaleValue)} x {activeDays} dias = {formatUsd(estimatedMonthlyRevenue)}
+                </p>
+              </div>
+
+              <div className="rounded-[1.4rem] border border-green-900 bg-black/30 p-4">
+                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Lucro projetado</p>
+                <p className="mt-2 text-3xl font-black text-emerald-300">
+                  {monthlySimulation.isInvalid ? "--" : formatUsd(monthlyProfit)}
+                </p>
+                <p className="mt-2 text-sm text-green-600">
+                  Calculado com a margem de lucro atual e atualizado automaticamente conforme os percentuais mudam.
+                </p>
+              </div>
+
+              <div className="rounded-[1.4rem] border border-green-900 bg-black/30 p-4">
+                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Status da projeção</p>
+                <p className={`mt-2 text-sm font-semibold ${monthlySimulation.isInvalid ? "text-rose-400" : "text-emerald-400"}`}>
+                  {monthlySimulation.isInvalid
+                    ? "A projeção mensal fica bloqueada enquanto a soma dos percentuais passar de 100%."
+                    : "A projeção mensal está válida com os percentuais atuais."}
+                </p>
+              </div>
+            </div>
+          </article>
         </section>
 
         <section className="mt-6 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
@@ -593,13 +758,13 @@ export function FinancialCalculatorClient() {
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Estado da configuracao</p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="rounded-[1.4rem] border border-green-900 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Percentual restante</p>
+                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Percentual do repasse</p>
                 <p className="mt-2 text-3xl font-black text-green-200">
                   {calculation.isInvalid || calculation.remainingPercent === null ? "--" : formatPercent(calculation.remainingPercent)}
                 </p>
               </div>
               <div className="rounded-[1.4rem] border border-green-900 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Valor restante</p>
+                <p className="text-xs uppercase tracking-[0.14em] text-green-600">Valor do repasse</p>
                 <p className="mt-2 text-3xl font-black text-green-200">
                   {calculation.isInvalid || calculation.remainingValue === null ? "--" : formatUsd(calculation.remainingValue)}
                 </p>
