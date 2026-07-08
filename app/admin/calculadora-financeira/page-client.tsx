@@ -438,16 +438,20 @@ export function FinancialCalculatorClient() {
     [config.categories, percentInputs],
   );
 
+  const profitPercent = useMemo(
+    () => categories.find((category) => category.key === "profitMargin")?.percent ?? 0,
+    [categories],
+  );
+
+  const salesPerDay = useMemo(() => parseDecimalInput(salesPerDayInput), [salesPerDayInput]);
+  const averageSaleValue = useMemo(() => parseDecimalInput(averageSaleValueInput), [averageSaleValueInput]);
+  const activeDays = useMemo(() => Math.max(0, Math.round(parseDecimalInput(activeDaysInput))), [activeDaysInput]);
+  const estimatedMonthlyRevenue = useMemo(() => salesPerDay * averageSaleValue * activeDays, [activeDays, averageSaleValue, salesPerDay]);
   const totalSales = useMemo(() => estimatedMonthlyRevenue, [estimatedMonthlyRevenue]);
 
   const calculation = useMemo(() => {
     return buildDistributionCalculation(categories, totalSales);
   }, [categories, totalSales]);
-
-  const profitPercent = useMemo(
-    () => categories.find((category) => category.key === "profitMargin")?.percent ?? 0,
-    [categories],
-  );
 
   const profitValue = useMemo(
     () => calculation.allocations.find((category) => category.key === "profitMargin")?.amount ?? 0,
@@ -460,11 +464,6 @@ export function FinancialCalculatorClient() {
   );
 
   const supplierValue = useMemo(() => calculation.remainingValue ?? 0, [calculation.remainingValue]);
-
-  const salesPerDay = useMemo(() => parseDecimalInput(salesPerDayInput), [salesPerDayInput]);
-  const averageSaleValue = useMemo(() => parseDecimalInput(averageSaleValueInput), [averageSaleValueInput]);
-  const activeDays = useMemo(() => Math.max(0, Math.round(parseDecimalInput(activeDaysInput))), [activeDaysInput]);
-  const estimatedMonthlyRevenue = useMemo(() => salesPerDay * averageSaleValue * activeDays, [activeDays, averageSaleValue, salesPerDay]);
 
   const monthlySimulation = useMemo(
     () => buildDistributionCalculation(categories, estimatedMonthlyRevenue),
