@@ -3,7 +3,6 @@ import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 import { DashboardClient, type DashboardOrder } from "./dashboard-client";
-import { GrantRandomChestButton } from "./grant-random-chest-button";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +11,24 @@ function parseIsoToUnixSeconds(iso: string | null | undefined): number {
   const ms = new Date(iso).getTime();
   if (Number.isNaN(ms)) return Math.floor(Date.now() / 1000);
   return Math.floor(ms / 1000);
+}
+
+function clampPercent(value: number): number {
+  if (Number.isNaN(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 100) return 100;
+  return Math.round(value * 100) / 100;
+}
+
+function buildFinancials(totalCents: number, commissionPercentRaw: number) {
+  const commissionPercent = clampPercent(commissionPercentRaw);
+  const sellerAmountCents = Math.round(totalCents * (1 - commissionPercent / 100));
+
+  return {
+    commissionPercent,
+    sellerAmountCents,
+    platformProfitCents: totalCents - sellerAmountCents,
+  };
 }
 
 export default async function DashboardPage() {
@@ -46,6 +63,9 @@ export default async function DashboardPage() {
       const orderId = typeof data.orderId === "string" && data.orderId ? data.orderId : docRow.id;
       const paymentStatus = typeof data.paymentStatus === "string" ? data.paymentStatus.toLowerCase() : "";
       const orderStatus = typeof data.orderStatus === "string" ? data.orderStatus.toLowerCase() : "";
+      const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
+      const storedCommissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
+      const financials = buildFinancials(totalCents, storedCommissionPercent);
 
       let statusLabel = "Unpaid";
       if (orderStatus === "completed" || completedOrderIds.has(orderId)) {
@@ -57,7 +77,7 @@ export default async function DashboardPage() {
       return {
         id: orderId,
         createdUnix: parseIsoToUnixSeconds(typeof data.stripeCreatedAt === "string" ? data.stripeCreatedAt : null),
-        amountTotal: typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0,
+        amountTotal: totalCents,
         currency: typeof data.currency === "string" && data.currency ? data.currency : "brl",
         statusLabel,
         gameTitle: typeof data.gameTitle === "string" && data.gameTitle ? data.gameTitle : "--",
@@ -65,6 +85,9 @@ export default async function DashboardPage() {
         paymentMethod: typeof data.paymentMethod === "string" && data.paymentMethod ? data.paymentMethod : "--",
         nickname: typeof data.nickname === "string" && data.nickname ? data.nickname : "--",
         email: typeof data.customerEmail === "string" && data.customerEmail ? data.customerEmail : "--",
+        commissionPercent: financials.commissionPercent,
+        sellerAmountCents: financials.sellerAmountCents,
+        platformProfitCents: financials.platformProfitCents,
       };
     });
   } catch (error) {
@@ -109,6 +132,9 @@ export default async function DashboardPage() {
           paymentMethod: session.metadata?.paymentMethod || "--",
           nickname: session.metadata?.nickname || "--",
           email: session.customer_email || "--",
+          commissionPercent: 15,
+          sellerAmountCents: Math.round(amountTotal * 0.85),
+          platformProfitCents: amountTotal - Math.round(amountTotal * 0.85),
         };
       });
     } catch {
@@ -129,7 +155,6 @@ export default async function DashboardPage() {
 
         <section className="mt-8">
           <DashboardClient orders={orders} loadError={loadError} />
-          <GrantRandomChestButton />
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">
