@@ -83,6 +83,7 @@ const HISTORY_FALLBACK: FinancialCalculatorHistory = {
 
 const DEFAULT_CONFIG = buildDefaultFinancialCalculatorConfig();
 const DEFAULT_PAGE_FONT_FAMILY = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+const STRIPE_CARD_FEE_PERCENT = 4;
 
 const CATEGORY_VISUALS: Record<FinancialDistributionCategoryKey, CategoryVisual> = {
   profitMargin: {
@@ -447,7 +448,11 @@ export function FinancialCalculatorClient() {
   const averageSaleValue = useMemo(() => parseDecimalInput(averageSaleValueInput), [averageSaleValueInput]);
   const activeDays = useMemo(() => Math.max(0, Math.round(parseDecimalInput(activeDaysInput))), [activeDaysInput]);
   const estimatedMonthlyRevenue = useMemo(() => salesPerDay * averageSaleValue * activeDays, [activeDays, averageSaleValue, salesPerDay]);
-  const totalSales = useMemo(() => estimatedMonthlyRevenue, [estimatedMonthlyRevenue]);
+  const adjustedMonthlyRevenue = useMemo(
+    () => estimatedMonthlyRevenue * (1 + STRIPE_CARD_FEE_PERCENT / 100),
+    [estimatedMonthlyRevenue],
+  );
+  const totalSales = useMemo(() => adjustedMonthlyRevenue, [adjustedMonthlyRevenue]);
 
   const calculation = useMemo(() => {
     return buildDistributionCalculation(categories, totalSales);
@@ -466,8 +471,8 @@ export function FinancialCalculatorClient() {
   const supplierValue = useMemo(() => calculation.remainingValue ?? 0, [calculation.remainingValue]);
 
   const monthlySimulation = useMemo(
-    () => buildDistributionCalculation(categories, estimatedMonthlyRevenue),
-    [categories, estimatedMonthlyRevenue],
+    () => buildDistributionCalculation(categories, adjustedMonthlyRevenue),
+    [categories, adjustedMonthlyRevenue],
   );
 
   const monthlyProfit = useMemo(
@@ -507,7 +512,7 @@ export function FinancialCalculatorClient() {
 
   const summaryText = useMemo(() => {
     return [
-      `Receita mensal estimada: ${formatUsd(totalSales)}`,
+      `Receita mensal ajustada (+${STRIPE_CARD_FEE_PERCENT}% Stripe): ${formatUsd(totalSales)}`,
       `Lucro: ${formatUsd(profitValue)} (${formatPercent(profitPercent)})`,
       `Retencao: ${formatUsd(retentionValue)}`,
       `Repasse aos fornecedores: ${formatUsd(supplierValue)}`,
@@ -523,7 +528,7 @@ export function FinancialCalculatorClient() {
   const revenueNumber = useAnimatedNumber(totalSales);
   const marginNumber = useAnimatedNumber(profitPercent);
 
-  const monthlyRevenueNumber = useAnimatedNumber(estimatedMonthlyRevenue);
+  const monthlyRevenueNumber = useAnimatedNumber(adjustedMonthlyRevenue);
   const monthlyProfitNumber = useAnimatedNumber(monthlySimulation.isInvalid ? 0 : monthlyProfit);
   const monthlyRetentionNumber = useAnimatedNumber(monthlySimulation.isInvalid ? 0 : monthlyRetention);
   const monthlySupplierNumber = useAnimatedNumber(monthlySimulation.isInvalid ? 0 : monthlySupplierPayout);
@@ -714,7 +719,7 @@ export function FinancialCalculatorClient() {
             title="Receita Mensal"
             icon={Banknote}
             value={revenueNumber === 0 ? "--" : formatUsd(calculation.isInvalid ? 0 : revenueNumber)}
-            helper="Derivada do simulador mensal"
+            helper={`Derivada do simulador mensal + ${STRIPE_CARD_FEE_PERCENT}% Stripe`}
             toneClassName="border-sky-500/20 bg-gradient-to-br from-sky-500/20 to-sky-950/40"
           />
           <MetricCard
@@ -828,6 +833,9 @@ export function FinancialCalculatorClient() {
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Simulador Mensal</p>
                 <h2 className="mt-2 text-xl font-black text-white sm:text-2xl">Previsão compacta do mês</h2>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+                  Ajuste automático de {STRIPE_CARD_FEE_PERCENT}% para cartão/Stripe
+                </p>
               </div>
               <Clock3 className="h-5 w-5 text-amber-300" />
             </div>
@@ -858,7 +866,7 @@ export function FinancialCalculatorClient() {
               <table className="w-full text-left text-sm">
                 <tbody className="divide-y divide-white/10">
                   <tr className="bg-sky-500/5">
-                    <td className="px-4 py-3 text-slate-300">Receita mensal</td>
+                    <td className="px-4 py-3 text-slate-300">Receita mensal ajustada</td>
                     <td className="px-4 py-3 text-right text-lg font-black text-sky-300 tabular-nums">
                       {monthlySimulation.isInvalid ? "--" : formatUsd(monthlyRevenueNumber)}
                     </td>
@@ -891,7 +899,8 @@ export function FinancialCalculatorClient() {
               </div>
             ) : (
               <p className="mt-4 text-sm text-slate-400">
-                {salesPerDay.toFixed(0)} vendas/dia × {formatUsd(averageSaleValue)} × {activeDays} dias = {formatUsd(monthlyRevenueNumber)}
+                {salesPerDay.toFixed(0)} vendas/dia × {formatUsd(averageSaleValue)} × {activeDays} dias = {formatUsd(estimatedMonthlyRevenue)}
+                <span className="ml-2 text-slate-500">+ {STRIPE_CARD_FEE_PERCENT}% Stripe = {formatUsd(monthlyRevenueNumber)}</span>
               </p>
             )}
           </article>
