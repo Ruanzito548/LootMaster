@@ -1,5 +1,3 @@
-import { getAdminDb } from "@/lib/firebase-admin";
-
 export const FINANCIAL_CALCULATOR_CONFIG_VERSION = 1;
 export const FINANCIAL_CALCULATOR_CONFIG_DOC_ID = "financial-calculator";
 
@@ -121,15 +119,4 @@ export function sanitizeFinancialCalculatorConfig(source: unknown): FinancialCal
       };
     }),
   };
-}
-
-export async function getLiveFinancialCalculatorConfig(): Promise<FinancialCalculatorConfig> {
-  const adminDb = getAdminDb();
-  const snapshot = await adminDb.collection("app-config").doc(FINANCIAL_CALCULATOR_CONFIG_DOC_ID).get();
-
-  if (!snapshot.exists) {
-    return buildDefaultFinancialCalculatorConfig();
-  }
-
-  return sanitizeFinancialCalculatorConfig(snapshot.data());
 }
