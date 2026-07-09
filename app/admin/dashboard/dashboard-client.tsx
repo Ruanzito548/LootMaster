@@ -48,6 +48,77 @@ type RevenueBucket = {
   ordersCount: number;
 };
 
+type OperationalCostValueType = "percent" | "fixed";
+type OperationalCostFrequency = "once" | "monthly" | "per_order";
+
+type OperationalCostItem = {
+  id: string;
+  name: string;
+  value: number;
+  valueType: OperationalCostValueType;
+  frequency: OperationalCostFrequency;
+};
+
+const OPERATIONAL_COST_STORAGE_KEY = "dashboard-operational-cost-items-v1";
+
+const DEFAULT_OPERATIONAL_COST_ITEMS: OperationalCostItem[] = [
+  {
+    id: "server-site",
+    name: "Servidor do site",
+    value: 350,
+    valueType: "fixed",
+    frequency: "monthly",
+  },
+  {
+    id: "impostos",
+    name: "Impostos",
+    value: 6,
+    valueType: "percent",
+    frequency: "monthly",
+  },
+  {
+    id: "third-party",
+    name: "Servicos de terceiros",
+    value: 2,
+    valueType: "percent",
+    frequency: "per_order",
+  },
+];
+
+function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
+  if (!value || typeof value !== "object") return null;
+
+  const row = value as Partial<OperationalCostItem>;
+  const name = typeof row.name === "string" ? row.name.trim() : "";
+
+  if (!name) return null;
+
+  const parsedValue = typeof row.value === "number" && Number.isFinite(row.value) ? row.value : 0;
+  const valueType = row.valueType === "percent" || row.valueType === "fixed" ? row.valueType : "fixed";
+  const frequency =
+    row.frequency === "once" || row.frequency === "monthly" || row.frequency === "per_order"
+      ? row.frequency
+      : "monthly";
+
+  return {
+    id: typeof row.id === "string" && row.id ? row.id : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name,
+    value: Math.max(0, parsedValue),
+    valueType,
+    frequency,
+  };
+}
+
+function countMonthsInPeriod(startMs: number, endMs: number) {
+  const safeStart = Math.min(startMs, endMs);
+  const safeEnd = Math.max(startMs, endMs);
+  const startDate = new Date(safeStart);
+  const endDate = new Date(safeEnd);
+  const months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth()) + 1;
+
+  return Math.max(1, months);
+}
+
 function formatMoney(amountInCents: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -294,6 +365,54 @@ export function DashboardClient({
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [hoveredBarKey, setHoveredBarKey] = useState<string | null>(null);
   const [chartAnimated, setChartAnimated] = useState(false);
+  const [operationalCostsOpen, setOperationalCostsOpen] = useState(false);
+  const [operationalCostItems, setOperationalCostItems] = useState<OperationalCostItem[]>(DEFAULT_OPERATIONAL_COST_ITEMS);
+  const [newOperationalCostName, setNewOperationalCostName] = useState("");
+  const [newOperationalCostValue, setNewOperationalCostValue] = useState("0");
+  const [newOperationalCostValueType, setNewOperationalCostValueType] = useState<OperationalCostValueType>("fixed");
+  const [newOperationalCostFrequency, setNewOperationalCostFrequency] = useState<OperationalCostFrequency>("monthly");
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(OPERATIONAL_COST_STORAGE_KEY);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+
+      const recovered = parsed
+        .map(parseOperationalCostItem)
+        .filter((item): item is OperationalCostItem => item !== null);
+
+      if (recovered.length > 0) {
+        setOperationalCostItems(recovered);
+      }
+    } catch {
+      // Ignore malformed local values and keep defaults.
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(OPERATIONAL_COST_STORAGE_KEY, JSON.stringify(operationalCostItems));
+  }, [operationalCostItems]);
+
+  useEffect(() => {
+    if (!operationalCostsOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOperationalCostsOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [operationalCostsOpen]);
 
   useEffect(() => {
     setChartAnimated(false);
@@ -347,11 +466,53 @@ export function DashboardClient({
     return rangeStart ? createdMs >= rangeStart : true;
   });
 
+  const nowMs = Date.now();
   const totalRevenue = dashboardFilteredOrders.reduce((acc, order) => acc + order.amountTotal, 0);
   const totalPayout = dashboardFilteredOrders.reduce((acc, order) => acc + order.supplierPayout, 0);
   const totalGrossProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.grossProfit, 0);
-  const totalNetProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.netProfit, 0);
+  const orderNetProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.netProfit, 0);
   const totalOrders = dashboardFilteredOrders.length;
+
+  const periodStartMs = (() => {
+    if (customBounds) return customBounds.startMs;
+    if (rangeStart) return rangeStart;
+
+    if (dashboardFilteredOrders.length === 0) {
+      return nowMs;
+    }
+
+    return Math.min(...dashboardFilteredOrders.map((order) => order.createdUnix * 1000));
+  })();
+
+  const periodEndMs = (() => {
+    if (customBounds) return customBounds.endMs;
+    if (rangeStart) return nowMs;
+
+    if (dashboardFilteredOrders.length === 0) {
+      return nowMs;
+    }
+
+    return Math.max(...dashboardFilteredOrders.map((order) => order.createdUnix * 1000));
+  })();
+
+  const monthsInPeriod = countMonthsInPeriod(periodStartMs, periodEndMs);
+  const operationalCostTotal = operationalCostItems.reduce((acc, item) => {
+    const unitCostCents =
+      item.valueType === "percent"
+        ? Math.round(totalGrossProfit * (item.value / 100))
+        : Math.round(Math.max(0, item.value) * 100);
+
+    const multiplier =
+      item.frequency === "monthly"
+        ? monthsInPeriod
+        : item.frequency === "per_order"
+          ? totalOrders
+          : 1;
+
+    return acc + Math.max(0, unitCostCents * Math.max(1, multiplier));
+  }, 0);
+
+  const totalNetProfit = totalGrossProfit - operationalCostTotal;
   const paidOrders = dashboardFilteredOrders.filter((order) => {
     const label = order.statusLabel.toLowerCase();
     return label === "paid" || label === "pago" || label === "completed" || label === "concluido";
@@ -416,11 +577,10 @@ export function DashboardClient({
     },
   ];
 
-  const taxTotalMax = Math.max(...taxSegments.map((segment) => segment.value), 1);
+  const taxTotalMax = Math.max(...taxSegments.map((segment) => Math.max(0, segment.value)), 1);
 
   const recentOrders = [...dashboardFilteredOrders].sort((a, b) => b.createdUnix - a.createdUnix).slice(0, 8);
 
-  const nowMs = Date.now();
   const normalizedCurrentAnchor = normalizePeriodAnchorMs(chartScope, nowMs, nowMs);
   const canNavigateNext = chartAnchorMs < normalizedCurrentAnchor;
   const currentBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, chartAnchorMs), dashboardFilteredOrders);
@@ -503,6 +663,48 @@ export function DashboardClient({
     const now = Date.now();
     setChartAnchorMs(normalizePeriodAnchorMs("monthly", target, now));
     setMonthPickerOpen(false);
+  }
+
+  function updateOperationalCostItem(itemId: string, patch: Partial<OperationalCostItem>) {
+    setOperationalCostItems((current) =>
+      current.map((item) => {
+        if (item.id !== itemId) return item;
+
+        return {
+          ...item,
+          ...patch,
+          name: (patch.name ?? item.name).trimStart(),
+          value: Math.max(0, Number(patch.value ?? item.value) || 0),
+        };
+      }),
+    );
+  }
+
+  function removeOperationalCostItem(itemId: string) {
+    setOperationalCostItems((current) => current.filter((item) => item.id !== itemId));
+  }
+
+  function addOperationalCostItem() {
+    const trimmedName = newOperationalCostName.trim();
+    const parsedValue = Number(newOperationalCostValue.replace(",", "."));
+
+    if (!trimmedName || !Number.isFinite(parsedValue) || parsedValue < 0) {
+      return;
+    }
+
+    const newItem: OperationalCostItem = {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      name: trimmedName,
+      value: parsedValue,
+      valueType: newOperationalCostValueType,
+      frequency: newOperationalCostFrequency,
+    };
+
+    setOperationalCostItems((current) => [...current, newItem]);
+    setNewOperationalCostName("");
+    setNewOperationalCostValue("0");
+    setNewOperationalCostValueType("fixed");
+    setNewOperationalCostFrequency("monthly");
   }
 
   async function saveFinancialSettings() {
@@ -741,9 +943,11 @@ export function DashboardClient({
                 <p className="mt-1 text-xs text-slate-500">Valor para fornecedores</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Lucro líquido</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Lucro líquido ajustado</p>
                 <p className="mt-2 text-3xl font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</p>
-                <p className="mt-1 text-xs text-slate-500">Margem média de {formatPercent(averageMarginPercent)}</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Bruto {formatMoney(totalGrossProfit)} - Custo operacional {formatMoney(operationalCostTotal)}
+                </p>
               </div>
             </div>
 
@@ -761,6 +965,40 @@ export function DashboardClient({
                 <p className="mt-2 text-2xl font-black text-cyan-300">{paidOrders}</p>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setOperationalCostsOpen(true)}
+              className="mt-5 block w-full rounded-2xl border border-fuchsia-500/35 bg-fuchsia-500/10 p-4 text-left transition hover:border-fuchsia-400/50 hover:bg-fuchsia-500/15"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-fuchsia-200">Custo Operacional</p>
+                  <p className="mt-1 text-sm text-fuchsia-100/90">
+                    Clique para cadastrar e editar custos operacionais (fixos e percentuais).
+                  </p>
+                  <p className="mt-1 text-xs text-fuchsia-200/80">
+                    Lucro líquido base dos pedidos: {formatMoney(orderNetProfit)}
+                  </p>
+                </div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-fuchsia-200">Abrir</p>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Lucro bruto</p>
+                  <p className="mt-1 text-sm font-bold text-cyan-200">{formatMoney(totalGrossProfit)}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Custo operacional total</p>
+                  <p className="mt-1 text-sm font-bold text-amber-200">{formatMoney(operationalCostTotal)}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Lucro líquido</p>
+                  <p className="mt-1 text-sm font-bold text-fuchsia-200">{formatMoney(totalNetProfit)}</p>
+                </div>
+              </div>
+            </button>
           </article>
 
           <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-8">
@@ -801,7 +1039,7 @@ export function DashboardClient({
                     <div className="h-2 rounded-full bg-white/5">
                       <div
                         className={`h-2 rounded-full bg-gradient-to-r ${segment.color}`}
-                        style={{ width: `${Math.max(6, Math.round((segment.value / taxTotalMax) * 100))}%` }}
+                        style={{ width: `${Math.max(6, Math.round((Math.max(0, segment.value) / taxTotalMax) * 100))}%` }}
                       />
                     </div>
                   </div>
@@ -1251,6 +1489,190 @@ export function DashboardClient({
           </>
         )}
       </main>
+
+      {operationalCostsOpen ? (
+        <div className="fixed inset-0 z-[120]">
+          <button
+            type="button"
+            onClick={() => setOperationalCostsOpen(false)}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            aria-label="Fechar custos operacionais"
+          />
+
+          <aside className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-3xl border border-white/10 bg-[#121721] p-5 shadow-[0_-24px_60px_rgba(0,0,0,0.55)] md:inset-y-0 md:right-0 md:left-auto md:max-h-none md:w-[560px] md:rounded-none md:rounded-l-3xl md:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-fuchsia-300">Custo Operacional</p>
+                <h3 className="mt-2 text-2xl font-black text-white">Cadastro de custos</h3>
+                <p className="mt-2 text-sm text-slate-400">
+                  Cadastre custos fixos ou percentuais com frequência unica, mensal ou por pedido.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setOperationalCostsOpen(false)}
+                className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-200 transition hover:bg-white/10"
+              >
+                Fechar
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Lucro bruto</p>
+                <p className="mt-1 text-sm font-black text-cyan-300">{formatMoney(totalGrossProfit)}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Custos operacionais</p>
+                <p className="mt-1 text-sm font-black text-amber-300">{formatMoney(operationalCostTotal)}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Lucro líquido</p>
+                <p className="mt-1 text-sm font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</p>
+              </div>
+            </div>
+
+            <p className="mt-4 text-xs text-slate-500">
+              Período atual: {monthsInPeriod} mes(es), {totalOrders} pedido(s). Custos percentuais usam como base o lucro bruto.
+            </p>
+
+            <div className="mt-4 space-y-3">
+              {operationalCostItems.map((item) => {
+                const unitCostCents =
+                  item.valueType === "percent"
+                    ? Math.round(totalGrossProfit * (item.value / 100))
+                    : Math.round(item.value * 100);
+                const multiplier = item.frequency === "monthly" ? monthsInPeriod : item.frequency === "per_order" ? totalOrders : 1;
+                const itemTotal = Math.max(0, unitCostCents * Math.max(1, multiplier));
+
+                return (
+                  <div key={item.id} className="rounded-2xl border border-white/10 bg-black/25 p-3">
+                    <div className="grid gap-2 sm:grid-cols-[1.4fr_0.9fr]">
+                      <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                        Nome
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(event) => updateOperationalCostItem(item.id, { name: event.target.value })}
+                          className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                        />
+                      </label>
+
+                      <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                        Valor
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.value}
+                          onChange={(event) => updateOperationalCostItem(item.id, { value: Number(event.target.value) || 0 })}
+                          className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                      <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                        Tipo
+                        <select
+                          value={item.valueType}
+                          onChange={(event) =>
+                            updateOperationalCostItem(item.id, {
+                              valueType: event.target.value as OperationalCostValueType,
+                            })
+                          }
+                          className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                        >
+                          <option value="fixed">Valor fixo (USD)</option>
+                          <option value="percent">Percentual (%)</option>
+                        </select>
+                      </label>
+
+                      <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                        Frequência
+                        <select
+                          value={item.frequency}
+                          onChange={(event) =>
+                            updateOperationalCostItem(item.id, {
+                              frequency: event.target.value as OperationalCostFrequency,
+                            })
+                          }
+                          className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                        >
+                          <option value="once">Único</option>
+                          <option value="monthly">Mensal</option>
+                          <option value="per_order">Por pedido</option>
+                        </select>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => removeOperationalCostItem(item.id)}
+                        className="min-h-[40px] rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 text-xs font-bold uppercase tracking-[0.12em] text-rose-200 transition hover:bg-rose-500/20"
+                      >
+                        Remover
+                      </button>
+                    </div>
+
+                    <p className="mt-2 text-xs text-slate-400">
+                      Custo no período: <span className="font-semibold text-amber-300">{formatMoney(itemTotal)}</span>
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Adicionar novo custo</p>
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <input
+                  type="text"
+                  value={newOperationalCostName}
+                  onChange={(event) => setNewOperationalCostName(event.target.value)}
+                  placeholder="Nome do custo"
+                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newOperationalCostValue}
+                  onChange={(event) => setNewOperationalCostValue(event.target.value)}
+                  placeholder="Valor"
+                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                />
+                <select
+                  value={newOperationalCostValueType}
+                  onChange={(event) => setNewOperationalCostValueType(event.target.value as OperationalCostValueType)}
+                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                >
+                  <option value="fixed">Valor fixo (USD)</option>
+                  <option value="percent">Percentual (%)</option>
+                </select>
+                <select
+                  value={newOperationalCostFrequency}
+                  onChange={(event) => setNewOperationalCostFrequency(event.target.value as OperationalCostFrequency)}
+                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                >
+                  <option value="once">Único</option>
+                  <option value="monthly">Mensal</option>
+                  <option value="per_order">Por pedido</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={addOperationalCostItem}
+                className="mt-3 min-h-[40px] rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-4 text-xs font-bold uppercase tracking-[0.12em] text-cyan-200 transition hover:bg-cyan-500/20"
+              >
+                Adicionar custo
+              </button>
+            </div>
+          </aside>
+        </div>
+      ) : null}
     </div>
   );
 }
