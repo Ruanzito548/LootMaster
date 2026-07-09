@@ -6,7 +6,7 @@ import {
   buildDefaultSiteFeeSettings,
   sanitizeSiteFeeSettings,
 } from "@/lib/site-fee-settings";
-import { buildOrderFinancialSnapshot } from "@/lib/order-financials";
+import { buildOrderFinancialSnapshot, clampPercent, computeOrderFinancials } from "@/lib/order-financials";
 
 import { DashboardClient, type DashboardOrder } from "./dashboard-client";
 
@@ -65,7 +65,6 @@ export default async function DashboardPage() {
       const orderId = typeof data.orderId === "string" && data.orderId ? data.orderId : docRow.id;
       const paymentStatus = typeof data.paymentStatus === "string" ? data.paymentStatus.toLowerCase() : "";
       const orderStatus = typeof data.orderStatus === "string" ? data.orderStatus.toLowerCase() : "";
-      const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
       const financials = buildOrderFinancialSnapshot(data, {
         supplierDefaultPercent,
         cardGatewayFeePercent,
@@ -83,7 +82,7 @@ export default async function DashboardPage() {
       return {
         id: orderId,
         createdUnix: parseIsoToUnixSeconds(typeof data.stripeCreatedAt === "string" ? data.stripeCreatedAt : null),
-        amountTotal: totalCents,
+        amountTotal: financials.grossRevenue,
         currency: typeof data.currency === "string" && data.currency ? data.currency : "brl",
         statusLabel,
         gameTitle: typeof data.gameTitle === "string" && data.gameTitle ? data.gameTitle : "--",
@@ -123,8 +122,29 @@ export default async function DashboardPage() {
     try {
       orders = sessions.map((session) => {
         const amountTotal = typeof session.amount_total === "number" ? session.amount_total : 0;
+        const meta = session.metadata ?? {};
         const checkoutStatus = session.status;
         const paymentStatus = session.payment_status;
+        const supplierPercent = Number.isFinite(Number(meta.supplierPercentage))
+          ? clampPercent(Number(meta.supplierPercentage))
+          : supplierDefaultPercent;
+        const cardFeePercent = Number.isFinite(Number(meta.cardGatewayFeePercent))
+          ? clampPercent(Number(meta.cardGatewayFeePercent))
+          : cardGatewayFeePercent;
+        const cashbackFeePercent = Number.isFinite(Number(meta.cashbackPercent))
+          ? clampPercent(Number(meta.cashbackPercent))
+          : cashbackPercent;
+        const operationalFeePercent = Number.isFinite(Number(meta.operationalReservePercent))
+          ? clampPercent(Number(meta.operationalReservePercent))
+          : operationalReservePercent;
+
+        const financials = computeOrderFinancials(
+          amountTotal,
+          supplierPercent,
+          cardFeePercent,
+          cashbackFeePercent,
+          operationalFeePercent,
+        );
 
         let statusLabel = "Unpaid";
         if (completedOrderIds.has(session.id)) statusLabel = "Completed";
@@ -135,22 +155,22 @@ export default async function DashboardPage() {
         return {
           id: session.id,
           createdUnix: session.created,
-          amountTotal,
+          amountTotal: financials.grossRevenue,
           currency: session.currency || "brl",
           statusLabel,
-          gameTitle: session.metadata?.gameTitle || "--",
-          categoryTitle: session.metadata?.categoryTitle || "--",
-          paymentMethod: session.metadata?.paymentMethod || "--",
-          nickname: session.metadata?.nickname || "--",
+          gameTitle: meta.gameTitle || "--",
+          categoryTitle: meta.categoryTitle || "--",
+          paymentMethod: meta.paymentMethod || "--",
+          nickname: meta.nickname || "--",
           email: session.customer_email || "--",
-          supplierName: session.metadata?.supplierName || "--",
-          supplierPercentage: Number(session.metadata?.supplierPercentage ?? 75) || 75,
-          supplierPayout: Math.round(amountTotal * 0.75),
-          grossProfit: amountTotal - Math.round(amountTotal * 0.75),
-          cardFee: 0,
-          cashback: 0,
-          operationalReserve: 0,
-          netProfit: amountTotal - Math.round(amountTotal * 0.75),
+          supplierName: meta.supplierName || "--",
+          supplierPercentage: financials.supplierPercentage,
+          supplierPayout: financials.supplierPayout,
+          grossProfit: financials.grossProfit,
+          cardFee: financials.cardFee,
+          cashback: financials.cashback,
+          operationalReserve: financials.operationalReserve,
+          netProfit: financials.netProfit,
         };
       });
     } catch {

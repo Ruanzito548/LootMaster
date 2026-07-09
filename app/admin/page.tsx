@@ -67,12 +67,6 @@ const adminSections = [
     description: "Simulate sales distribution, persist percentages, and validate financial splits.",
     href: "/admin/calculadora-financeira",
   },
-  {
-    id: "12",
-    title: "Checklist",
-    description: "Create and track your internal to-do list with completed task controls.",
-    href: "/admin/checklist",
-  },
 ];
 
 export default function AdminPage() {
