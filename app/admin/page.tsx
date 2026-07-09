@@ -3,39 +3,39 @@ import Link from "next/link";
 const adminSections = [
   {
     id: "01",
+    title: "Dashboard",
+    description: "Monitoramento financeiro e visão geral em tempo real.",
+    href: "/admin/dashboard",
+  },
+  {
+    id: "02",
+    title: "Orders",
+    description: "Gerencie pedidos, repasses e edição de percentuais dos fornecedores.",
+    href: "/admin/orders",
+  },
+  {
+    id: "03",
+    title: "Saques",
+    description: "Aprove ou rejeite solicitações de saque dos fornecedores.",
+    href: "/admin/withdrawals",
+  },
+  {
+    id: "04",
     title: "Manage hots",
     description: "Control which games appear in the highlighted section.",
     href: "/admin/manage-hots",
   },
   {
-    id: "02",
+    id: "05",
     title: "Games",
     description: "Choose the game and service type to edit settings.",
     href: "/admin/games",
   },
   {
-    id: "03",
-    title: "Dashboard",
-    description: "Reserved for future tools, controls and admin features.",
-    href: "/admin/dashboard",
-  },
-  {
-    id: "04",
+    id: "06",
     title: "Inventory Items",
     description: "Create item name, WoW rarity, and icon path for inventory slots.",
     href: "/admin/items",
-  },
-  {
-    id: "05",
-    title: "Orders",
-    description: "Manage Stripe payments and follow order processing status.",
-    href: "/admin/orders",
-  },
-  {
-    id: "06",
-    title: "Withdrawals",
-    description: "Approve or reject supplier cashout requests.",
-    href: "/admin/withdrawals",
   },
   {
     id: "07",
@@ -85,30 +85,6 @@ export default function AdminPage() {
             Pick a section below to continue.
           </p>
         </div>
-
-        <section className="mt-8 grid gap-4 sm:grid-cols-3">
-          <Link
-            href="/admin/dashboard"
-            className="rounded-2xl border border-green-900 bg-green-950/20 p-5 transition hover:-translate-y-0.5 hover:border-green-700/50 hover:bg-green-950/40"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Acesso rápido</p>
-            <p className="mt-2 text-3xl font-black text-green-300">Dashboard</p>
-          </Link>
-          <Link
-            href="/admin/orders"
-            className="rounded-2xl border border-green-900 bg-green-950/20 p-5 transition hover:-translate-y-0.5 hover:border-green-700/50 hover:bg-green-950/40"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Acesso rápido</p>
-            <p className="mt-2 text-3xl font-black text-green-300">Orders</p>
-          </Link>
-          <Link
-            href="/admin/withdrawals"
-            className="rounded-2xl border border-green-900 bg-green-950/20 p-5 transition hover:-translate-y-0.5 hover:border-green-700/50 hover:bg-green-950/40"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Acesso rápido</p>
-            <p className="mt-2 text-3xl font-black text-green-400">Saques</p>
-          </Link>
-        </section>
 
         <section className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {adminSections.map((section) => (
