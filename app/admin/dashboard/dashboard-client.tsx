@@ -25,6 +25,7 @@ type DashboardClientProps = {
   orders: DashboardOrder[];
   loadError: string | null;
   initialGlobalPlatformFeePercent: number;
+  initialCardGatewayFeePercent: number;
 };
 
 type RangeValue = "7" | "30" | "90" | "all";
@@ -210,6 +211,7 @@ export function DashboardClient({
   orders,
   loadError,
   initialGlobalPlatformFeePercent,
+  initialCardGatewayFeePercent,
 }: DashboardClientProps) {
   const [range, setRange] = useState<RangeValue>("30");
   const [chartScope, setChartScope] = useState<ChartScope>("weekly");
@@ -217,6 +219,7 @@ export function DashboardClient({
   const [gameFilter, setGameFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [globalFeeInput, setGlobalFeeInput] = useState(initialGlobalPlatformFeePercent.toFixed(2));
+  const [cardFeeInput, setCardFeeInput] = useState(initialCardGatewayFeePercent.toFixed(2));
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
@@ -351,8 +354,15 @@ export function DashboardClient({
     }
 
     const parsed = Number(globalFeeInput.replace(",", "."));
+    const parsedCardFee = Number(cardFeeInput.replace(",", "."));
     if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
       setSettingsError("A taxa global deve estar entre 0 e 100.");
+      setSettingsMessage(null);
+      return;
+    }
+
+    if (!Number.isFinite(parsedCardFee) || parsedCardFee < 0 || parsedCardFee > 100) {
+      setSettingsError("A taxa de cartão deve estar entre 0 e 100.");
       setSettingsMessage(null);
       return;
     }
@@ -377,13 +387,14 @@ export function DashboardClient({
         },
         body: JSON.stringify({
           globalPlatformFeePercent: parsed,
+          cardGatewayFeePercent: parsedCardFee,
         }),
       });
 
       const data = (await response.json()) as {
         ok?: boolean;
         error?: string;
-        settings?: { globalPlatformFeePercent: number };
+        settings?: { globalPlatformFeePercent: number; cardGatewayFeePercent: number };
       };
 
       if (!response.ok || !data.ok || !data.settings) {
@@ -392,6 +403,7 @@ export function DashboardClient({
       }
 
       setGlobalFeeInput(data.settings.globalPlatformFeePercent.toFixed(2));
+      setCardFeeInput(data.settings.cardGatewayFeePercent.toFixed(2));
       setSettingsMessage("Taxa global salva. A alteração vale para novas ordens.");
     } catch (error) {
       setSettingsError(error instanceof Error ? error.message : "Não foi possível salvar a taxa global.");
@@ -616,6 +628,19 @@ export function DashboardClient({
                     step="0.01"
                     value={globalFeeInput}
                     onChange={(event) => setGlobalFeeInput(event.target.value)}
+                    className="min-h-[44px] w-48 rounded-xl border border-white/10 bg-black/50 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-400"
+                  />
+                </label>
+
+                <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                  Taxa de cartão (%)
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={cardFeeInput}
+                    onChange={(event) => setCardFeeInput(event.target.value)}
                     className="min-h-[44px] w-48 rounded-xl border border-white/10 bg-black/50 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-400"
                   />
                 </label>

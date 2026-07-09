@@ -5,6 +5,7 @@ export type SiteFeeSettings = {
   schemaVersion: number;
   updatedAtMs: number;
   globalPlatformFeePercent: number;
+  cardGatewayFeePercent: number;
 };
 
 function asFiniteNumber(value: unknown): number | null {
@@ -29,6 +30,7 @@ export function buildDefaultSiteFeeSettings(): SiteFeeSettings {
     schemaVersion: SITE_FEE_SETTINGS_SCHEMA_VERSION,
     updatedAtMs: Date.now(),
     globalPlatformFeePercent: 15,
+    cardGatewayFeePercent: 4,
   };
 }
 
@@ -45,5 +47,6 @@ export function sanitizeSiteFeeSettings(source: unknown): SiteFeeSettings {
     schemaVersion: SITE_FEE_SETTINGS_SCHEMA_VERSION,
     updatedAtMs: asFiniteNumber(parsed.updatedAtMs) ?? Date.now(),
     globalPlatformFeePercent: clampPercent(parsed.globalPlatformFeePercent, fallback.globalPlatformFeePercent),
+    cardGatewayFeePercent: clampPercent(parsed.cardGatewayFeePercent, fallback.cardGatewayFeePercent),
   };
 }

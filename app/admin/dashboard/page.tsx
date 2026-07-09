@@ -42,6 +42,7 @@ export default async function DashboardPage() {
   let orders: DashboardOrder[] = [];
   let loadError: string | null = null;
   let globalPlatformFeePercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+  let cardGatewayFeePercent = buildDefaultSiteFeeSettings().cardGatewayFeePercent;
   let completedOrderIds = new Set<string>();
 
   try {
@@ -65,9 +66,12 @@ export default async function DashboardPage() {
       .get();
 
     const siteFeeSnapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
-    globalPlatformFeePercent = siteFeeSnapshot.exists
-      ? sanitizeSiteFeeSettings(siteFeeSnapshot.data()).globalPlatformFeePercent
-      : buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+    const siteFeeSettings = siteFeeSnapshot.exists
+      ? sanitizeSiteFeeSettings(siteFeeSnapshot.data())
+      : buildDefaultSiteFeeSettings();
+
+    globalPlatformFeePercent = siteFeeSettings.globalPlatformFeePercent;
+    cardGatewayFeePercent = siteFeeSettings.cardGatewayFeePercent;
 
     orders = snapshot.docs.map((docRow) => {
       const data = docRow.data() as Record<string, unknown>;
@@ -169,6 +173,7 @@ export default async function DashboardPage() {
             orders={orders}
             loadError={loadError}
             initialGlobalPlatformFeePercent={globalPlatformFeePercent}
+            initialCardGatewayFeePercent={cardGatewayFeePercent}
           />
         </section>
 

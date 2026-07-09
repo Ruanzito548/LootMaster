@@ -26,9 +26,9 @@ type CheckoutBody = {
   customerUid?: string;
 };
 
-function computeFinalAmount(price: number, paymentMethod: string): number {
+function computeFinalAmount(price: number, paymentMethod: string, cardGatewayFeePercent: number): number {
   if (paymentMethod === "pix") return Math.round(price * 0.95 * 100);
-  if (paymentMethod === "card") return Math.round(price * 1.04 * 100);
+  if (paymentMethod === "card") return Math.round(price * (1 + cardGatewayFeePercent / 100) * 100);
   return Math.round(price * 100);
 }
 
@@ -81,15 +81,15 @@ async function resolvePricingConfig(gameId: string, serverId: string, faction: s
   return defaultGoldConfigEntry;
 }
 
-async function resolveGlobalPlatformFeePercent() {
+async function resolveSiteFeeSettings() {
   const adminDb = getAdminDb();
   const snapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
 
   if (!snapshot.exists) {
-    return buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+    return buildDefaultSiteFeeSettings();
   }
 
-  return sanitizeSiteFeeSettings(snapshot.data()).globalPlatformFeePercent;
+  return sanitizeSiteFeeSettings(snapshot.data());
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -171,6 +171,7 @@ export async function POST(request: Request): Promise<Response> {
 
   let authoritativeConfig;
   let globalPlatformFeePercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+  let cardGatewayFeePercent = buildDefaultSiteFeeSettings().cardGatewayFeePercent;
 
   try {
     authoritativeConfig = await resolvePricingConfig(
@@ -183,9 +184,13 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
-    globalPlatformFeePercent = await resolveGlobalPlatformFeePercent();
+    const siteFeeSettings = await resolveSiteFeeSettings();
+    globalPlatformFeePercent = siteFeeSettings.globalPlatformFeePercent;
+    cardGatewayFeePercent = siteFeeSettings.cardGatewayFeePercent;
   } catch {
-    globalPlatformFeePercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+    const defaults = buildDefaultSiteFeeSettings();
+    globalPlatformFeePercent = defaults.globalPlatformFeePercent;
+    cardGatewayFeePercent = defaults.cardGatewayFeePercent;
   }
 
   const validatedGoldAmount = Math.min(
@@ -199,7 +204,7 @@ export async function POST(request: Request): Promise<Response> {
 
   const basePrice = (validatedGoldAmount / 1000) * authoritativeConfig.pricePerThousand;
   const baseAmountCents = Math.round(basePrice * 100);
-  const unitAmount = computeFinalAmount(basePrice, paymentMethod);
+  const unitAmount = computeFinalAmount(basePrice, paymentMethod, cardGatewayFeePercent);
 
   if (unitAmount <= 0) {
     return Response.json({ error: "Invalid price." }, { status: 422 });
@@ -228,6 +233,7 @@ export async function POST(request: Request): Promise<Response> {
     hasServerOptions: String(hasServerOptions),
     customerUid: customerUid?.trim() ?? "",
     commissionPercent: String(globalPlatformFeePercent),
+    cardGatewayFeePercent: String(cardGatewayFeePercent),
   };
 
   try {
@@ -252,7 +258,7 @@ export async function POST(request: Request): Promise<Response> {
                 `Delivery: ${deliveryMethod}`,
                 `Character: ${nickname}`,
                 paymentMethod === "pix" ? "Pix discount applied (5%)" : null,
-                paymentMethod === "card" ? "Card gateway fee applied (4%)" : null,
+                paymentMethod === "card" ? `Card gateway fee applied (${cardGatewayFeePercent.toFixed(2)}%)` : null,
               ]
                 .filter(Boolean)
                 .join(" | "),

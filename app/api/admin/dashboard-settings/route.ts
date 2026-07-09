@@ -10,6 +10,7 @@ import {
 
 type PutBody = {
   globalPlatformFeePercent?: number;
+  cardGatewayFeePercent?: number;
 };
 
 function statusFromErrorMessage(message: string): number {
@@ -66,8 +67,14 @@ export async function PUT(request: Request): Promise<Response> {
     return Response.json({ error: message }, { status: statusFromErrorMessage(message) });
   }
 
-  if (!body || typeof body.globalPlatformFeePercent !== "number") {
-    return Response.json({ error: "Invalid payload for global platform fee percent." }, { status: 422 });
+  const hasGlobalPlatformFee = typeof body?.globalPlatformFeePercent === "number";
+  const hasCardGatewayFee = typeof body?.cardGatewayFeePercent === "number";
+
+  if (!body || (!hasGlobalPlatformFee && !hasCardGatewayFee)) {
+    return Response.json(
+      { error: "Invalid payload for dashboard settings fees." },
+      { status: 422 },
+    );
   }
 
   try {
@@ -76,7 +83,8 @@ export async function PUT(request: Request): Promise<Response> {
     const base = snapshot.exists ? sanitizeSiteFeeSettings(snapshot.data()) : buildDefaultSiteFeeSettings();
     const settings = sanitizeSiteFeeSettings({
       ...base,
-      globalPlatformFeePercent: body.globalPlatformFeePercent,
+      globalPlatformFeePercent: hasGlobalPlatformFee ? body.globalPlatformFeePercent : base.globalPlatformFeePercent,
+      cardGatewayFeePercent: hasCardGatewayFee ? body.cardGatewayFeePercent : base.cardGatewayFeePercent,
       updatedAtMs: Date.now(),
     });
 
