@@ -29,7 +29,7 @@ type DashboardClientProps = {
 };
 
 type RangeValue = "7" | "30" | "90" | "all";
-type ChartScope = "weekly" | "monthly" | "yearly";
+type ChartScope = "daily" | "weekly" | "monthly" | "yearly";
 
 type RevenueBucket = {
   key: string;
@@ -68,16 +68,140 @@ function startOfDay(ms: number) {
   return date.getTime();
 }
 
-function buildCurrentBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] {
-  const buckets: RevenueBucket[] = [];
+function startOfWeek(ms: number) {
+  const date = new Date(ms);
+  const day = date.getDay();
+  const offsetToMonday = (day + 6) % 7;
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - offsetToMonday);
+  return date.getTime();
+}
+
+function startOfMonth(ms: number) {
+  const date = new Date(ms);
+  return new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0).getTime();
+}
+
+function startOfYear(ms: number) {
+  const date = new Date(ms);
+  return new Date(date.getFullYear(), 0, 1, 0, 0, 0, 0).getTime();
+}
+
+function capitalize(value: string) {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function normalizePeriodAnchorMs(scope: ChartScope, inputMs: number, nowMs: number) {
+  const clampedMs = Math.min(inputMs, nowMs);
+
+  if (scope === "daily") return startOfDay(clampedMs);
+  if (scope === "weekly") return startOfWeek(clampedMs);
+  if (scope === "monthly") return startOfMonth(clampedMs);
+  return startOfYear(clampedMs);
+}
+
+function shiftPeriodAnchorMs(scope: ChartScope, anchorMs: number, step: number, nowMs: number) {
+  const date = new Date(anchorMs);
+
+  if (scope === "daily") {
+    date.setDate(date.getDate() + step);
+  } else if (scope === "weekly") {
+    date.setDate(date.getDate() + step * 7);
+  } else if (scope === "monthly") {
+    date.setMonth(date.getMonth() + step);
+  } else {
+    date.setFullYear(date.getFullYear() + step);
+  }
+
+  return normalizePeriodAnchorMs(scope, date.getTime(), nowMs);
+}
+
+function formatDateInputValue(ms: number) {
+  const date = new Date(ms);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatPeriodLabel(scope: ChartScope, anchorMs: number) {
+  const anchorDate = new Date(anchorMs);
+
+  if (scope === "daily") {
+    return capitalize(
+      anchorDate.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }),
+    );
+  }
 
   if (scope === "weekly") {
-    const oneDayMs = 24 * 60 * 60 * 1000;
-    const todayStart = startOfDay(nowMs);
-    const periodStart = todayStart - oneDayMs * 6;
+    const weekStart = startOfWeek(anchorMs);
+    const weekEnd = weekStart + 6 * 24 * 60 * 60 * 1000;
+    const startLabel = new Date(weekStart).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
+    const endLabel = new Date(weekEnd).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
+    return `${capitalize(startLabel)} - ${capitalize(endLabel)}`;
+  }
+
+  if (scope === "monthly") {
+    return capitalize(
+      anchorDate.toLocaleDateString("pt-BR", {
+        month: "long",
+        year: "numeric",
+      }),
+    );
+  }
+
+  return String(anchorDate.getFullYear());
+}
+
+function getScopeUnitLabel(scope: ChartScope) {
+  if (scope === "daily") return "hora";
+  if (scope === "weekly") return "dia";
+  if (scope === "monthly") return "dia";
+  return "mês";
+}
+
+function buildPeriodBuckets(scope: ChartScope, anchorMs: number): RevenueBucket[] {
+  const buckets: RevenueBucket[] = [];
+  const oneHourMs = 60 * 60 * 1000;
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+  if (scope === "daily") {
+    const dayStart = startOfDay(anchorMs);
+
+    for (let hour = 0; hour < 24; hour += 1) {
+      const startMs = dayStart + hour * oneHourMs;
+      const endMs = startMs + oneHourMs;
+      const label = hour % 3 === 0 ? String(hour).padStart(2, "0") : "";
+
+      buckets.push({
+        key: `${dayStart}-${hour}`,
+        label,
+        fullLabel: `${new Date(startMs).toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })} ${String(hour).padStart(2, "0")}:00`,
+        startMs,
+        endMs,
+        revenueCents: 0,
+        ordersCount: 0,
+      });
+    }
+
+    return buckets;
+  }
+
+  if (scope === "weekly") {
+    const weekStart = startOfWeek(anchorMs);
 
     for (let index = 0; index < 7; index += 1) {
-      const startMs = periodStart + index * oneDayMs;
+      const startMs = weekStart + index * oneDayMs;
       const endMs = startMs + oneDayMs;
       const date = new Date(startMs);
       const weekday = date
@@ -87,7 +211,7 @@ function buildCurrentBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] 
 
       buckets.push({
         key: `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`,
-        label: weekday.charAt(0).toUpperCase() + weekday.slice(1),
+        label: capitalize(weekday),
         fullLabel: date.toLocaleDateString("pt-BR", {
           day: "2-digit",
           month: "2-digit",
@@ -104,9 +228,10 @@ function buildCurrentBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] 
   }
 
   if (scope === "monthly") {
-    const now = new Date(nowMs);
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    const periodStart = startOfMonth(anchorMs);
+    const date = new Date(periodStart);
+    const year = date.getFullYear();
+    const month = date.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     for (let day = 1; day <= daysInMonth; day += 1) {
@@ -131,9 +256,8 @@ function buildCurrentBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] 
     return buckets;
   }
 
-  const now = new Date(nowMs);
-  const year = now.getFullYear();
-  const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const yearStart = startOfYear(anchorMs);
+  const year = new Date(yearStart).getFullYear();
 
   for (let month = 0; month < 12; month += 1) {
     const startMs = new Date(year, month, 1, 0, 0, 0, 0).getTime();
@@ -142,10 +266,12 @@ function buildCurrentBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] 
     buckets.push({
       key: `${year}-${month + 1}`,
       label: monthLabels[month],
-      fullLabel: new Date(startMs).toLocaleDateString("pt-BR", {
-        month: "long",
-        year: "numeric",
-      }),
+      fullLabel: capitalize(
+        new Date(startMs).toLocaleDateString("pt-BR", {
+          month: "long",
+          year: "numeric",
+        }),
+      ),
       startMs,
       endMs,
       revenueCents: 0,
@@ -154,22 +280,6 @@ function buildCurrentBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] 
   }
 
   return buckets;
-}
-
-function buildPreviousBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] {
-  if (scope === "weekly") {
-    return buildCurrentBuckets(scope, nowMs - 7 * 24 * 60 * 60 * 1000);
-  }
-
-  if (scope === "monthly") {
-    const now = new Date(nowMs);
-    const previousMonthAnchor = new Date(now.getFullYear(), now.getMonth() - 1, 15, 12, 0, 0, 0).getTime();
-    return buildCurrentBuckets(scope, previousMonthAnchor);
-  }
-
-  const now = new Date(nowMs);
-  const previousYearAnchor = new Date(now.getFullYear() - 1, 6, 15, 12, 0, 0, 0).getTime();
-  return buildCurrentBuckets(scope, previousYearAnchor);
 }
 
 function fillBucketsWithOrders(buckets: RevenueBucket[], inputOrders: DashboardOrder[]): RevenueBucket[] {
@@ -213,8 +323,11 @@ export function DashboardClient({
   initialGlobalPlatformFeePercent,
   initialCardGatewayFeePercent,
 }: DashboardClientProps) {
+  const initialNowMs = Date.now();
   const [range, setRange] = useState<RangeValue>("30");
   const [chartScope, setChartScope] = useState<ChartScope>("weekly");
+  const [chartAnchorMs, setChartAnchorMs] = useState(() => normalizePeriodAnchorMs("weekly", initialNowMs, initialNowMs));
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [gameFilter, setGameFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
@@ -233,7 +346,18 @@ export function DashboardClient({
     });
 
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [chartScope, statusFilter, gameFilter, paymentFilter]);
+  }, [chartScope, chartAnchorMs, statusFilter, gameFilter, paymentFilter]);
+
+  useEffect(() => {
+    const nowMs = Date.now();
+    setChartAnchorMs((current) => normalizePeriodAnchorMs(chartScope, current, nowMs));
+  }, [chartScope]);
+
+  useEffect(() => {
+    if (chartScope !== "monthly") {
+      setMonthPickerOpen(false);
+    }
+  }, [chartScope]);
 
   const statusOptions = ["all", ...Array.from(new Set(orders.map((order) => order.statusLabel)))];
   const gameOptions = ["all", ...Array.from(new Set(orders.map((order) => order.gameTitle)))];
@@ -320,8 +444,27 @@ export function DashboardClient({
   const recentOrders = [...dashboardFilteredOrders].sort((a, b) => b.createdUnix - a.createdUnix).slice(0, 8);
 
   const nowMs = Date.now();
-  const currentBuckets = fillBucketsWithOrders(buildCurrentBuckets(chartScope, nowMs), baseFilteredOrders);
-  const previousBuckets = fillBucketsWithOrders(buildPreviousBuckets(chartScope, nowMs), baseFilteredOrders);
+  const normalizedCurrentAnchor = normalizePeriodAnchorMs(chartScope, nowMs, nowMs);
+  const canNavigateNext = chartAnchorMs < normalizedCurrentAnchor;
+  const currentBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, chartAnchorMs), baseFilteredOrders);
+  const previousAnchorMs = shiftPeriodAnchorMs(chartScope, chartAnchorMs, -1, nowMs);
+  const previousBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, previousAnchorMs), baseFilteredOrders);
+  const chartPeriodLabel = formatPeriodLabel(chartScope, chartAnchorMs);
+  const periodUnitLabel = getScopeUnitLabel(chartScope);
+  const periodAverageLabel = `Média por ${periodUnitLabel}`;
+  const bestPeriodLabel = chartScope === "yearly" ? "Melhor mês" : chartScope === "daily" ? "Melhor hora" : "Melhor período";
+  const worstPeriodLabel = chartScope === "yearly" ? "Pior mês" : chartScope === "daily" ? "Pior hora" : "Pior período";
+
+  const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const orderYears = Array.from(new Set(baseFilteredOrders.map((order) => new Date(order.createdUnix * 1000).getFullYear())));
+  if (!orderYears.includes(new Date(nowMs).getFullYear())) {
+    orderYears.push(new Date(nowMs).getFullYear());
+  }
+  const availableYears = orderYears.sort((a, b) => b - a);
+  const selectedMonth = new Date(chartAnchorMs).getMonth();
+  const selectedYear = new Date(chartAnchorMs).getFullYear();
+  const chartGridTemplateColumns = `repeat(${Math.max(currentBuckets.length, 1)}, minmax(0, 1fr))`;
+  const chartMinWidth = Math.max(960, currentBuckets.length * 38);
 
   const chartMaxValue = Math.max(...currentBuckets.map((bucket) => bucket.revenueCents), 1);
   const chartReferenceLines = buildReferenceLines(chartMaxValue);
@@ -347,6 +490,40 @@ export function DashboardClient({
       : chartTotalRevenue > 0
         ? 100
         : 0;
+
+  function navigatePeriod(step: number) {
+    setHoveredBarKey(null);
+    setChartAnchorMs((current) => shiftPeriodAnchorMs(chartScope, current, step, Date.now()));
+  }
+
+  function applyDailyDate(value: string) {
+    if (!value) {
+      return;
+    }
+
+    const parsedMs = new Date(`${value}T12:00:00`).getTime();
+    if (Number.isNaN(parsedMs)) {
+      return;
+    }
+
+    const now = Date.now();
+    setChartAnchorMs(normalizePeriodAnchorMs("daily", parsedMs, now));
+  }
+
+  function applyMonthlyYear(year: number) {
+    const anchor = new Date(chartAnchorMs);
+    const target = new Date(year, anchor.getMonth(), 1, 12, 0, 0, 0).getTime();
+    const now = Date.now();
+    setChartAnchorMs(normalizePeriodAnchorMs("monthly", target, now));
+  }
+
+  function applyMonthlyMonth(monthIndex: number) {
+    const anchor = new Date(chartAnchorMs);
+    const target = new Date(anchor.getFullYear(), monthIndex, 1, 12, 0, 0, 0).getTime();
+    const now = Date.now();
+    setChartAnchorMs(normalizePeriodAnchorMs("monthly", target, now));
+    setMonthPickerOpen(false);
+  }
 
   async function saveGlobalSiteFee() {
     if (savingSettings) {
@@ -411,13 +588,6 @@ export function DashboardClient({
       setSavingSettings(false);
     }
   }
-
-  const chartColumnsClass =
-    chartScope === "weekly"
-        ? "grid-cols-7"
-        : chartScope === "monthly"
-          ? "grid-cols-15 sm:grid-cols-31"
-          : "grid-cols-12";
 
   return (
     <div className="min-h-screen bg-[#0F1117] text-white" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
@@ -675,32 +845,118 @@ export function DashboardClient({
           <>
             <section className="mt-5">
               <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/30 p-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Receita</p>
-                    <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">Faturamento por período</h2>
+                    <h2 className="mt-1 text-xl font-black text-white sm:text-2xl">Faturamento por período</h2>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {[
-                      { label: "Semanal", value: "weekly" as const },
-                      { label: "Mensal", value: "monthly" as const },
-                      { label: "Anual", value: "yearly" as const },
-                    ].map((scopeOption) => (
+
+                  <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1">
+                    <button
+                      type="button"
+                      onClick={() => navigatePeriod(-1)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/40 text-lg text-white transition hover:border-cyan-400/60 hover:text-cyan-200"
+                      aria-label="Período anterior"
+                    >
+                      ←
+                    </button>
+                    <span className="min-w-[190px] text-center text-sm font-bold text-white sm:min-w-[220px]">{chartPeriodLabel}</span>
+                    <button
+                      type="button"
+                      onClick={() => navigatePeriod(1)}
+                      disabled={!canNavigateNext}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/40 text-lg text-white transition hover:border-cyan-400/60 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-35"
+                      aria-label="Próximo período"
+                    >
+                      →
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] p-1">
+                      {[
+                        { label: "Diário", value: "daily" as const },
+                        { label: "Semanal", value: "weekly" as const },
+                        { label: "Mensal", value: "monthly" as const },
+                        { label: "Anual", value: "yearly" as const },
+                      ].map((scopeOption) => (
+                        <button
+                          key={scopeOption.value}
+                          type="button"
+                          onClick={() => setChartScope(scopeOption.value)}
+                          className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] transition ${
+                            chartScope === scopeOption.value
+                              ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-200"
+                              : "border-transparent text-slate-300 hover:border-white/20 hover:bg-white/5"
+                          }`}
+                        >
+                          {scopeOption.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {chartScope === "daily" ? (
+                      <label className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 text-xs font-semibold text-slate-300">
+                        <span className="text-sm">📅</span>
+                        <input
+                          type="date"
+                          max={formatDateInputValue(Date.now())}
+                          value={formatDateInputValue(chartAnchorMs)}
+                          onChange={(event) => applyDailyDate(event.target.value)}
+                          className="bg-transparent text-xs font-semibold text-white outline-none"
+                        />
+                      </label>
+                    ) : null}
+
+                    {chartScope === "monthly" ? (
                       <button
-                        key={scopeOption.value}
                         type="button"
-                        onClick={() => setChartScope(scopeOption.value)}
-                        className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] transition ${
-                          chartScope === scopeOption.value
-                            ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-200"
-                            : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20"
-                        }`}
+                        onClick={() => setMonthPickerOpen((value) => !value)}
+                        className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 text-xs font-semibold text-slate-200 transition hover:border-cyan-400/50"
                       >
-                        {scopeOption.label}
+                        <span className="text-sm">📅</span>
+                        {chartPeriodLabel}
+                        <span className="text-[10px] text-slate-400">▼</span>
                       </button>
-                    ))}
+                    ) : null}
                   </div>
                 </div>
+
+                {chartScope === "monthly" && monthPickerOpen ? (
+                  <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Selecionar mês</p>
+                      <select
+                        value={selectedYear}
+                        onChange={(event) => applyMonthlyYear(Number(event.target.value))}
+                        className="min-h-[36px] rounded-lg border border-white/10 bg-black/40 px-3 text-xs font-semibold text-white outline-none transition focus:border-cyan-400"
+                      >
+                        {availableYears.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                      {monthNames.map((monthLabel, monthIndex) => (
+                        <button
+                          key={monthLabel}
+                          type="button"
+                          onClick={() => applyMonthlyMonth(monthIndex)}
+                          className={`rounded-lg border px-2 py-2 text-xs font-semibold transition ${
+                            selectedMonth === monthIndex
+                              ? "border-cyan-400/60 bg-cyan-500/15 text-cyan-200"
+                              : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/20"
+                          }`}
+                        >
+                          {monthLabel}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
@@ -708,7 +964,7 @@ export function DashboardClient({
                     <p className="mt-1 text-sm font-semibold text-white">{formatMoney(chartTotalRevenue)}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Média por período</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{periodAverageLabel}</p>
                     <p className="mt-1 text-sm font-semibold text-cyan-300">{formatMoney(chartAverageRevenue)}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
@@ -718,7 +974,7 @@ export function DashboardClient({
                 </div>
 
                 <div className="mt-4 overflow-x-auto pb-1">
-                  <div className="relative min-w-[960px]">
+                  <div className="relative" style={{ minWidth: `${chartMinWidth}px` }}>
                     <div className="relative h-80 rounded-2xl border border-white/10 bg-black/30 p-4 sm:p-5">
                       {chartReferenceLines.map((line) => (
                         <div
@@ -734,7 +990,10 @@ export function DashboardClient({
                         </div>
                       ))}
 
-                      <div className={`absolute inset-x-4 bottom-5 top-8 grid items-end gap-1 ${chartColumnsClass}`}>
+                      <div
+                        className="absolute inset-x-4 bottom-5 top-8 grid items-end gap-1"
+                        style={{ gridTemplateColumns: chartGridTemplateColumns }}
+                      >
                         {currentBuckets.map((bucket) => {
                           const ratio = bucket.revenueCents > 0 ? bucket.revenueCents / chartMaxValue : 0;
                           const heightPercent = ratio * 84;
@@ -801,13 +1060,13 @@ export function DashboardClient({
                     <p className="mt-1 text-lg font-black text-emerald-300">{formatMoney(chartTicketAverage)}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Melhor período</p>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">{bestPeriodLabel}</p>
                     <p className="mt-1 text-sm font-semibold text-white">
                       {chartBestBucket ? `${chartBestBucket.label} - ${formatMoney(chartBestBucket.revenueCents)}` : "Sem vendas"}
                     </p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Pior período</p>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">{worstPeriodLabel}</p>
                     <p className="mt-1 text-sm font-semibold text-white">
                       {chartWorstBucket ? `${chartWorstBucket.label} - ${formatMoney(chartWorstBucket.revenueCents)}` : "Sem vendas"}
                     </p>

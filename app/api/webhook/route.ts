@@ -4,11 +4,15 @@ import { FieldValue } from "firebase-admin/firestore";
 import {
   computeFeeBreakdown,
   DEFAULT_AGENT_FEE_SHARE_PERCENT,
-  DEFAULT_PLATFORM_FEE_PERCENT,
 } from "@/lib/agency";
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
+import {
+  SITE_FEE_SETTINGS_DOC_ID,
+  buildDefaultSiteFeeSettings,
+  sanitizeSiteFeeSettings,
+} from "@/lib/site-fee-settings";
 import { syncPaidOrderToWalletBackend } from "@/lib/wallet-backend";
 import { calculateLevelProgress, calculateTotalXp } from "../../../lib/level-rewards";
 
@@ -118,11 +122,43 @@ async function resolveDiscordChannelId(gameId: string, categoryId: string): Prom
   }
 }
 
-async function persistPaidOrder(session: Stripe.Checkout.Session): Promise<void> {
+function clampPercent(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 100) return 100;
+  return Math.round(value * 100) / 100;
+}
+
+async function resolveCurrentGlobalPlatformFeePercent(): Promise<number> {
+  const adminDb = getAdminDb();
+
+  try {
+    const snapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
+    if (!snapshot.exists) {
+      return buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+    }
+
+    return sanitizeSiteFeeSettings(snapshot.data()).globalPlatformFeePercent;
+  } catch {
+    return buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+  }
+}
+
+async function resolveSessionCommissionPercent(session: Stripe.Checkout.Session): Promise<number> {
+  const meta = session.metadata ?? {};
+  const parsed = Number(meta.commissionPercent);
+
+  if (Number.isFinite(parsed)) {
+    return clampPercent(parsed);
+  }
+
+  return resolveCurrentGlobalPlatformFeePercent();
+}
+
+async function persistPaidOrder(session: Stripe.Checkout.Session, commissionPercent: number): Promise<void> {
   const meta = session.metadata ?? {};
   const adminDb = getAdminDb();
   const amountTotalCents = session.amount_total ?? 0;
-  const commissionPercent = Number(meta.commissionPercent ?? DEFAULT_PLATFORM_FEE_PERCENT) || DEFAULT_PLATFORM_FEE_PERCENT;
   const sellerAmountCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
   const platformProfitCents = amountTotalCents - sellerAmountCents;
 
@@ -254,7 +290,7 @@ async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<voi
   const meta = session.metadata ?? {};
   const totalCents = session.amount_total ?? 0;
   const baseAmountCents = Number(meta.baseAmountCents ?? 0) || 0;
-  const commissionPercent = Number(meta.commissionPercent ?? DEFAULT_PLATFORM_FEE_PERCENT) || DEFAULT_PLATFORM_FEE_PERCENT;
+  const commissionPercent = await resolveSessionCommissionPercent(session);
   const commissionBaseCents = baseAmountCents > 0 ? baseAmountCents : totalCents;
   const customerAgent = await resolveCustomerAgent(session);
   const feeBreakdown = computeFeeBreakdown(
@@ -553,8 +589,10 @@ export async function POST(request: Request): Promise<Response> {
 
     // Only notify for fully paid sessions
     if (session.payment_status === "paid") {
+      const commissionPercent = await resolveSessionCommissionPercent(session);
+
       try {
-        await persistPaidOrder(session);
+        await persistPaidOrder(session, commissionPercent);
       } catch (err) {
         console.error("[Stripe Webhook] Could not persist paid order to Firestore:", err);
       }
@@ -573,7 +611,6 @@ export async function POST(request: Request): Promise<Response> {
 
       try {
         const amountTotalCents = session.amount_total ?? 0;
-        const commissionPercent = Number(meta.commissionPercent ?? 15) || 15;
         const supplierPayoutCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
 
         await syncPaidOrderToWalletBackend({

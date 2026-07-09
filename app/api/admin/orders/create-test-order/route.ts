@@ -1,6 +1,11 @@
 import { getAdminDb } from "@/lib/firebase-admin";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import {
+  SITE_FEE_SETTINGS_DOC_ID,
+  buildDefaultSiteFeeSettings,
+  sanitizeSiteFeeSettings,
+} from "@/lib/site-fee-settings";
 
 const games = [
   { gameId: "tbc-anniversary", gameTitle: "WoW TBC Anniversary", categoryId: "gold", categoryTitle: "Gold" },
@@ -44,6 +49,21 @@ export async function POST(request: Request): Promise<Response> {
     const amountTotalCents = Math.round((goldAmount / 1000) * pricePerThousand * 100);
     const suffix = Math.random().toString(36).slice(2, 8);
     const orderId = `test_${Date.now()}_${suffix}`;
+    const adminDb = getAdminDb();
+
+    let commissionPercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+    try {
+      const siteFeeSnapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
+      const siteFees = siteFeeSnapshot.exists
+        ? sanitizeSiteFeeSettings(siteFeeSnapshot.data())
+        : buildDefaultSiteFeeSettings();
+      commissionPercent = siteFees.globalPlatformFeePercent;
+    } catch {
+      commissionPercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+    }
+
+    const sellerAmountCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
+    const platformProfitCents = amountTotalCents - sellerAmountCents;
 
     const payload = {
       orderId,
@@ -66,12 +86,14 @@ export async function POST(request: Request): Promise<Response> {
       nickname: pickOne(nicknames),
       paymentMethod: "pix",
       hasServerOptions: true,
+      commissionPercent,
+      sellerAmountCents,
+      platformProfitCents,
       stripeCreatedAt: now.toISOString(),
       updatedAt: now.toISOString(),
       isTestOrder: true,
     };
 
-    const adminDb = getAdminDb();
     await adminDb.collection("order-checkouts").doc(orderId).set(payload, { merge: true });
 
     try {
