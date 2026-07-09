@@ -344,7 +344,7 @@ export function FinancialCalculatorClient() {
               </p>
               <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">Calculadora Financeira</h1>
               <p className="max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
-                Simule cenarios com o mesmo metodo do dashboard: fornecedor, taxa de cartao, cashback e reserva operacional.
+                Simule cenarios com o mesmo metodo do dashboard: fornecedor, gateway de pagamento, cashback e reserva operacional.
               </p>
             </div>
 
@@ -436,7 +436,7 @@ export function FinancialCalculatorClient() {
                 onChange={(next) => setScenarioInputs((current) => ({ ...current, supplierPercentage: next }))}
               />
               <PercentRow
-                label="Taxa de Cartao (%)"
+                label="Gateway de pagamento (%)"
                 helper="Custo do gateway/cartao"
                 value={scenarioInputs.cardGatewayFeePercent}
                 onChange={(next) => setScenarioInputs((current) => ({ ...current, cardGatewayFeePercent: next }))}
@@ -459,7 +459,7 @@ export function FinancialCalculatorClient() {
               <table className="w-full text-left text-sm">
                 <tbody className="divide-y divide-white/10">
                   <tr className="bg-white/[0.03]">
-                    <td className="px-4 py-3 text-slate-300">Taxa de cartao</td>
+                    <td className="px-4 py-3 text-slate-300">Gateway de pagamento</td>
                     <td className="px-4 py-3 text-right font-black text-cyan-300 tabular-nums">{formatUsdFromCents(scenario.cardFee)}</td>
                   </tr>
                   <tr className="bg-white/[0.03]">

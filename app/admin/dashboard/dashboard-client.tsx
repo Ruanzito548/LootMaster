@@ -522,7 +522,7 @@ export function DashboardClient({
     }
 
     if (!Number.isFinite(parsedCardFee) || parsedCardFee < 0 || parsedCardFee > 100) {
-      setSettingsError("A taxa de cartão deve estar entre 0 e 100.");
+      setSettingsError("O gateway de pagamento deve estar entre 0 e 100.");
       setSettingsMessage(null);
       return;
     }
@@ -828,7 +828,7 @@ export function DashboardClient({
                 </label>
 
                 <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                  Taxa de cartão (%)
+                  Gateway de pagamento (%)
                   <input
                     type="number"
                     min="0"
