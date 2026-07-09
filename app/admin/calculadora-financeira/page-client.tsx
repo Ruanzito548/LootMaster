@@ -82,7 +82,6 @@ const HISTORY_FALLBACK: FinancialCalculatorHistory = {
 };
 
 const DEFAULT_CONFIG = buildDefaultFinancialCalculatorConfig();
-const DEFAULT_PAGE_FONT_FAMILY = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
 const CATEGORY_VISUALS: Record<FinancialDistributionCategoryKey, CategoryVisual> = {
   profitMargin: {
@@ -640,7 +639,7 @@ export function FinancialCalculatorClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#05070d] text-slate-100" style={{ fontFamily: DEFAULT_PAGE_FONT_FAMILY }}>
+    <div className="min-h-screen bg-[#05070d] text-slate-100">
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pb-14 pt-10 sm:px-6 lg:px-8">
         <header className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.16),transparent_28%),linear-gradient(180deg,rgba(8,12,20,0.98),rgba(6,9,15,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:p-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
