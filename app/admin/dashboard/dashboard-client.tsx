@@ -28,7 +28,7 @@ type DashboardClientProps = {
 };
 
 type RangeValue = "7" | "30" | "90" | "all";
-type ChartScope = "daily" | "weekly" | "monthly" | "yearly";
+type ChartScope = "weekly" | "monthly" | "yearly";
 
 type RevenueBucket = {
   key: string;
@@ -61,12 +61,6 @@ function getRangeStartMs(range: RangeValue): number | null {
   return Date.now() - days * 24 * 60 * 60 * 1000;
 }
 
-function startOfHour(ms: number) {
-  const date = new Date(ms);
-  date.setMinutes(0, 0, 0);
-  return date.getTime();
-}
-
 function startOfDay(ms: number) {
   const date = new Date(ms);
   date.setHours(0, 0, 0, 0);
@@ -75,37 +69,6 @@ function startOfDay(ms: number) {
 
 function buildCurrentBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] {
   const buckets: RevenueBucket[] = [];
-
-  if (scope === "daily") {
-    const oneHourMs = 60 * 60 * 1000;
-    const currentHourStart = startOfHour(nowMs);
-    const periodStart = currentHourStart - oneHourMs * 23;
-
-    for (let index = 0; index < 24; index += 1) {
-      const startMs = periodStart + index * oneHourMs;
-      const endMs = startMs + oneHourMs;
-      const date = new Date(startMs);
-      const hour = String(date.getHours()).padStart(2, "0");
-
-      buckets.push({
-        key: `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${hour}`,
-        label: `${hour}h`,
-        fullLabel: date.toLocaleString("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        startMs,
-        endMs,
-        revenueCents: 0,
-        ordersCount: 0,
-      });
-    }
-
-    return buckets;
-  }
 
   if (scope === "weekly") {
     const oneDayMs = 24 * 60 * 60 * 1000;
@@ -193,10 +156,6 @@ function buildCurrentBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] 
 }
 
 function buildPreviousBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] {
-  if (scope === "daily") {
-    return buildCurrentBuckets(scope, nowMs - 24 * 60 * 60 * 1000);
-  }
-
   if (scope === "weekly") {
     return buildCurrentBuckets(scope, nowMs - 7 * 24 * 60 * 60 * 1000);
   }
@@ -442,9 +401,7 @@ export function DashboardClient({
   }
 
   const chartColumnsClass =
-    chartScope === "daily"
-      ? "grid-cols-12 sm:grid-cols-24"
-      : chartScope === "weekly"
+    chartScope === "weekly"
         ? "grid-cols-7"
         : chartScope === "monthly"
           ? "grid-cols-15 sm:grid-cols-31"
@@ -700,7 +657,6 @@ export function DashboardClient({
                   </div>
                   <div className="flex items-center gap-2">
                     {[
-                      { label: "Diário", value: "daily" as const },
                       { label: "Semanal", value: "weekly" as const },
                       { label: "Mensal", value: "monthly" as const },
                       { label: "Anual", value: "yearly" as const },
@@ -753,10 +709,10 @@ export function DashboardClient({
                         </div>
                       ))}
 
-                      <div className={`absolute inset-x-4 bottom-5 top-6 grid items-end gap-1 ${chartColumnsClass}`}>
+                      <div className={`absolute inset-x-4 bottom-5 top-8 grid items-end gap-1 ${chartColumnsClass}`}>
                         {currentBuckets.map((bucket) => {
                           const ratio = bucket.revenueCents > 0 ? bucket.revenueCents / chartMaxValue : 0;
-                          const heightPercent = ratio * 100;
+                          const heightPercent = ratio * 84;
                           const isHovered = hoveredBarKey === bucket.key;
                           const showValue = chartScope === "weekly" || chartScope === "yearly" || isHovered;
                           const averageTicket = bucket.ordersCount > 0 ? Math.round(bucket.revenueCents / bucket.ordersCount) : 0;
@@ -769,24 +725,29 @@ export function DashboardClient({
                               onMouseLeave={() => setHoveredBarKey(null)}
                             >
                               <div className="relative flex h-full w-full items-end pb-6">
-                                <div className="relative h-full w-full overflow-hidden rounded-md bg-slate-800/60">
-                                  {bucket.revenueCents > 0 ? (
-                                    <div
-                                      className={`absolute bottom-0 left-0 right-0 rounded-md bg-[linear-gradient(180deg,#22d3ee_0%,#34d399_56%,#86efac_100%)] transition-all duration-500 ease-out ${
-                                        isHovered ? "brightness-110 shadow-[0_0_14px_rgba(52,211,153,0.35)]" : "shadow-[0_0_8px_rgba(52,211,153,0.2)]"
-                                      }`}
-                                      style={{
-                                        height: chartAnimated ? `${heightPercent}%` : "0%",
-                                      }}
-                                    />
+                                <div className="relative h-full w-full">
+                                  <div className="absolute inset-0 overflow-hidden rounded-md bg-slate-800/60">
+                                    {bucket.revenueCents > 0 ? (
+                                      <div
+                                        className={`absolute bottom-0 left-0 right-0 rounded-md bg-[linear-gradient(180deg,#22d3ee_0%,#34d399_56%,#86efac_100%)] transition-all duration-500 ease-out ${
+                                          isHovered ? "brightness-110 shadow-[0_0_14px_rgba(52,211,153,0.35)]" : "shadow-[0_0_8px_rgba(52,211,153,0.2)]"
+                                        }`}
+                                        style={{
+                                          height: chartAnimated ? `${heightPercent}%` : "0%",
+                                        }}
+                                      />
+                                    ) : null}
+                                  </div>
+
+                                  {bucket.revenueCents > 0 && showValue ? (
+                                    <p
+                                      className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 rounded-md bg-[#0F1117]/90 px-1.5 py-0.5 text-[10px] font-bold text-cyan-200"
+                                      style={{ bottom: `calc(${heightPercent}% + 8px)` }}
+                                    >
+                                      {formatMoney(bucket.revenueCents)}
+                                    </p>
                                   ) : null}
                                 </div>
-
-                                {bucket.revenueCents > 0 && showValue ? (
-                                  <p className="pointer-events-none absolute left-1/2 top-0 z-10 -translate-x-1/2 rounded-md bg-[#0F1117]/90 px-1.5 py-0.5 text-[10px] font-bold text-cyan-200">
-                                    {formatMoney(bucket.revenueCents)}
-                                  </p>
-                                ) : null}
 
                                 <div className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-20 hidden w-max -translate-x-1/2 rounded-xl border border-white/10 bg-[#11141C] px-3 py-2 text-xs text-slate-200 shadow-[0_14px_30px_rgba(0,0,0,0.45)] group-hover:block">
                                   <p className="font-semibold text-white">{bucket.fullLabel}</p>
