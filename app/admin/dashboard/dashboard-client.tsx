@@ -28,7 +28,7 @@ type DashboardClientProps = {
   initialCardGatewayFeePercent: number;
 };
 
-type RangeValue = "7" | "30" | "90" | "all";
+type RangeValue = "7" | "30" | "90" | "all" | "custom";
 type ChartScope = "weekly" | "monthly" | "yearly";
 
 type RevenueBucket = {
@@ -56,8 +56,28 @@ function formatDateTime(unixSeconds: number) {
   return new Date(unixSeconds * 1000).toLocaleString("pt-BR");
 }
 
+function formatDateInputFromMs(ms: number) {
+  const date = new Date(ms);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateStartMs(value: string): number | null {
+  if (!value) return null;
+  const parsed = new Date(`${value}T00:00:00`).getTime();
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function parseDateEndMs(value: string): number | null {
+  if (!value) return null;
+  const parsed = new Date(`${value}T23:59:59.999`).getTime();
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 function getRangeStartMs(range: RangeValue): number | null {
-  if (range === "all") return null;
+  if (range === "all" || range === "custom") return null;
   const days = Number(range);
   return Date.now() - days * 24 * 60 * 60 * 1000;
 }
@@ -297,7 +317,11 @@ export function DashboardClient({
   initialCardGatewayFeePercent,
 }: DashboardClientProps) {
   const initialNowMs = Date.now();
+  const initialRangeEndDate = formatDateInputFromMs(initialNowMs);
+  const initialRangeStartDate = formatDateInputFromMs(initialNowMs - 29 * 24 * 60 * 60 * 1000);
   const [range, setRange] = useState<RangeValue>("30");
+  const [customRangeStartDate, setCustomRangeStartDate] = useState(initialRangeStartDate);
+  const [customRangeEndDate, setCustomRangeEndDate] = useState(initialRangeEndDate);
   const [chartScope, setChartScope] = useState<ChartScope>("weekly");
   const [chartAnchorMs, setChartAnchorMs] = useState(() => normalizePeriodAnchorMs("weekly", initialNowMs, initialNowMs));
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
@@ -319,7 +343,7 @@ export function DashboardClient({
     });
 
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [chartScope, chartAnchorMs, statusFilter, gameFilter, paymentFilter]);
+  }, [chartScope, chartAnchorMs, range, customRangeStartDate, customRangeEndDate, statusFilter, gameFilter, paymentFilter]);
 
   useEffect(() => {
     const nowMs = Date.now();
@@ -344,8 +368,23 @@ export function DashboardClient({
   });
 
   const rangeStart = getRangeStartMs(range);
+  const customStartMs = parseDateStartMs(customRangeStartDate);
+  const customEndMs = parseDateEndMs(customRangeEndDate);
+  const customBounds =
+    range === "custom" && customStartMs !== null && customEndMs !== null
+      ? {
+          startMs: Math.min(customStartMs, customEndMs),
+          endMs: Math.max(customStartMs, customEndMs),
+        }
+      : null;
+
   const dashboardFilteredOrders = baseFilteredOrders.filter((order) => {
     const createdMs = order.createdUnix * 1000;
+
+    if (customBounds) {
+      return createdMs >= customBounds.startMs && createdMs <= customBounds.endMs;
+    }
+
     return rangeStart ? createdMs >= rangeStart : true;
   });
 
@@ -419,9 +458,9 @@ export function DashboardClient({
   const nowMs = Date.now();
   const normalizedCurrentAnchor = normalizePeriodAnchorMs(chartScope, nowMs, nowMs);
   const canNavigateNext = chartAnchorMs < normalizedCurrentAnchor;
-  const currentBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, chartAnchorMs), baseFilteredOrders);
+  const currentBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, chartAnchorMs), dashboardFilteredOrders);
   const previousAnchorMs = shiftPeriodAnchorMs(chartScope, chartAnchorMs, -1, nowMs);
-  const previousBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, previousAnchorMs), baseFilteredOrders);
+  const previousBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, previousAnchorMs), dashboardFilteredOrders);
   const chartPeriodLabel = formatPeriodLabel(chartScope, chartAnchorMs);
   const periodUnitLabel = getScopeUnitLabel(chartScope);
   const periodAverageLabel = `Média por ${periodUnitLabel}`;
@@ -429,7 +468,7 @@ export function DashboardClient({
   const worstPeriodLabel = chartScope === "yearly" ? "Pior mês" : "Pior período";
 
   const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-  const orderYears = Array.from(new Set(baseFilteredOrders.map((order) => new Date(order.createdUnix * 1000).getFullYear())));
+  const orderYears = Array.from(new Set(dashboardFilteredOrders.map((order) => new Date(order.createdUnix * 1000).getFullYear())));
   if (!orderYears.includes(new Date(nowMs).getFullYear())) {
     orderYears.push(new Date(nowMs).getFullYear());
   }
@@ -472,6 +511,18 @@ export function DashboardClient({
   function navigatePeriod(step: number) {
     setHoveredBarKey(null);
     setChartAnchorMs((current) => shiftPeriodAnchorMs(chartScope, current, step, Date.now()));
+  }
+
+  function drillDownToMonthly(bucketStartMs: number) {
+    if (chartScope !== "yearly") {
+      return;
+    }
+
+    const now = Date.now();
+    setHoveredBarKey(null);
+    setMonthPickerOpen(false);
+    setChartAnchorMs(normalizePeriodAnchorMs("monthly", bucketStartMs, now));
+    setChartScope("monthly");
   }
 
   function applyMonthlyYear(year: number) {
@@ -570,8 +621,33 @@ export function DashboardClient({
                   <option value="30">Últimos 30 dias</option>
                   <option value="90">Últimos 90 dias</option>
                   <option value="all">Todo período</option>
+                  <option value="custom">Período personalizado</option>
                 </select>
               </label>
+
+              {range === "custom" ? (
+                <>
+                  <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                    Início
+                    <input
+                      type="date"
+                      value={customRangeStartDate}
+                      onChange={(event) => setCustomRangeStartDate(event.target.value)}
+                      className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                    />
+                  </label>
+
+                  <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                    Fim
+                    <input
+                      type="date"
+                      value={customRangeEndDate}
+                      onChange={(event) => setCustomRangeEndDate(event.target.value)}
+                      className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                    />
+                  </label>
+                </>
+              ) : null}
 
               <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
                 Status
@@ -923,6 +999,12 @@ export function DashboardClient({
                   </div>
                 </div>
 
+                {chartScope === "yearly" ? (
+                  <p className="mt-3 text-xs font-semibold text-cyan-200/90">
+                    Clique em um mês para abrir o gráfico mensal correspondente.
+                  </p>
+                ) : null}
+
                 <div className="mt-4 overflow-x-auto pb-1">
                   <div className="relative" style={{ minWidth: `${chartMinWidth}px` }}>
                     <div className="relative h-80 rounded-2xl border border-white/10 bg-black/30 p-4 sm:p-5">
@@ -965,6 +1047,7 @@ export function DashboardClient({
                           const ratio = bucket.revenueCents > 0 ? bucket.revenueCents / chartScaleMax : 0;
                           const heightPercent = Math.max(0, Math.min(100, ratio * 100));
                           const tooltipBottomPercent = Math.min(heightPercent + 22, 76);
+                          const canDrillDown = chartScope === "yearly";
                           const isHovered = hoveredBarKey === bucket.key;
                           const showValue = chartScope === "weekly" || chartScope === "yearly" || isHovered;
                           const averageTicket = bucket.ordersCount > 0 ? Math.round(bucket.revenueCents / bucket.ordersCount) : 0;
@@ -972,9 +1055,25 @@ export function DashboardClient({
                           return (
                             <div
                               key={bucket.key}
-                              className="group relative flex h-full flex-col items-center justify-end"
+                              className={`group relative flex h-full flex-col items-center justify-end ${
+                                canDrillDown ? "cursor-pointer" : "cursor-default"
+                              }`}
                               onMouseEnter={() => setHoveredBarKey(bucket.key)}
                               onMouseLeave={() => setHoveredBarKey(null)}
+                              onClick={() => {
+                                if (canDrillDown) {
+                                  drillDownToMonthly(bucket.startMs);
+                                }
+                              }}
+                              role={canDrillDown ? "button" : undefined}
+                              tabIndex={canDrillDown ? 0 : undefined}
+                              onKeyDown={(event) => {
+                                if (!canDrillDown) return;
+                                if (event.key === "Enter" || event.key === " ") {
+                                  event.preventDefault();
+                                  drillDownToMonthly(bucket.startMs);
+                                }
+                              }}
                             >
                               <div className="relative flex h-full w-full items-end">
                                 <div className="relative h-full w-full">
