@@ -160,7 +160,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-black text-green-400">
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
+      <main className="flex w-full flex-1 flex-col px-4 pb-20 pt-12 sm:px-6 lg:px-8">
         <div className="space-y-4">
           <p className="text-sm font-bold uppercase tracking-[0.28em] text-green-600">Admin</p>
           <h1 className="text-4xl font-black leading-tight text-green-300 sm:text-5xl">Dashboard</h1>

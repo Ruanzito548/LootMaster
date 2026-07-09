@@ -608,7 +608,7 @@ export function DashboardClient({
 
   return (
     <div className="min-h-screen bg-[#0F1117] text-white" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
-      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="w-full px-4 py-8 sm:px-6 lg:px-8">
         <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
           <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6 xl:col-span-2">
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
