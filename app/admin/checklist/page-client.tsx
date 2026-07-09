@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 type ChecklistItem = {
   id: string;
   text: string;
+  description: string;
   done: boolean;
   createdAt: number;
 };
@@ -26,9 +27,28 @@ function isChecklistItem(value: unknown): value is ChecklistItem {
   return (
     typeof row.id === "string" &&
     typeof row.text === "string" &&
+    typeof row.description === "string" &&
     typeof row.done === "boolean" &&
     typeof row.createdAt === "number"
   );
+}
+
+function normalizeChecklistItem(value: unknown): ChecklistItem | null {
+  if (!value || typeof value !== "object") return null;
+
+  const row = value as Partial<ChecklistItem>;
+  if (typeof row.id !== "string") return null;
+  if (typeof row.text !== "string") return null;
+  if (typeof row.done !== "boolean") return null;
+  if (typeof row.createdAt !== "number") return null;
+
+  return {
+    id: row.id,
+    text: row.text,
+    description: typeof row.description === "string" ? row.description : "",
+    done: row.done,
+    createdAt: row.createdAt,
+  };
 }
 
 type FilterMode = "all" | "pending" | "done";
@@ -36,8 +56,10 @@ type FilterMode = "all" | "pending" | "done";
 export function AdminChecklistClient() {
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [descriptionValue, setDescriptionValue] = useState("");
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [isLoaded, setIsLoaded] = useState(false);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     try {
@@ -53,7 +75,10 @@ export function AdminChecklistClient() {
         return;
       }
 
-      const recovered = parsed.filter(isChecklistItem).sort((a, b) => b.createdAt - a.createdAt);
+      const recovered = parsed
+        .map(normalizeChecklistItem)
+        .filter((row): row is ChecklistItem => row !== null)
+        .sort((a, b) => b.createdAt - a.createdAt);
       setItems(recovered);
     } catch {
       // Ignore malformed values and start with an empty checklist.
@@ -88,12 +113,14 @@ export function AdminChecklistClient() {
     const newItem: ChecklistItem = {
       id: generateItemId(),
       text: trimmedValue,
+      description: descriptionValue.trim(),
       done: false,
       createdAt: Date.now(),
     };
 
     setItems((prev) => [newItem, ...prev]);
     setInputValue("");
+    setDescriptionValue("");
   }
 
   function toggleItem(itemId: string) {
@@ -108,9 +135,20 @@ export function AdminChecklistClient() {
     setItems((prev) => prev.filter((item) => !item.done));
   }
 
+  function updateItemDescription(itemId: string, description: string) {
+    setItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, description } : item)));
+  }
+
+  function toggleDescriptionPanel(itemId: string) {
+    setExpandedDescriptions((prev) => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }));
+  }
+
   return (
     <div className="rounded-2xl border border-green-900 bg-green-950/10 p-5 shadow-[0_20px_50px_-35px_rgba(34,197,94,0.6)] sm:p-6">
-      <form onSubmit={addItem} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <form onSubmit={addItem} className="space-y-3">
         <input
           type="text"
           value={inputValue}
@@ -119,12 +157,21 @@ export function AdminChecklistClient() {
           className="w-full rounded-lg border border-green-800 bg-black px-4 py-3 text-sm text-green-200 outline-none transition placeholder:text-green-700 focus:border-green-500"
           maxLength={120}
         />
-        <button
-          type="submit"
-          className="inline-flex items-center justify-center rounded-lg border border-green-600 bg-green-900/60 px-5 py-3 text-sm font-semibold text-green-200 transition hover:bg-green-800"
-        >
-          Adicionar
-        </button>
+        <textarea
+          value={descriptionValue}
+          onChange={(event) => setDescriptionValue(event.target.value)}
+          placeholder="Descricao (opcional): cole aqui prompts, contexto e observacoes"
+          className="min-h-[90px] w-full rounded-lg border border-green-800 bg-black px-4 py-3 text-sm text-green-200 outline-none transition placeholder:text-green-700 focus:border-green-500"
+          maxLength={2500}
+        />
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="inline-flex items-center justify-center rounded-lg border border-green-600 bg-green-900/60 px-5 py-3 text-sm font-semibold text-green-200 transition hover:bg-green-800"
+          >
+            Adicionar
+          </button>
+        </div>
       </form>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.12em] text-green-600">
@@ -185,24 +232,45 @@ export function AdminChecklistClient() {
           visibleItems.map((item) => (
             <li
               key={item.id}
-              className="flex items-center gap-3 rounded-xl border border-green-900 bg-black/70 px-3 py-2.5 sm:px-4"
+              className="rounded-xl border border-green-900 bg-black/70 px-3 py-2.5 sm:px-4"
             >
-              <input
-                type="checkbox"
-                checked={item.done}
-                onChange={() => toggleItem(item.id)}
-                className="h-4 w-4 rounded border-green-700 bg-black text-green-500"
-              />
-              <span className={`flex-1 text-sm ${item.done ? "text-green-700 line-through" : "text-green-200"}`}>
-                {item.text}
-              </span>
-              <button
-                type="button"
-                onClick={() => removeItem(item.id)}
-                className="rounded-md border border-green-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-green-600 transition hover:border-green-700 hover:text-green-400"
-              >
-                Remover
-              </button>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={item.done}
+                  onChange={() => toggleItem(item.id)}
+                  className="h-4 w-4 rounded border-green-700 bg-black text-green-500"
+                />
+                <span className={`flex-1 text-sm ${item.done ? "text-green-700 line-through" : "text-green-200"}`}>
+                  {item.text}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => toggleDescriptionPanel(item.id)}
+                  className="rounded-md border border-green-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-green-600 transition hover:border-green-700 hover:text-green-400"
+                >
+                  {expandedDescriptions[item.id] ? "Ocultar descricao" : "Descricao"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeItem(item.id)}
+                  className="rounded-md border border-green-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-green-600 transition hover:border-green-700 hover:text-green-400"
+                >
+                  Remover
+                </button>
+              </div>
+
+              {expandedDescriptions[item.id] ? (
+                <div className="pt-3">
+                  <textarea
+                    value={item.description}
+                    onChange={(event) => updateItemDescription(item.id, event.target.value)}
+                    placeholder="Adicione detalhes, prompts e instrucoes para esta tarefa"
+                    className="min-h-[120px] w-full rounded-lg border border-green-900 bg-black px-3 py-2 text-sm text-green-200 outline-none transition placeholder:text-green-700 focus:border-green-600"
+                    maxLength={4000}
+                  />
+                </div>
+              ) : null}
             </li>
           ))
         )}
