@@ -29,7 +29,7 @@ type DashboardClientProps = {
 };
 
 type RangeValue = "7" | "30" | "90" | "all";
-type ChartScope = "daily" | "weekly" | "monthly" | "yearly";
+type ChartScope = "weekly" | "monthly" | "yearly";
 
 type RevenueBucket = {
   key: string;
@@ -62,12 +62,6 @@ function getRangeStartMs(range: RangeValue): number | null {
   return Date.now() - days * 24 * 60 * 60 * 1000;
 }
 
-function startOfDay(ms: number) {
-  const date = new Date(ms);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime();
-}
-
 function startOfWeek(ms: number) {
   const date = new Date(ms);
   const day = date.getDay();
@@ -95,7 +89,6 @@ function capitalize(value: string) {
 function normalizePeriodAnchorMs(scope: ChartScope, inputMs: number, nowMs: number) {
   const clampedMs = Math.min(inputMs, nowMs);
 
-  if (scope === "daily") return startOfDay(clampedMs);
   if (scope === "weekly") return startOfWeek(clampedMs);
   if (scope === "monthly") return startOfMonth(clampedMs);
   return startOfYear(clampedMs);
@@ -104,9 +97,7 @@ function normalizePeriodAnchorMs(scope: ChartScope, inputMs: number, nowMs: numb
 function shiftPeriodAnchorMs(scope: ChartScope, anchorMs: number, step: number, nowMs: number) {
   const date = new Date(anchorMs);
 
-  if (scope === "daily") {
-    date.setDate(date.getDate() + step);
-  } else if (scope === "weekly") {
+  if (scope === "weekly") {
     date.setDate(date.getDate() + step * 7);
   } else if (scope === "monthly") {
     date.setMonth(date.getMonth() + step);
@@ -117,26 +108,8 @@ function shiftPeriodAnchorMs(scope: ChartScope, anchorMs: number, step: number, 
   return normalizePeriodAnchorMs(scope, date.getTime(), nowMs);
 }
 
-function formatDateInputValue(ms: number) {
-  const date = new Date(ms);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 function formatPeriodLabel(scope: ChartScope, anchorMs: number) {
   const anchorDate = new Date(anchorMs);
-
-  if (scope === "daily") {
-    return capitalize(
-      anchorDate.toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      }),
-    );
-  }
 
   if (scope === "weekly") {
     const weekStart = startOfWeek(anchorMs);
@@ -159,7 +132,6 @@ function formatPeriodLabel(scope: ChartScope, anchorMs: number) {
 }
 
 function getScopeUnitLabel(scope: ChartScope) {
-  if (scope === "daily") return "hora";
   if (scope === "weekly") return "dia";
   if (scope === "monthly") return "dia";
   return "mês";
@@ -167,35 +139,8 @@ function getScopeUnitLabel(scope: ChartScope) {
 
 function buildPeriodBuckets(scope: ChartScope, anchorMs: number): RevenueBucket[] {
   const buckets: RevenueBucket[] = [];
-  const oneHourMs = 60 * 60 * 1000;
   const oneDayMs = 24 * 60 * 60 * 1000;
   const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-
-  if (scope === "daily") {
-    const dayStart = startOfDay(anchorMs);
-
-    for (let hour = 0; hour < 24; hour += 1) {
-      const startMs = dayStart + hour * oneHourMs;
-      const endMs = startMs + oneHourMs;
-      const label = hour % 3 === 0 ? String(hour).padStart(2, "0") : "";
-
-      buckets.push({
-        key: `${dayStart}-${hour}`,
-        label,
-        fullLabel: `${new Date(startMs).toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })} ${String(hour).padStart(2, "0")}:00`,
-        startMs,
-        endMs,
-        revenueCents: 0,
-        ordersCount: 0,
-      });
-    }
-
-    return buckets;
-  }
 
   if (scope === "weekly") {
     const weekStart = startOfWeek(anchorMs);
@@ -315,6 +260,15 @@ function buildReferenceLines(maxValue: number) {
       positionPercent,
     };
   });
+}
+
+function buildChartScaleMax(maxRevenueCents: number) {
+  const scaleStepUsd = 1000;
+  const scaleStepCents = scaleStepUsd * 100;
+  const safeRevenue = Math.max(maxRevenueCents, 0);
+  const roundedScale = Math.ceil(safeRevenue / scaleStepCents) * scaleStepCents;
+
+  return Math.max(scaleStepCents, roundedScale);
 }
 
 export function DashboardClient({
@@ -452,8 +406,8 @@ export function DashboardClient({
   const chartPeriodLabel = formatPeriodLabel(chartScope, chartAnchorMs);
   const periodUnitLabel = getScopeUnitLabel(chartScope);
   const periodAverageLabel = `Média por ${periodUnitLabel}`;
-  const bestPeriodLabel = chartScope === "yearly" ? "Melhor mês" : chartScope === "daily" ? "Melhor hora" : "Melhor período";
-  const worstPeriodLabel = chartScope === "yearly" ? "Pior mês" : chartScope === "daily" ? "Pior hora" : "Pior período";
+  const bestPeriodLabel = chartScope === "yearly" ? "Melhor mês" : "Melhor período";
+  const worstPeriodLabel = chartScope === "yearly" ? "Pior mês" : "Pior período";
 
   const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const orderYears = Array.from(new Set(baseFilteredOrders.map((order) => new Date(order.createdUnix * 1000).getFullYear())));
@@ -466,8 +420,9 @@ export function DashboardClient({
   const chartGridTemplateColumns = `repeat(${Math.max(currentBuckets.length, 1)}, minmax(0, 1fr))`;
   const chartMinWidth = Math.max(960, currentBuckets.length * 38);
 
-  const chartMaxValue = Math.max(...currentBuckets.map((bucket) => bucket.revenueCents), 1);
-  const chartReferenceLines = buildReferenceLines(chartMaxValue);
+  const chartMaxValue = Math.max(...currentBuckets.map((bucket) => bucket.revenueCents), 0);
+  const chartScaleMax = buildChartScaleMax(chartMaxValue);
+  const chartReferenceLines = buildReferenceLines(chartScaleMax);
   const chartTotalRevenue = currentBuckets.reduce((acc, bucket) => acc + bucket.revenueCents, 0);
   const chartTotalOrders = currentBuckets.reduce((acc, bucket) => acc + bucket.ordersCount, 0);
   const chartAverageRevenue = currentBuckets.length > 0 ? Math.round(chartTotalRevenue / currentBuckets.length) : 0;
@@ -494,20 +449,6 @@ export function DashboardClient({
   function navigatePeriod(step: number) {
     setHoveredBarKey(null);
     setChartAnchorMs((current) => shiftPeriodAnchorMs(chartScope, current, step, Date.now()));
-  }
-
-  function applyDailyDate(value: string) {
-    if (!value) {
-      return;
-    }
-
-    const parsedMs = new Date(`${value}T12:00:00`).getTime();
-    if (Number.isNaN(parsedMs)) {
-      return;
-    }
-
-    const now = Date.now();
-    setChartAnchorMs(normalizePeriodAnchorMs("daily", parsedMs, now));
   }
 
   function applyMonthlyYear(year: number) {
@@ -875,7 +816,6 @@ export function DashboardClient({
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] p-1">
                       {[
-                        { label: "Diário", value: "daily" as const },
                         { label: "Semanal", value: "weekly" as const },
                         { label: "Mensal", value: "monthly" as const },
                         { label: "Anual", value: "yearly" as const },
@@ -894,19 +834,6 @@ export function DashboardClient({
                         </button>
                       ))}
                     </div>
-
-                    {chartScope === "daily" ? (
-                      <label className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 text-xs font-semibold text-slate-300">
-                        <span className="text-sm">📅</span>
-                        <input
-                          type="date"
-                          max={formatDateInputValue(Date.now())}
-                          value={formatDateInputValue(chartAnchorMs)}
-                          onChange={(event) => applyDailyDate(event.target.value)}
-                          className="bg-transparent text-xs font-semibold text-white outline-none"
-                        />
-                      </label>
-                    ) : null}
 
                     {chartScope === "monthly" ? (
                       <button
@@ -995,7 +922,7 @@ export function DashboardClient({
                         style={{ gridTemplateColumns: chartGridTemplateColumns }}
                       >
                         {currentBuckets.map((bucket) => {
-                          const ratio = bucket.revenueCents > 0 ? bucket.revenueCents / chartMaxValue : 0;
+                          const ratio = bucket.revenueCents > 0 ? bucket.revenueCents / chartScaleMax : 0;
                           const heightPercent = ratio * 84;
                           const isHovered = hoveredBarKey === bucket.key;
                           const showValue = chartScope === "weekly" || chartScope === "yearly" || isHovered;
