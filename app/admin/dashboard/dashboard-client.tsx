@@ -357,20 +357,7 @@ export function DashboardClient({
     return label === "paid" || label === "pago" || label === "completed" || label === "concluido";
   }).length;
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
-  const averageSupplierPercent =
-    totalOrders > 0
-      ? dashboardFilteredOrders.reduce((acc, order) => acc + order.supplierPercentage, 0) / totalOrders
-      : 0;
   const averageMarginPercent = totalRevenue > 0 ? (totalNetProfit / totalRevenue) * 100 : 0;
-  const averagePayout = totalOrders > 0 ? Math.round(totalPayout / totalOrders) : 0;
-  const highestSupplierOrder =
-    dashboardFilteredOrders.length > 0
-      ? dashboardFilteredOrders.reduce((highest, order) => (order.supplierPercentage > highest.supplierPercentage ? order : highest), dashboardFilteredOrders[0])
-      : null;
-  const lowestSupplierOrder =
-    dashboardFilteredOrders.length > 0
-      ? dashboardFilteredOrders.reduce((lowest, order) => (order.supplierPercentage < lowest.supplierPercentage ? order : lowest), dashboardFilteredOrders[0])
-      : null;
 
   const statusGrouped = new Map<string, number>();
   for (const order of dashboardFilteredOrders) {
@@ -760,7 +747,7 @@ export function DashboardClient({
               </div>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Ticket médio</p>
                 <p className="mt-2 text-2xl font-black text-white">{formatMoney(avgTicket)}</p>
@@ -772,22 +759,6 @@ export function DashboardClient({
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Pedidos pagos</p>
                 <p className="mt-2 text-2xl font-black text-cyan-300">{paidOrders}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Fornecedor médio %</p>
-                <p className="mt-2 text-2xl font-black text-fuchsia-300">{formatPercent(averageSupplierPercent)}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Repasse médio</p>
-                <p className="mt-2 text-2xl font-black text-amber-300">{formatMoney(averagePayout)}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Maior fornecedor</p>
-                <p className="mt-2 text-2xl font-black text-cyan-300">{highestSupplierOrder ? formatPercent(highestSupplierOrder.supplierPercentage) : "--"}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Menor fornecedor</p>
-                <p className="mt-2 text-2xl font-black text-cyan-300">{lowestSupplierOrder ? formatPercent(lowestSupplierOrder.supplierPercentage) : "--"}</p>
               </div>
             </div>
           </article>
