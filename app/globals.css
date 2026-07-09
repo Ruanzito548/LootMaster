@@ -341,12 +341,32 @@ body {
   z-index: 1;
 }
 
-/* Expand admin pages to full width while preserving their internal spacing. */
+/* Let page-level wrappers show the shared admin background + palette. */
+.admin-dashboard-theme > .min-h-screen {
+  background: transparent !important;
+}
+
+.admin-dashboard-theme [class*="text-green-"] {
+  color: #d6e4f5 !important;
+}
+
+.admin-dashboard-theme [class*="border-green-"] {
+  border-color: rgba(148, 163, 184, 0.34) !important;
+}
+
+.admin-dashboard-theme [class*="bg-green-"] {
+  background-color: rgba(8, 16, 30, 0.42) !important;
+}
+
+/* Expand admin pages to full width and keep safe lateral padding. */
 .admin-dashboard-theme main[class*="max-w-"] {
-  max-width: 100% !important;
+  max-width: none !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
   width: 100% !important;
+  box-sizing: border-box !important;
+  padding-left: clamp(14px, 2.2vw, 34px) !important;
+  padding-right: clamp(14px, 2.2vw, 34px) !important;
 }
 
 @keyframes reward-claim-pop {

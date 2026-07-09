@@ -1089,7 +1089,7 @@ export function DashboardClient({
                           const tooltipBottomPercent = Math.min(heightPercent + 22, 76);
                           const canDrillDown = chartScope === "yearly";
                           const isHovered = hoveredBarKey === bucket.key;
-                          const showValue = chartScope === "yearly" || isHovered;
+                          const showValue = bucket.revenueCents > 0;
                           const averageTicket = bucket.ordersCount > 0 ? Math.round(bucket.revenueCents / bucket.ordersCount) : 0;
 
                           return (
