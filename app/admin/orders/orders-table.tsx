@@ -17,7 +17,6 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
   const router = useRouter();
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editingSupplierPercent, setEditingSupplierPercent] = useState<number>(0);
-  const [editingSupplierName, setEditingSupplierName] = useState<string>("");
   const [savingOrderId, setSavingOrderId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<
@@ -234,7 +233,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId,
-          supplierName: editingSupplierName,
+          supplierName: row.supplierName === "--" ? "" : row.supplierName,
           supplierPercentage: percent,
         }),
       });
@@ -378,13 +377,6 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                   {isEditing ? (
                     <div className="flex flex-wrap items-center gap-1">
                       <input
-                        type="text"
-                        value={editingSupplierName}
-                        onChange={(event) => setEditingSupplierName(event.target.value)}
-                        placeholder="Supplier"
-                        className="w-24 rounded border border-green-800 bg-black px-1 py-1 text-xs text-green-300"
-                      />
-                      <input
                         type="number"
                         min={0}
                         max={100}
@@ -413,7 +405,6 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                         onClick={() => {
                           setEditingOrderId(row.id);
                           setEditingSupplierPercent(row.supplierPercentage);
-                          setEditingSupplierName(row.supplierName === "--" ? "" : row.supplierName);
                         }}
                         className="rounded border border-green-800 px-2 py-1 text-xs font-semibold text-green-300 hover:bg-green-950"
                       >
