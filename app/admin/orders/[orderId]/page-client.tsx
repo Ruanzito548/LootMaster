@@ -45,27 +45,31 @@ type OrderSummary = {
 
 type OperationalCostValueType = "percent" | "fixed";
 type OperationalCostFrequency = "once" | "per_order" | "daily" | "weekly" | "monthly" | "annual";
+type OperationalCostCurrency = "USD" | "BRL";
 
 type OperationalCostItem = {
   id: string;
   name: string;
   value: number;
   valueType: OperationalCostValueType;
+  currency: OperationalCostCurrency;
   frequency: OperationalCostFrequency;
   isActive: boolean;
 };
 
 const OPERATIONAL_COST_STORAGE_KEY = "dashboard-operational-cost-items-v1";
+const FX_RATE_STORAGE_KEY = "dashboard-usd-to-brl-rate-v1";
+const DEFAULT_USD_TO_BRL_RATE = 5.5;
 
-function formatMoney(amountInCents: number) {
-  return new Intl.NumberFormat("en-US", {
+function formatMoneyBrlFromUsdCents(amountInUsdCents: number, usdToBrlRate: number) {
+  return new Intl.NumberFormat("pt-BR", {
     style: "currency",
-    currency: "USD",
-  }).format(amountInCents / 100);
+    currency: "BRL",
+  }).format((amountInUsdCents / 100) * usdToBrlRate);
 }
 
-function formatDeduction(amountInCents: number) {
-  return `-${formatMoney(Math.abs(amountInCents))}`;
+function formatDeductionBrlFromUsdCents(amountInUsdCents: number, usdToBrlRate: number) {
+  return `-${formatMoneyBrlFromUsdCents(Math.abs(amountInUsdCents), usdToBrlRate)}`;
 }
 
 function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
@@ -78,6 +82,7 @@ function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
 
   const parsedValue = typeof row.value === "number" && Number.isFinite(row.value) ? row.value : 0;
   const valueType = row.valueType === "percent" || row.valueType === "fixed" ? row.valueType : "fixed";
+  const currency = row.currency === "BRL" ? "BRL" : "USD";
   const frequency =
     row.frequency === "once" ||
     row.frequency === "per_order" ||
@@ -93,6 +98,7 @@ function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
     name,
     value: Math.max(0, parsedValue),
     valueType,
+    currency,
     frequency,
     isActive: row.isActive !== false,
   };
@@ -114,7 +120,13 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [operationalCostItems, setOperationalCostItems] = useState<OperationalCostItem[]>([]);
+  const [usdToBrlRateInput, setUsdToBrlRateInput] = useState(DEFAULT_USD_TO_BRL_RATE.toFixed(2));
   const submitLockRef = useRef(false);
+
+  const parsedUsdToBrlRate = Number(usdToBrlRateInput.replace(",", "."));
+  const usdToBrlRate = Number.isFinite(parsedUsdToBrlRate) && parsedUsdToBrlRate > 0 ? parsedUsdToBrlRate : DEFAULT_USD_TO_BRL_RATE;
+  const formatMoney = (amountInUsdCents: number) => formatMoneyBrlFromUsdCents(amountInUsdCents, usdToBrlRate);
+  const formatDeduction = (amountInUsdCents: number) => formatDeductionBrlFromUsdCents(amountInUsdCents, usdToBrlRate);
 
   useEffect(() => {
     try {
@@ -134,6 +146,20 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
     }
   }, []);
 
+  useEffect(() => {
+    try {
+      const rawRate = window.localStorage.getItem(FX_RATE_STORAGE_KEY);
+      if (!rawRate) return;
+
+      const parsedRate = Number(rawRate);
+      if (!Number.isFinite(parsedRate) || parsedRate <= 0) return;
+
+      setUsdToBrlRateInput(parsedRate.toFixed(2));
+    } catch {
+      // Keep default rate.
+    }
+  }, []);
+
   const operationalCostPerOrderCents = operationalCostItems
     .filter((item) => item.isActive)
     .reduce((acc, item) => {
@@ -141,27 +167,31 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
         return acc + Math.round(summary.totalCents * (item.value / 100));
       }
 
+      const baseFixedUsdCents = item.currency === "BRL"
+        ? Math.round((item.value * 100) / usdToBrlRate)
+        : Math.round(item.value * 100);
+
       if (item.frequency === "per_order") {
-        return acc + Math.round(item.value * 100);
+        return acc + baseFixedUsdCents;
       }
 
       if (item.frequency === "daily") {
-        return acc + Math.round((item.value * 100) / Math.max(summary.dailyOrdersCount, 1));
+        return acc + Math.round(baseFixedUsdCents / Math.max(summary.dailyOrdersCount, 1));
       }
 
       if (item.frequency === "weekly") {
-        return acc + Math.round((item.value * 100) / Math.max(summary.weeklyOrdersCount, 1));
+        return acc + Math.round(baseFixedUsdCents / Math.max(summary.weeklyOrdersCount, 1));
       }
 
       if (item.frequency === "monthly") {
-        return acc + Math.round((item.value * 100) / Math.max(summary.monthlyOrdersCount, 1));
+        return acc + Math.round(baseFixedUsdCents / Math.max(summary.monthlyOrdersCount, 1));
       }
 
       if (item.frequency === "annual") {
-        return acc + Math.round((item.value * 100) / Math.max(summary.annualOrdersCount, 1));
+        return acc + Math.round(baseFixedUsdCents / Math.max(summary.annualOrdersCount, 1));
       }
 
-      return acc + Math.round(item.value * 100);
+      return acc + baseFixedUsdCents;
     }, 0);
 
   const netAfterOperationalCents = summary.netProfitCents - operationalCostPerOrderCents;
@@ -452,12 +482,12 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-green-700">Total</p>
-            <p className="mt-1 text-sm font-semibold text-green-300">{summary.totalLabel}</p>
+            <p className="mt-1 text-sm font-semibold text-green-300">{formatMoney(summary.totalCents)}</p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-green-700">Supplier Payout</p>
             <p className="mt-1 text-sm font-semibold text-green-300">
-              {summary.payoutLabel} ({summary.supplierPercentage.toFixed(2)}%)
+              {formatMoney(summary.supplierPayoutCents)} ({summary.supplierPercentage.toFixed(2)}%)
             </p>
           </div>
           <div>

@@ -50,17 +50,21 @@ type RevenueBucket = {
 
 type OperationalCostValueType = "percent" | "fixed";
 type OperationalCostFrequency = "once" | "per_order" | "daily" | "weekly" | "monthly" | "annual";
+type OperationalCostCurrency = "USD" | "BRL";
 
 type OperationalCostItem = {
   id: string;
   name: string;
   value: number;
   valueType: OperationalCostValueType;
+  currency: OperationalCostCurrency;
   frequency: OperationalCostFrequency;
   isActive: boolean;
 };
 
 const OPERATIONAL_COST_STORAGE_KEY = "dashboard-operational-cost-items-v1";
+const FX_RATE_STORAGE_KEY = "dashboard-usd-to-brl-rate-v1";
+const DEFAULT_USD_TO_BRL_RATE = 5.5;
 
 const DEFAULT_OPERATIONAL_COST_ITEMS: OperationalCostItem[] = [
   {
@@ -68,6 +72,7 @@ const DEFAULT_OPERATIONAL_COST_ITEMS: OperationalCostItem[] = [
     name: "Servidor do site",
     value: 40,
     valueType: "fixed",
+    currency: "USD",
     frequency: "monthly",
     isActive: true,
   },
@@ -76,6 +81,7 @@ const DEFAULT_OPERATIONAL_COST_ITEMS: OperationalCostItem[] = [
     name: "Impostos",
     value: 5,
     valueType: "percent",
+    currency: "USD",
     frequency: "monthly",
     isActive: true,
   },
@@ -84,6 +90,7 @@ const DEFAULT_OPERATIONAL_COST_ITEMS: OperationalCostItem[] = [
     name: "Servicos de terceiros",
     value: 20,
     valueType: "fixed",
+    currency: "USD",
     frequency: "monthly",
     isActive: true,
   },
@@ -99,6 +106,7 @@ function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
 
   const parsedValue = typeof row.value === "number" && Number.isFinite(row.value) ? row.value : 0;
   const valueType = row.valueType === "percent" || row.valueType === "fixed" ? row.valueType : "fixed";
+  const currency = row.currency === "BRL" ? "BRL" : "USD";
   const frequency =
     row.frequency === "once" ||
     row.frequency === "per_order" ||
@@ -114,6 +122,7 @@ function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
     name,
     value: Math.max(0, parsedValue),
     valueType,
+    currency,
     frequency,
     isActive: row.isActive !== false,
   };
@@ -146,15 +155,15 @@ function resolveGatewayLabel(paymentMethod: string) {
   return `Gateway ${paymentMethod}`;
 }
 
-function formatMoney(amountInCents: number) {
-  return new Intl.NumberFormat("en-US", {
+function formatMoneyBrlFromUsdCents(amountInUsdCents: number, usdToBrlRate: number) {
+  return new Intl.NumberFormat("pt-BR", {
     style: "currency",
-    currency: "USD",
-  }).format(amountInCents / 100);
+    currency: "BRL",
+  }).format((amountInUsdCents / 100) * usdToBrlRate);
 }
 
-function formatDeduction(amountInCents: number) {
-  return `-${formatMoney(Math.abs(amountInCents))}`;
+function formatDeductionBrlFromUsdCents(amountInUsdCents: number, usdToBrlRate: number) {
+  return `-${formatMoneyBrlFromUsdCents(Math.abs(amountInUsdCents), usdToBrlRate)}`;
 }
 
 function formatPercent(value: number) {
@@ -398,10 +407,17 @@ export function DashboardClient({
   const [chartAnimated, setChartAnimated] = useState(false);
   const [operationalCostsOpen, setOperationalCostsOpen] = useState(false);
   const [operationalCostItems, setOperationalCostItems] = useState<OperationalCostItem[]>(DEFAULT_OPERATIONAL_COST_ITEMS);
+  const [usdToBrlRateInput, setUsdToBrlRateInput] = useState(DEFAULT_USD_TO_BRL_RATE.toFixed(2));
   const [newOperationalCostName, setNewOperationalCostName] = useState("");
   const [newOperationalCostValue, setNewOperationalCostValue] = useState("0");
   const [newOperationalCostValueType, setNewOperationalCostValueType] = useState<OperationalCostValueType>("fixed");
+  const [newOperationalCostCurrency, setNewOperationalCostCurrency] = useState<OperationalCostCurrency>("USD");
   const [newOperationalCostFrequency, setNewOperationalCostFrequency] = useState<OperationalCostFrequency>("monthly");
+
+  const parsedUsdToBrlRate = Number(usdToBrlRateInput.replace(",", "."));
+  const usdToBrlRate = Number.isFinite(parsedUsdToBrlRate) && parsedUsdToBrlRate > 0 ? parsedUsdToBrlRate : DEFAULT_USD_TO_BRL_RATE;
+  const formatMoney = (amountInUsdCents: number) => formatMoneyBrlFromUsdCents(amountInUsdCents, usdToBrlRate);
+  const formatDeduction = (amountInUsdCents: number) => formatDeductionBrlFromUsdCents(amountInUsdCents, usdToBrlRate);
 
   useEffect(() => {
     try {
@@ -424,8 +440,26 @@ export function DashboardClient({
   }, []);
 
   useEffect(() => {
+    try {
+      const rawRate = window.localStorage.getItem(FX_RATE_STORAGE_KEY);
+      if (!rawRate) return;
+
+      const parsedRate = Number(rawRate);
+      if (!Number.isFinite(parsedRate) || parsedRate <= 0) return;
+
+      setUsdToBrlRateInput(parsedRate.toFixed(2));
+    } catch {
+      // Ignore malformed local values and keep defaults.
+    }
+  }, []);
+
+  useEffect(() => {
     window.localStorage.setItem(OPERATIONAL_COST_STORAGE_KEY, JSON.stringify(operationalCostItems));
   }, [operationalCostItems]);
+
+  useEffect(() => {
+    window.localStorage.setItem(FX_RATE_STORAGE_KEY, String(usdToBrlRate));
+  }, [usdToBrlRate]);
 
   useEffect(() => {
     if (!operationalCostsOpen) {
@@ -540,7 +574,9 @@ export function DashboardClient({
       const unitCostCents =
         item.valueType === "percent"
           ? Math.round(totalRevenue * (item.value / 100))
-          : Math.round(Math.max(0, item.value) * 100);
+          : item.currency === "BRL"
+            ? Math.round((Math.max(0, item.value) * 100) / usdToBrlRate)
+            : Math.round(Math.max(0, item.value) * 100);
 
       const multiplier =
         item.frequency === "per_order"
@@ -575,7 +611,9 @@ export function DashboardClient({
     const unitCostCents =
       item.valueType === "percent"
         ? Math.round(totalRevenue * (item.value / 100))
-        : Math.round(item.value * 100);
+        : item.currency === "BRL"
+          ? Math.round((item.value * 100) / usdToBrlRate)
+          : Math.round(item.value * 100);
 
     const multiplier =
       item.frequency === "per_order"
@@ -757,6 +795,7 @@ export function DashboardClient({
       name: trimmedName,
       value: parsedValue,
       valueType: newOperationalCostValueType,
+      currency: newOperationalCostCurrency,
       frequency: newOperationalCostFrequency,
       isActive: true,
     };
@@ -765,6 +804,7 @@ export function DashboardClient({
     setNewOperationalCostName("");
     setNewOperationalCostValue("0");
     setNewOperationalCostValueType("fixed");
+    setNewOperationalCostCurrency("USD");
     setNewOperationalCostFrequency("monthly");
   }
 
@@ -1633,6 +1673,20 @@ export function DashboardClient({
               </div>
             </div>
 
+            <div className="mt-3 max-w-xs">
+              <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                Cotação USD para BRL
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={usdToBrlRateInput}
+                  onChange={(event) => setUsdToBrlRateInput(event.target.value)}
+                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                />
+              </label>
+            </div>
+
             <p className="mt-4 text-xs text-slate-500">
               Período atual: {daysInPeriod} dia(s), {monthsInPeriod} mes(es), {totalOrders} pedido(s). Custos percentuais usam como base o faturamento.
             </p>
@@ -1668,7 +1722,7 @@ export function DashboardClient({
                       </label>
                     </div>
 
-                    <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                    <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
                       <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
                         Tipo
                         <select
@@ -1680,8 +1734,25 @@ export function DashboardClient({
                           }
                           className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
                         >
-                          <option value="fixed">Valor fixo (USD)</option>
+                          <option value="fixed">Valor fixo (USD/BRL)</option>
                           <option value="percent">Percentual (%)</option>
+                        </select>
+                      </label>
+
+                      <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                        Moeda
+                        <select
+                          value={item.currency}
+                          disabled={item.valueType === "percent"}
+                          onChange={(event) =>
+                            updateOperationalCostItem(item.id, {
+                              currency: event.target.value as OperationalCostCurrency,
+                            })
+                          }
+                          className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400 disabled:opacity-50"
+                        >
+                          <option value="USD">USD</option>
+                          <option value="BRL">BRL</option>
                         </select>
                       </label>
 
@@ -1760,8 +1831,17 @@ export function DashboardClient({
                   onChange={(event) => setNewOperationalCostValueType(event.target.value as OperationalCostValueType)}
                   className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
                 >
-                  <option value="fixed">Valor fixo (USD)</option>
+                  <option value="fixed">Valor fixo (USD/BRL)</option>
                   <option value="percent">Percentual (%)</option>
+                </select>
+                <select
+                  value={newOperationalCostCurrency}
+                  disabled={newOperationalCostValueType === "percent"}
+                  onChange={(event) => setNewOperationalCostCurrency(event.target.value as OperationalCostCurrency)}
+                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400 disabled:opacity-50"
+                >
+                  <option value="USD">USD</option>
+                  <option value="BRL">BRL</option>
                 </select>
                 <select
                   value={newOperationalCostFrequency}
