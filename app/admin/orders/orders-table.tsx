@@ -131,7 +131,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
       } else if (sortBy === "payout") {
         compare = left.supplierPayout - right.supplierPayout;
       } else if (sortBy === "profit") {
-        compare = left.netProfit - right.netProfit;
+        compare = left.grossProfit - right.grossProfit;
       } else if (sortBy === "supplier") {
         compare = left.supplierPercentage - right.supplierPercentage;
       } else if (sortBy === "payment") {
@@ -373,7 +373,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                 </td>
                 <td className="px-2 py-2 font-semibold text-green-300">{formatMoney(row.totalCents)}</td>
                 <td className="px-2 py-2 text-amber-300">{formatMoney(row.supplierPayout)}</td>
-                <td className="px-2 py-2 text-cyan-300">{formatMoney(row.netProfit)}</td>
+                <td className="px-2 py-2 text-cyan-300">{formatMoney(row.grossProfit)}</td>
                 <td className="px-2 py-2">
                   {isEditing ? (
                     <div className="flex flex-wrap items-center gap-1">
