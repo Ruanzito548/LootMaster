@@ -183,6 +183,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   const stepDetailsDone =
     stepAmountDone && nickname.trim() !== "" && deliveryMethod.trim() !== "" && email.trim() !== "";
   const formReady = stepDetailsDone && paymentMethod.trim() !== "";
+  const completedSteps = [stepServerDone, stepAmountDone, stepDetailsDone, formReady].filter(Boolean).length;
 
   const basePrice = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
   const paymentAdjustment = paymentMethod === "pix" ? basePrice * -0.05 : paymentMethod === "card" ? basePrice * 0.04 : 0;
@@ -509,11 +510,30 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
         </article>
       </div>
 
-      <aside className="xl:sticky xl:top-24 xl:h-fit">
+      <aside className="self-start lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
         <article className="gm-panel rounded-[1.35rem] p-5">
           <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">Order summary</p>
+          <p className="mt-2 text-xs text-[#88a8d1]">Live preview of your checkout while you scroll.</p>
+
+          <div className="mt-3 rounded-xl border border-white/10 bg-[#0b162b]/70 px-3 py-3">
+            <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+              <span className="text-xs uppercase tracking-[0.12em]">Progress</span>
+              <span className="text-xs font-black text-[#6ee7ff]">{completedSteps}/4</span>
+            </div>
+            <div className="mt-2 h-1.5 rounded-full bg-white/10">
+              <div className="h-full rounded-full bg-[linear-gradient(90deg,#3ba8ff_0%,#6ee7ff_65%,#22c55e_100%)] transition-all" style={{ width: `${progressPercent}%` }} />
+            </div>
+          </div>
 
           <div className="mt-4 space-y-3 text-sm">
+            <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+              <span>Country</span>
+              <span className="font-semibold text-[#e7f5ff]">{countryConfig.countryName}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+              <span>Currency</span>
+              <span className="font-semibold text-[#e7f5ff]">{selectedCurrency}</span>
+            </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Server</span>
               <span className="font-semibold text-[#e7f5ff]">{selectedServer?.name ?? "-"}</span>
@@ -527,6 +547,14 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Gold</span>
               <span className="font-semibold text-[#e7f5ff]">{safeGoldAmount.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+              <span>Delivery</span>
+              <span className="font-semibold text-[#e7f5ff]">{deliveryMethod || "-"}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+              <span>Character</span>
+              <span className="max-w-[10rem] truncate font-semibold text-[#e7f5ff]">{nickname.trim() || "-"}</span>
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Base</span>
@@ -557,7 +585,8 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             <p className={`mt-2 text-sm font-black ${paymentMethod === "pix" ? "text-[#86efac]" : paymentMethod === "paypal" ? "text-[#facc15]" : "text-[#93c5fd]"}`}>
               {selectedPayment?.label ?? "Payment"}
             </p>
-            <p className="mt-1 text-xs text-[#a9c4e2]">{selectedPayment.description}</p>
+            <p className="mt-1 text-xs text-[#a9c4e2]">{selectedPayment?.description ?? ""}</p>
+            <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[#88a8d1]">Gateway: {selectedPayment?.provider ?? "Stripe"}</p>
           </div>
 
           {checkoutError ? (

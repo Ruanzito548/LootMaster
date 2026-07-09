@@ -7,7 +7,6 @@ import { type ComponentType, useEffect, useEffectEvent, useRef, useState } from 
 import { createPortal } from "react-dom";
 import {
   Bell,
-  CheckSquare,
   Crown,
   Gamepad2,
   Gift,
@@ -35,7 +34,6 @@ const navItems: NavItem[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/games", label: "Games", icon: Gamepad2 },
   { href: "/rewards", label: "Rewards", icon: Gift },
-  { href: "/checklist", label: "Checklist", icon: CheckSquare },
   { href: "/profile/inventory", label: "Inventory", icon: Package },
   { href: "/admin", label: "Admin", icon: Shield, requiresAdmin: true },
 ];
