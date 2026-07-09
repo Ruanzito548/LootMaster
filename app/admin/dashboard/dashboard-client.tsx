@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { auth } from "@/lib/firebase";
 
@@ -28,7 +28,17 @@ type DashboardClientProps = {
 };
 
 type RangeValue = "7" | "30" | "90" | "all";
-type ChartWindow = "week" | "month";
+type ChartScope = "daily" | "weekly" | "monthly" | "yearly";
+
+type RevenueBucket = {
+  key: string;
+  label: string;
+  fullLabel: string;
+  startMs: number;
+  endMs: number;
+  revenueCents: number;
+  ordersCount: number;
+};
 
 function formatMoney(amountInCents: number) {
   return new Intl.NumberFormat("en-US", {
@@ -41,17 +51,6 @@ function formatPercent(value: number) {
   return `${value.toFixed(2)}%`;
 }
 
-function formatDateLabel(unixMs: number, chartWindow: ChartWindow) {
-  if (chartWindow === "week") {
-    return new Date(unixMs).toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
-  }
-
-  return new Date(unixMs).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-  });
-}
-
 function formatDateTime(unixSeconds: number) {
   return new Date(unixSeconds * 1000).toLocaleString("pt-BR");
 }
@@ -62,13 +61,199 @@ function getRangeStartMs(range: RangeValue): number | null {
   return Date.now() - days * 24 * 60 * 60 * 1000;
 }
 
+function startOfHour(ms: number) {
+  const date = new Date(ms);
+  date.setMinutes(0, 0, 0);
+  return date.getTime();
+}
+
+function startOfDay(ms: number) {
+  const date = new Date(ms);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+function buildCurrentBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] {
+  const buckets: RevenueBucket[] = [];
+
+  if (scope === "daily") {
+    const oneHourMs = 60 * 60 * 1000;
+    const currentHourStart = startOfHour(nowMs);
+    const periodStart = currentHourStart - oneHourMs * 23;
+
+    for (let index = 0; index < 24; index += 1) {
+      const startMs = periodStart + index * oneHourMs;
+      const endMs = startMs + oneHourMs;
+      const date = new Date(startMs);
+      const hour = String(date.getHours()).padStart(2, "0");
+
+      buckets.push({
+        key: `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${hour}`,
+        label: `${hour}h`,
+        fullLabel: date.toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        startMs,
+        endMs,
+        revenueCents: 0,
+        ordersCount: 0,
+      });
+    }
+
+    return buckets;
+  }
+
+  if (scope === "weekly") {
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const todayStart = startOfDay(nowMs);
+    const periodStart = todayStart - oneDayMs * 6;
+
+    for (let index = 0; index < 7; index += 1) {
+      const startMs = periodStart + index * oneDayMs;
+      const endMs = startMs + oneDayMs;
+      const date = new Date(startMs);
+      const weekday = date
+        .toLocaleDateString("pt-BR", { weekday: "short" })
+        .replace(".", "")
+        .slice(0, 3);
+
+      buckets.push({
+        key: `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`,
+        label: weekday.charAt(0).toUpperCase() + weekday.slice(1),
+        fullLabel: date.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }),
+        startMs,
+        endMs,
+        revenueCents: 0,
+        ordersCount: 0,
+      });
+    }
+
+    return buckets;
+  }
+
+  if (scope === "monthly") {
+    const now = new Date(nowMs);
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const startMs = new Date(year, month, day, 0, 0, 0, 0).getTime();
+      const endMs = new Date(year, month, day + 1, 0, 0, 0, 0).getTime();
+
+      buckets.push({
+        key: `${year}-${month + 1}-${day}`,
+        label: String(day).padStart(2, "0"),
+        fullLabel: new Date(startMs).toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }),
+        startMs,
+        endMs,
+        revenueCents: 0,
+        ordersCount: 0,
+      });
+    }
+
+    return buckets;
+  }
+
+  const now = new Date(nowMs);
+  const year = now.getFullYear();
+  const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+  for (let month = 0; month < 12; month += 1) {
+    const startMs = new Date(year, month, 1, 0, 0, 0, 0).getTime();
+    const endMs = new Date(year, month + 1, 1, 0, 0, 0, 0).getTime();
+
+    buckets.push({
+      key: `${year}-${month + 1}`,
+      label: monthLabels[month],
+      fullLabel: new Date(startMs).toLocaleDateString("pt-BR", {
+        month: "long",
+        year: "numeric",
+      }),
+      startMs,
+      endMs,
+      revenueCents: 0,
+      ordersCount: 0,
+    });
+  }
+
+  return buckets;
+}
+
+function buildPreviousBuckets(scope: ChartScope, nowMs: number): RevenueBucket[] {
+  if (scope === "daily") {
+    return buildCurrentBuckets(scope, nowMs - 24 * 60 * 60 * 1000);
+  }
+
+  if (scope === "weekly") {
+    return buildCurrentBuckets(scope, nowMs - 7 * 24 * 60 * 60 * 1000);
+  }
+
+  if (scope === "monthly") {
+    const now = new Date(nowMs);
+    const previousMonthAnchor = new Date(now.getFullYear(), now.getMonth() - 1, 15, 12, 0, 0, 0).getTime();
+    return buildCurrentBuckets(scope, previousMonthAnchor);
+  }
+
+  const now = new Date(nowMs);
+  const previousYearAnchor = new Date(now.getFullYear() - 1, 6, 15, 12, 0, 0, 0).getTime();
+  return buildCurrentBuckets(scope, previousYearAnchor);
+}
+
+function fillBucketsWithOrders(buckets: RevenueBucket[], inputOrders: DashboardOrder[]): RevenueBucket[] {
+  const next = buckets.map((bucket) => ({ ...bucket }));
+
+  for (const order of inputOrders) {
+    const createdMs = order.createdUnix * 1000;
+
+    for (let index = 0; index < next.length; index += 1) {
+      const bucket = next[index];
+
+      if (createdMs >= bucket.startMs && createdMs < bucket.endMs) {
+        bucket.revenueCents += order.amountTotal;
+        bucket.ordersCount += 1;
+        break;
+      }
+    }
+  }
+
+  return next;
+}
+
+function buildReferenceLines(maxValue: number) {
+  const safeMax = Math.max(maxValue, 1);
+  const step = safeMax / 4;
+
+  return [4, 3, 2, 1, 0].map((multiplier) => {
+    const value = Math.round(step * multiplier);
+    const positionPercent = (value / safeMax) * 100;
+
+    return {
+      value,
+      positionPercent,
+    };
+  });
+}
+
 export function DashboardClient({
   orders,
   loadError,
   initialGlobalPlatformFeePercent,
 }: DashboardClientProps) {
   const [range, setRange] = useState<RangeValue>("30");
-  const [chartWindow, setChartWindow] = useState<ChartWindow>("month");
+  const [chartScope, setChartScope] = useState<ChartScope>("weekly");
   const [statusFilter, setStatusFilter] = useState("all");
   const [gameFilter, setGameFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
@@ -76,74 +261,48 @@ export function DashboardClient({
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [hoveredBarKey, setHoveredBarKey] = useState<string | null>(null);
+  const [chartAnimated, setChartAnimated] = useState(false);
+
+  useEffect(() => {
+    setChartAnimated(false);
+    const animationFrame = window.requestAnimationFrame(() => {
+      setChartAnimated(true);
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [chartScope, statusFilter, gameFilter, paymentFilter]);
 
   const statusOptions = ["all", ...Array.from(new Set(orders.map((order) => order.statusLabel)))];
   const gameOptions = ["all", ...Array.from(new Set(orders.map((order) => order.gameTitle)))];
   const paymentOptions = ["all", ...Array.from(new Set(orders.map((order) => order.paymentMethod)))];
 
-  const rangeStart = getRangeStartMs(range);
-  const filteredOrders = orders.filter((order) => {
-    const createdMs = order.createdUnix * 1000;
-
-    if (rangeStart && createdMs < rangeStart) return false;
+  const baseFilteredOrders = orders.filter((order) => {
     if (statusFilter !== "all" && order.statusLabel !== statusFilter) return false;
     if (gameFilter !== "all" && order.gameTitle !== gameFilter) return false;
     if (paymentFilter !== "all" && order.paymentMethod !== paymentFilter) return false;
     return true;
   });
 
-  const totalRevenue = filteredOrders.reduce((acc, order) => acc + order.amountTotal, 0);
-  const totalPayout = filteredOrders.reduce((acc, order) => acc + order.sellerAmountCents, 0);
-  const totalPlatformProfit = filteredOrders.reduce((acc, order) => acc + order.platformProfitCents, 0);
-  const totalOrders = filteredOrders.length;
-  const paidOrders = filteredOrders.filter((order) => {
+  const rangeStart = getRangeStartMs(range);
+  const dashboardFilteredOrders = baseFilteredOrders.filter((order) => {
+    const createdMs = order.createdUnix * 1000;
+    return rangeStart ? createdMs >= rangeStart : true;
+  });
+
+  const totalRevenue = dashboardFilteredOrders.reduce((acc, order) => acc + order.amountTotal, 0);
+  const totalPayout = dashboardFilteredOrders.reduce((acc, order) => acc + order.sellerAmountCents, 0);
+  const totalPlatformProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.platformProfitCents, 0);
+  const totalOrders = dashboardFilteredOrders.length;
+  const paidOrders = dashboardFilteredOrders.filter((order) => {
     const label = order.statusLabel.toLowerCase();
     return label === "paid" || label === "pago" || label === "completed" || label === "concluido";
   }).length;
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
   const averageCommissionPercent = totalRevenue > 0 ? (totalPlatformProfit / totalRevenue) * 100 : 0;
 
-  const chartDays = chartWindow === "week" ? 7 : 30;
-  const chartStartDate = new Date();
-  chartStartDate.setHours(0, 0, 0, 0);
-  chartStartDate.setDate(chartStartDate.getDate() - (chartDays - 1));
-  const chartStartMs = chartStartDate.getTime();
-
-  const groupedChart = new Map<string, { revenue: number; orders: number }>();
-  for (const order of filteredOrders) {
-    const createdMs = order.createdUnix * 1000;
-    if (createdMs < chartStartMs) {
-      continue;
-    }
-
-    const date = new Date(createdMs);
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    const current = groupedChart.get(key) ?? { revenue: 0, orders: 0 };
-    groupedChart.set(key, { revenue: current.revenue + order.amountTotal, orders: current.orders + 1 });
-  }
-
-  const chartPoints = Array.from({ length: chartDays }, (_, offset) => {
-    const day = new Date(chartStartMs);
-    day.setDate(day.getDate() + offset);
-    const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
-    const grouped = groupedChart.get(key) ?? { revenue: 0, orders: 0 };
-
-    return {
-      dayKey: key,
-      label: formatDateLabel(day.getTime(), chartWindow),
-      fullLabel: day.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }),
-      value: grouped.revenue,
-      orders: grouped.orders,
-    };
-  });
-
-  const chartMaxValue = Math.max(...chartPoints.map((point) => point.value), 1);
-  const chartTotalRevenue = chartPoints.reduce((acc, point) => acc + point.value, 0);
-  const chartAverageRevenue = chartDays > 0 ? Math.round(chartTotalRevenue / chartDays) : 0;
-  const chartBestDay = chartPoints.reduce((best, current) => (current.value > best.value ? current : best), chartPoints[0]);
-
   const statusGrouped = new Map<string, number>();
-  for (const order of filteredOrders) {
+  for (const order of dashboardFilteredOrders) {
     statusGrouped.set(order.statusLabel, (statusGrouped.get(order.statusLabel) || 0) + 1);
   }
 
@@ -155,34 +314,31 @@ export function DashboardClient({
     }))
     .sort((a, b) => b.count - a.count);
 
-  const gameRevenue = (() => {
-    const grouped = new Map<string, number>();
+  const gameRevenueGrouped = new Map<string, number>();
+  for (const order of dashboardFilteredOrders) {
+    gameRevenueGrouped.set(order.gameTitle, (gameRevenueGrouped.get(order.gameTitle) || 0) + order.amountTotal);
+  }
 
-    for (const order of filteredOrders) {
-      grouped.set(order.gameTitle, (grouped.get(order.gameTitle) || 0) + order.amountTotal);
-    }
-
-    return Array.from(grouped.entries())
-      .map(([game, value]) => ({ game, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
-  })();
+  const gameRevenue = Array.from(gameRevenueGrouped.entries())
+    .map(([game, value]) => ({ game, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 6);
 
   const topGameMax = Math.max(...gameRevenue.map((item) => item.value), 1);
 
-  const paymentMix = (() => {
-    const grouped = new Map<string, { count: number; value: number }>();
+  const paymentMixGrouped = new Map<string, { count: number; value: number }>();
+  for (const order of dashboardFilteredOrders) {
+    const key = order.paymentMethod || "--";
+    const current = paymentMixGrouped.get(key) ?? { count: 0, value: 0 };
+    paymentMixGrouped.set(key, {
+      count: current.count + 1,
+      value: current.value + order.amountTotal,
+    });
+  }
 
-    for (const order of filteredOrders) {
-      const key = order.paymentMethod || "--";
-      const current = grouped.get(key) ?? { count: 0, value: 0 };
-      grouped.set(key, { count: current.count + 1, value: current.value + order.amountTotal });
-    }
-
-    return Array.from(grouped.entries())
-      .map(([method, value]) => ({ method, ...value }))
-      .sort((a, b) => b.value - a.value);
-  })();
+  const paymentMix = Array.from(paymentMixGrouped.entries())
+    .map(([method, value]) => ({ method, ...value }))
+    .sort((a, b) => b.value - a.value);
 
   const taxSegments = [
     {
@@ -199,7 +355,36 @@ export function DashboardClient({
 
   const taxTotalMax = Math.max(...taxSegments.map((segment) => segment.value), 1);
 
-  const recentOrders = [...filteredOrders].sort((a, b) => b.createdUnix - a.createdUnix).slice(0, 8);
+  const recentOrders = [...dashboardFilteredOrders].sort((a, b) => b.createdUnix - a.createdUnix).slice(0, 8);
+
+  const nowMs = Date.now();
+  const currentBuckets = fillBucketsWithOrders(buildCurrentBuckets(chartScope, nowMs), baseFilteredOrders);
+  const previousBuckets = fillBucketsWithOrders(buildPreviousBuckets(chartScope, nowMs), baseFilteredOrders);
+
+  const chartMaxValue = Math.max(...currentBuckets.map((bucket) => bucket.revenueCents), 1);
+  const chartReferenceLines = buildReferenceLines(chartMaxValue);
+  const chartTotalRevenue = currentBuckets.reduce((acc, bucket) => acc + bucket.revenueCents, 0);
+  const chartTotalOrders = currentBuckets.reduce((acc, bucket) => acc + bucket.ordersCount, 0);
+  const chartAverageRevenue = currentBuckets.length > 0 ? Math.round(chartTotalRevenue / currentBuckets.length) : 0;
+  const chartTicketAverage = chartTotalOrders > 0 ? Math.round(chartTotalRevenue / chartTotalOrders) : 0;
+
+  const nonZeroBuckets = currentBuckets.filter((bucket) => bucket.revenueCents > 0);
+  const chartBestBucket =
+    nonZeroBuckets.length > 0
+      ? nonZeroBuckets.reduce((best, current) => (current.revenueCents > best.revenueCents ? current : best), nonZeroBuckets[0])
+      : null;
+  const chartWorstBucket =
+    nonZeroBuckets.length > 0
+      ? nonZeroBuckets.reduce((worst, current) => (current.revenueCents < worst.revenueCents ? current : worst), nonZeroBuckets[0])
+      : null;
+
+  const previousRevenue = previousBuckets.reduce((acc, bucket) => acc + bucket.revenueCents, 0);
+  const growthPercent =
+    previousRevenue > 0
+      ? ((chartTotalRevenue - previousRevenue) / previousRevenue) * 100
+      : chartTotalRevenue > 0
+        ? 100
+        : 0;
 
   async function saveGlobalSiteFee() {
     if (savingSettings) {
@@ -256,11 +441,20 @@ export function DashboardClient({
     }
   }
 
+  const chartColumnsClass =
+    chartScope === "daily"
+      ? "grid-cols-12 sm:grid-cols-24"
+      : chartScope === "weekly"
+        ? "grid-cols-7"
+        : chartScope === "monthly"
+          ? "grid-cols-15 sm:grid-cols-31"
+          : "grid-cols-12";
+
   return (
-    <div className="min-h-screen bg-black text-green-400" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+    <div className="min-h-screen bg-[#0F1117] text-white" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-          <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6 xl:col-span-2">
+          <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6 xl:col-span-2">
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
               <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 xl:col-span-2">
                 Período do dashboard
@@ -323,7 +517,7 @@ export function DashboardClient({
             </div>
           </article>
 
-          <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-8">
+          <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="space-y-3">
                 <p className="text-xs font-bold uppercase tracking-[0.28em] text-slate-400">Admin</p>
@@ -405,7 +599,7 @@ export function DashboardClient({
             </div>
           </article>
 
-          <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-8">
+          <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-8">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Mix financeiro</p>
@@ -492,102 +686,163 @@ export function DashboardClient({
         ) : null}
 
         {totalOrders === 0 ? (
-          <section className="mt-5 rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-6 text-sm font-semibold text-slate-400">
+          <section className="mt-5 rounded-[1.8rem] border border-white/10 bg-[#171A22] p-6 text-sm font-semibold text-slate-400">
             Nenhum pedido encontrado para os filtros selecionados.
           </section>
         ) : (
           <>
             <section className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-              <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
-                <div className="flex items-start justify-between gap-3">
+              <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Receita</p>
-                    <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">Faturamento por dia</h2>
+                    <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">Faturamento por período</h2>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setChartWindow("week")}
-                      className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] transition ${
-                        chartWindow === "week"
-                          ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-200"
-                          : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20"
-                      }`}
-                    >
-                      Semana
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setChartWindow("month")}
-                      className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] transition ${
-                        chartWindow === "month"
-                          ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-200"
-                          : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20"
-                      }`}
-                    >
-                      Mês
-                    </button>
+                    {[
+                      { label: "Diário", value: "daily" as const },
+                      { label: "Semanal", value: "weekly" as const },
+                      { label: "Mensal", value: "monthly" as const },
+                      { label: "Anual", value: "yearly" as const },
+                    ].map((scopeOption) => (
+                      <button
+                        key={scopeOption.value}
+                        type="button"
+                        onClick={() => setChartScope(scopeOption.value)}
+                        className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] transition ${
+                          chartScope === scopeOption.value
+                            ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-200"
+                            : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20"
+                        }`}
+                      >
+                        {scopeOption.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Receita no período</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Receita</p>
                     <p className="mt-1 text-sm font-semibold text-white">{formatMoney(chartTotalRevenue)}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Média por dia</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Média por período</p>
                     <p className="mt-1 text-sm font-semibold text-cyan-300">{formatMoney(chartAverageRevenue)}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Melhor dia</p>
-                    <p className="mt-1 text-sm font-semibold text-emerald-300">
-                      {chartBestDay ? `${chartBestDay.label} · ${formatMoney(chartBestDay.value)}` : "--"}
-                    </p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Total de pedidos</p>
+                    <p className="mt-1 text-sm font-semibold text-emerald-300">{chartTotalOrders}</p>
                   </div>
                 </div>
 
-                <div className={`mt-5 grid gap-2 ${chartWindow === "week" ? "grid-cols-7" : "grid-cols-10 sm:grid-cols-15"}`}>
-                  {chartPoints.map((point) => {
-                    const heightPct = Math.max(6, Math.round((point.value / chartMaxValue) * 100));
-
-                    return (
-                      <div key={point.dayKey} className="flex flex-col items-center justify-end gap-2">
-                        <div className="flex h-44 w-full items-end rounded-t-md bg-white/[0.02] px-0.5">
-                          <div
-                            className="w-full rounded-t-md bg-[linear-gradient(180deg,#22d3ee_0%,#34d399_56%,#86efac_100%)] shadow-[0_0_18px_rgba(45,212,191,0.22)]"
-                            style={{ height: `${heightPct}%` }}
-                            title={`${point.fullLabel} - ${formatMoney(point.value)} (${point.orders} pedidos)`}
-                          />
+                <div className="mt-4 overflow-x-auto">
+                  <div className="relative min-w-[720px]">
+                    <div className="relative h-72 rounded-2xl border border-white/10 bg-black/30 p-4">
+                      {chartReferenceLines.map((line) => (
+                        <div
+                          key={`${line.value}-${line.positionPercent}`}
+                          className="pointer-events-none absolute left-4 right-4"
+                          style={{ bottom: `calc(${line.positionPercent}% + 22px)` }}
+                        >
+                          <div className="relative border-t border-dashed border-white/10">
+                            <span className="absolute -top-2 -left-2 -translate-x-full rounded bg-[#0F1117] px-1 text-[10px] font-semibold text-slate-500">
+                              {formatMoney(line.value)}
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-[10px] text-slate-500">{point.label}</span>
-                        <span className="text-[10px] text-slate-600">{point.orders}</span>
+                      ))}
+
+                      <div className={`absolute inset-x-4 bottom-4 grid items-end gap-1 ${chartColumnsClass}`}>
+                        {currentBuckets.map((bucket) => {
+                          const ratio = bucket.revenueCents > 0 ? bucket.revenueCents / chartMaxValue : 0;
+                          const heightPercent = ratio * 100;
+                          const isHovered = hoveredBarKey === bucket.key;
+                          const showValue = chartScope === "weekly" || chartScope === "yearly" || isHovered;
+                          const averageTicket = bucket.ordersCount > 0 ? Math.round(bucket.revenueCents / bucket.ordersCount) : 0;
+
+                          return (
+                            <div
+                              key={bucket.key}
+                              className="group relative flex flex-col items-center"
+                              onMouseEnter={() => setHoveredBarKey(bucket.key)}
+                              onMouseLeave={() => setHoveredBarKey(null)}
+                            >
+                              <div className="relative flex h-52 w-full items-end">
+                                <div className="relative h-full w-full overflow-hidden rounded-md bg-slate-800/60">
+                                  {bucket.revenueCents > 0 ? (
+                                    <div
+                                      className={`absolute bottom-0 left-0 right-0 rounded-md bg-[linear-gradient(180deg,#22d3ee_0%,#34d399_56%,#86efac_100%)] transition-all duration-500 ease-out ${
+                                        isHovered ? "brightness-110 shadow-[0_0_14px_rgba(52,211,153,0.35)]" : "shadow-[0_0_8px_rgba(52,211,153,0.2)]"
+                                      }`}
+                                      style={{
+                                        height: chartAnimated ? `${heightPercent}%` : "0%",
+                                      }}
+                                    />
+                                  ) : null}
+                                </div>
+
+                                <div className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-20 hidden w-max -translate-x-1/2 rounded-xl border border-white/10 bg-[#11141C] px-3 py-2 text-xs text-slate-200 shadow-[0_14px_30px_rgba(0,0,0,0.45)] group-hover:block">
+                                  <p className="font-semibold text-white">{bucket.fullLabel}</p>
+                                  <p className="mt-1 text-slate-300">Receita: <span className="font-semibold text-cyan-300">{formatMoney(bucket.revenueCents)}</span></p>
+                                  <p className="mt-1 text-slate-300">Pedidos: <span className="font-semibold text-emerald-300">{bucket.ordersCount}</span></p>
+                                  <p className="mt-1 text-slate-300">Ticket Médio: <span className="font-semibold text-fuchsia-300">{formatMoney(averageTicket)}</span></p>
+                                </div>
+                              </div>
+
+                              <div className="mt-2 min-h-[12px] text-center">
+                                {bucket.revenueCents > 0 && showValue ? (
+                                  <p className="text-[10px] font-bold text-cyan-200">{formatMoney(bucket.revenueCents)}</p>
+                                ) : null}
+                              </div>
+
+                              <p className="mt-1 text-[10px] font-semibold text-slate-400">{bucket.label}</p>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    </div>
+                  </div>
                 </div>
               </article>
 
-              <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
+              <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Operação</p>
-                    <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">Status e pagamento</h2>
+                    <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Resumo do período</p>
+                    <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">Indicadores</h2>
                   </div>
                 </div>
 
-                <div className="mt-5 space-y-4">
-                  {statusBreakdown.map((row) => (
-                    <div key={row.label} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-slate-300">{row.label}</span>
-                        <span className="text-slate-500">{row.count} ({row.pct}%)</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-white/5">
-                        <div className="h-2 rounded-full bg-[linear-gradient(90deg,#22d3ee,#34d399)]" style={{ width: `${Math.max(4, row.pct)}%` }} />
-                      </div>
-                    </div>
-                  ))}
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Receita Total</p>
+                    <p className="mt-1 text-lg font-black text-cyan-300">{formatMoney(chartTotalRevenue)}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Ticket Médio</p>
+                    <p className="mt-1 text-lg font-black text-emerald-300">{formatMoney(chartTicketAverage)}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Melhor período</p>
+                    <p className="mt-1 text-sm font-semibold text-white">
+                      {chartBestBucket ? `${chartBestBucket.label} - ${formatMoney(chartBestBucket.revenueCents)}` : "Sem vendas"}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Pior período</p>
+                    <p className="mt-1 text-sm font-semibold text-white">
+                      {chartWorstBucket ? `${chartWorstBucket.label} - ${formatMoney(chartWorstBucket.revenueCents)}` : "Sem vendas"}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:col-span-2">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Crescimento vs período anterior</p>
+                    <p className={`mt-1 text-lg font-black ${growthPercent >= 0 ? "text-emerald-300" : "text-rose-300"}`}>
+                      {growthPercent >= 0 ? "+" : ""}
+                      {growthPercent.toFixed(2)}%
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">Anterior: {formatMoney(previousRevenue)}</p>
+                  </div>
                 </div>
 
                 <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
@@ -613,7 +868,7 @@ export function DashboardClient({
             </section>
 
             <section className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-              <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
+              <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Top jogos</p>
@@ -640,7 +895,7 @@ export function DashboardClient({
                 </div>
               </article>
 
-              <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
+              <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Recentes</p>
