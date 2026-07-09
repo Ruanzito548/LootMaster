@@ -18,6 +18,22 @@ function formatMoney(amountInCents: number | null) {
   }).format(amountInCents / 100);
 }
 
+function toIsoRange(date: Date) {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+  const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+  return { startIso: start.toISOString(), endIso: end.toISOString() };
+}
+
+function resolveGatewayLabel(paymentMethod: string) {
+  const normalized = paymentMethod.trim().toLowerCase();
+
+  if (!normalized || normalized === "--") return "Gateway";
+  if (normalized.includes("mercado")) return "Gateway Mercado Pago";
+  if (normalized.includes("stripe") || normalized.includes("card") || normalized.includes("cartao")) return "Gateway Stripe";
+  if (normalized.includes("pix")) return "Gateway";
+  return `Gateway ${paymentMethod}`;
+}
+
 export default async function AdminOrderApplicantsPage(
   props: PageProps<"/admin/orders/[orderId]">
 ) {
@@ -34,6 +50,22 @@ export default async function AdminOrderApplicantsPage(
     faction: "-",
     totalLabel: "--",
     payoutLabel: "--",
+    totalCents: 0,
+    supplierPayoutCents: 0,
+    supplierPercentage: 0,
+    gatewayLabel: "Gateway",
+    gatewayCents: 0,
+    gatewayPercent: 0,
+    cashbackCents: 0,
+    cashbackPercent: 0,
+    operationalReserveCents: 0,
+    operationalReservePercent: 0,
+    netProfitCents: 0,
+    orderCreatedAtIso: null as string | null,
+    dailyOrdersCount: 1,
+    weeklyOrdersCount: 1,
+    monthlyOrdersCount: 1,
+    annualOrdersCount: 1,
     agentName: "--",
     agentEmail: "--",
   };
@@ -73,6 +105,71 @@ export default async function AdminOrderApplicantsPage(
         operationalReservePercent: defaults.operationalReservePercent,
       });
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
+      const paymentMethod = typeof data.paymentMethod === "string" ? data.paymentMethod : "";
+      const orderCreatedAtIso =
+        typeof data.stripeCreatedAt === "string" && data.stripeCreatedAt
+          ? data.stripeCreatedAt
+          : null;
+      let dailyOrdersCount = 1;
+      let weeklyOrdersCount = 1;
+      let monthlyOrdersCount = 1;
+      let annualOrdersCount = 1;
+
+      if (orderCreatedAtIso) {
+        try {
+          const orderDate = new Date(orderCreatedAtIso);
+
+          if (!Number.isNaN(orderDate.getTime())) {
+            const dayRange = toIsoRange(orderDate);
+
+            const weekStart = new Date(orderDate);
+            const weekDay = weekStart.getDay();
+            const mondayOffset = (weekDay + 6) % 7;
+            weekStart.setDate(weekStart.getDate() - mondayOffset);
+            weekStart.setHours(0, 0, 0, 0);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            weekEnd.setHours(23, 59, 59, 999);
+
+            const monthStart = new Date(orderDate.getFullYear(), orderDate.getMonth(), 1, 0, 0, 0, 0);
+            const monthEnd = new Date(orderDate.getFullYear(), orderDate.getMonth() + 1, 0, 23, 59, 59, 999);
+
+            const yearStart = new Date(orderDate.getFullYear(), 0, 1, 0, 0, 0, 0);
+            const yearEnd = new Date(orderDate.getFullYear(), 11, 31, 23, 59, 59, 999);
+
+            const [daySnapshot, weekSnapshot, monthSnapshot, yearSnapshot] = await Promise.all([
+              adminDb
+                .collection("order-checkouts")
+                .where("stripeCreatedAt", ">=", dayRange.startIso)
+                .where("stripeCreatedAt", "<=", dayRange.endIso)
+                .get(),
+              adminDb
+                .collection("order-checkouts")
+                .where("stripeCreatedAt", ">=", weekStart.toISOString())
+                .where("stripeCreatedAt", "<=", weekEnd.toISOString())
+                .get(),
+              adminDb
+                .collection("order-checkouts")
+                .where("stripeCreatedAt", ">=", monthStart.toISOString())
+                .where("stripeCreatedAt", "<=", monthEnd.toISOString())
+                .get(),
+              adminDb
+                .collection("order-checkouts")
+                .where("stripeCreatedAt", ">=", yearStart.toISOString())
+                .where("stripeCreatedAt", "<=", yearEnd.toISOString())
+                .get(),
+            ]);
+
+            dailyOrdersCount = Math.max(1, daySnapshot.size);
+            weeklyOrdersCount = Math.max(1, weekSnapshot.size);
+            monthlyOrdersCount = Math.max(1, monthSnapshot.size);
+            annualOrdersCount = Math.max(1, yearSnapshot.size);
+          }
+        } catch (rangeError) {
+          console.warn("[Admin Order Applicants] Could not resolve period order counts:", rangeError);
+        }
+      }
+
       let agentName = "--";
       let agentEmail = "--";
 
@@ -103,6 +200,22 @@ export default async function AdminOrderApplicantsPage(
         faction: typeof data.faction === "string" ? data.faction : "-",
         totalLabel: formatMoney(amountTotalCents),
         payoutLabel: formatMoney(financials.supplierPayout),
+        totalCents: financials.grossRevenue,
+        supplierPayoutCents: financials.supplierPayout,
+        supplierPercentage: financials.supplierPercentage,
+        gatewayLabel: resolveGatewayLabel(paymentMethod),
+        gatewayCents: financials.cardFee,
+        gatewayPercent: typeof data.cardFeePercent === "number" ? data.cardFeePercent : 0,
+        cashbackCents: financials.cashback,
+        cashbackPercent: typeof data.cashbackPercent === "number" ? data.cashbackPercent : 0,
+        operationalReserveCents: financials.operationalReserve,
+        operationalReservePercent: typeof data.operationalReservePercent === "number" ? data.operationalReservePercent : 0,
+        netProfitCents: financials.netProfit,
+        orderCreatedAtIso,
+        dailyOrdersCount,
+        weeklyOrdersCount,
+        monthlyOrdersCount,
+        annualOrdersCount,
         agentName,
         agentEmail,
       };
@@ -128,6 +241,22 @@ export default async function AdminOrderApplicantsPage(
           faction: session.metadata?.faction ?? "-",
           totalLabel: formatMoney(session.amount_total),
           payoutLabel: formatMoney(Math.round((session.amount_total ?? 0) * 0.75)),
+          totalCents: session.amount_total ?? 0,
+          supplierPayoutCents: Math.round((session.amount_total ?? 0) * 0.75),
+          supplierPercentage: Number(session.metadata?.supplierPercentage ?? 75) || 75,
+          gatewayLabel: resolveGatewayLabel(session.metadata?.paymentMethod ?? ""),
+          gatewayCents: 0,
+          gatewayPercent: 0,
+          cashbackCents: 0,
+          cashbackPercent: 0,
+          operationalReserveCents: 0,
+          operationalReservePercent: 0,
+          netProfitCents: (session.amount_total ?? 0) - Math.round((session.amount_total ?? 0) * 0.75),
+          orderCreatedAtIso: typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : null,
+          dailyOrdersCount: 1,
+          weeklyOrdersCount: 1,
+          monthlyOrdersCount: 1,
+          annualOrdersCount: 1,
           agentName: "--",
           agentEmail: "--",
         };

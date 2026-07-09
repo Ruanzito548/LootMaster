@@ -49,7 +49,7 @@ type RevenueBucket = {
 };
 
 type OperationalCostValueType = "percent" | "fixed";
-type OperationalCostFrequency = "once" | "monthly" | "per_order";
+type OperationalCostFrequency = "once" | "per_order" | "daily" | "weekly" | "monthly" | "annual";
 
 type OperationalCostItem = {
   id: string;
@@ -57,6 +57,7 @@ type OperationalCostItem = {
   value: number;
   valueType: OperationalCostValueType;
   frequency: OperationalCostFrequency;
+  isActive: boolean;
 };
 
 const OPERATIONAL_COST_STORAGE_KEY = "dashboard-operational-cost-items-v1";
@@ -65,23 +66,26 @@ const DEFAULT_OPERATIONAL_COST_ITEMS: OperationalCostItem[] = [
   {
     id: "server-site",
     name: "Servidor do site",
-    value: 350,
+    value: 40,
     valueType: "fixed",
     frequency: "monthly",
+    isActive: true,
   },
   {
     id: "impostos",
     name: "Impostos",
-    value: 6,
+    value: 5,
     valueType: "percent",
     frequency: "monthly",
+    isActive: true,
   },
   {
     id: "third-party",
     name: "Servicos de terceiros",
-    value: 2,
-    valueType: "percent",
-    frequency: "per_order",
+    value: 20,
+    valueType: "fixed",
+    frequency: "monthly",
+    isActive: true,
   },
 ];
 
@@ -96,7 +100,12 @@ function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
   const parsedValue = typeof row.value === "number" && Number.isFinite(row.value) ? row.value : 0;
   const valueType = row.valueType === "percent" || row.valueType === "fixed" ? row.valueType : "fixed";
   const frequency =
-    row.frequency === "once" || row.frequency === "monthly" || row.frequency === "per_order"
+    row.frequency === "once" ||
+    row.frequency === "per_order" ||
+    row.frequency === "daily" ||
+    row.frequency === "weekly" ||
+    row.frequency === "monthly" ||
+    row.frequency === "annual"
       ? row.frequency
       : "monthly";
 
@@ -106,6 +115,7 @@ function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
     value: Math.max(0, parsedValue),
     valueType,
     frequency,
+    isActive: row.isActive !== false,
   };
 }
 
@@ -119,11 +129,32 @@ function countMonthsInPeriod(startMs: number, endMs: number) {
   return Math.max(1, months);
 }
 
+function countDaysInPeriod(startMs: number, endMs: number) {
+  const safeStart = Math.min(startMs, endMs);
+  const safeEnd = Math.max(startMs, endMs);
+  const dayMs = 24 * 60 * 60 * 1000;
+  return Math.max(1, Math.floor((safeEnd - safeStart) / dayMs) + 1);
+}
+
+function resolveGatewayLabel(paymentMethod: string) {
+  const normalized = paymentMethod.trim().toLowerCase();
+
+  if (!normalized || normalized === "--") return "Gateway";
+  if (normalized.includes("mercado")) return "Gateway Mercado Pago";
+  if (normalized.includes("stripe") || normalized.includes("card") || normalized.includes("cartao")) return "Gateway Stripe";
+  if (normalized.includes("pix")) return "Gateway";
+  return `Gateway ${paymentMethod}`;
+}
+
 function formatMoney(amountInCents: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(amountInCents / 100);
+}
+
+function formatDeduction(amountInCents: number) {
+  return `-${formatMoney(Math.abs(amountInCents))}`;
 }
 
 function formatPercent(value: number) {
@@ -469,6 +500,9 @@ export function DashboardClient({
   const nowMs = Date.now();
   const totalRevenue = dashboardFilteredOrders.reduce((acc, order) => acc + order.amountTotal, 0);
   const totalPayout = dashboardFilteredOrders.reduce((acc, order) => acc + order.supplierPayout, 0);
+  const totalGatewayFee = dashboardFilteredOrders.reduce((acc, order) => acc + order.cardFee, 0);
+  const totalCashback = dashboardFilteredOrders.reduce((acc, order) => acc + order.cashback, 0);
+  const totalOperationalReserve = dashboardFilteredOrders.reduce((acc, order) => acc + order.operationalReserve, 0);
   const totalGrossProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.grossProfit, 0);
   const orderNetProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.netProfit, 0);
   const totalOrders = dashboardFilteredOrders.length;
@@ -496,23 +530,69 @@ export function DashboardClient({
   })();
 
   const monthsInPeriod = countMonthsInPeriod(periodStartMs, periodEndMs);
-  const operationalCostTotal = operationalCostItems.reduce((acc, item) => {
+  const daysInPeriod = countDaysInPeriod(periodStartMs, periodEndMs);
+  const weeksInPeriod = Math.max(1, Math.ceil(daysInPeriod / 7));
+  const yearsInPeriod = Math.max(1 / 365, daysInPeriod / 365);
+
+  const operationalCostRows = operationalCostItems
+    .filter((item) => item.isActive)
+    .map((item) => {
+      const unitCostCents =
+        item.valueType === "percent"
+          ? Math.round(totalRevenue * (item.value / 100))
+          : Math.round(Math.max(0, item.value) * 100);
+
+      const multiplier =
+        item.frequency === "per_order"
+          ? totalOrders
+          : item.frequency === "daily"
+            ? daysInPeriod
+            : item.frequency === "weekly"
+              ? weeksInPeriod
+              : item.frequency === "monthly"
+                ? monthsInPeriod
+                : item.frequency === "annual"
+                  ? yearsInPeriod
+                  : 1;
+
+      const totalCents = Math.max(0, Math.round(unitCostCents * Math.max(multiplier, 0)));
+
+      return {
+        ...item,
+        totalCents,
+      };
+    });
+
+  const operationalCostTotal = operationalCostRows.reduce((acc, item) => acc + item.totalCents, 0);
+  const operationalCostPerOrder = totalOrders > 0 ? Math.round(operationalCostTotal / totalOrders) : 0;
+  const totalNetProfit = orderNetProfit - operationalCostTotal;
+  const gatewayMethods = Array.from(new Set(dashboardFilteredOrders.map((order) => resolveGatewayLabel(order.paymentMethod))));
+  const gatewayLabel = gatewayMethods.length === 1 ? gatewayMethods[0] : "Gateway (misto)";
+
+  function computeOperationalCostItemTotal(item: OperationalCostItem) {
+    if (!item.isActive) return 0;
+
     const unitCostCents =
       item.valueType === "percent"
-        ? Math.round(totalGrossProfit * (item.value / 100))
-        : Math.round(Math.max(0, item.value) * 100);
+        ? Math.round(totalRevenue * (item.value / 100))
+        : Math.round(item.value * 100);
 
     const multiplier =
-      item.frequency === "monthly"
-        ? monthsInPeriod
-        : item.frequency === "per_order"
-          ? totalOrders
-          : 1;
+      item.frequency === "per_order"
+        ? totalOrders
+        : item.frequency === "daily"
+          ? daysInPeriod
+          : item.frequency === "weekly"
+            ? weeksInPeriod
+            : item.frequency === "monthly"
+              ? monthsInPeriod
+              : item.frequency === "annual"
+                ? yearsInPeriod
+                : 1;
 
-    return acc + Math.max(0, unitCostCents * Math.max(1, multiplier));
-  }, 0);
+    return Math.max(0, Math.round(unitCostCents * Math.max(multiplier, 0)));
+  }
 
-  const totalNetProfit = totalGrossProfit - operationalCostTotal;
   const paidOrders = dashboardFilteredOrders.filter((order) => {
     const label = order.statusLabel.toLowerCase();
     return label === "paid" || label === "pago" || label === "completed" || label === "concluido";
@@ -558,26 +638,6 @@ export function DashboardClient({
   const paymentMix = Array.from(paymentMixGrouped.entries())
     .map(([method, value]) => ({ method, ...value }))
     .sort((a, b) => b.value - a.value);
-
-  const taxSegments = [
-    {
-      label: "Repasse",
-      value: totalPayout,
-      color: "from-emerald-400 to-emerald-200",
-    },
-    {
-      label: "Lucro bruto",
-      value: totalGrossProfit,
-      color: "from-cyan-400 to-sky-300",
-    },
-    {
-      label: "Lucro líquido",
-      value: totalNetProfit,
-      color: "from-fuchsia-400 to-violet-300",
-    },
-  ];
-
-  const taxTotalMax = Math.max(...taxSegments.map((segment) => Math.max(0, segment.value)), 1);
 
   const recentOrders = [...dashboardFilteredOrders].sort((a, b) => b.createdUnix - a.createdUnix).slice(0, 8);
 
@@ -698,6 +758,7 @@ export function DashboardClient({
       value: parsedValue,
       valueType: newOperationalCostValueType,
       frequency: newOperationalCostFrequency,
+      isActive: true,
     };
 
     setOperationalCostItems((current) => [...current, newItem]);
@@ -1012,40 +1073,79 @@ export function DashboardClient({
               </span>
             </div>
 
-            <div className="mt-6 flex items-center gap-5">
-              <div
-                className="relative h-44 w-44 shrink-0 rounded-full border border-white/10"
-                style={{
-                  background:
-                    totalRevenue > 0
-                      ? `conic-gradient(from 180deg, rgba(52,211,153,0.95) 0% ${Math.max(0, (totalPayout / totalRevenue) * 100)}%, rgba(34,211,238,0.95) ${Math.max(0, (totalPayout / totalRevenue) * 100)}% 100%)`
-                      : "linear-gradient(180deg, rgba(15,23,42,0.95), rgba(2,6,23,0.95))",
-                }}
-              >
-                <div className="absolute inset-[18%] flex flex-col items-center justify-center rounded-full border border-white/10 bg-black/95 text-center">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Lucro</span>
-                  <span className="mt-1 text-lg font-black text-white">{formatPercent(averageMarginPercent)}</span>
-                  <span className="mt-1 text-[10px] font-semibold text-slate-500">da receita total</span>
+            <article className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Composição do Lucro</p>
+
+              <div className="mt-4 space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-200">Faturamento Bruto</span>
+                  <span className="font-black text-cyan-200">{formatMoney(totalRevenue)}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">- Repasse Fornecedor</span>
+                  <span className="font-black text-rose-300">{formatDeduction(totalPayout)}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">- {gatewayLabel}</span>
+                  <span className="font-black text-rose-300">{formatDeduction(totalGatewayFee)}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">- Cashback / Loot Coins</span>
+                  <span className="font-black text-rose-300">{formatDeduction(totalCashback)}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">- Reserva Operacional</span>
+                  <span className="font-black text-rose-300">{formatDeduction(totalOperationalReserve)}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">- Custos Operacionais</span>
+                  <span className="font-black text-rose-300">{formatDeduction(operationalCostTotal)}</span>
                 </div>
               </div>
 
-              <div className="min-w-0 flex-1 space-y-3">
-                {taxSegments.map((segment) => (
-                  <div key={segment.label} className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-3 text-xs">
-                      <span className="font-semibold text-slate-300">{segment.label}</span>
-                      <span className="tabular-nums text-slate-500">{formatMoney(segment.value)}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-white/5">
-                      <div
-                        className={`h-2 rounded-full bg-gradient-to-r ${segment.color}`}
-                        style={{ width: `${Math.max(6, Math.round((Math.max(0, segment.value) / taxTotalMax) * 100))}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+              <div className="my-3 border-t border-dashed border-white/15" />
+
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Lucro Líquido</span>
+                <span className="text-xl font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</span>
               </div>
-            </div>
+            </article>
+
+            <article className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Repasse x Lucro</p>
+
+              <div className="mt-4 space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">Receita</span>
+                  <span className="font-semibold text-cyan-300">{formatMoney(totalRevenue)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">Fornecedor</span>
+                  <span className="font-semibold text-rose-300">{formatDeduction(totalPayout)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">Gateway</span>
+                  <span className="font-semibold text-rose-300">{formatDeduction(totalGatewayFee)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">Reserva Operacional</span>
+                  <span className="font-semibold text-rose-300">{formatDeduction(totalOperationalReserve)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">Custo Operacional</span>
+                  <span className="font-semibold text-rose-300">{formatDeduction(operationalCostTotal)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <span className="font-black text-white">Lucro Líquido</span>
+                  <span className="font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</span>
+                </div>
+              </div>
+            </article>
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Configuração financeira</p>
@@ -1534,17 +1634,13 @@ export function DashboardClient({
             </div>
 
             <p className="mt-4 text-xs text-slate-500">
-              Período atual: {monthsInPeriod} mes(es), {totalOrders} pedido(s). Custos percentuais usam como base o lucro bruto.
+              Período atual: {daysInPeriod} dia(s), {monthsInPeriod} mes(es), {totalOrders} pedido(s). Custos percentuais usam como base o faturamento.
             </p>
 
             <div className="mt-4 space-y-3">
               {operationalCostItems.map((item) => {
-                const unitCostCents =
-                  item.valueType === "percent"
-                    ? Math.round(totalGrossProfit * (item.value / 100))
-                    : Math.round(item.value * 100);
-                const multiplier = item.frequency === "monthly" ? monthsInPeriod : item.frequency === "per_order" ? totalOrders : 1;
-                const itemTotal = Math.max(0, unitCostCents * Math.max(1, multiplier));
+                const itemTotal = computeOperationalCostItemTotal(item);
+                const perOrderRate = totalOrders > 0 ? Math.round(itemTotal / totalOrders) : 0;
 
                 return (
                   <div key={item.id} className="rounded-2xl border border-white/10 bg-black/25 p-3">
@@ -1601,7 +1697,10 @@ export function DashboardClient({
                           className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
                         >
                           <option value="once">Único</option>
+                          <option value="daily">Diário</option>
+                          <option value="weekly">Semanal</option>
                           <option value="monthly">Mensal</option>
+                          <option value="annual">Anual</option>
                           <option value="per_order">Por pedido</option>
                         </select>
                       </label>
@@ -1615,8 +1714,21 @@ export function DashboardClient({
                       </button>
                     </div>
 
+                    <label className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={item.isActive}
+                        onChange={(event) => updateOperationalCostItem(item.id, { isActive: event.target.checked })}
+                        className="h-4 w-4 rounded border-white/20 bg-black"
+                      />
+                      {item.isActive ? "Ativo" : "Inativo"}
+                    </label>
+
                     <p className="mt-2 text-xs text-slate-400">
                       Custo no período: <span className="font-semibold text-amber-300">{formatMoney(itemTotal)}</span>
+                      {totalOrders > 0 ? (
+                        <span className="ml-2 text-slate-500">({formatMoney(perOrderRate)} por pedido)</span>
+                      ) : null}
                     </p>
                   </div>
                 );
@@ -1657,7 +1769,10 @@ export function DashboardClient({
                   className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
                 >
                   <option value="once">Único</option>
+                  <option value="daily">Diário</option>
+                  <option value="weekly">Semanal</option>
                   <option value="monthly">Mensal</option>
+                  <option value="annual">Anual</option>
                   <option value="per_order">Por pedido</option>
                 </select>
               </div>

@@ -23,9 +23,80 @@ type OrderSummary = {
   faction: string;
   totalLabel: string;
   payoutLabel: string;
+  totalCents: number;
+  supplierPayoutCents: number;
+  supplierPercentage: number;
+  gatewayLabel: string;
+  gatewayCents: number;
+  gatewayPercent: number;
+  cashbackCents: number;
+  cashbackPercent: number;
+  operationalReserveCents: number;
+  operationalReservePercent: number;
+  netProfitCents: number;
+  orderCreatedAtIso: string | null;
+  dailyOrdersCount: number;
+  weeklyOrdersCount: number;
+  monthlyOrdersCount: number;
+  annualOrdersCount: number;
   agentName: string;
   agentEmail: string;
 };
+
+type OperationalCostValueType = "percent" | "fixed";
+type OperationalCostFrequency = "once" | "per_order" | "daily" | "weekly" | "monthly" | "annual";
+
+type OperationalCostItem = {
+  id: string;
+  name: string;
+  value: number;
+  valueType: OperationalCostValueType;
+  frequency: OperationalCostFrequency;
+  isActive: boolean;
+};
+
+const OPERATIONAL_COST_STORAGE_KEY = "dashboard-operational-cost-items-v1";
+
+function formatMoney(amountInCents: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amountInCents / 100);
+}
+
+function formatDeduction(amountInCents: number) {
+  return `-${formatMoney(Math.abs(amountInCents))}`;
+}
+
+function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
+  if (!value || typeof value !== "object") return null;
+
+  const row = value as Partial<OperationalCostItem>;
+  const name = typeof row.name === "string" ? row.name.trim() : "";
+
+  if (!name) return null;
+
+  const parsedValue = typeof row.value === "number" && Number.isFinite(row.value) ? row.value : 0;
+  const valueType = row.valueType === "percent" || row.valueType === "fixed" ? row.valueType : "fixed";
+  const frequency =
+    row.frequency === "once" ||
+    row.frequency === "per_order" ||
+    row.frequency === "daily" ||
+    row.frequency === "weekly" ||
+    row.frequency === "monthly" ||
+    row.frequency === "annual"
+      ? row.frequency
+      : "monthly";
+
+  return {
+    id: typeof row.id === "string" && row.id ? row.id : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name,
+    value: Math.max(0, parsedValue),
+    valueType,
+    frequency,
+    isActive: row.isActive !== false,
+  };
+}
 
 type Props = {
   summary: OrderSummary;
@@ -42,7 +113,58 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
   const [isResending, setIsResending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [operationalCostItems, setOperationalCostItems] = useState<OperationalCostItem[]>([]);
   const submitLockRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(OPERATIONAL_COST_STORAGE_KEY);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+
+      const recovered = parsed
+        .map(parseOperationalCostItem)
+        .filter((item): item is OperationalCostItem => item !== null);
+
+      setOperationalCostItems(recovered);
+    } catch {
+      setOperationalCostItems([]);
+    }
+  }, []);
+
+  const operationalCostPerOrderCents = operationalCostItems
+    .filter((item) => item.isActive)
+    .reduce((acc, item) => {
+      if (item.valueType === "percent") {
+        return acc + Math.round(summary.totalCents * (item.value / 100));
+      }
+
+      if (item.frequency === "per_order") {
+        return acc + Math.round(item.value * 100);
+      }
+
+      if (item.frequency === "daily") {
+        return acc + Math.round((item.value * 100) / Math.max(summary.dailyOrdersCount, 1));
+      }
+
+      if (item.frequency === "weekly") {
+        return acc + Math.round((item.value * 100) / Math.max(summary.weeklyOrdersCount, 1));
+      }
+
+      if (item.frequency === "monthly") {
+        return acc + Math.round((item.value * 100) / Math.max(summary.monthlyOrdersCount, 1));
+      }
+
+      if (item.frequency === "annual") {
+        return acc + Math.round((item.value * 100) / Math.max(summary.annualOrdersCount, 1));
+      }
+
+      return acc + Math.round(item.value * 100);
+    }, 0);
+
+  const netAfterOperationalCents = summary.netProfitCents - operationalCostPerOrderCents;
 
   useEffect(() => {
     if (!auth) {
@@ -334,7 +456,9 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-green-700">Supplier Payout</p>
-            <p className="mt-1 text-sm font-semibold text-green-300">{summary.payoutLabel}</p>
+            <p className="mt-1 text-sm font-semibold text-green-300">
+              {summary.payoutLabel} ({summary.supplierPercentage.toFixed(2)}%)
+            </p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-green-700">Assigned Agent</p>
@@ -344,6 +468,44 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
             ) : null}
           </div>
         </div>
+
+        <article className="mt-5 rounded-xl border border-green-900 bg-green-950/10 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Resumo Financeiro da Order</p>
+
+          <div className="mt-3 space-y-2 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-green-200">Venda</span>
+              <span className="font-semibold text-green-200">{formatMoney(summary.totalCents)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-green-300">Fornecedor ({summary.supplierPercentage.toFixed(2)}%)</span>
+              <span className="font-semibold text-rose-300">{formatDeduction(summary.supplierPayoutCents)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-green-300">{summary.gatewayLabel} ({summary.gatewayPercent.toFixed(2)}%)</span>
+              <span className="font-semibold text-rose-300">{formatDeduction(summary.gatewayCents)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-green-300">Cashback / Loot Coins ({summary.cashbackPercent.toFixed(2)}%)</span>
+              <span className="font-semibold text-rose-300">{formatDeduction(summary.cashbackCents)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-green-300">Reserva Operacional ({summary.operationalReservePercent.toFixed(2)}%)</span>
+              <span className="font-semibold text-rose-300">{formatDeduction(summary.operationalReserveCents)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-green-300">Custo Operacional</span>
+              <span className="font-semibold text-rose-300">{formatDeduction(operationalCostPerOrderCents)}</span>
+            </div>
+
+            <div className="border-t border-dashed border-green-900 pt-2" />
+
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-bold text-green-100">Lucro Líquido</span>
+              <span className="font-bold text-green-100">{formatMoney(netAfterOperationalCents)}</span>
+            </div>
+          </div>
+        </article>
       </article>
 
       {dispatch ? (
