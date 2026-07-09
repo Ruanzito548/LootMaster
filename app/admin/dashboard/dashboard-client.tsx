@@ -29,7 +29,7 @@ type DashboardClientProps = {
 };
 
 type RangeValue = "7" | "30" | "90" | "all" | "custom";
-type ChartScope = "weekly" | "monthly" | "yearly";
+type ChartScope = "monthly" | "yearly";
 
 type RevenueBucket = {
   key: string;
@@ -82,15 +82,6 @@ function getRangeStartMs(range: RangeValue): number | null {
   return Date.now() - days * 24 * 60 * 60 * 1000;
 }
 
-function startOfWeek(ms: number) {
-  const date = new Date(ms);
-  const day = date.getDay();
-  const offsetToMonday = (day + 6) % 7;
-  date.setHours(0, 0, 0, 0);
-  date.setDate(date.getDate() - offsetToMonday);
-  return date.getTime();
-}
-
 function startOfMonth(ms: number) {
   const date = new Date(ms);
   return new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0).getTime();
@@ -109,7 +100,6 @@ function capitalize(value: string) {
 function normalizePeriodAnchorMs(scope: ChartScope, inputMs: number, nowMs: number) {
   const clampedMs = Math.min(inputMs, nowMs);
 
-  if (scope === "weekly") return startOfWeek(clampedMs);
   if (scope === "monthly") return startOfMonth(clampedMs);
   return startOfYear(clampedMs);
 }
@@ -117,9 +107,7 @@ function normalizePeriodAnchorMs(scope: ChartScope, inputMs: number, nowMs: numb
 function shiftPeriodAnchorMs(scope: ChartScope, anchorMs: number, step: number, nowMs: number) {
   const date = new Date(anchorMs);
 
-  if (scope === "weekly") {
-    date.setDate(date.getDate() + step * 7);
-  } else if (scope === "monthly") {
+  if (scope === "monthly") {
     date.setMonth(date.getMonth() + step);
   } else {
     date.setFullYear(date.getFullYear() + step);
@@ -130,14 +118,6 @@ function shiftPeriodAnchorMs(scope: ChartScope, anchorMs: number, step: number, 
 
 function formatPeriodLabel(scope: ChartScope, anchorMs: number) {
   const anchorDate = new Date(anchorMs);
-
-  if (scope === "weekly") {
-    const weekStart = startOfWeek(anchorMs);
-    const weekEnd = weekStart + 6 * 24 * 60 * 60 * 1000;
-    const startLabel = new Date(weekStart).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
-    const endLabel = new Date(weekEnd).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
-    return `${capitalize(startLabel)} - ${capitalize(endLabel)}`;
-  }
 
   if (scope === "monthly") {
     return capitalize(
@@ -152,45 +132,13 @@ function formatPeriodLabel(scope: ChartScope, anchorMs: number) {
 }
 
 function getScopeUnitLabel(scope: ChartScope) {
-  if (scope === "weekly") return "dia";
   if (scope === "monthly") return "dia";
   return "mês";
 }
 
 function buildPeriodBuckets(scope: ChartScope, anchorMs: number): RevenueBucket[] {
   const buckets: RevenueBucket[] = [];
-  const oneDayMs = 24 * 60 * 60 * 1000;
   const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-
-  if (scope === "weekly") {
-    const weekStart = startOfWeek(anchorMs);
-
-    for (let index = 0; index < 7; index += 1) {
-      const startMs = weekStart + index * oneDayMs;
-      const endMs = startMs + oneDayMs;
-      const date = new Date(startMs);
-      const weekday = date
-        .toLocaleDateString("pt-BR", { weekday: "short" })
-        .replace(".", "")
-        .slice(0, 3);
-
-      buckets.push({
-        key: `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`,
-        label: capitalize(weekday),
-        fullLabel: date.toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }),
-        startMs,
-        endMs,
-        revenueCents: 0,
-        ordersCount: 0,
-      });
-    }
-
-    return buckets;
-  }
 
   if (scope === "monthly") {
     const periodStart = startOfMonth(anchorMs);
@@ -322,8 +270,8 @@ export function DashboardClient({
   const [range, setRange] = useState<RangeValue>("30");
   const [customRangeStartDate, setCustomRangeStartDate] = useState(initialRangeStartDate);
   const [customRangeEndDate, setCustomRangeEndDate] = useState(initialRangeEndDate);
-  const [chartScope, setChartScope] = useState<ChartScope>("weekly");
-  const [chartAnchorMs, setChartAnchorMs] = useState(() => normalizePeriodAnchorMs("weekly", initialNowMs, initialNowMs));
+  const [chartScope, setChartScope] = useState<ChartScope>("monthly");
+  const [chartAnchorMs, setChartAnchorMs] = useState(() => normalizePeriodAnchorMs("monthly", initialNowMs, initialNowMs));
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [gameFilter, setGameFilter] = useState("all");
@@ -915,7 +863,6 @@ export function DashboardClient({
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] p-1">
                       {[
-                        { label: "Semanal", value: "weekly" as const },
                         { label: "Mensal", value: "monthly" as const },
                         { label: "Anual", value: "yearly" as const },
                       ].map((scopeOption) => (
@@ -945,6 +892,31 @@ export function DashboardClient({
                         <span className="text-[10px] text-slate-400">▼</span>
                       </button>
                     ) : null}
+
+                    <div className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 text-xs font-semibold text-slate-200">
+                      <span className="text-sm">📅</span>
+                      <input
+                        type="date"
+                        value={customRangeStartDate}
+                        onChange={(event) => {
+                          setCustomRangeStartDate(event.target.value);
+                          setRange("custom");
+                        }}
+                        className="bg-transparent text-xs font-semibold text-white outline-none"
+                        aria-label="Data inicial do gráfico"
+                      />
+                      <span className="text-slate-500">até</span>
+                      <input
+                        type="date"
+                        value={customRangeEndDate}
+                        onChange={(event) => {
+                          setCustomRangeEndDate(event.target.value);
+                          setRange("custom");
+                        }}
+                        className="bg-transparent text-xs font-semibold text-white outline-none"
+                        aria-label="Data final do gráfico"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1049,7 +1021,7 @@ export function DashboardClient({
                           const tooltipBottomPercent = Math.min(heightPercent + 22, 76);
                           const canDrillDown = chartScope === "yearly";
                           const isHovered = hoveredBarKey === bucket.key;
-                          const showValue = chartScope === "weekly" || chartScope === "yearly" || isHovered;
+                          const showValue = chartScope === "yearly" || isHovered;
                           const averageTicket = bucket.ordersCount > 0 ? Math.round(bucket.revenueCents / bucket.ordersCount) : 0;
 
                           return (
