@@ -691,7 +691,7 @@ export function DashboardClient({
           </section>
         ) : (
           <>
-            <section className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+            <section className="mt-5">
               <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -736,14 +736,14 @@ export function DashboardClient({
                   </div>
                 </div>
 
-                <div className="mt-4 overflow-x-auto">
-                  <div className="relative min-w-[720px]">
-                    <div className="relative h-72 rounded-2xl border border-white/10 bg-black/30 p-4">
+                <div className="mt-4 overflow-x-auto pb-1">
+                  <div className="relative min-w-[960px]">
+                    <div className="relative h-80 rounded-2xl border border-white/10 bg-black/30 p-4 sm:p-5">
                       {chartReferenceLines.map((line) => (
                         <div
                           key={`${line.value}-${line.positionPercent}`}
                           className="pointer-events-none absolute left-4 right-4"
-                          style={{ bottom: `calc(${line.positionPercent}% + 22px)` }}
+                          style={{ bottom: `calc(${line.positionPercent}% + 38px)` }}
                         >
                           <div className="relative border-t border-dashed border-white/10">
                             <span className="absolute -top-2 -left-2 -translate-x-full rounded bg-[#0F1117] px-1 text-[10px] font-semibold text-slate-500">
@@ -753,7 +753,7 @@ export function DashboardClient({
                         </div>
                       ))}
 
-                      <div className={`absolute inset-x-4 bottom-4 grid items-end gap-1 ${chartColumnsClass}`}>
+                      <div className={`absolute inset-x-4 bottom-5 top-6 grid items-end gap-1 ${chartColumnsClass}`}>
                         {currentBuckets.map((bucket) => {
                           const ratio = bucket.revenueCents > 0 ? bucket.revenueCents / chartMaxValue : 0;
                           const heightPercent = ratio * 100;
@@ -764,11 +764,11 @@ export function DashboardClient({
                           return (
                             <div
                               key={bucket.key}
-                              className="group relative flex flex-col items-center"
+                              className="group relative flex h-full flex-col items-center justify-end"
                               onMouseEnter={() => setHoveredBarKey(bucket.key)}
                               onMouseLeave={() => setHoveredBarKey(null)}
                             >
-                              <div className="relative flex h-52 w-full items-end">
+                              <div className="relative flex h-full w-full items-end pb-6">
                                 <div className="relative h-full w-full overflow-hidden rounded-md bg-slate-800/60">
                                   {bucket.revenueCents > 0 ? (
                                     <div
@@ -782,6 +782,12 @@ export function DashboardClient({
                                   ) : null}
                                 </div>
 
+                                {bucket.revenueCents > 0 && showValue ? (
+                                  <p className="pointer-events-none absolute left-1/2 top-0 z-10 -translate-x-1/2 rounded-md bg-[#0F1117]/90 px-1.5 py-0.5 text-[10px] font-bold text-cyan-200">
+                                    {formatMoney(bucket.revenueCents)}
+                                  </p>
+                                ) : null}
+
                                 <div className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-20 hidden w-max -translate-x-1/2 rounded-xl border border-white/10 bg-[#11141C] px-3 py-2 text-xs text-slate-200 shadow-[0_14px_30px_rgba(0,0,0,0.45)] group-hover:block">
                                   <p className="font-semibold text-white">{bucket.fullLabel}</p>
                                   <p className="mt-1 text-slate-300">Receita: <span className="font-semibold text-cyan-300">{formatMoney(bucket.revenueCents)}</span></p>
@@ -790,13 +796,7 @@ export function DashboardClient({
                                 </div>
                               </div>
 
-                              <div className="mt-2 min-h-[12px] text-center">
-                                {bucket.revenueCents > 0 && showValue ? (
-                                  <p className="text-[10px] font-bold text-cyan-200">{formatMoney(bucket.revenueCents)}</p>
-                                ) : null}
-                              </div>
-
-                              <p className="mt-1 text-[10px] font-semibold text-slate-400">{bucket.label}</p>
+                              <p className="-mt-1 text-[10px] font-semibold text-slate-400">{bucket.label}</p>
                             </div>
                           );
                         })}
@@ -804,17 +804,8 @@ export function DashboardClient({
                     </div>
                   </div>
                 </div>
-              </article>
 
-              <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Resumo do período</p>
-                    <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">Indicadores</h2>
-                  </div>
-                </div>
-
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                   <div className="rounded-xl border border-white/10 bg-black/30 p-3">
                     <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Receita Total</p>
                     <p className="mt-1 text-lg font-black text-cyan-300">{formatMoney(chartTotalRevenue)}</p>
@@ -835,7 +826,7 @@ export function DashboardClient({
                       {chartWorstBucket ? `${chartWorstBucket.label} - ${formatMoney(chartWorstBucket.revenueCents)}` : "Sem vendas"}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-black/30 p-3 sm:col-span-2">
+                  <div className="rounded-xl border border-white/10 bg-black/30 p-3">
                     <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Crescimento vs período anterior</p>
                     <p className={`mt-1 text-lg font-black ${growthPercent >= 0 ? "text-emerald-300" : "text-rose-300"}`}>
                       {growthPercent >= 0 ? "+" : ""}
