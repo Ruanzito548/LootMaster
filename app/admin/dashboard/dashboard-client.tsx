@@ -439,7 +439,7 @@ export function DashboardClient({
   const chartGridTemplateColumns = `repeat(${Math.max(currentBuckets.length, 1)}, minmax(0, 1fr))`;
   const chartMinWidth = Math.max(960, currentBuckets.length * 38);
   const chartYAxisGutterPx = 64;
-  const chartPlotTopPx = 32;
+  const chartPlotTopPx = 52;
   const chartPlotBottomPx = 42;
 
   const chartMaxValue = Math.max(...currentBuckets.map((bucket) => bucket.revenueCents), 0);
@@ -1000,7 +1000,7 @@ export function DashboardClient({
                                   ) : null}
                                 </div>
 
-                                <div className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-20 hidden w-max -translate-x-1/2 rounded-xl border border-white/10 bg-[#11141C] px-3 py-2 text-xs text-slate-200 shadow-[0_14px_30px_rgba(0,0,0,0.45)] group-hover:block">
+                                <div className="pointer-events-none absolute bottom-[calc(100%+18px)] left-1/2 z-20 hidden w-max -translate-x-1/2 rounded-xl border border-white/10 bg-[#11141C] px-3 py-2 text-xs text-slate-200 shadow-[0_14px_30px_rgba(0,0,0,0.45)] group-hover:block">
                                   <p className="font-semibold text-white">{bucket.fullLabel}</p>
                                   <p className="mt-1 text-slate-300">Receita: <span className="font-semibold text-cyan-300">{formatMoney(bucket.revenueCents)}</span></p>
                                   <p className="mt-1 text-slate-300">Pedidos: <span className="font-semibold text-emerald-300">{bucket.ordersCount}</span></p>
