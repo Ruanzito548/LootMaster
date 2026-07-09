@@ -14,6 +14,10 @@ export type DashboardOrder = {
   gameTitle: string;
   categoryTitle: string;
   paymentMethod: string;
+  paymentGateway: string;
+  paymentProvider: string;
+  country: string;
+  countryCode: string;
   nickname: string;
   email: string;
   supplierName: string;
@@ -63,7 +67,6 @@ type OperationalCostItem = {
 };
 
 const OPERATIONAL_COST_STORAGE_KEY = "dashboard-operational-cost-items-v1";
-const FX_RATE_STORAGE_KEY = "dashboard-usd-to-brl-rate-v1";
 const DEFAULT_USD_TO_BRL_RATE = 5.5;
 
 const DEFAULT_OPERATIONAL_COST_ITEMS: OperationalCostItem[] = [
@@ -155,6 +158,13 @@ function resolveGatewayLabel(paymentMethod: string) {
   return `Gateway ${paymentMethod}`;
 }
 
+function formatMoney(amountInCents: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amountInCents / 100);
+}
+
 function formatMoneyBrlFromUsdCents(amountInUsdCents: number, usdToBrlRate: number) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -162,8 +172,8 @@ function formatMoneyBrlFromUsdCents(amountInUsdCents: number, usdToBrlRate: numb
   }).format((amountInUsdCents / 100) * usdToBrlRate);
 }
 
-function formatDeductionBrlFromUsdCents(amountInUsdCents: number, usdToBrlRate: number) {
-  return `-${formatMoneyBrlFromUsdCents(Math.abs(amountInUsdCents), usdToBrlRate)}`;
+function formatDeduction(amountInCents: number) {
+  return `-${formatMoney(Math.abs(amountInCents))}`;
 }
 
 function formatPercent(value: number) {
@@ -407,17 +417,12 @@ export function DashboardClient({
   const [chartAnimated, setChartAnimated] = useState(false);
   const [operationalCostsOpen, setOperationalCostsOpen] = useState(false);
   const [operationalCostItems, setOperationalCostItems] = useState<OperationalCostItem[]>(DEFAULT_OPERATIONAL_COST_ITEMS);
-  const [usdToBrlRateInput, setUsdToBrlRateInput] = useState(DEFAULT_USD_TO_BRL_RATE.toFixed(2));
+  const [usdToBrlRate, setUsdToBrlRate] = useState(DEFAULT_USD_TO_BRL_RATE);
   const [newOperationalCostName, setNewOperationalCostName] = useState("");
   const [newOperationalCostValue, setNewOperationalCostValue] = useState("0");
   const [newOperationalCostValueType, setNewOperationalCostValueType] = useState<OperationalCostValueType>("fixed");
   const [newOperationalCostCurrency, setNewOperationalCostCurrency] = useState<OperationalCostCurrency>("USD");
   const [newOperationalCostFrequency, setNewOperationalCostFrequency] = useState<OperationalCostFrequency>("monthly");
-
-  const parsedUsdToBrlRate = Number(usdToBrlRateInput.replace(",", "."));
-  const usdToBrlRate = Number.isFinite(parsedUsdToBrlRate) && parsedUsdToBrlRate > 0 ? parsedUsdToBrlRate : DEFAULT_USD_TO_BRL_RATE;
-  const formatMoney = (amountInUsdCents: number) => formatMoneyBrlFromUsdCents(amountInUsdCents, usdToBrlRate);
-  const formatDeduction = (amountInUsdCents: number) => formatDeductionBrlFromUsdCents(amountInUsdCents, usdToBrlRate);
 
   useEffect(() => {
     try {
@@ -440,26 +445,34 @@ export function DashboardClient({
   }, []);
 
   useEffect(() => {
-    try {
-      const rawRate = window.localStorage.getItem(FX_RATE_STORAGE_KEY);
-      if (!rawRate) return;
+    let ignore = false;
 
-      const parsedRate = Number(rawRate);
-      if (!Number.isFinite(parsedRate) || parsedRate <= 0) return;
+    const loadRate = async () => {
+      try {
+        const response = await fetch("/api/fx/usd-brl");
+        const data = (await response.json()) as { usdToBrl?: number };
+        if (ignore) return;
 
-      setUsdToBrlRateInput(parsedRate.toFixed(2));
-    } catch {
-      // Ignore malformed local values and keep defaults.
-    }
+        if (typeof data.usdToBrl === "number" && Number.isFinite(data.usdToBrl) && data.usdToBrl > 0) {
+          setUsdToBrlRate(data.usdToBrl);
+        }
+      } catch {
+        if (!ignore) {
+          setUsdToBrlRate(DEFAULT_USD_TO_BRL_RATE);
+        }
+      }
+    };
+
+    void loadRate();
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   useEffect(() => {
     window.localStorage.setItem(OPERATIONAL_COST_STORAGE_KEY, JSON.stringify(operationalCostItems));
   }, [operationalCostItems]);
-
-  useEffect(() => {
-    window.localStorage.setItem(FX_RATE_STORAGE_KEY, String(usdToBrlRate));
-  }, [usdToBrlRate]);
 
   useEffect(() => {
     if (!operationalCostsOpen) {
@@ -1047,7 +1060,7 @@ export function DashboardClient({
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Lucro líquido ajustado</p>
                 <p className="mt-2 text-3xl font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Bruto {formatMoney(totalGrossProfit)} - Custo operacional {formatMoney(operationalCostTotal)}
+                  BRL: {formatMoneyBrlFromUsdCents(totalNetProfit, usdToBrlRate)}
                 </p>
               </div>
             </div>
@@ -1152,7 +1165,12 @@ export function DashboardClient({
 
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Lucro Líquido</span>
-                <span className="text-xl font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</span>
+                <span className="text-right text-xl font-black text-fuchsia-300">
+                  {formatMoney(totalNetProfit)}
+                  <span className="block text-xs font-semibold text-fuchsia-200/80">
+                    {formatMoneyBrlFromUsdCents(totalNetProfit, usdToBrlRate)}
+                  </span>
+                </span>
               </div>
             </article>
 
@@ -1182,7 +1200,12 @@ export function DashboardClient({
                 </div>
                 <div className="flex items-center justify-between gap-3 pt-1">
                   <span className="font-black text-white">Lucro Líquido</span>
-                  <span className="font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</span>
+                  <span className="text-right font-black text-fuchsia-300">
+                    {formatMoney(totalNetProfit)}
+                    <span className="block text-[11px] font-semibold text-fuchsia-200/80">
+                      {formatMoneyBrlFromUsdCents(totalNetProfit, usdToBrlRate)}
+                    </span>
+                  </span>
                 </div>
               </div>
             </article>
@@ -1674,17 +1697,9 @@ export function DashboardClient({
             </div>
 
             <div className="mt-3 max-w-xs">
-              <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                Cotação USD para BRL
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={usdToBrlRateInput}
-                  onChange={(event) => setUsdToBrlRateInput(event.target.value)}
-                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                />
-              </label>
+              <div className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-300">
+                Cotação automática USD/BRL: <span className="font-semibold text-cyan-300">{usdToBrlRate.toFixed(4)}</span>
+              </div>
             </div>
 
             <p className="mt-4 text-xs text-slate-500">

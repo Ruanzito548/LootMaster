@@ -15,7 +15,14 @@ type CheckoutBody = {
   categoryTitle: string;
   goldAmount: number;
   pricePerThousand: number;
-  paymentMethod: "pix" | "card" | "balance";
+  paymentMethod: "pix" | "card" | "paypal";
+  paymentGateway?: "stripe" | "paypal";
+  paymentProvider?: "Pix" | "Stripe" | "PayPal";
+  country?: string;
+  countryCode?: string;
+  locale?: string;
+  currency?: "BRL" | "USD" | "EUR" | "GBP";
+  fxRateFromBrl?: number;
   nickname: string;
   serverId: string;
   server: string;
@@ -29,6 +36,7 @@ type CheckoutBody = {
 function computeFinalAmount(price: number, paymentMethod: string, cardGatewayFeePercent: number): number {
   if (paymentMethod === "pix") return Math.round(price * 0.95 * 100);
   if (paymentMethod === "card") return Math.round(price * (1 + cardGatewayFeePercent / 100) * 100);
+  if (paymentMethod === "paypal") return Math.round(price * 100);
   return Math.round(price * 100);
 }
 
@@ -114,6 +122,13 @@ export async function POST(request: Request): Promise<Response> {
     categoryTitle,
     goldAmount,
     paymentMethod,
+    paymentGateway,
+    paymentProvider,
+    country,
+    countryCode,
+    locale,
+    currency,
+    fxRateFromBrl,
     nickname,
     serverId,
     server,
@@ -210,7 +225,17 @@ export async function POST(request: Request): Promise<Response> {
 
   const basePrice = (validatedGoldAmount / 1000) * authoritativeConfig.pricePerThousand;
   const baseAmountCents = Math.round(basePrice * 100);
-  const unitAmount = computeFinalAmount(basePrice, paymentMethod, cardGatewayFeePercent);
+  const unitAmountBrl = computeFinalAmount(basePrice, paymentMethod, cardGatewayFeePercent);
+
+  const normalizedCurrency = (currency ?? "BRL").toLowerCase();
+  const selectedCurrency = ["brl", "usd", "eur", "gbp"].includes(normalizedCurrency) ? normalizedCurrency : "brl";
+  const parsedFxRate = typeof fxRateFromBrl === "number" && Number.isFinite(fxRateFromBrl) && fxRateFromBrl > 0
+    ? fxRateFromBrl
+    : 1;
+
+  const unitAmount = selectedCurrency === "brl"
+    ? unitAmountBrl
+    : Math.max(1, Math.round(unitAmountBrl * parsedFxRate));
 
   if (unitAmount <= 0) {
     return Response.json({ error: "Invalid price." }, { status: 422 });
@@ -219,8 +244,13 @@ export async function POST(request: Request): Promise<Response> {
   const origin = request.headers.get("origin") ?? "http://localhost:3000";
 
   const paymentMethodTypes = (
-    paymentMethod === "pix" ? ["pix"] : ["card"]
-  ) as Stripe.Checkout.SessionCreateParams["payment_method_types"];
+    paymentMethod === "pix" ? ["pix"] : paymentMethod === "paypal" ? ["paypal"] : ["card"]
+  ) as unknown as Stripe.Checkout.SessionCreateParams["payment_method_types"];
+
+  const clientIp =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    "";
 
   const metadata = {
     gameId,
@@ -236,6 +266,13 @@ export async function POST(request: Request): Promise<Response> {
     deliveryMethod,
     nickname,
     paymentMethod,
+    paymentGateway: paymentGateway ?? (paymentMethod === "paypal" ? "paypal" : "stripe"),
+    paymentProvider: paymentProvider ?? (paymentMethod === "pix" ? "Pix" : paymentMethod === "paypal" ? "PayPal" : "Stripe"),
+    country: country ?? "",
+    countryCode: countryCode ?? "",
+    locale: locale ?? "",
+    currency: selectedCurrency.toUpperCase(),
+    clientIp,
     hasServerOptions: String(hasServerOptions),
     customerUid: customerUid?.trim() ?? "",
     supplierPercentage: String(supplierDefaultPercent),
@@ -258,7 +295,7 @@ export async function POST(request: Request): Promise<Response> {
       line_items: [
         {
           price_data: {
-            currency: "brl",
+            currency: selectedCurrency,
             unit_amount: unitAmount,
             product_data: {
               name: `${goldAmount.toLocaleString("pt-BR")} gold — ${gameTitle} / ${categoryTitle}`,
@@ -269,6 +306,7 @@ export async function POST(request: Request): Promise<Response> {
                 `Character: ${nickname}`,
                 paymentMethod === "pix" ? "Pix discount applied (5%)" : null,
                 paymentMethod === "card" ? `Card gateway fee applied (${cardGatewayFeePercent.toFixed(2)}%)` : null,
+                paymentMethod === "paypal" ? "PayPal checkout" : null,
               ]
                 .filter(Boolean)
                 .join(" | "),

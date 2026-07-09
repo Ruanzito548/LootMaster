@@ -16,40 +16,60 @@ type GoldPurchaseMenuProps = {
   servers: GameServer[];
 };
 
-type PaymentMethod = "pix" | "card" | "balance";
+type PaymentMethod = "pix" | "card" | "paypal";
 
-const paymentMethods: Array<{
+type CheckoutPaymentMethod = {
   id: PaymentMethod;
-  title: string;
+  label: string;
   description: string;
-  accentClass: string;
-}> = [
-  {
-    id: "pix",
-    title: "Pix",
-    description: "Instant confirmation and 5% discount.",
-    accentClass: "text-[#86efac]",
-  },
-  {
-    id: "card",
-    title: "Credit card",
-    description: "Fast approval and card-first checkout.",
-    accentClass: "text-[#93c5fd]",
-  },
-  {
-    id: "balance",
-    title: "LM Coins",
-    description: "Use wallet balance with no external fee.",
-    accentClass: "text-[#facc15]",
-  },
-];
+  gateway: "stripe" | "paypal";
+  provider: "Pix" | "Stripe" | "PayPal";
+};
+
+type CountryConfig = {
+  countryCode: string;
+  countryName: string;
+  locale: string;
+  currency: "BRL" | "USD" | "EUR" | "GBP";
+  methods: CheckoutPaymentMethod[];
+};
+
+const DEFAULT_COUNTRY_CONFIG: CountryConfig = {
+  countryCode: "US",
+  countryName: "United States",
+  locale: "en-US",
+  currency: "USD",
+  methods: [
+    {
+      id: "card",
+      label: "Credit Card (Stripe)",
+      description: "Visa, Mastercard, American Express and others.",
+      gateway: "stripe",
+      provider: "Stripe",
+    },
+    {
+      id: "paypal",
+      label: "PayPal",
+      description: "Checkout with your PayPal account.",
+      gateway: "paypal",
+      provider: "PayPal",
+    },
+  ],
+};
+
+const FALLBACK_RATES: Record<string, number> = {
+  BRL: 1,
+  USD: 0.18,
+  EUR: 0.16,
+  GBP: 0.14,
+};
 
 const deliveryMethods = ["Face to face", "Auction House", "Mailbox"];
 
-function formatBRL(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
+function formatCurrency(value: number, currency: string, locale: string) {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "BRL",
+    currency,
   }).format(value);
 }
 
@@ -61,10 +81,14 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   const [nickname, setNickname] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState(deliveryMethods[0]);
   const [email, setEmail] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [customerUid, setCustomerUid] = useState("");
+  const [countryConfig, setCountryConfig] = useState<CountryConfig>(DEFAULT_COUNTRY_CONFIG);
+  const [supportedCountries, setSupportedCountries] = useState<CountryConfig[]>([DEFAULT_COUNTRY_CONFIG]);
+  const [ratesByCurrency, setRatesByCurrency] = useState<Record<string, number>>(FALLBACK_RATES);
+  const [countryLoading, setCountryLoading] = useState(true);
 
   const hasServerOptions = servers.length > 0;
   const requiresFaction = hasServerOptions && gameId !== "retail";
@@ -93,6 +117,59 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
     });
   }, []);
 
+  useEffect(() => {
+    let ignore = false;
+
+    const loadCheckoutContext = async (countryCode?: string) => {
+      try {
+        const query = countryCode ? `?countryCode=${countryCode}` : "";
+        const response = await fetch(`/api/checkout/context${query}`);
+        const data = (await response.json()) as {
+          countryConfig?: CountryConfig;
+          supportedCountries?: CountryConfig[];
+          rates?: Record<string, number>;
+        };
+
+        if (ignore) return;
+
+        if (data.countryConfig) {
+          setCountryConfig(data.countryConfig);
+          const nextDefaultMethod = data.countryConfig.methods[0]?.id;
+          if (nextDefaultMethod) {
+            setPaymentMethod(nextDefaultMethod);
+          }
+        }
+
+        if (Array.isArray(data.supportedCountries) && data.supportedCountries.length > 0) {
+          setSupportedCountries(data.supportedCountries);
+        }
+
+        if (data.rates) {
+          setRatesByCurrency({
+            BRL: Number.isFinite(data.rates.BRL) ? data.rates.BRL : 1,
+            USD: Number.isFinite(data.rates.USD) ? data.rates.USD : FALLBACK_RATES.USD,
+            EUR: Number.isFinite(data.rates.EUR) ? data.rates.EUR : FALLBACK_RATES.EUR,
+            GBP: Number.isFinite(data.rates.GBP) ? data.rates.GBP : FALLBACK_RATES.GBP,
+          });
+        }
+      } catch {
+        if (!ignore) {
+          setCountryConfig(DEFAULT_COUNTRY_CONFIG);
+        }
+      } finally {
+        if (!ignore) {
+          setCountryLoading(false);
+        }
+      }
+    };
+
+    void loadCheckoutContext();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   const goldConfig = getGoldConfigFor(fullGoldConfig, gameId, selectedServerId, selectedFaction);
   const selectedServer = servers.find((server) => server.id === selectedServerId);
 
@@ -110,8 +187,13 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   const basePrice = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
   const paymentAdjustment = paymentMethod === "pix" ? basePrice * -0.05 : paymentMethod === "card" ? basePrice * 0.04 : 0;
   const finalPrice = Math.max(0, basePrice + paymentAdjustment);
-
-  const selectedPayment = paymentMethods.find((method) => method.id === paymentMethod) ?? paymentMethods[0];
+  const selectedPayment = countryConfig.methods.find((method) => method.id === paymentMethod) ?? countryConfig.methods[0];
+  const selectedCurrency = countryConfig.currency;
+  const selectedLocale = countryConfig.locale;
+  const displayRate = ratesByCurrency[selectedCurrency] ?? 1;
+  const finalPriceLocalized = finalPrice * displayRate;
+  const basePriceLocalized = basePrice * displayRate;
+  const paymentAdjustmentLocalized = paymentAdjustment * displayRate;
 
   const progressPercent = useMemo(() => {
     let score = 0;
@@ -141,6 +223,13 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
           goldAmount: safeGoldAmount,
           pricePerThousand: goldConfig.pricePerThousand,
           paymentMethod,
+          country: countryConfig.countryName,
+          countryCode: countryConfig.countryCode,
+          locale: countryConfig.locale,
+          currency: selectedCurrency,
+          paymentGateway: selectedPayment?.gateway ?? "stripe",
+          paymentProvider: selectedPayment?.provider ?? "Stripe",
+          fxRateFromBrl: displayRate,
           nickname: nickname.trim(),
           serverId: selectedServerId,
           server: selectedServer?.name ?? "",
@@ -164,6 +253,35 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
       setCheckoutError("Network error. Check your connection and try again.");
     } finally {
       setCheckoutLoading(false);
+    }
+  };
+
+  const onCountryChange = async (nextCountryCode: string) => {
+    setCountryLoading(true);
+    setCheckoutError(null);
+
+    try {
+      const response = await fetch(`/api/checkout/context?countryCode=${nextCountryCode}`);
+      const data = (await response.json()) as {
+        countryConfig?: CountryConfig;
+        rates?: Record<string, number>;
+      };
+
+      if (data.countryConfig) {
+        setCountryConfig(data.countryConfig);
+        const nextMethod = data.countryConfig.methods[0]?.id;
+        if (nextMethod) {
+          setPaymentMethod(nextMethod);
+        }
+      }
+
+      if (data.rates) {
+        setRatesByCurrency((current) => ({ ...current, ...data.rates }));
+      }
+    } catch {
+      setCheckoutError("Could not update country settings.");
+    } finally {
+      setCountryLoading(false);
     }
   };
 
@@ -191,6 +309,30 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
           <div className="flex items-center gap-2 text-[#9ec4f4]">
             <Sword className="h-4 w-4" />
             <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em]">Step 1: Server and faction</p>
+          </div>
+
+          <div className="mt-4">
+            <label htmlFor="country-select" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
+              Country
+            </label>
+            <select
+              id="country-select"
+              value={countryConfig.countryCode}
+              disabled={countryLoading}
+              onChange={(event) => void onCountryChange(event.target.value)}
+              className="gm-select mt-2 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
+            >
+              {supportedCountries.map((country) => (
+                <option key={country.countryCode} value={country.countryCode}>
+                  {country.countryName}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs text-[#88a8d1]">
+              {countryConfig.countryCode === "BR"
+                ? "Pagamentos em reais (BRL). Escolha Pix ou Cartao."
+                : "Payments processed securely by Stripe or PayPal."}
+            </p>
           </div>
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -282,7 +424,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              {paymentMethods.map((method) => (
+              {countryConfig.methods.map((method) => (
                 <button
                   key={method.id}
                   type="button"
@@ -294,7 +436,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
                       : "border-white/10 bg-[#0e172c]/70 hover:border-white/18"
                   }`}
                 >
-                  <p className={`text-sm font-black ${method.accentClass}`}>{method.title}</p>
+                  <p className={`text-sm font-black ${method.id === "pix" ? "text-[#86efac]" : method.id === "paypal" ? "text-[#facc15]" : "text-[#93c5fd]"}`}>{method.label}</p>
                   <p className="mt-2 text-xs leading-6 text-[#a9c4e2]">{method.description}</p>
                 </button>
               ))}
@@ -388,12 +530,14 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Base</span>
-              <span className="font-semibold text-[#e7f5ff]">{formatBRL(basePrice)}</span>
+              <span className="font-semibold text-[#e7f5ff]">{formatCurrency(basePriceLocalized, selectedCurrency, selectedLocale)}</span>
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
-              <span>{paymentMethod === "pix" ? "Pix discount" : paymentMethod === "card" ? "Card fee" : "Adjustment"}</span>
+              <span>{paymentMethod === "pix" ? "Pix discount" : paymentMethod === "card" ? "Card fee" : "PayPal fee"}</span>
               <span className={`font-semibold ${paymentAdjustment <= 0 ? "text-[#86efac]" : "text-[#fdba74]"}`}>
-                {paymentAdjustment === 0 ? formatBRL(0) : `${paymentAdjustment > 0 ? "+" : "-"}${formatBRL(Math.abs(paymentAdjustment))}`}
+                {paymentAdjustment === 0
+                  ? formatCurrency(0, selectedCurrency, selectedLocale)
+                  : `${paymentAdjustment > 0 ? "+" : "-"}${formatCurrency(Math.abs(paymentAdjustmentLocalized), selectedCurrency, selectedLocale)}`}
               </span>
             </div>
           </div>
@@ -402,7 +546,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
 
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#d3e9ff]">Total</p>
-            <p className="text-2xl font-black text-[#6ee7ff]">{formatBRL(finalPrice)}</p>
+            <p className="text-2xl font-black text-[#6ee7ff]">{formatCurrency(finalPriceLocalized, selectedCurrency, selectedLocale)}</p>
           </div>
 
           <div className="mt-4 rounded-xl border border-white/10 bg-[#0b162b]/75 px-3 py-3">
@@ -410,7 +554,9 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
               {paymentMethod === "pix" ? <Landmark className="h-4 w-4" /> : paymentMethod === "card" ? <CreditCard className="h-4 w-4" /> : <Banknote className="h-4 w-4" />}
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em]">Payment method</p>
             </div>
-            <p className={`mt-2 text-sm font-black ${selectedPayment.accentClass}`}>{selectedPayment.title}</p>
+            <p className={`mt-2 text-sm font-black ${paymentMethod === "pix" ? "text-[#86efac]" : paymentMethod === "paypal" ? "text-[#facc15]" : "text-[#93c5fd]"}`}>
+              {selectedPayment?.label ?? "Payment"}
+            </p>
             <p className="mt-1 text-xs text-[#a9c4e2]">{selectedPayment.description}</p>
           </div>
 
@@ -426,7 +572,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             onClick={() => void startCheckout()}
             className="gm-button gm-button-primary mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {checkoutLoading ? "Redirecting..." : `Checkout ${formatBRL(finalPrice)}`}
+            {checkoutLoading ? "Redirecting..." : `Checkout ${formatCurrency(finalPriceLocalized, selectedCurrency, selectedLocale)}`}
           </button>
         </article>
       </aside>
