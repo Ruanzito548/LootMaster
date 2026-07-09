@@ -419,6 +419,7 @@ export function DashboardClient({
   const selectedYear = new Date(chartAnchorMs).getFullYear();
   const chartGridTemplateColumns = `repeat(${Math.max(currentBuckets.length, 1)}, minmax(0, 1fr))`;
   const chartMinWidth = Math.max(960, currentBuckets.length * 38);
+  const chartYAxisGutterPx = 64;
 
   const chartMaxValue = Math.max(...currentBuckets.map((bucket) => bucket.revenueCents), 0);
   const chartScaleMax = buildChartScaleMax(chartMaxValue);
@@ -903,14 +904,25 @@ export function DashboardClient({
                 <div className="mt-4 overflow-x-auto pb-1">
                   <div className="relative" style={{ minWidth: `${chartMinWidth}px` }}>
                     <div className="relative h-80 rounded-2xl border border-white/10 bg-black/30 p-4 sm:p-5">
+                      <span className="pointer-events-none absolute left-2 top-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                        USD
+                      </span>
+
                       {chartReferenceLines.map((line) => (
                         <div
                           key={`${line.value}-${line.positionPercent}`}
-                          className="pointer-events-none absolute left-4 right-4"
-                          style={{ bottom: `calc(${line.positionPercent}% + 38px)` }}
+                          className="pointer-events-none absolute"
+                          style={{
+                            left: `${chartYAxisGutterPx}px`,
+                            right: "16px",
+                            bottom: `calc(${line.positionPercent}% + 38px)`,
+                          }}
                         >
                           <div className="relative border-t border-dashed border-white/10">
-                            <span className="absolute -top-2 -left-2 -translate-x-full rounded bg-[#0F1117] px-1 text-[10px] font-semibold text-slate-500">
+                            <span
+                              className="absolute -top-2 rounded bg-[#0F1117] px-1 text-[10px] font-semibold text-slate-400"
+                              style={{ left: `${-chartYAxisGutterPx + 6}px` }}
+                            >
                               {formatMoney(line.value)}
                             </span>
                           </div>
@@ -918,8 +930,12 @@ export function DashboardClient({
                       ))}
 
                       <div
-                        className="absolute inset-x-4 bottom-5 top-8 grid items-end gap-1"
-                        style={{ gridTemplateColumns: chartGridTemplateColumns }}
+                        className="absolute bottom-5 top-8 grid items-end gap-1"
+                        style={{
+                          left: `${chartYAxisGutterPx}px`,
+                          right: "16px",
+                          gridTemplateColumns: chartGridTemplateColumns,
+                        }}
                       >
                         {currentBuckets.map((bucket) => {
                           const ratio = bucket.revenueCents > 0 ? bucket.revenueCents / chartScaleMax : 0;
