@@ -1,52 +1,18 @@
 export const FINANCIAL_CALCULATOR_CONFIG_VERSION = 1;
 export const FINANCIAL_CALCULATOR_CONFIG_DOC_ID = "financial-calculator";
 
-export type FinancialDistributionCategoryKey =
-  | "profitMargin"
-  | "retentionFund"
-  | "platformFee"
-  | "otherCosts";
-
-export type FinancialDistributionCategory = {
-  key: FinancialDistributionCategoryKey;
-  label: string;
-  shortLabel: string;
-  percent: number;
-};
-
 export type FinancialCalculatorConfig = {
   schemaVersion: number;
   updatedAtMs: number;
   currency: "USD";
-  categories: FinancialDistributionCategory[];
+  supplierPercentage: number;
+  cardGatewayFeePercent: number;
+  cashbackPercent: number;
+  operationalReservePercent: number;
+  defaultSalesPerDay: number;
+  defaultAverageTicket: number;
+  defaultActiveDays: number;
 };
-
-const DEFAULT_CATEGORIES: FinancialDistributionCategory[] = [
-  {
-    key: "profitMargin",
-    label: "Margem de Lucro",
-    shortLabel: "Lucro",
-    percent: 18,
-  },
-  {
-    key: "retentionFund",
-    label: "Fundo de Retencao de Clientes",
-    shortLabel: "Retencao",
-    percent: 7,
-  },
-  {
-    key: "platformFee",
-    label: "Taxa da Plataforma",
-    shortLabel: "Plataforma",
-    percent: 0,
-  },
-  {
-    key: "otherCosts",
-    label: "Outros Custos",
-    shortLabel: "Outros Custos",
-    percent: 0,
-  },
-];
 
 function asFiniteNumber(value: unknown): number | null {
   if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -65,8 +31,32 @@ function clampPercent(value: unknown, fallback: number) {
   return Math.max(0, Math.min(100, Number(parsed.toFixed(2))));
 }
 
-function isCategoryKey(value: unknown): value is FinancialDistributionCategoryKey {
-  return DEFAULT_CATEGORIES.some((category) => category.key === value);
+function clampNonNegativeInt(value: unknown, fallback: number) {
+  const parsed = asFiniteNumber(value);
+  if (parsed === null) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.round(parsed));
+}
+
+function readLegacyCategoryPercent(source: unknown, key: string): number | null {
+  if (!Array.isArray(source)) {
+    return null;
+  }
+
+  for (const entry of source) {
+    if (!entry || typeof entry !== "object") {
+      continue;
+    }
+
+    const record = entry as { key?: unknown; percent?: unknown };
+    if (record.key === key) {
+      return asFiniteNumber(record.percent);
+    }
+  }
+
+  return null;
 }
 
 export function buildDefaultFinancialCalculatorConfig(): FinancialCalculatorConfig {
@@ -74,7 +64,13 @@ export function buildDefaultFinancialCalculatorConfig(): FinancialCalculatorConf
     schemaVersion: FINANCIAL_CALCULATOR_CONFIG_VERSION,
     updatedAtMs: Date.now(),
     currency: "USD",
-    categories: DEFAULT_CATEGORIES.map((category) => ({ ...category })),
+    supplierPercentage: 75,
+    cardGatewayFeePercent: 2,
+    cashbackPercent: 7,
+    operationalReservePercent: 3,
+    defaultSalesPerDay: 12,
+    defaultAverageTicket: 100,
+    defaultActiveDays: 30,
   };
 }
 
@@ -85,38 +81,28 @@ export function sanitizeFinancialCalculatorConfig(source: unknown): FinancialCal
     return fallback;
   }
 
-  const parsed = source as Partial<FinancialCalculatorConfig>;
+  const parsed = source as Partial<FinancialCalculatorConfig> & {
+    categories?: unknown;
+  };
 
-  if (parsed.schemaVersion !== FINANCIAL_CALCULATOR_CONFIG_VERSION || !Array.isArray(parsed.categories)) {
-    return fallback;
-  }
+  const legacyProfitMargin = readLegacyCategoryPercent(parsed.categories, "profitMargin") ?? 0;
+  const legacyRetentionFund = readLegacyCategoryPercent(parsed.categories, "retentionFund") ?? fallback.cashbackPercent;
+  const legacyPlatformFee = readLegacyCategoryPercent(parsed.categories, "platformFee") ?? fallback.cardGatewayFeePercent;
+  const legacyOtherCosts = readLegacyCategoryPercent(parsed.categories, "otherCosts") ?? fallback.operationalReservePercent;
 
-  const parsedByKey = new Map<FinancialDistributionCategoryKey, Partial<FinancialDistributionCategory>>();
-
-  for (const entry of parsed.categories) {
-    if (!entry || typeof entry !== "object" || !isCategoryKey((entry as { key?: unknown }).key)) {
-      continue;
-    }
-
-    parsedByKey.set(entry.key, entry);
-  }
+  const legacyAllocated = Math.max(0, legacyProfitMargin + legacyRetentionFund + legacyPlatformFee + legacyOtherCosts);
+  const legacySupplierFallback = Math.max(0, 100 - legacyAllocated);
 
   return {
     schemaVersion: FINANCIAL_CALCULATOR_CONFIG_VERSION,
     updatedAtMs: asFiniteNumber(parsed.updatedAtMs) ?? Date.now(),
     currency: "USD",
-    categories: fallback.categories.map((category) => {
-      const nextEntry = parsedByKey.get(category.key);
-
-      return {
-        ...category,
-        label: typeof nextEntry?.label === "string" && nextEntry.label.trim() ? nextEntry.label : category.label,
-        shortLabel:
-          typeof nextEntry?.shortLabel === "string" && nextEntry.shortLabel.trim()
-            ? nextEntry.shortLabel
-            : category.shortLabel,
-        percent: clampPercent(nextEntry?.percent, category.percent),
-      };
-    }),
+    supplierPercentage: clampPercent(parsed.supplierPercentage, legacySupplierFallback || fallback.supplierPercentage),
+    cardGatewayFeePercent: clampPercent(parsed.cardGatewayFeePercent, legacyPlatformFee),
+    cashbackPercent: clampPercent(parsed.cashbackPercent, legacyRetentionFund),
+    operationalReservePercent: clampPercent(parsed.operationalReservePercent, legacyOtherCosts),
+    defaultSalesPerDay: clampNonNegativeInt(parsed.defaultSalesPerDay, fallback.defaultSalesPerDay),
+    defaultAverageTicket: clampNonNegativeInt(parsed.defaultAverageTicket, fallback.defaultAverageTicket),
+    defaultActiveDays: clampNonNegativeInt(parsed.defaultActiveDays, fallback.defaultActiveDays),
   };
 }

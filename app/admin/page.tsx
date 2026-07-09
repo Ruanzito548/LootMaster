@@ -87,18 +87,27 @@ export default function AdminPage() {
         </div>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
-          <article className="rounded-2xl border border-green-900 bg-green-950/20 p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Active modules</p>
-            <p className="mt-2 text-3xl font-black text-green-300">11</p>
-          </article>
-          <article className="rounded-2xl border border-green-900 bg-green-950/20 p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Commerce</p>
-            <p className="mt-2 text-3xl font-black text-green-300">Stripe Online</p>
-          </article>
-          <article className="rounded-2xl border border-green-900 bg-green-950/20 p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Inventory tools</p>
-            <p className="mt-2 text-3xl font-black text-green-400">Ready</p>
-          </article>
+          <Link
+            href="/admin/dashboard"
+            className="rounded-2xl border border-green-900 bg-green-950/20 p-5 transition hover:-translate-y-0.5 hover:border-green-700/50 hover:bg-green-950/40"
+          >
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Acesso rápido</p>
+            <p className="mt-2 text-3xl font-black text-green-300">Dashboard</p>
+          </Link>
+          <Link
+            href="/admin/orders"
+            className="rounded-2xl border border-green-900 bg-green-950/20 p-5 transition hover:-translate-y-0.5 hover:border-green-700/50 hover:bg-green-950/40"
+          >
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Acesso rápido</p>
+            <p className="mt-2 text-3xl font-black text-green-300">Orders</p>
+          </Link>
+          <Link
+            href="/admin/withdrawals"
+            className="rounded-2xl border border-green-900 bg-green-950/20 p-5 transition hover:-translate-y-0.5 hover:border-green-700/50 hover:bg-green-950/40"
+          >
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Acesso rápido</p>
+            <p className="mt-2 text-3xl font-black text-green-400">Saques</p>
+          </Link>
         </section>
 
         <section className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
