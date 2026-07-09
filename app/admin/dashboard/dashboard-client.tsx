@@ -247,12 +247,40 @@ function fillBucketsWithOrders(buckets: RevenueBucket[], inputOrders: DashboardO
   return next;
 }
 
-function buildReferenceLines(maxValue: number) {
-  const safeMax = Math.max(maxValue, 1);
-  const step = safeMax / 4;
+function roundUpToNiceScale(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return 100;
 
-  return [4, 3, 2, 1, 0].map((multiplier) => {
-    const value = Math.round(step * multiplier);
+  const magnitude = 10 ** Math.floor(Math.log10(value));
+  const residual = value / magnitude;
+  const candidates = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 9, 10];
+  const selected = candidates.find((candidate) => residual <= candidate) ?? 10;
+
+  return selected * magnitude;
+}
+
+function buildChartScale(maxRevenueCents: number) {
+  const safeMaxCents = Math.max(maxRevenueCents, 0);
+  const safeMaxUsd = safeMaxCents / 100;
+  const desiredIntervals = 5;
+  const scaleMaxUsd = roundUpToNiceScale(safeMaxUsd);
+  const stepUsd = scaleMaxUsd / desiredIntervals;
+  const scaleMaxCents = Math.round(scaleMaxUsd * 100);
+
+  const ticks = Array.from({ length: desiredIntervals + 1 }, (_, index) => {
+    const tickUsd = scaleMaxUsd - index * stepUsd;
+    return Math.max(0, Math.round(tickUsd * 100));
+  });
+
+  return {
+    max: scaleMaxCents,
+    ticks,
+  };
+}
+
+function buildReferenceLines(scaleMaxValue: number, ticks: number[]) {
+  const safeMax = Math.max(scaleMaxValue, 1);
+
+  return ticks.map((value) => {
     const positionPercent = (value / safeMax) * 100;
 
     return {
@@ -260,15 +288,6 @@ function buildReferenceLines(maxValue: number) {
       positionPercent,
     };
   });
-}
-
-function buildChartScaleMax(maxRevenueCents: number) {
-  const scaleStepUsd = 1000;
-  const scaleStepCents = scaleStepUsd * 100;
-  const safeRevenue = Math.max(maxRevenueCents, 0);
-  const roundedScale = Math.ceil(safeRevenue / scaleStepCents) * scaleStepCents;
-
-  return Math.max(scaleStepCents, roundedScale);
 }
 
 export function DashboardClient({
@@ -420,10 +439,13 @@ export function DashboardClient({
   const chartGridTemplateColumns = `repeat(${Math.max(currentBuckets.length, 1)}, minmax(0, 1fr))`;
   const chartMinWidth = Math.max(960, currentBuckets.length * 38);
   const chartYAxisGutterPx = 64;
+  const chartPlotTopPx = 32;
+  const chartPlotBottomPx = 42;
 
   const chartMaxValue = Math.max(...currentBuckets.map((bucket) => bucket.revenueCents), 0);
-  const chartScaleMax = buildChartScaleMax(chartMaxValue);
-  const chartReferenceLines = buildReferenceLines(chartScaleMax);
+  const chartScale = buildChartScale(chartMaxValue);
+  const chartScaleMax = chartScale.max;
+  const chartReferenceLines = buildReferenceLines(chartScaleMax, chartScale.ticks);
   const chartTotalRevenue = currentBuckets.reduce((acc, bucket) => acc + bucket.revenueCents, 0);
   const chartTotalOrders = currentBuckets.reduce((acc, bucket) => acc + bucket.ordersCount, 0);
   const chartAverageRevenue = currentBuckets.length > 0 ? Math.round(chartTotalRevenue / currentBuckets.length) : 0;
@@ -915,7 +937,7 @@ export function DashboardClient({
                           style={{
                             left: `${chartYAxisGutterPx}px`,
                             right: "16px",
-                            bottom: `calc(${line.positionPercent}% + 38px)`,
+                            bottom: `calc(${line.positionPercent}% + ${chartPlotBottomPx}px)`,
                           }}
                         >
                           <div className="relative border-t border-dashed border-white/10">
@@ -930,8 +952,10 @@ export function DashboardClient({
                       ))}
 
                       <div
-                        className="absolute bottom-5 top-8 grid items-end gap-1"
+                        className="absolute grid items-end gap-1"
                         style={{
+                          top: `${chartPlotTopPx}px`,
+                          bottom: `${chartPlotBottomPx}px`,
                           left: `${chartYAxisGutterPx}px`,
                           right: "16px",
                           gridTemplateColumns: chartGridTemplateColumns,
@@ -939,7 +963,7 @@ export function DashboardClient({
                       >
                         {currentBuckets.map((bucket) => {
                           const ratio = bucket.revenueCents > 0 ? bucket.revenueCents / chartScaleMax : 0;
-                          const heightPercent = ratio * 84;
+                          const heightPercent = Math.max(0, Math.min(100, ratio * 100));
                           const isHovered = hoveredBarKey === bucket.key;
                           const showValue = chartScope === "weekly" || chartScope === "yearly" || isHovered;
                           const averageTicket = bucket.ordersCount > 0 ? Math.round(bucket.revenueCents / bucket.ordersCount) : 0;
@@ -951,7 +975,7 @@ export function DashboardClient({
                               onMouseEnter={() => setHoveredBarKey(bucket.key)}
                               onMouseLeave={() => setHoveredBarKey(null)}
                             >
-                              <div className="relative flex h-full w-full items-end pb-6">
+                              <div className="relative flex h-full w-full items-end">
                                 <div className="relative h-full w-full">
                                   <div className="absolute inset-0 overflow-hidden rounded-md bg-slate-800/60">
                                     {bucket.revenueCents > 0 ? (
@@ -984,7 +1008,9 @@ export function DashboardClient({
                                 </div>
                               </div>
 
-                              <p className="-mt-1 text-[10px] font-semibold text-slate-400">{bucket.label}</p>
+                              <p className="pointer-events-none absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-slate-400">
+                                {bucket.label}
+                              </p>
                             </div>
                           );
                         })}
