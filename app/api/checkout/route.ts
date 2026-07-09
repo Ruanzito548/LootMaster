@@ -3,6 +3,11 @@ import Stripe from "stripe";
 import { defaultGoldConfigEntry } from "@/app/data/gold-config";
 import { getServersByGameId } from "@/app/data/games";
 import { getAdminDb } from "@/lib/firebase-admin";
+import {
+  SITE_FEE_SETTINGS_DOC_ID,
+  buildDefaultSiteFeeSettings,
+  sanitizeSiteFeeSettings,
+} from "@/lib/site-fee-settings";
 
 type CheckoutBody = {
   gameId: string;
@@ -74,6 +79,17 @@ async function resolvePricingConfig(gameId: string, serverId: string, faction: s
   }
 
   return defaultGoldConfigEntry;
+}
+
+async function resolveGlobalPlatformFeePercent() {
+  const adminDb = getAdminDb();
+  const snapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
+
+  if (!snapshot.exists) {
+    return buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+  }
+
+  return sanitizeSiteFeeSettings(snapshot.data()).globalPlatformFeePercent;
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -154,6 +170,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   let authoritativeConfig;
+  let globalPlatformFeePercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
 
   try {
     authoritativeConfig = await resolvePricingConfig(
@@ -163,6 +180,12 @@ export async function POST(request: Request): Promise<Response> {
     );
   } catch {
     return Response.json({ error: "Could not load price configuration." }, { status: 503 });
+  }
+
+  try {
+    globalPlatformFeePercent = await resolveGlobalPlatformFeePercent();
+  } catch {
+    globalPlatformFeePercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
   }
 
   const validatedGoldAmount = Math.min(
@@ -204,6 +227,7 @@ export async function POST(request: Request): Promise<Response> {
     paymentMethod,
     hasServerOptions: String(hasServerOptions),
     customerUid: customerUid?.trim() ?? "",
+    commissionPercent: String(globalPlatformFeePercent),
   };
 
   try {

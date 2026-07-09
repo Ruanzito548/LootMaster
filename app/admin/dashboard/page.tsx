@@ -1,6 +1,11 @@
 import Link from "next/link";
 import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
+import {
+  SITE_FEE_SETTINGS_DOC_ID,
+  buildDefaultSiteFeeSettings,
+  sanitizeSiteFeeSettings,
+} from "@/lib/site-fee-settings";
 
 import { DashboardClient, type DashboardOrder } from "./dashboard-client";
 
@@ -36,6 +41,7 @@ export default async function DashboardPage() {
   let sessions: Stripe.Checkout.Session[] = [];
   let orders: DashboardOrder[] = [];
   let loadError: string | null = null;
+  let globalPlatformFeePercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
   let completedOrderIds = new Set<string>();
 
   try {
@@ -57,6 +63,11 @@ export default async function DashboardPage() {
       .orderBy("updatedAt", "desc")
       .limit(300)
       .get();
+
+    const siteFeeSnapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
+    globalPlatformFeePercent = siteFeeSnapshot.exists
+      ? sanitizeSiteFeeSettings(siteFeeSnapshot.data()).globalPlatformFeePercent
+      : buildDefaultSiteFeeSettings().globalPlatformFeePercent;
 
     orders = snapshot.docs.map((docRow) => {
       const data = docRow.data() as Record<string, unknown>;
@@ -154,7 +165,11 @@ export default async function DashboardPage() {
         </div>
 
         <section className="mt-8">
-          <DashboardClient orders={orders} loadError={loadError} />
+          <DashboardClient
+            orders={orders}
+            loadError={loadError}
+            initialGlobalPlatformFeePercent={globalPlatformFeePercent}
+          />
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">

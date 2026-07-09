@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+
+import { auth } from "@/lib/firebase";
 
 export type DashboardOrder = {
   id: string;
@@ -22,9 +24,11 @@ export type DashboardOrder = {
 type DashboardClientProps = {
   orders: DashboardOrder[];
   loadError: string | null;
+  initialGlobalPlatformFeePercent: number;
 };
 
 type RangeValue = "7" | "30" | "90" | "all";
+type ChartWindow = "week" | "month";
 
 function formatMoney(amountInCents: number) {
   return new Intl.NumberFormat("en-US", {
@@ -37,8 +41,12 @@ function formatPercent(value: number) {
   return `${value.toFixed(2)}%`;
 }
 
-function formatDateLabel(unixSeconds: number) {
-  return new Date(unixSeconds * 1000).toLocaleDateString("pt-BR", {
+function formatDateLabel(unixMs: number, chartWindow: ChartWindow) {
+  if (chartWindow === "week") {
+    return new Date(unixMs).toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
+  }
+
+  return new Date(unixMs).toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "2-digit",
   });
@@ -54,40 +62,35 @@ function getRangeStartMs(range: RangeValue): number | null {
   return Date.now() - days * 24 * 60 * 60 * 1000;
 }
 
-export function DashboardClient({ orders, loadError }: DashboardClientProps) {
+export function DashboardClient({
+  orders,
+  loadError,
+  initialGlobalPlatformFeePercent,
+}: DashboardClientProps) {
   const [range, setRange] = useState<RangeValue>("30");
+  const [chartWindow, setChartWindow] = useState<ChartWindow>("month");
   const [statusFilter, setStatusFilter] = useState("all");
   const [gameFilter, setGameFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
+  const [globalFeeInput, setGlobalFeeInput] = useState(initialGlobalPlatformFeePercent.toFixed(2));
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
 
-  const statusOptions = useMemo(() => {
-    const unique = new Set(orders.map((order) => order.statusLabel));
-    return ["all", ...Array.from(unique)];
-  }, [orders]);
+  const statusOptions = ["all", ...Array.from(new Set(orders.map((order) => order.statusLabel)))];
+  const gameOptions = ["all", ...Array.from(new Set(orders.map((order) => order.gameTitle)))];
+  const paymentOptions = ["all", ...Array.from(new Set(orders.map((order) => order.paymentMethod)))];
 
-  const gameOptions = useMemo(() => {
-    const unique = new Set(orders.map((order) => order.gameTitle));
-    return ["all", ...Array.from(unique)];
-  }, [orders]);
+  const rangeStart = getRangeStartMs(range);
+  const filteredOrders = orders.filter((order) => {
+    const createdMs = order.createdUnix * 1000;
 
-  const paymentOptions = useMemo(() => {
-    const unique = new Set(orders.map((order) => order.paymentMethod));
-    return ["all", ...Array.from(unique)];
-  }, [orders]);
-
-  const filteredOrders = useMemo(() => {
-    const rangeStart = getRangeStartMs(range);
-
-    return orders.filter((order) => {
-      const createdMs = order.createdUnix * 1000;
-
-      if (rangeStart && createdMs < rangeStart) return false;
-      if (statusFilter !== "all" && order.statusLabel !== statusFilter) return false;
-      if (gameFilter !== "all" && order.gameTitle !== gameFilter) return false;
-      if (paymentFilter !== "all" && order.paymentMethod !== paymentFilter) return false;
-      return true;
-    });
-  }, [orders, range, statusFilter, gameFilter, paymentFilter]);
+    if (rangeStart && createdMs < rangeStart) return false;
+    if (statusFilter !== "all" && order.statusLabel !== statusFilter) return false;
+    if (gameFilter !== "all" && order.gameTitle !== gameFilter) return false;
+    if (paymentFilter !== "all" && order.paymentMethod !== paymentFilter) return false;
+    return true;
+  });
 
   const totalRevenue = filteredOrders.reduce((acc, order) => acc + order.amountTotal, 0);
   const totalPayout = filteredOrders.reduce((acc, order) => acc + order.sellerAmountCents, 0);
@@ -100,44 +103,57 @@ export function DashboardClient({ orders, loadError }: DashboardClientProps) {
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
   const averageCommissionPercent = totalRevenue > 0 ? (totalPlatformProfit / totalRevenue) * 100 : 0;
 
-  const revenueByDay = useMemo(() => {
-    const grouped = new Map<string, number>();
+  const chartDays = chartWindow === "week" ? 7 : 30;
+  const chartStartDate = new Date();
+  chartStartDate.setHours(0, 0, 0, 0);
+  chartStartDate.setDate(chartStartDate.getDate() - (chartDays - 1));
+  const chartStartMs = chartStartDate.getTime();
 
-    for (const order of filteredOrders) {
-      const date = new Date(order.createdUnix * 1000);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      grouped.set(key, (grouped.get(key) || 0) + order.amountTotal);
+  const groupedChart = new Map<string, { revenue: number; orders: number }>();
+  for (const order of filteredOrders) {
+    const createdMs = order.createdUnix * 1000;
+    if (createdMs < chartStartMs) {
+      continue;
     }
 
-    const points = Array.from(grouped.entries())
-      .sort(([a], [b]) => (a < b ? -1 : 1))
-      .slice(-14)
-      .map(([dayKey, value]) => ({
-        dayKey,
-        label: formatDateLabel(new Date(`${dayKey}T00:00:00`).getTime() / 1000),
-        value,
-      }));
+    const date = new Date(createdMs);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const current = groupedChart.get(key) ?? { revenue: 0, orders: 0 };
+    groupedChart.set(key, { revenue: current.revenue + order.amountTotal, orders: current.orders + 1 });
+  }
 
-    const maxValue = Math.max(...points.map((point) => point.value), 1);
+  const chartPoints = Array.from({ length: chartDays }, (_, offset) => {
+    const day = new Date(chartStartMs);
+    day.setDate(day.getDate() + offset);
+    const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+    const grouped = groupedChart.get(key) ?? { revenue: 0, orders: 0 };
 
-    return { points, maxValue };
-  }, [filteredOrders]);
+    return {
+      dayKey: key,
+      label: formatDateLabel(day.getTime(), chartWindow),
+      fullLabel: day.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }),
+      value: grouped.revenue,
+      orders: grouped.orders,
+    };
+  });
 
-  const statusBreakdown = useMemo(() => {
-    const grouped = new Map<string, number>();
+  const chartMaxValue = Math.max(...chartPoints.map((point) => point.value), 1);
+  const chartTotalRevenue = chartPoints.reduce((acc, point) => acc + point.value, 0);
+  const chartAverageRevenue = chartDays > 0 ? Math.round(chartTotalRevenue / chartDays) : 0;
+  const chartBestDay = chartPoints.reduce((best, current) => (current.value > best.value ? current : best), chartPoints[0]);
 
-    for (const order of filteredOrders) {
-      grouped.set(order.statusLabel, (grouped.get(order.statusLabel) || 0) + 1);
-    }
+  const statusGrouped = new Map<string, number>();
+  for (const order of filteredOrders) {
+    statusGrouped.set(order.statusLabel, (statusGrouped.get(order.statusLabel) || 0) + 1);
+  }
 
-    return Array.from(grouped.entries())
-      .map(([label, count]) => ({
-        label,
-        count,
-        pct: totalOrders > 0 ? Math.round((count / totalOrders) * 100) : 0,
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [filteredOrders, totalOrders]);
+  const statusBreakdown = Array.from(statusGrouped.entries())
+    .map(([label, count]) => ({
+      label,
+      count,
+      pct: totalOrders > 0 ? Math.round((count / totalOrders) * 100) : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
 
   const gameRevenue = (() => {
     const grouped = new Map<string, number>();
@@ -185,10 +201,128 @@ export function DashboardClient({ orders, loadError }: DashboardClientProps) {
 
   const recentOrders = [...filteredOrders].sort((a, b) => b.createdUnix - a.createdUnix).slice(0, 8);
 
+  async function saveGlobalSiteFee() {
+    if (savingSettings) {
+      return;
+    }
+
+    const parsed = Number(globalFeeInput.replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
+      setSettingsError("A taxa global deve estar entre 0 e 100.");
+      setSettingsMessage(null);
+      return;
+    }
+
+    if (!auth?.currentUser) {
+      setSettingsError("Faça login com uma conta admin para salvar configurações.");
+      setSettingsMessage(null);
+      return;
+    }
+
+    setSavingSettings(true);
+    setSettingsError(null);
+    setSettingsMessage(null);
+
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/dashboard-settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          globalPlatformFeePercent: parsed,
+        }),
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        settings?: { globalPlatformFeePercent: number };
+      };
+
+      if (!response.ok || !data.ok || !data.settings) {
+        setSettingsError(data.error ?? "Não foi possível salvar a taxa global.");
+        return;
+      }
+
+      setGlobalFeeInput(data.settings.globalPlatformFeePercent.toFixed(2));
+      setSettingsMessage("Taxa global salva. A alteração vale para novas ordens.");
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : "Não foi possível salvar a taxa global.");
+    } finally {
+      setSavingSettings(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-black text-green-400" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+          <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6 xl:col-span-2">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 xl:col-span-2">
+                Período do dashboard
+                <select
+                  className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  value={range}
+                  onChange={(event) => setRange(event.target.value as RangeValue)}
+                >
+                  <option value="7">Últimos 7 dias</option>
+                  <option value="30">Últimos 30 dias</option>
+                  <option value="90">Últimos 90 dias</option>
+                  <option value="all">Todo período</option>
+                </select>
+              </label>
+
+              <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                Status
+                <select
+                  className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                >
+                  {statusOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option === "all" ? "Todos" : option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                Jogo
+                <select
+                  className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  value={gameFilter}
+                  onChange={(event) => setGameFilter(event.target.value)}
+                >
+                  {gameOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option === "all" ? "Todos" : option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                Pagamento
+                <select
+                  className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  value={paymentFilter}
+                  onChange={(event) => setPaymentFilter(event.target.value)}
+                >
+                  {paymentOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option === "all" ? "Todos" : option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </article>
+
           <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="space-y-3">
@@ -317,26 +451,36 @@ export function DashboardClient({ orders, loadError }: DashboardClientProps) {
               </div>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {[
-                { label: "Últimos 7 dias", value: "7" as const },
-                { label: "Últimos 30 dias", value: "30" as const },
-                { label: "Últimos 90 dias", value: "90" as const },
-              ].map((button) => (
+            <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Configurações</p>
+              <p className="mt-1 text-sm text-slate-400">Taxa global aplicada em novas ordens da plataforma.</p>
+
+              <div className="mt-4 flex flex-wrap items-end gap-3">
+                <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                  Taxa global do site (%)
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={globalFeeInput}
+                    onChange={(event) => setGlobalFeeInput(event.target.value)}
+                    className="min-h-[44px] w-48 rounded-xl border border-white/10 bg-black/50 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-400"
+                  />
+                </label>
+
                 <button
-                  key={button.value}
                   type="button"
-                  onClick={() => setRange(button.value)}
-                  className={`rounded-2xl border px-4 py-3 text-left transition ${
-                    range === button.value
-                      ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-200"
-                      : "border-white/10 bg-black/30 text-slate-300 hover:border-white/20 hover:bg-white/5"
-                  }`}
+                  onClick={() => void saveGlobalSiteFee()}
+                  disabled={savingSettings}
+                  className="inline-flex min-h-[44px] items-center rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 text-sm font-semibold text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <p className="text-xs font-bold uppercase tracking-[0.18em]">{button.label}</p>
-                  <p className="mt-1 text-sm text-slate-500">Troca a leitura do painel</p>
+                  {savingSettings ? "Salvando..." : "Salvar taxa global"}
                 </button>
-              ))}
+              </div>
+
+              {settingsMessage ? <p className="mt-3 text-xs font-semibold text-emerald-300">{settingsMessage}</p> : null}
+              {settingsError ? <p className="mt-3 text-xs font-semibold text-rose-300">{settingsError}</p> : null}
             </div>
           </article>
         </section>
@@ -346,69 +490,6 @@ export function DashboardClient({ orders, loadError }: DashboardClientProps) {
             {loadError}
           </section>
         ) : null}
-
-        <section className="mt-5 rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-              Período
-              <select
-                className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                value={range}
-                onChange={(event) => setRange(event.target.value as RangeValue)}
-              >
-                <option value="7">Últimos 7 dias</option>
-                <option value="30">Últimos 30 dias</option>
-                <option value="90">Últimos 90 dias</option>
-                <option value="all">Todo período</option>
-              </select>
-            </label>
-
-            <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-              Status
-              <select
-                className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                {statusOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option === "all" ? "Todos" : option}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-              Jogo
-              <select
-                className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                value={gameFilter}
-                onChange={(event) => setGameFilter(event.target.value)}
-              >
-                {gameOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option === "all" ? "Todos" : option}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-              Pagamento
-              <select
-                className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                value={paymentFilter}
-                onChange={(event) => setPaymentFilter(event.target.value)}
-              >
-                {paymentOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option === "all" ? "Todos" : option}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </section>
 
         {totalOrders === 0 ? (
           <section className="mt-5 rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-6 text-sm font-semibold text-slate-400">
@@ -423,25 +504,64 @@ export function DashboardClient({ orders, loadError }: DashboardClientProps) {
                     <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Receita</p>
                     <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">Faturamento por dia</h2>
                   </div>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-slate-300">
-                    {revenueByDay.points.length} pontos
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setChartWindow("week")}
+                      className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] transition ${
+                        chartWindow === "week"
+                          ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-200"
+                          : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20"
+                      }`}
+                    >
+                      Semana
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChartWindow("month")}
+                      className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] transition ${
+                        chartWindow === "month"
+                          ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-200"
+                          : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20"
+                      }`}
+                    >
+                      Mês
+                    </button>
+                  </div>
                 </div>
 
-                <div className="mt-5 grid grid-cols-7 gap-2 sm:grid-cols-14">
-                  {revenueByDay.points.map((point) => {
-                    const heightPct = Math.max(8, Math.round((point.value / revenueByDay.maxValue) * 100));
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Receita no período</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{formatMoney(chartTotalRevenue)}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Média por dia</p>
+                    <p className="mt-1 text-sm font-semibold text-cyan-300">{formatMoney(chartAverageRevenue)}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Melhor dia</p>
+                    <p className="mt-1 text-sm font-semibold text-emerald-300">
+                      {chartBestDay ? `${chartBestDay.label} · ${formatMoney(chartBestDay.value)}` : "--"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`mt-5 grid gap-2 ${chartWindow === "week" ? "grid-cols-7" : "grid-cols-10 sm:grid-cols-15"}`}>
+                  {chartPoints.map((point) => {
+                    const heightPct = Math.max(6, Math.round((point.value / chartMaxValue) * 100));
 
                     return (
                       <div key={point.dayKey} className="flex flex-col items-center justify-end gap-2">
-                        <div className="flex h-40 w-full items-end">
+                        <div className="flex h-44 w-full items-end rounded-t-md bg-white/[0.02] px-0.5">
                           <div
-                            className="w-full rounded-t-md bg-[linear-gradient(180deg,#22d3ee_0%,#34d399_56%,#86efac_100%)]"
+                            className="w-full rounded-t-md bg-[linear-gradient(180deg,#22d3ee_0%,#34d399_56%,#86efac_100%)] shadow-[0_0_18px_rgba(45,212,191,0.22)]"
                             style={{ height: `${heightPct}%` }}
-                            title={`${point.label} - ${formatMoney(point.value)}`}
+                            title={`${point.fullLabel} - ${formatMoney(point.value)} (${point.orders} pedidos)`}
                           />
                         </div>
                         <span className="text-[10px] text-slate-500">{point.label}</span>
+                        <span className="text-[10px] text-slate-600">{point.orders}</span>
                       </div>
                     );
                   })}
