@@ -557,11 +557,11 @@ export function DashboardClient({
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
           <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6 xl:col-span-2">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
               <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 xl:col-span-2">
                 Período do dashboard
                 <select
-                  className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  className="min-h-[48px] w-full rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
                   value={range}
                   onChange={(event) => setRange(event.target.value as RangeValue)}
                 >
@@ -581,7 +581,7 @@ export function DashboardClient({
                       type="date"
                       value={customRangeStartDate}
                       onChange={(event) => setCustomRangeStartDate(event.target.value)}
-                      className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                      className="min-h-[48px] w-full rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
                     />
                   </label>
 
@@ -591,7 +591,7 @@ export function DashboardClient({
                       type="date"
                       value={customRangeEndDate}
                       onChange={(event) => setCustomRangeEndDate(event.target.value)}
-                      className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                      className="min-h-[48px] w-full rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
                     />
                   </label>
                 </>
@@ -600,7 +600,7 @@ export function DashboardClient({
               <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
                 Status
                 <select
-                  className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  className="min-h-[48px] w-full rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
                 >
@@ -615,7 +615,7 @@ export function DashboardClient({
               <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
                 Jogo
                 <select
-                  className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  className="min-h-[48px] w-full rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
                   value={gameFilter}
                   onChange={(event) => setGameFilter(event.target.value)}
                 >
@@ -630,7 +630,7 @@ export function DashboardClient({
               <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
                 Pagamento
                 <select
-                  className="min-h-[48px] rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  className="min-h-[48px] w-full rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
                   value={paymentFilter}
                   onChange={(event) => setPaymentFilter(event.target.value)}
                 >
@@ -893,30 +893,6 @@ export function DashboardClient({
                       </button>
                     ) : null}
 
-                    <div className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 text-xs font-semibold text-slate-200">
-                      <span className="text-sm text-white">📅</span>
-                      <input
-                        type="date"
-                        value={customRangeStartDate}
-                        onChange={(event) => {
-                          setCustomRangeStartDate(event.target.value);
-                          setRange("custom");
-                        }}
-                        className="bg-transparent text-xs font-semibold text-white outline-none"
-                        aria-label="Data inicial do gráfico"
-                      />
-                      <span className="text-slate-500">até</span>
-                      <input
-                        type="date"
-                        value={customRangeEndDate}
-                        onChange={(event) => {
-                          setCustomRangeEndDate(event.target.value);
-                          setRange("custom");
-                        }}
-                        className="bg-transparent text-xs font-semibold text-white outline-none"
-                        aria-label="Data final do gráfico"
-                      />
-                    </div>
                   </div>
                 </div>
 
