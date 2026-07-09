@@ -9,8 +9,10 @@ import {
 } from "@/lib/site-fee-settings";
 
 type PutBody = {
-  globalPlatformFeePercent?: number;
+  supplierDefaultPercent?: number;
   cardGatewayFeePercent?: number;
+  cashbackPercent?: number;
+  operationalReservePercent?: number;
 };
 
 function statusFromErrorMessage(message: string): number {
@@ -67,10 +69,12 @@ export async function PUT(request: Request): Promise<Response> {
     return Response.json({ error: message }, { status: statusFromErrorMessage(message) });
   }
 
-  const hasGlobalPlatformFee = typeof body?.globalPlatformFeePercent === "number";
+  const hasSupplierDefaultPercent = typeof body?.supplierDefaultPercent === "number";
   const hasCardGatewayFee = typeof body?.cardGatewayFeePercent === "number";
+  const hasCashbackPercent = typeof body?.cashbackPercent === "number";
+  const hasOperationalReservePercent = typeof body?.operationalReservePercent === "number";
 
-  if (!body || (!hasGlobalPlatformFee && !hasCardGatewayFee)) {
+  if (!body || (!hasSupplierDefaultPercent && !hasCardGatewayFee && !hasCashbackPercent && !hasOperationalReservePercent)) {
     return Response.json(
       { error: "Invalid payload for dashboard settings fees." },
       { status: 422 },
@@ -83,8 +87,12 @@ export async function PUT(request: Request): Promise<Response> {
     const base = snapshot.exists ? sanitizeSiteFeeSettings(snapshot.data()) : buildDefaultSiteFeeSettings();
     const settings = sanitizeSiteFeeSettings({
       ...base,
-      globalPlatformFeePercent: hasGlobalPlatformFee ? body.globalPlatformFeePercent : base.globalPlatformFeePercent,
+      supplierDefaultPercent: hasSupplierDefaultPercent ? body.supplierDefaultPercent : base.supplierDefaultPercent,
       cardGatewayFeePercent: hasCardGatewayFee ? body.cardGatewayFeePercent : base.cardGatewayFeePercent,
+      cashbackPercent: hasCashbackPercent ? body.cashbackPercent : base.cashbackPercent,
+      operationalReservePercent: hasOperationalReservePercent
+        ? body.operationalReservePercent
+        : base.operationalReservePercent,
       updatedAtMs: Date.now(),
     });
 

@@ -4,8 +4,10 @@ export const SITE_FEE_SETTINGS_DOC_ID = "site-fee-settings";
 export type SiteFeeSettings = {
   schemaVersion: number;
   updatedAtMs: number;
-  globalPlatformFeePercent: number;
+  supplierDefaultPercent: number;
   cardGatewayFeePercent: number;
+  cashbackPercent: number;
+  operationalReservePercent: number;
 };
 
 function asFiniteNumber(value: unknown): number | null {
@@ -29,8 +31,10 @@ export function buildDefaultSiteFeeSettings(): SiteFeeSettings {
   return {
     schemaVersion: SITE_FEE_SETTINGS_SCHEMA_VERSION,
     updatedAtMs: Date.now(),
-    globalPlatformFeePercent: 15,
-    cardGatewayFeePercent: 4,
+    supplierDefaultPercent: 75,
+    cardGatewayFeePercent: 2,
+    cashbackPercent: 7,
+    operationalReservePercent: 3,
   };
 }
 
@@ -41,12 +45,16 @@ export function sanitizeSiteFeeSettings(source: unknown): SiteFeeSettings {
     return fallback;
   }
 
-  const parsed = source as Partial<SiteFeeSettings>;
+  const parsed = source as Partial<SiteFeeSettings> & { globalPlatformFeePercent?: number };
+  const legacyPlatformFeePercent = clampPercent(parsed.globalPlatformFeePercent, 15);
+  const supplierDefaultFallback = 100 - legacyPlatformFeePercent;
 
   return {
     schemaVersion: SITE_FEE_SETTINGS_SCHEMA_VERSION,
     updatedAtMs: asFiniteNumber(parsed.updatedAtMs) ?? Date.now(),
-    globalPlatformFeePercent: clampPercent(parsed.globalPlatformFeePercent, fallback.globalPlatformFeePercent),
+    supplierDefaultPercent: clampPercent(parsed.supplierDefaultPercent, supplierDefaultFallback),
     cardGatewayFeePercent: clampPercent(parsed.cardGatewayFeePercent, fallback.cardGatewayFeePercent),
+    cashbackPercent: clampPercent(parsed.cashbackPercent, fallback.cashbackPercent),
+    operationalReservePercent: clampPercent(parsed.operationalReservePercent, fallback.operationalReservePercent),
   };
 }

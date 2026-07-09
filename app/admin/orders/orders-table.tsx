@@ -16,7 +16,8 @@ function formatMoney(cents: number): string {
 export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
   const router = useRouter();
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
-  const [editingFee, setEditingFee] = useState<number>(0);
+  const [editingSupplierPercent, setEditingSupplierPercent] = useState<number>(0);
+  const [editingSupplierName, setEditingSupplierName] = useState<string>("");
   const [savingOrderId, setSavingOrderId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<
@@ -31,7 +32,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
     | "value"
     | "payout"
     | "profit"
-    | "fee"
+    | "supplier"
     | "payment"
   >("created");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -128,11 +129,11 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
       } else if (sortBy === "value") {
         compare = left.totalCents - right.totalCents;
       } else if (sortBy === "payout") {
-        compare = left.sellerAmountCents - right.sellerAmountCents;
+        compare = left.supplierPayout - right.supplierPayout;
       } else if (sortBy === "profit") {
-        compare = left.platformProfitCents - right.platformProfitCents;
-      } else if (sortBy === "fee") {
-        compare = left.commissionPercent - right.commissionPercent;
+        compare = left.netProfit - right.netProfit;
+      } else if (sortBy === "supplier") {
+        compare = left.supplierPercentage - right.supplierPercentage;
       } else if (sortBy === "payment") {
         compare = left.paymentMethod.localeCompare(right.paymentMethod, "en-US", { sensitivity: "base" });
       }
@@ -170,8 +171,10 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
       "Faction",
       "Value",
       "Payout",
-      "Profit",
-      "Fee",
+      "Gross Profit",
+      "Net Profit",
+      "Supplier",
+      "Supplier %",
       "Delivery",
       "Payment",
     ];
@@ -190,9 +193,11 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
         row.server,
         row.faction,
         formatMoney(row.totalCents),
-        formatMoney(row.sellerAmountCents),
-        formatMoney(row.platformProfitCents),
-        `${row.commissionPercent}%`,
+        formatMoney(row.supplierPayout),
+        formatMoney(row.grossProfit),
+        formatMoney(row.netProfit),
+        row.supplierName,
+        `${row.supplierPercentage}%`,
         row.deliveryMethod,
         row.paymentMethod,
       ].map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","),
@@ -208,15 +213,15 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
     URL.revokeObjectURL(url);
   }
 
-  async function saveFee(orderId: string) {
+  async function saveSupplier(orderId: string) {
     const row = rowsById.get(orderId);
     if (!row) {
       return;
     }
 
-    const percent = Number(editingFee);
+    const percent = Number(editingSupplierPercent);
     if (Number.isNaN(percent) || percent < 0 || percent > 100) {
-      setErrorMessage("Fee must be between 0 and 100.");
+      setErrorMessage("Supplier percentage must be between 0 and 100.");
       return;
     }
 
@@ -229,21 +234,22 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId,
-          commissionPercent: percent,
+          supplierName: editingSupplierName,
+          supplierPercentage: percent,
         }),
       });
 
       const data = (await response.json()) as { ok?: boolean; error?: string };
 
       if (!response.ok || !data.ok) {
-        setErrorMessage(data.error ?? "Could not update fee.");
+        setErrorMessage(data.error ?? "Could not update supplier.");
         return;
       }
 
       setEditingOrderId(null);
       router.refresh();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not update fee.");
+      setErrorMessage(error instanceof Error ? error.message : "Could not update supplier.");
     } finally {
       setSavingOrderId(null);
     }
@@ -284,7 +290,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("value")} className="inline-flex items-center gap-1">Value <span>{sortBy === "value" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("payout")} className="inline-flex items-center gap-1">Payout <span>{sortBy === "payout" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("profit")} className="inline-flex items-center gap-1">Profit <span>{sortBy === "profit" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("fee")} className="inline-flex items-center gap-1">Fee <span>{sortBy === "fee" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("supplier")} className="inline-flex items-center gap-1">Supplier % <span>{sortBy === "supplier" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("payment")} className="inline-flex items-center gap-1">Payment <span>{sortBy === "payment" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2">Applicants</th>
           </tr>
@@ -366,24 +372,32 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                   {row.server === "--" && row.faction === "--" ? "--" : ""}
                 </td>
                 <td className="px-2 py-2 font-semibold text-green-300">{formatMoney(row.totalCents)}</td>
-                <td className="px-2 py-2 text-amber-300">{formatMoney(row.sellerAmountCents)}</td>
-                <td className="px-2 py-2 text-cyan-300">{formatMoney(row.platformProfitCents)}</td>
+                <td className="px-2 py-2 text-amber-300">{formatMoney(row.supplierPayout)}</td>
+                <td className="px-2 py-2 text-cyan-300">{formatMoney(row.netProfit)}</td>
                 <td className="px-2 py-2">
                   {isEditing ? (
                     <div className="flex flex-wrap items-center gap-1">
+                      <input
+                        type="text"
+                        value={editingSupplierName}
+                        onChange={(event) => setEditingSupplierName(event.target.value)}
+                        placeholder="Supplier"
+                        className="w-24 rounded border border-green-800 bg-black px-1 py-1 text-xs text-green-300"
+                      />
                       <input
                         type="number"
                         min={0}
                         max={100}
                         step={0.01}
-                        value={editingFee}
-                        onChange={(event) => setEditingFee(Number(event.target.value))}
+                        value={editingSupplierPercent}
+                        onChange={(event) => setEditingSupplierPercent(Number(event.target.value))}
                         className="w-16 rounded border border-green-800 bg-black px-1 py-1 text-xs text-green-300"
                       />
                       <span className="text-xs text-green-500">%</span>
+                      <span className="text-xs text-amber-300">{formatMoney(row.totalCents * (editingSupplierPercent / 100))}</span>
                       <button
                         type="button"
-                        onClick={() => void saveFee(row.id)}
+                        onClick={() => void saveSupplier(row.id)}
                         disabled={isSaving}
                         className="rounded border border-amber-700 bg-amber-950/30 px-2 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-950/50 disabled:opacity-50"
                       >
@@ -392,12 +406,14 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                     </div>
                   ) : (
                     <div className="flex flex-wrap items-center gap-1">
-                      <span className="text-xs font-semibold text-green-300">{row.commissionPercent}%</span>
+                      <span className="text-xs font-semibold text-green-300">{row.supplierPercentage}%</span>
+                      <span className="text-[10px] text-green-500">{row.supplierName || "--"}</span>
                       <button
                         type="button"
                         onClick={() => {
                           setEditingOrderId(row.id);
-                          setEditingFee(row.commissionPercent);
+                          setEditingSupplierPercent(row.supplierPercentage);
+                          setEditingSupplierName(row.supplierName === "--" ? "" : row.supplierName);
                         }}
                         className="rounded border border-green-800 px-2 py-1 text-xs font-semibold text-green-300 hover:bg-green-950"
                       >

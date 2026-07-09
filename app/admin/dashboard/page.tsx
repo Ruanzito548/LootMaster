@@ -6,6 +6,7 @@ import {
   buildDefaultSiteFeeSettings,
   sanitizeSiteFeeSettings,
 } from "@/lib/site-fee-settings";
+import { buildOrderFinancialSnapshot } from "@/lib/order-financials";
 
 import { DashboardClient, type DashboardOrder } from "./dashboard-client";
 
@@ -18,31 +19,15 @@ function parseIsoToUnixSeconds(iso: string | null | undefined): number {
   return Math.floor(ms / 1000);
 }
 
-function clampPercent(value: number): number {
-  if (Number.isNaN(value)) return 0;
-  if (value < 0) return 0;
-  if (value > 100) return 100;
-  return Math.round(value * 100) / 100;
-}
-
-function buildFinancials(totalCents: number, commissionPercentRaw: number) {
-  const commissionPercent = clampPercent(commissionPercentRaw);
-  const sellerAmountCents = Math.round(totalCents * (1 - commissionPercent / 100));
-
-  return {
-    commissionPercent,
-    sellerAmountCents,
-    platformProfitCents: totalCents - sellerAmountCents,
-  };
-}
-
 export default async function DashboardPage() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   let sessions: Stripe.Checkout.Session[] = [];
   let orders: DashboardOrder[] = [];
   let loadError: string | null = null;
-  let globalPlatformFeePercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+  let supplierDefaultPercent = buildDefaultSiteFeeSettings().supplierDefaultPercent;
   let cardGatewayFeePercent = buildDefaultSiteFeeSettings().cardGatewayFeePercent;
+  let cashbackPercent = buildDefaultSiteFeeSettings().cashbackPercent;
+  let operationalReservePercent = buildDefaultSiteFeeSettings().operationalReservePercent;
   let completedOrderIds = new Set<string>();
 
   try {
@@ -70,8 +55,10 @@ export default async function DashboardPage() {
       ? sanitizeSiteFeeSettings(siteFeeSnapshot.data())
       : buildDefaultSiteFeeSettings();
 
-    globalPlatformFeePercent = siteFeeSettings.globalPlatformFeePercent;
+    supplierDefaultPercent = siteFeeSettings.supplierDefaultPercent;
     cardGatewayFeePercent = siteFeeSettings.cardGatewayFeePercent;
+    cashbackPercent = siteFeeSettings.cashbackPercent;
+    operationalReservePercent = siteFeeSettings.operationalReservePercent;
 
     orders = snapshot.docs.map((docRow) => {
       const data = docRow.data() as Record<string, unknown>;
@@ -79,8 +66,12 @@ export default async function DashboardPage() {
       const paymentStatus = typeof data.paymentStatus === "string" ? data.paymentStatus.toLowerCase() : "";
       const orderStatus = typeof data.orderStatus === "string" ? data.orderStatus.toLowerCase() : "";
       const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
-      const storedCommissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
-      const financials = buildFinancials(totalCents, storedCommissionPercent);
+      const financials = buildOrderFinancialSnapshot(data, {
+        supplierDefaultPercent,
+        cardGatewayFeePercent,
+        cashbackPercent,
+        operationalReservePercent,
+      });
 
       let statusLabel = "Unpaid";
       if (orderStatus === "completed" || completedOrderIds.has(orderId)) {
@@ -100,9 +91,14 @@ export default async function DashboardPage() {
         paymentMethod: typeof data.paymentMethod === "string" && data.paymentMethod ? data.paymentMethod : "--",
         nickname: typeof data.nickname === "string" && data.nickname ? data.nickname : "--",
         email: typeof data.customerEmail === "string" && data.customerEmail ? data.customerEmail : "--",
-        commissionPercent: financials.commissionPercent,
-        sellerAmountCents: financials.sellerAmountCents,
-        platformProfitCents: financials.platformProfitCents,
+        supplierName: typeof data.supplierName === "string" && data.supplierName ? data.supplierName : "--",
+        supplierPercentage: financials.supplierPercentage,
+        supplierPayout: financials.supplierPayout,
+        grossProfit: financials.grossProfit,
+        cardFee: financials.cardFee,
+        cashback: financials.cashback,
+        operationalReserve: financials.operationalReserve,
+        netProfit: financials.netProfit,
       };
     });
   } catch (error) {
@@ -147,9 +143,14 @@ export default async function DashboardPage() {
           paymentMethod: session.metadata?.paymentMethod || "--",
           nickname: session.metadata?.nickname || "--",
           email: session.customer_email || "--",
-          commissionPercent: 15,
-          sellerAmountCents: Math.round(amountTotal * 0.85),
-          platformProfitCents: amountTotal - Math.round(amountTotal * 0.85),
+          supplierName: session.metadata?.supplierName || "--",
+          supplierPercentage: Number(session.metadata?.supplierPercentage ?? 75) || 75,
+          supplierPayout: Math.round(amountTotal * 0.75),
+          grossProfit: amountTotal - Math.round(amountTotal * 0.75),
+          cardFee: 0,
+          cashback: 0,
+          operationalReserve: 0,
+          netProfit: amountTotal - Math.round(amountTotal * 0.75),
         };
       });
     } catch {
@@ -172,8 +173,10 @@ export default async function DashboardPage() {
           <DashboardClient
             orders={orders}
             loadError={loadError}
-            initialGlobalPlatformFeePercent={globalPlatformFeePercent}
+            initialSupplierDefaultPercent={supplierDefaultPercent}
             initialCardGatewayFeePercent={cardGatewayFeePercent}
+            initialCashbackPercent={cashbackPercent}
+            initialOperationalReservePercent={operationalReservePercent}
           />
         </section>
 

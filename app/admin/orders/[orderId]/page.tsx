@@ -3,6 +3,8 @@ import Stripe from "stripe";
 import { FieldPath } from "firebase-admin/firestore";
 
 import { getAdminDb } from "@/lib/firebase-admin";
+import { buildOrderFinancialSnapshot } from "@/lib/order-financials";
+import { buildDefaultSiteFeeSettings } from "@/lib/site-fee-settings";
 
 import { AdminOrderApplicantsClient } from "./page-client";
 
@@ -14,23 +16,6 @@ function formatMoney(amountInCents: number | null) {
     style: "currency",
     currency: "USD",
   }).format(amountInCents / 100);
-}
-
-function clampPercent(value: number): number {
-  if (Number.isNaN(value)) return 0;
-  if (value < 0) return 0;
-  if (value > 100) return 100;
-  return Math.round(value * 100) / 100;
-}
-
-function buildFinancials(totalCents: number, commissionPercentRaw: number) {
-  const commissionPercent = clampPercent(commissionPercentRaw);
-  const sellerAmountCents = Math.round(totalCents * (1 - commissionPercent / 100));
-
-  return {
-    commissionPercent,
-    sellerAmountCents,
-  };
 }
 
 export default async function AdminOrderApplicantsPage(
@@ -80,8 +65,13 @@ export default async function AdminOrderApplicantsPage(
     if (orderDoc.exists) {
       const data = orderDoc.data() as Record<string, unknown>;
       const amountTotalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
-      const commissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
-      const financials = buildFinancials(amountTotalCents, commissionPercent);
+      const defaults = buildDefaultSiteFeeSettings();
+      const financials = buildOrderFinancialSnapshot(data, {
+        supplierDefaultPercent: defaults.supplierDefaultPercent,
+        cardGatewayFeePercent: defaults.cardGatewayFeePercent,
+        cashbackPercent: defaults.cashbackPercent,
+        operationalReservePercent: defaults.operationalReservePercent,
+      });
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
       let agentName = "--";
       let agentEmail = "--";
@@ -112,7 +102,7 @@ export default async function AdminOrderApplicantsPage(
         server: typeof data.server === "string" ? data.server : "-",
         faction: typeof data.faction === "string" ? data.faction : "-",
         totalLabel: formatMoney(amountTotalCents),
-        payoutLabel: formatMoney(financials.sellerAmountCents),
+        payoutLabel: formatMoney(financials.supplierPayout),
         agentName,
         agentEmail,
       };
@@ -137,7 +127,7 @@ export default async function AdminOrderApplicantsPage(
           server: session.metadata?.server ?? "-",
           faction: session.metadata?.faction ?? "-",
           totalLabel: formatMoney(session.amount_total),
-          payoutLabel: formatMoney(Math.round((session.amount_total ?? 0) * 0.85)),
+          payoutLabel: formatMoney(Math.round((session.amount_total ?? 0) * 0.75)),
           agentName: "--",
           agentEmail: "--",
         };

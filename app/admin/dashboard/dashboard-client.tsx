@@ -16,16 +16,23 @@ export type DashboardOrder = {
   paymentMethod: string;
   nickname: string;
   email: string;
-  commissionPercent: number;
-  sellerAmountCents: number;
-  platformProfitCents: number;
+  supplierName: string;
+  supplierPercentage: number;
+  supplierPayout: number;
+  grossProfit: number;
+  cardFee: number;
+  cashback: number;
+  operationalReserve: number;
+  netProfit: number;
 };
 
 type DashboardClientProps = {
   orders: DashboardOrder[];
   loadError: string | null;
-  initialGlobalPlatformFeePercent: number;
+  initialSupplierDefaultPercent: number;
   initialCardGatewayFeePercent: number;
+  initialCashbackPercent: number;
+  initialOperationalReservePercent: number;
 };
 
 type RangeValue = "7" | "30" | "90" | "all" | "custom";
@@ -261,8 +268,10 @@ function buildReferenceLines(scaleMaxValue: number, ticks: number[]) {
 export function DashboardClient({
   orders,
   loadError,
-  initialGlobalPlatformFeePercent,
+  initialSupplierDefaultPercent,
   initialCardGatewayFeePercent,
+  initialCashbackPercent,
+  initialOperationalReservePercent,
 }: DashboardClientProps) {
   const initialNowMs = Date.now();
   const initialRangeEndDate = formatDateInputFromMs(initialNowMs);
@@ -276,8 +285,10 @@ export function DashboardClient({
   const [statusFilter, setStatusFilter] = useState("all");
   const [gameFilter, setGameFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
-  const [globalFeeInput, setGlobalFeeInput] = useState(initialGlobalPlatformFeePercent.toFixed(2));
+  const [supplierDefaultInput, setSupplierDefaultInput] = useState(initialSupplierDefaultPercent.toFixed(2));
   const [cardFeeInput, setCardFeeInput] = useState(initialCardGatewayFeePercent.toFixed(2));
+  const [cashbackInput, setCashbackInput] = useState(initialCashbackPercent.toFixed(2));
+  const [operationalReserveInput, setOperationalReserveInput] = useState(initialOperationalReservePercent.toFixed(2));
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
@@ -337,15 +348,29 @@ export function DashboardClient({
   });
 
   const totalRevenue = dashboardFilteredOrders.reduce((acc, order) => acc + order.amountTotal, 0);
-  const totalPayout = dashboardFilteredOrders.reduce((acc, order) => acc + order.sellerAmountCents, 0);
-  const totalPlatformProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.platformProfitCents, 0);
+  const totalPayout = dashboardFilteredOrders.reduce((acc, order) => acc + order.supplierPayout, 0);
+  const totalGrossProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.grossProfit, 0);
+  const totalNetProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.netProfit, 0);
   const totalOrders = dashboardFilteredOrders.length;
   const paidOrders = dashboardFilteredOrders.filter((order) => {
     const label = order.statusLabel.toLowerCase();
     return label === "paid" || label === "pago" || label === "completed" || label === "concluido";
   }).length;
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
-  const averageCommissionPercent = totalRevenue > 0 ? (totalPlatformProfit / totalRevenue) * 100 : 0;
+  const averageSupplierPercent =
+    totalOrders > 0
+      ? dashboardFilteredOrders.reduce((acc, order) => acc + order.supplierPercentage, 0) / totalOrders
+      : 0;
+  const averageMarginPercent = totalRevenue > 0 ? (totalNetProfit / totalRevenue) * 100 : 0;
+  const averagePayout = totalOrders > 0 ? Math.round(totalPayout / totalOrders) : 0;
+  const highestSupplierOrder =
+    dashboardFilteredOrders.length > 0
+      ? dashboardFilteredOrders.reduce((highest, order) => (order.supplierPercentage > highest.supplierPercentage ? order : highest), dashboardFilteredOrders[0])
+      : null;
+  const lowestSupplierOrder =
+    dashboardFilteredOrders.length > 0
+      ? dashboardFilteredOrders.reduce((lowest, order) => (order.supplierPercentage < lowest.supplierPercentage ? order : lowest), dashboardFilteredOrders[0])
+      : null;
 
   const statusGrouped = new Map<string, number>();
   for (const order of dashboardFilteredOrders) {
@@ -393,9 +418,14 @@ export function DashboardClient({
       color: "from-emerald-400 to-emerald-200",
     },
     {
-      label: "Lucro",
-      value: totalPlatformProfit,
+      label: "Lucro bruto",
+      value: totalGrossProfit,
       color: "from-cyan-400 to-sky-300",
+    },
+    {
+      label: "Lucro líquido",
+      value: totalNetProfit,
+      color: "from-fuchsia-400 to-violet-300",
     },
   ];
 
@@ -488,21 +518,36 @@ export function DashboardClient({
     setMonthPickerOpen(false);
   }
 
-  async function saveGlobalSiteFee() {
+  async function saveFinancialSettings() {
     if (savingSettings) {
       return;
     }
 
-    const parsed = Number(globalFeeInput.replace(",", "."));
+    const parsedSupplierDefault = Number(supplierDefaultInput.replace(",", "."));
     const parsedCardFee = Number(cardFeeInput.replace(",", "."));
-    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
-      setSettingsError("A taxa global deve estar entre 0 e 100.");
+    const parsedCashback = Number(cashbackInput.replace(",", "."));
+    const parsedOperationalReserve = Number(operationalReserveInput.replace(",", "."));
+
+    if (!Number.isFinite(parsedSupplierDefault) || parsedSupplierDefault < 0 || parsedSupplierDefault > 100) {
+      setSettingsError("O fornecedor padrão deve estar entre 0 e 100.");
       setSettingsMessage(null);
       return;
     }
 
     if (!Number.isFinite(parsedCardFee) || parsedCardFee < 0 || parsedCardFee > 100) {
       setSettingsError("A taxa de cartão deve estar entre 0 e 100.");
+      setSettingsMessage(null);
+      return;
+    }
+
+    if (!Number.isFinite(parsedCashback) || parsedCashback < 0 || parsedCashback > 100) {
+      setSettingsError("O cashback deve estar entre 0 e 100.");
+      setSettingsMessage(null);
+      return;
+    }
+
+    if (!Number.isFinite(parsedOperationalReserve) || parsedOperationalReserve < 0 || parsedOperationalReserve > 100) {
+      setSettingsError("A reserva operacional deve estar entre 0 e 100.");
       setSettingsMessage(null);
       return;
     }
@@ -526,27 +571,36 @@ export function DashboardClient({
           Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
-          globalPlatformFeePercent: parsed,
+          supplierDefaultPercent: parsedSupplierDefault,
           cardGatewayFeePercent: parsedCardFee,
+          cashbackPercent: parsedCashback,
+          operationalReservePercent: parsedOperationalReserve,
         }),
       });
 
       const data = (await response.json()) as {
         ok?: boolean;
         error?: string;
-        settings?: { globalPlatformFeePercent: number; cardGatewayFeePercent: number };
+        settings?: {
+          supplierDefaultPercent: number;
+          cardGatewayFeePercent: number;
+          cashbackPercent: number;
+          operationalReservePercent: number;
+        };
       };
 
       if (!response.ok || !data.ok || !data.settings) {
-        setSettingsError(data.error ?? "Não foi possível salvar a taxa global.");
+        setSettingsError(data.error ?? "Não foi possível salvar a configuração financeira.");
         return;
       }
 
-      setGlobalFeeInput(data.settings.globalPlatformFeePercent.toFixed(2));
+      setSupplierDefaultInput(data.settings.supplierDefaultPercent.toFixed(2));
       setCardFeeInput(data.settings.cardGatewayFeePercent.toFixed(2));
-      setSettingsMessage("Taxa global salva. A alteração vale para novas ordens.");
+      setCashbackInput(data.settings.cashbackPercent.toFixed(2));
+      setOperationalReserveInput(data.settings.operationalReservePercent.toFixed(2));
+      setSettingsMessage("Configuração financeira salva. A alteração vale para novas ordens.");
     } catch (error) {
-      setSettingsError(error instanceof Error ? error.message : "Não foi possível salvar a taxa global.");
+      setSettingsError(error instanceof Error ? error.message : "Não foi possível salvar a configuração financeira.");
     } finally {
       setSavingSettings(false);
     }
@@ -700,13 +754,13 @@ export function DashboardClient({
                 <p className="mt-1 text-xs text-slate-500">Valor para fornecedores</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Lucro da plataforma</p>
-                <p className="mt-2 text-3xl font-black text-fuchsia-300">{formatMoney(totalPlatformProfit)}</p>
-                <p className="mt-1 text-xs text-slate-500">Média de {formatPercent(averageCommissionPercent)}</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Lucro líquido</p>
+                <p className="mt-2 text-3xl font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</p>
+                <p className="mt-1 text-xs text-slate-500">Margem média de {formatPercent(averageMarginPercent)}</p>
               </div>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Ticket médio</p>
                 <p className="mt-2 text-2xl font-black text-white">{formatMoney(avgTicket)}</p>
@@ -720,8 +774,20 @@ export function DashboardClient({
                 <p className="mt-2 text-2xl font-black text-cyan-300">{paidOrders}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Taxa média</p>
-                <p className="mt-2 text-2xl font-black text-fuchsia-300">{formatPercent(averageCommissionPercent)}</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Fornecedor médio %</p>
+                <p className="mt-2 text-2xl font-black text-fuchsia-300">{formatPercent(averageSupplierPercent)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Repasse médio</p>
+                <p className="mt-2 text-2xl font-black text-amber-300">{formatMoney(averagePayout)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Maior fornecedor</p>
+                <p className="mt-2 text-2xl font-black text-cyan-300">{highestSupplierOrder ? formatPercent(highestSupplierOrder.supplierPercentage) : "--"}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Menor fornecedor</p>
+                <p className="mt-2 text-2xl font-black text-cyan-300">{lowestSupplierOrder ? formatPercent(lowestSupplierOrder.supplierPercentage) : "--"}</p>
               </div>
             </div>
           </article>
@@ -749,7 +815,7 @@ export function DashboardClient({
               >
                 <div className="absolute inset-[18%] flex flex-col items-center justify-center rounded-full border border-white/10 bg-black/95 text-center">
                   <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Lucro</span>
-                  <span className="mt-1 text-lg font-black text-white">{formatPercent(averageCommissionPercent)}</span>
+                  <span className="mt-1 text-lg font-black text-white">{formatPercent(averageMarginPercent)}</span>
                   <span className="mt-1 text-[10px] font-semibold text-slate-500">da receita total</span>
                 </div>
               </div>
@@ -773,19 +839,19 @@ export function DashboardClient({
             </div>
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Configurações</p>
-              <p className="mt-1 text-sm text-slate-400">Taxa global aplicada em novas ordens da plataforma.</p>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Configuração financeira</p>
+              <p className="mt-1 text-sm text-slate-400">Valores padrão aplicados apenas em novas ordens da plataforma.</p>
 
               <div className="mt-4 flex flex-wrap items-end gap-3">
                 <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                  Taxa global do site (%)
+                  Fornecedor padrão (%)
                   <input
                     type="number"
                     min="0"
                     max="100"
                     step="0.01"
-                    value={globalFeeInput}
-                    onChange={(event) => setGlobalFeeInput(event.target.value)}
+                    value={supplierDefaultInput}
+                    onChange={(event) => setSupplierDefaultInput(event.target.value)}
                     className="min-h-[44px] w-48 rounded-xl border border-white/10 bg-black/50 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-400"
                   />
                 </label>
@@ -803,13 +869,39 @@ export function DashboardClient({
                   />
                 </label>
 
+                <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                  Cashback (%)
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={cashbackInput}
+                    onChange={(event) => setCashbackInput(event.target.value)}
+                    className="min-h-[44px] w-48 rounded-xl border border-white/10 bg-black/50 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-400"
+                  />
+                </label>
+
+                <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                  Reserva operacional (%)
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={operationalReserveInput}
+                    onChange={(event) => setOperationalReserveInput(event.target.value)}
+                    className="min-h-[44px] w-48 rounded-xl border border-white/10 bg-black/50 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-400"
+                  />
+                </label>
+
                 <button
                   type="button"
-                  onClick={() => void saveGlobalSiteFee()}
+                  onClick={() => void saveFinancialSettings()}
                   disabled={savingSettings}
                   className="inline-flex min-h-[44px] items-center rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 text-sm font-semibold text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {savingSettings ? "Salvando..." : "Salvar taxa global"}
+                  {savingSettings ? "Salvando..." : "Salvar configuração financeira"}
                 </button>
               </div>
 

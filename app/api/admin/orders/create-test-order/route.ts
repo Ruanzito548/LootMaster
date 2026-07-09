@@ -6,6 +6,7 @@ import {
   buildDefaultSiteFeeSettings,
   sanitizeSiteFeeSettings,
 } from "@/lib/site-fee-settings";
+import { computeOrderFinancials } from "@/lib/order-financials";
 
 const games = [
   { gameId: "tbc-anniversary", gameTitle: "WoW TBC Anniversary", categoryId: "gold", categoryTitle: "Gold" },
@@ -51,19 +52,34 @@ export async function POST(request: Request): Promise<Response> {
     const orderId = `test_${Date.now()}_${suffix}`;
     const adminDb = getAdminDb();
 
-    let commissionPercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+    let supplierPercentage = buildDefaultSiteFeeSettings().supplierDefaultPercent;
+    let cardFeePercent = buildDefaultSiteFeeSettings().cardGatewayFeePercent;
+    let cashbackPercent = buildDefaultSiteFeeSettings().cashbackPercent;
+    let operationalReservePercent = buildDefaultSiteFeeSettings().operationalReservePercent;
     try {
       const siteFeeSnapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
       const siteFees = siteFeeSnapshot.exists
         ? sanitizeSiteFeeSettings(siteFeeSnapshot.data())
         : buildDefaultSiteFeeSettings();
-      commissionPercent = siteFees.globalPlatformFeePercent;
+      supplierPercentage = siteFees.supplierDefaultPercent;
+      cardFeePercent = siteFees.cardGatewayFeePercent;
+      cashbackPercent = siteFees.cashbackPercent;
+      operationalReservePercent = siteFees.operationalReservePercent;
     } catch {
-      commissionPercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+      const defaults = buildDefaultSiteFeeSettings();
+      supplierPercentage = defaults.supplierDefaultPercent;
+      cardFeePercent = defaults.cardGatewayFeePercent;
+      cashbackPercent = defaults.cashbackPercent;
+      operationalReservePercent = defaults.operationalReservePercent;
     }
 
-    const sellerAmountCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
-    const platformProfitCents = amountTotalCents - sellerAmountCents;
+    const financials = computeOrderFinancials(
+      amountTotalCents,
+      supplierPercentage,
+      cardFeePercent,
+      cashbackPercent,
+      operationalReservePercent,
+    );
 
     const payload = {
       orderId,
@@ -86,9 +102,22 @@ export async function POST(request: Request): Promise<Response> {
       nickname: pickOne(nicknames),
       paymentMethod: "pix",
       hasServerOptions: true,
-      commissionPercent,
-      sellerAmountCents,
-      platformProfitCents,
+      supplierId: "",
+      supplierName: "Fornecedor Teste",
+      supplierPercentage: financials.supplierPercentage,
+      grossRevenue: financials.grossRevenue,
+      supplierPayout: financials.supplierPayout,
+      grossProfit: financials.grossProfit,
+      cardFee: financials.cardFee,
+      cashback: financials.cashback,
+      operationalReserve: financials.operationalReserve,
+      netProfit: financials.netProfit,
+      cardFeePercent,
+      cashbackPercent,
+      operationalReservePercent,
+      commissionPercent: Math.max(0, 100 - financials.supplierPercentage),
+      sellerAmountCents: financials.supplierPayout,
+      platformProfitCents: financials.netProfit,
       stripeCreatedAt: now.toISOString(),
       updatedAt: now.toISOString(),
       isTestOrder: true,

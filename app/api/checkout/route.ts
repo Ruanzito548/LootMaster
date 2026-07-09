@@ -170,8 +170,10 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   let authoritativeConfig;
-  let globalPlatformFeePercent = buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+  let supplierDefaultPercent = buildDefaultSiteFeeSettings().supplierDefaultPercent;
   let cardGatewayFeePercent = buildDefaultSiteFeeSettings().cardGatewayFeePercent;
+  let cashbackPercent = buildDefaultSiteFeeSettings().cashbackPercent;
+  let operationalReservePercent = buildDefaultSiteFeeSettings().operationalReservePercent;
 
   try {
     authoritativeConfig = await resolvePricingConfig(
@@ -185,12 +187,16 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const siteFeeSettings = await resolveSiteFeeSettings();
-    globalPlatformFeePercent = siteFeeSettings.globalPlatformFeePercent;
+    supplierDefaultPercent = siteFeeSettings.supplierDefaultPercent;
     cardGatewayFeePercent = siteFeeSettings.cardGatewayFeePercent;
+    cashbackPercent = siteFeeSettings.cashbackPercent;
+    operationalReservePercent = siteFeeSettings.operationalReservePercent;
   } catch {
     const defaults = buildDefaultSiteFeeSettings();
-    globalPlatformFeePercent = defaults.globalPlatformFeePercent;
+    supplierDefaultPercent = defaults.supplierDefaultPercent;
     cardGatewayFeePercent = defaults.cardGatewayFeePercent;
+    cashbackPercent = defaults.cashbackPercent;
+    operationalReservePercent = defaults.operationalReservePercent;
   }
 
   const validatedGoldAmount = Math.min(
@@ -232,8 +238,12 @@ export async function POST(request: Request): Promise<Response> {
     paymentMethod,
     hasServerOptions: String(hasServerOptions),
     customerUid: customerUid?.trim() ?? "",
-    commissionPercent: String(globalPlatformFeePercent),
+    supplierPercentage: String(supplierDefaultPercent),
+    // Keep legacy field for compatibility with historical flows.
+    commissionPercent: String(100 - supplierDefaultPercent),
     cardGatewayFeePercent: String(cardGatewayFeePercent),
+    cashbackPercent: String(cashbackPercent),
+    operationalReservePercent: String(operationalReservePercent),
   };
 
   try {

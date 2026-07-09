@@ -1,9 +1,11 @@
 import { getAdminDb } from "@/lib/firebase-admin";
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import { computeOrderFinancials } from "@/lib/order-financials";
 
 type RequestBody = {
   orderId?: string;
-  commissionPercent?: number;
+  supplierName?: string;
+  supplierPercentage?: number;
 };
 
 function clampPercent(value: number): number {
@@ -24,13 +26,14 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const orderId = typeof body.orderId === "string" ? body.orderId.trim() : "";
-  const commissionPercentRaw = typeof body.commissionPercent === "number" ? body.commissionPercent : Number.NaN;
+  const supplierPercentageRaw = typeof body.supplierPercentage === "number" ? body.supplierPercentage : Number.NaN;
+  const supplierName = typeof body.supplierName === "string" ? body.supplierName.trim() : "";
 
-  if (!orderId || Number.isNaN(commissionPercentRaw)) {
+  if (!orderId || Number.isNaN(supplierPercentageRaw)) {
     return Response.json({ error: "Missing required fields." }, { status: 422 });
   }
 
-  const commissionPercent = clampPercent(commissionPercentRaw);
+  const supplierPercentage = clampPercent(supplierPercentageRaw);
 
   try {
     const adminDb = getAdminDb();
@@ -43,14 +46,32 @@ export async function POST(request: Request): Promise<Response> {
 
     const data = snapshot.data() as Record<string, unknown>;
     const amountTotalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
-    const sellerAmountCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
-    const platformProfitCents = amountTotalCents - sellerAmountCents;
+    const cardFeePercent = typeof data.cardFeePercent === "number" ? data.cardFeePercent : 0;
+    const cashbackPercent = typeof data.cashbackPercent === "number" ? data.cashbackPercent : 0;
+    const operationalReservePercent = typeof data.operationalReservePercent === "number" ? data.operationalReservePercent : 0;
+    const financials = computeOrderFinancials(
+      amountTotalCents,
+      supplierPercentage,
+      cardFeePercent,
+      cashbackPercent,
+      operationalReservePercent,
+    );
 
     await ref.set(
       {
-        commissionPercent,
-        sellerAmountCents,
-        platformProfitCents,
+        supplierName,
+        supplierPercentage: financials.supplierPercentage,
+        grossRevenue: financials.grossRevenue,
+        supplierPayout: financials.supplierPayout,
+        grossProfit: financials.grossProfit,
+        cardFee: financials.cardFee,
+        cashback: financials.cashback,
+        operationalReserve: financials.operationalReserve,
+        netProfit: financials.netProfit,
+        // Legacy aliases
+        commissionPercent: Math.max(0, 100 - financials.supplierPercentage),
+        sellerAmountCents: financials.supplierPayout,
+        platformProfitCents: financials.netProfit,
         updatedAt: new Date().toISOString(),
       },
       { merge: true },
@@ -58,12 +79,14 @@ export async function POST(request: Request): Promise<Response> {
 
     return Response.json({
       ok: true,
-      commissionPercent,
-      sellerAmountCents,
-      platformProfitCents,
+      supplierName,
+      supplierPercentage: financials.supplierPercentage,
+      supplierPayout: financials.supplierPayout,
+      grossProfit: financials.grossProfit,
+      netProfit: financials.netProfit,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not update order fee.";
+    const message = error instanceof Error ? error.message : "Could not update order supplier settings.";
     return Response.json({ error: message }, { status: 500 });
   }
 }

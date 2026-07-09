@@ -8,6 +8,7 @@ import {
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { computeOrderFinancials } from "@/lib/order-financials";
 import {
   SITE_FEE_SETTINGS_DOC_ID,
   buildDefaultSiteFeeSettings,
@@ -129,38 +130,71 @@ function clampPercent(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-async function resolveCurrentGlobalPlatformFeePercent(): Promise<number> {
+async function resolveCurrentFinancialSettings() {
   const adminDb = getAdminDb();
 
   try {
     const snapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
     if (!snapshot.exists) {
-      return buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+      return buildDefaultSiteFeeSettings();
     }
 
-    return sanitizeSiteFeeSettings(snapshot.data()).globalPlatformFeePercent;
+    return sanitizeSiteFeeSettings(snapshot.data());
   } catch {
-    return buildDefaultSiteFeeSettings().globalPlatformFeePercent;
+    return buildDefaultSiteFeeSettings();
   }
 }
 
-async function resolveSessionCommissionPercent(session: Stripe.Checkout.Session): Promise<number> {
+async function resolveSessionSupplierPercent(session: Stripe.Checkout.Session): Promise<number> {
   const meta = session.metadata ?? {};
-  const parsed = Number(meta.commissionPercent);
+  const parsedSupplier = Number(meta.supplierPercentage);
 
-  if (Number.isFinite(parsed)) {
-    return clampPercent(parsed);
+  if (Number.isFinite(parsedSupplier)) {
+    return clampPercent(parsedSupplier);
   }
 
-  return resolveCurrentGlobalPlatformFeePercent();
+  const legacyCommission = Number(meta.commissionPercent);
+  if (Number.isFinite(legacyCommission)) {
+    return clampPercent(legacyCommission);
+  }
+
+  const settings = await resolveCurrentFinancialSettings();
+  return settings.supplierDefaultPercent;
 }
 
-async function persistPaidOrder(session: Stripe.Checkout.Session, commissionPercent: number): Promise<void> {
+async function resolveSessionCostPercents(session: Stripe.Checkout.Session) {
+  const meta = session.metadata ?? {};
+  const settings = await resolveCurrentFinancialSettings();
+
+  const cardGatewayFeePercent = Number.isFinite(Number(meta.cardGatewayFeePercent))
+    ? clampPercent(Number(meta.cardGatewayFeePercent))
+    : settings.cardGatewayFeePercent;
+  const cashbackPercent = Number.isFinite(Number(meta.cashbackPercent))
+    ? clampPercent(Number(meta.cashbackPercent))
+    : settings.cashbackPercent;
+  const operationalReservePercent = Number.isFinite(Number(meta.operationalReservePercent))
+    ? clampPercent(Number(meta.operationalReservePercent))
+    : settings.operationalReservePercent;
+
+  return {
+    cardGatewayFeePercent,
+    cashbackPercent,
+    operationalReservePercent,
+  };
+}
+
+async function persistPaidOrder(session: Stripe.Checkout.Session, supplierPercentage: number): Promise<void> {
   const meta = session.metadata ?? {};
   const adminDb = getAdminDb();
   const amountTotalCents = session.amount_total ?? 0;
-  const sellerAmountCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
-  const platformProfitCents = amountTotalCents - sellerAmountCents;
+  const costs = await resolveSessionCostPercents(session);
+  const financials = computeOrderFinancials(
+    amountTotalCents,
+    supplierPercentage,
+    costs.cardGatewayFeePercent,
+    costs.cashbackPercent,
+    costs.operationalReservePercent,
+  );
 
   await adminDb.collection("order-checkouts").doc(session.id).set(
     {
@@ -185,9 +219,23 @@ async function persistPaidOrder(session: Stripe.Checkout.Session, commissionPerc
       nickname: meta.nickname ?? "",
       paymentMethod: meta.paymentMethod ?? "",
       hasServerOptions: meta.hasServerOptions === "true",
-      commissionPercent,
-      sellerAmountCents,
-      platformProfitCents,
+      supplierId: meta.supplierId ?? "",
+      supplierName: meta.supplierName ?? "",
+      supplierPercentage: financials.supplierPercentage,
+      grossRevenue: financials.grossRevenue,
+      supplierPayout: financials.supplierPayout,
+      grossProfit: financials.grossProfit,
+      cardFee: financials.cardFee,
+      cashback: financials.cashback,
+      operationalReserve: financials.operationalReserve,
+      netProfit: financials.netProfit,
+      cardFeePercent: costs.cardGatewayFeePercent,
+      cashbackPercent: costs.cashbackPercent,
+      operationalReservePercent: costs.operationalReservePercent,
+      // Legacy fields kept for compatibility with old consumers.
+      commissionPercent: Math.max(0, 100 - financials.supplierPercentage),
+      sellerAmountCents: financials.supplierPayout,
+      platformProfitCents: financials.netProfit,
       stripeCreatedAt: typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : null,
       updatedAt: new Date().toISOString(),
     },
@@ -290,7 +338,8 @@ async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<voi
   const meta = session.metadata ?? {};
   const totalCents = session.amount_total ?? 0;
   const baseAmountCents = Number(meta.baseAmountCents ?? 0) || 0;
-  const commissionPercent = await resolveSessionCommissionPercent(session);
+  const supplierPercentage = await resolveSessionSupplierPercent(session);
+  const commissionPercent = Math.max(0, 100 - supplierPercentage);
   const commissionBaseCents = baseAmountCents > 0 ? baseAmountCents : totalCents;
   const customerAgent = await resolveCustomerAgent(session);
   const feeBreakdown = computeFeeBreakdown(
@@ -339,6 +388,7 @@ async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<voi
         customerUid: customerAgent.customerUid,
         assignedAgentId: customerAgent.agentUid,
         commissionPercent,
+        supplierPercentage,
         platformFeeCents: feeBreakdown.platformFeeCents,
         agentPayoutCents: feeBreakdown.agentPayoutCents,
         lootmasterFeeCents: feeBreakdown.lootmasterFeeCents,
@@ -589,10 +639,10 @@ export async function POST(request: Request): Promise<Response> {
 
     // Only notify for fully paid sessions
     if (session.payment_status === "paid") {
-      const commissionPercent = await resolveSessionCommissionPercent(session);
+      const supplierPercentage = await resolveSessionSupplierPercent(session);
 
       try {
-        await persistPaidOrder(session, commissionPercent);
+        await persistPaidOrder(session, supplierPercentage);
       } catch (err) {
         console.error("[Stripe Webhook] Could not persist paid order to Firestore:", err);
       }
@@ -611,7 +661,7 @@ export async function POST(request: Request): Promise<Response> {
 
       try {
         const amountTotalCents = session.amount_total ?? 0;
-        const supplierPayoutCents = Math.round(amountTotalCents * (1 - commissionPercent / 100));
+        const supplierPayoutCents = Math.round(amountTotalCents * (supplierPercentage / 100));
 
         await syncPaidOrderToWalletBackend({
           orderId: session.id,

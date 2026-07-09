@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { buildOrderFinancialSnapshot } from "@/lib/order-financials";
+import { buildDefaultSiteFeeSettings } from "@/lib/site-fee-settings";
 import CreateTestOrderButton from "./create-test-order-button";
 import { type OrderRow } from "./export-button";
 import OrdersTable from "./orders-table";
@@ -24,25 +26,6 @@ function formatIsoDate(iso: string | null | undefined) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "--";
   return date.toLocaleString("en-US");
-}
-
-function clampPercent(value: number): number {
-  if (Number.isNaN(value)) return 0;
-  if (value < 0) return 0;
-  if (value > 100) return 100;
-  return Math.round(value * 100) / 100;
-}
-
-function buildFinancials(totalCents: number, commissionPercentRaw: number) {
-  const commissionPercent = clampPercent(commissionPercentRaw);
-  const sellerAmountCents = Math.round(totalCents * (1 - commissionPercent / 100));
-  const platformProfitCents = totalCents - sellerAmountCents;
-
-  return {
-    commissionPercent,
-    sellerAmountCents,
-    platformProfitCents,
-  };
 }
 
 function getStatus(
@@ -119,8 +102,12 @@ export default async function AdminOrdersPage() {
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
       const assignedAgent = assignedAgentId ? agentByUid.get(assignedAgentId) : null;
       const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
-      const storedCommissionPercent = typeof data.commissionPercent === "number" ? data.commissionPercent : 15;
-      const financials = buildFinancials(totalCents, storedCommissionPercent);
+      const financials = buildOrderFinancialSnapshot(data, {
+        supplierDefaultPercent: buildDefaultSiteFeeSettings().supplierDefaultPercent,
+        cardGatewayFeePercent: 0,
+        cashbackPercent: 0,
+        operationalReservePercent: 0,
+      });
 
       return {
         id: orderId,
@@ -149,9 +136,11 @@ export default async function AdminOrdersPage() {
         total: formatMoney(totalCents),
         currency: "usd",
         totalCents,
-        commissionPercent: financials.commissionPercent,
-        sellerAmountCents: financials.sellerAmountCents,
-        platformProfitCents: financials.platformProfitCents,
+        supplierName: typeof data.supplierName === "string" && data.supplierName ? data.supplierName : "--",
+        supplierPercentage: financials.supplierPercentage,
+        supplierPayout: financials.supplierPayout,
+        grossProfit: financials.grossProfit,
+        netProfit: financials.netProfit,
       };
     });
   } catch (error) {
@@ -201,9 +190,11 @@ export default async function AdminOrdersPage() {
       total: formatMoney(s.amount_total),
       currency: s.currency ?? "usd",
       totalCents: s.amount_total ?? 0,
-      commissionPercent: 15,
-      sellerAmountCents: Math.round((s.amount_total ?? 0) * 0.85),
-      platformProfitCents: (s.amount_total ?? 0) - Math.round((s.amount_total ?? 0) * 0.85),
+      supplierName: "--",
+      supplierPercentage: 75,
+      supplierPayout: Math.round((s.amount_total ?? 0) * 0.75),
+      grossProfit: (s.amount_total ?? 0) - Math.round((s.amount_total ?? 0) * 0.75),
+      netProfit: (s.amount_total ?? 0) - Math.round((s.amount_total ?? 0) * 0.75),
     }));
   }
 

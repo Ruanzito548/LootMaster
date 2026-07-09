@@ -18,9 +18,11 @@ export type OrderRow = {
   total: string;
   currency: string;
   totalCents: number;
-  commissionPercent: number;
-  sellerAmountCents: number;
-  platformProfitCents: number;
+  supplierName: string;
+  supplierPercentage: number;
+  supplierPayout: number;
+  grossProfit: number;
+  netProfit: number;
 };
 
 function formatMoney(cents: number): string {
@@ -46,8 +48,10 @@ export default function OrdersExportButton({ orders }: { orders: OrderRow[] }) {
       "Servidor",
       "Valor",
       "Repasse",
-      "Lucro",
-      "Taxa",
+      "Lucro Bruto",
+      "Lucro Líquido",
+      "Fornecedor",
+      "Fornecedor %",
       "Faction",
       "Entrega",
       "Pagamento",
@@ -68,9 +72,11 @@ export default function OrdersExportButton({ orders }: { orders: OrderRow[] }) {
         o.goldAmount,
         o.server,
         formatMoney(o.totalCents),
-        formatMoney(o.sellerAmountCents),
-        formatMoney(o.platformProfitCents),
-        `${o.commissionPercent}%`,
+        formatMoney(o.supplierPayout),
+        formatMoney(o.grossProfit),
+        formatMoney(o.netProfit),
+        o.supplierName,
+        `${o.supplierPercentage}%`,
         o.faction,
         o.deliveryMethod,
         o.paymentMethod,
