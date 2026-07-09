@@ -7,5 +7,5 @@ export default async function AdminLayout({
 }>) {
   await requireAuthenticatedAdminPage();
 
-  return children;
+  return <div className="admin-dashboard-theme">{children}</div>;
 }
