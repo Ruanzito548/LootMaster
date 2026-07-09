@@ -887,14 +887,14 @@ export function DashboardClient({
                         onClick={() => setMonthPickerOpen((value) => !value)}
                         className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 text-xs font-semibold text-slate-200 transition hover:border-cyan-400/50"
                       >
-                        <span className="text-sm">📅</span>
+                        <span className="text-sm text-white">📅</span>
                         {chartPeriodLabel}
                         <span className="text-[10px] text-slate-400">▼</span>
                       </button>
                     ) : null}
 
                     <div className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 text-xs font-semibold text-slate-200">
-                      <span className="text-sm">📅</span>
+                      <span className="text-sm text-white">📅</span>
                       <input
                         type="date"
                         value={customRangeStartDate}
