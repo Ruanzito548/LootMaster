@@ -964,6 +964,7 @@ export function DashboardClient({
                         {currentBuckets.map((bucket) => {
                           const ratio = bucket.revenueCents > 0 ? bucket.revenueCents / chartScaleMax : 0;
                           const heightPercent = Math.max(0, Math.min(100, ratio * 100));
+                          const tooltipBottomPercent = Math.min(heightPercent + 22, 76);
                           const isHovered = hoveredBarKey === bucket.key;
                           const showValue = chartScope === "weekly" || chartScope === "yearly" || isHovered;
                           const averageTicket = bucket.ordersCount > 0 ? Math.round(bucket.revenueCents / bucket.ordersCount) : 0;
@@ -1000,7 +1001,10 @@ export function DashboardClient({
                                   ) : null}
                                 </div>
 
-                                <div className="pointer-events-none absolute bottom-[calc(100%+58px)] left-1/2 z-20 hidden w-max -translate-x-1/2 rounded-xl border border-white/10 bg-[#11141C] px-3 py-2 text-xs text-slate-200 shadow-[0_14px_30px_rgba(0,0,0,0.45)] group-hover:block">
+                                <div
+                                  className="pointer-events-none absolute left-1/2 z-20 hidden w-max -translate-x-1/2 rounded-xl border border-white/10 bg-[#11141C] px-3 py-2 text-xs text-slate-200 shadow-[0_14px_30px_rgba(0,0,0,0.45)] group-hover:block"
+                                  style={{ bottom: `calc(${tooltipBottomPercent}% + 18px)` }}
+                                >
                                   <p className="font-semibold text-white">{bucket.fullLabel}</p>
                                   <p className="mt-1 text-slate-300">Receita: <span className="font-semibold text-cyan-300">{formatMoney(bucket.revenueCents)}</span></p>
                                   <p className="mt-1 text-slate-300">Pedidos: <span className="font-semibold text-emerald-300">{bucket.ordersCount}</span></p>
