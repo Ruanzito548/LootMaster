@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { auth } from "@/lib/firebase";
-
 export type DashboardOrder = {
   id: string;
   createdUnix: number;
@@ -33,10 +31,6 @@ export type DashboardOrder = {
 type DashboardClientProps = {
   orders: DashboardOrder[];
   loadError: string | null;
-  initialSupplierDefaultPercent: number;
-  initialCardGatewayFeePercent: number;
-  initialCashbackPercent: number;
-  initialOperationalReservePercent: number;
 };
 
 type RangeValue = "7" | "30" | "90" | "all" | "custom";
@@ -51,102 +45,6 @@ type RevenueBucket = {
   revenueCents: number;
   ordersCount: number;
 };
-
-type OperationalCostValueType = "percent" | "fixed";
-type OperationalCostFrequency = "once" | "per_order" | "daily" | "weekly" | "monthly" | "annual";
-type OperationalCostCurrency = "USD" | "BRL";
-
-type OperationalCostItem = {
-  id: string;
-  name: string;
-  value: number;
-  valueType: OperationalCostValueType;
-  currency: OperationalCostCurrency;
-  frequency: OperationalCostFrequency;
-  isActive: boolean;
-};
-
-const OPERATIONAL_COST_STORAGE_KEY = "dashboard-operational-cost-items-v1";
-const DEFAULT_USD_TO_BRL_RATE = 5.5;
-
-const DEFAULT_OPERATIONAL_COST_ITEMS: OperationalCostItem[] = [
-  {
-    id: "server-site",
-    name: "Servidor do site",
-    value: 40,
-    valueType: "fixed",
-    currency: "USD",
-    frequency: "monthly",
-    isActive: true,
-  },
-  {
-    id: "impostos",
-    name: "Impostos",
-    value: 5,
-    valueType: "percent",
-    currency: "USD",
-    frequency: "monthly",
-    isActive: true,
-  },
-  {
-    id: "third-party",
-    name: "Servicos de terceiros",
-    value: 20,
-    valueType: "fixed",
-    currency: "USD",
-    frequency: "monthly",
-    isActive: true,
-  },
-];
-
-function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
-  if (!value || typeof value !== "object") return null;
-
-  const row = value as Partial<OperationalCostItem>;
-  const name = typeof row.name === "string" ? row.name.trim() : "";
-
-  if (!name) return null;
-
-  const parsedValue = typeof row.value === "number" && Number.isFinite(row.value) ? row.value : 0;
-  const valueType = row.valueType === "percent" || row.valueType === "fixed" ? row.valueType : "fixed";
-  const currency = row.currency === "BRL" ? "BRL" : "USD";
-  const frequency =
-    row.frequency === "once" ||
-    row.frequency === "per_order" ||
-    row.frequency === "daily" ||
-    row.frequency === "weekly" ||
-    row.frequency === "monthly" ||
-    row.frequency === "annual"
-      ? row.frequency
-      : "monthly";
-
-  return {
-    id: typeof row.id === "string" && row.id ? row.id : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    name,
-    value: Math.max(0, parsedValue),
-    valueType,
-    currency,
-    frequency,
-    isActive: row.isActive !== false,
-  };
-}
-
-function countMonthsInPeriod(startMs: number, endMs: number) {
-  const safeStart = Math.min(startMs, endMs);
-  const safeEnd = Math.max(startMs, endMs);
-  const startDate = new Date(safeStart);
-  const endDate = new Date(safeEnd);
-  const months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth()) + 1;
-
-  return Math.max(1, months);
-}
-
-function countDaysInPeriod(startMs: number, endMs: number) {
-  const safeStart = Math.min(startMs, endMs);
-  const safeEnd = Math.max(startMs, endMs);
-  const dayMs = 24 * 60 * 60 * 1000;
-  return Math.max(1, Math.floor((safeEnd - safeStart) / dayMs) + 1);
-}
 
 function resolveGatewayLabel(paymentMethod: string) {
   const normalized = paymentMethod.trim().toLowerCase();
@@ -163,13 +61,6 @@ function formatMoney(amountInCents: number) {
     style: "currency",
     currency: "USD",
   }).format(amountInCents / 100);
-}
-
-function formatMoneyBrlFromUsdCents(amountInUsdCents: number, usdToBrlRate: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format((amountInUsdCents / 100) * usdToBrlRate);
 }
 
 function formatDeduction(amountInCents: number) {
@@ -389,10 +280,6 @@ function buildReferenceLines(scaleMaxValue: number, ticks: number[]) {
 export function DashboardClient({
   orders,
   loadError,
-  initialSupplierDefaultPercent,
-  initialCardGatewayFeePercent,
-  initialCashbackPercent,
-  initialOperationalReservePercent,
 }: DashboardClientProps) {
   const initialNowMs = Date.now();
   const initialRangeEndDate = formatDateInputFromMs(initialNowMs);
@@ -406,91 +293,8 @@ export function DashboardClient({
   const [statusFilter, setStatusFilter] = useState("all");
   const [gameFilter, setGameFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
-  const [supplierDefaultInput, setSupplierDefaultInput] = useState(initialSupplierDefaultPercent.toFixed(2));
-  const [cardFeeInput, setCardFeeInput] = useState(initialCardGatewayFeePercent.toFixed(2));
-  const [cashbackInput, setCashbackInput] = useState(initialCashbackPercent.toFixed(2));
-  const [operationalReserveInput, setOperationalReserveInput] = useState(initialOperationalReservePercent.toFixed(2));
-  const [savingSettings, setSavingSettings] = useState(false);
-  const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
-  const [settingsError, setSettingsError] = useState<string | null>(null);
   const [hoveredBarKey, setHoveredBarKey] = useState<string | null>(null);
   const [chartAnimated, setChartAnimated] = useState(false);
-  const [operationalCostsOpen, setOperationalCostsOpen] = useState(false);
-  const [operationalCostItems, setOperationalCostItems] = useState<OperationalCostItem[]>(DEFAULT_OPERATIONAL_COST_ITEMS);
-  const [usdToBrlRate, setUsdToBrlRate] = useState(DEFAULT_USD_TO_BRL_RATE);
-  const [newOperationalCostName, setNewOperationalCostName] = useState("");
-  const [newOperationalCostValue, setNewOperationalCostValue] = useState("0");
-  const [newOperationalCostValueType, setNewOperationalCostValueType] = useState<OperationalCostValueType>("fixed");
-  const [newOperationalCostCurrency, setNewOperationalCostCurrency] = useState<OperationalCostCurrency>("USD");
-  const [newOperationalCostFrequency, setNewOperationalCostFrequency] = useState<OperationalCostFrequency>("monthly");
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(OPERATIONAL_COST_STORAGE_KEY);
-      if (!raw) return;
-
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return;
-
-      const recovered = parsed
-        .map(parseOperationalCostItem)
-        .filter((item): item is OperationalCostItem => item !== null);
-
-      if (recovered.length > 0) {
-        setOperationalCostItems(recovered);
-      }
-    } catch {
-      // Ignore malformed local values and keep defaults.
-    }
-  }, []);
-
-  useEffect(() => {
-    let ignore = false;
-
-    const loadRate = async () => {
-      try {
-        const response = await fetch("/api/fx/usd-brl");
-        const data = (await response.json()) as { usdToBrl?: number };
-        if (ignore) return;
-
-        if (typeof data.usdToBrl === "number" && Number.isFinite(data.usdToBrl) && data.usdToBrl > 0) {
-          setUsdToBrlRate(data.usdToBrl);
-        }
-      } catch {
-        if (!ignore) {
-          setUsdToBrlRate(DEFAULT_USD_TO_BRL_RATE);
-        }
-      }
-    };
-
-    void loadRate();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(OPERATIONAL_COST_STORAGE_KEY, JSON.stringify(operationalCostItems));
-  }, [operationalCostItems]);
-
-  useEffect(() => {
-    if (!operationalCostsOpen) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOperationalCostsOpen(false);
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [operationalCostsOpen]);
 
   useEffect(() => {
     setChartAnimated(false);
@@ -553,103 +357,15 @@ export function DashboardClient({
   const totalGrossProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.grossProfit, 0);
   const orderNetProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.netProfit, 0);
   const totalOrders = dashboardFilteredOrders.length;
-
-  const periodStartMs = (() => {
-    if (customBounds) return customBounds.startMs;
-    if (rangeStart) return rangeStart;
-
-    if (dashboardFilteredOrders.length === 0) {
-      return nowMs;
-    }
-
-    return Math.min(...dashboardFilteredOrders.map((order) => order.createdUnix * 1000));
-  })();
-
-  const periodEndMs = (() => {
-    if (customBounds) return customBounds.endMs;
-    if (rangeStart) return nowMs;
-
-    if (dashboardFilteredOrders.length === 0) {
-      return nowMs;
-    }
-
-    return Math.max(...dashboardFilteredOrders.map((order) => order.createdUnix * 1000));
-  })();
-
-  const monthsInPeriod = countMonthsInPeriod(periodStartMs, periodEndMs);
-  const daysInPeriod = countDaysInPeriod(periodStartMs, periodEndMs);
-  const weeksInPeriod = Math.max(1, Math.ceil(daysInPeriod / 7));
-  const yearsInPeriod = Math.max(1 / 365, daysInPeriod / 365);
-
-  const operationalCostRows = operationalCostItems
-    .filter((item) => item.isActive)
-    .map((item) => {
-      const unitCostCents =
-        item.valueType === "percent"
-          ? Math.round(totalRevenue * (item.value / 100))
-          : item.currency === "BRL"
-            ? Math.round((Math.max(0, item.value) * 100) / usdToBrlRate)
-            : Math.round(Math.max(0, item.value) * 100);
-
-      const multiplier =
-        item.frequency === "per_order"
-          ? totalOrders
-          : item.frequency === "daily"
-            ? daysInPeriod
-            : item.frequency === "weekly"
-              ? weeksInPeriod
-              : item.frequency === "monthly"
-                ? monthsInPeriod
-                : item.frequency === "annual"
-                  ? yearsInPeriod
-                  : 1;
-
-      const totalCents = Math.max(0, Math.round(unitCostCents * Math.max(multiplier, 0)));
-
-      return {
-        ...item,
-        totalCents,
-      };
-    });
-
-  const operationalCostTotal = operationalCostRows.reduce((acc, item) => acc + item.totalCents, 0);
-  const operationalCostPerOrder = totalOrders > 0 ? Math.round(operationalCostTotal / totalOrders) : 0;
-  const totalNetProfit = orderNetProfit - operationalCostTotal;
+  const totalNetProfit = orderNetProfit;
   const gatewayMethods = Array.from(new Set(dashboardFilteredOrders.map((order) => resolveGatewayLabel(order.paymentMethod))));
   const gatewayLabel = gatewayMethods.length === 1 ? gatewayMethods[0] : "Gateway (misto)";
-
-  function computeOperationalCostItemTotal(item: OperationalCostItem) {
-    if (!item.isActive) return 0;
-
-    const unitCostCents =
-      item.valueType === "percent"
-        ? Math.round(totalRevenue * (item.value / 100))
-        : item.currency === "BRL"
-          ? Math.round((item.value * 100) / usdToBrlRate)
-          : Math.round(item.value * 100);
-
-    const multiplier =
-      item.frequency === "per_order"
-        ? totalOrders
-        : item.frequency === "daily"
-          ? daysInPeriod
-          : item.frequency === "weekly"
-            ? weeksInPeriod
-            : item.frequency === "monthly"
-              ? monthsInPeriod
-              : item.frequency === "annual"
-                ? yearsInPeriod
-                : 1;
-
-    return Math.max(0, Math.round(unitCostCents * Math.max(multiplier, 0)));
-  }
 
   const paidOrders = dashboardFilteredOrders.filter((order) => {
     const label = order.statusLabel.toLowerCase();
     return label === "paid" || label === "pago" || label === "completed" || label === "concluido";
   }).length;
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
-  const averageMarginPercent = totalRevenue > 0 ? (totalNetProfit / totalRevenue) * 100 : 0;
 
   const statusGrouped = new Map<string, number>();
   for (const order of dashboardFilteredOrders) {
@@ -776,138 +492,6 @@ export function DashboardClient({
     setMonthPickerOpen(false);
   }
 
-  function updateOperationalCostItem(itemId: string, patch: Partial<OperationalCostItem>) {
-    setOperationalCostItems((current) =>
-      current.map((item) => {
-        if (item.id !== itemId) return item;
-
-        return {
-          ...item,
-          ...patch,
-          name: (patch.name ?? item.name).trimStart(),
-          value: Math.max(0, Number(patch.value ?? item.value) || 0),
-        };
-      }),
-    );
-  }
-
-  function removeOperationalCostItem(itemId: string) {
-    setOperationalCostItems((current) => current.filter((item) => item.id !== itemId));
-  }
-
-  function addOperationalCostItem() {
-    const trimmedName = newOperationalCostName.trim();
-    const parsedValue = Number(newOperationalCostValue.replace(",", "."));
-
-    if (!trimmedName || !Number.isFinite(parsedValue) || parsedValue < 0) {
-      return;
-    }
-
-    const newItem: OperationalCostItem = {
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      name: trimmedName,
-      value: parsedValue,
-      valueType: newOperationalCostValueType,
-      currency: newOperationalCostCurrency,
-      frequency: newOperationalCostFrequency,
-      isActive: true,
-    };
-
-    setOperationalCostItems((current) => [...current, newItem]);
-    setNewOperationalCostName("");
-    setNewOperationalCostValue("0");
-    setNewOperationalCostValueType("fixed");
-    setNewOperationalCostCurrency("USD");
-    setNewOperationalCostFrequency("monthly");
-  }
-
-  async function saveFinancialSettings() {
-    if (savingSettings) {
-      return;
-    }
-
-    const parsedSupplierDefault = Number(supplierDefaultInput.replace(",", "."));
-    const parsedCardFee = Number(cardFeeInput.replace(",", "."));
-    const parsedCashback = Number(cashbackInput.replace(",", "."));
-    const parsedOperationalReserve = Number(operationalReserveInput.replace(",", "."));
-
-    if (!Number.isFinite(parsedSupplierDefault) || parsedSupplierDefault < 0 || parsedSupplierDefault > 100) {
-      setSettingsError("O fornecedor padrão deve estar entre 0 e 100.");
-      setSettingsMessage(null);
-      return;
-    }
-
-    if (!Number.isFinite(parsedCardFee) || parsedCardFee < 0 || parsedCardFee > 100) {
-      setSettingsError("O gateway de pagamento deve estar entre 0 e 100.");
-      setSettingsMessage(null);
-      return;
-    }
-
-    if (!Number.isFinite(parsedCashback) || parsedCashback < 0 || parsedCashback > 100) {
-      setSettingsError("O cashback deve estar entre 0 e 100.");
-      setSettingsMessage(null);
-      return;
-    }
-
-    if (!Number.isFinite(parsedOperationalReserve) || parsedOperationalReserve < 0 || parsedOperationalReserve > 100) {
-      setSettingsError("A reserva operacional deve estar entre 0 e 100.");
-      setSettingsMessage(null);
-      return;
-    }
-
-    if (!auth?.currentUser) {
-      setSettingsError("Faça login com uma conta admin para salvar configurações.");
-      setSettingsMessage(null);
-      return;
-    }
-
-    setSavingSettings(true);
-    setSettingsError(null);
-    setSettingsMessage(null);
-
-    try {
-      const idToken = await auth.currentUser.getIdToken();
-      const response = await fetch("/api/admin/dashboard-settings", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({
-          supplierDefaultPercent: parsedSupplierDefault,
-          cardGatewayFeePercent: parsedCardFee,
-          cashbackPercent: parsedCashback,
-          operationalReservePercent: parsedOperationalReserve,
-        }),
-      });
-
-      const data = (await response.json()) as {
-        ok?: boolean;
-        error?: string;
-        settings?: {
-          supplierDefaultPercent: number;
-          cardGatewayFeePercent: number;
-          cashbackPercent: number;
-          operationalReservePercent: number;
-        };
-      };
-
-      if (!response.ok || !data.ok || !data.settings) {
-        setSettingsError(data.error ?? "Não foi possível salvar a configuração financeira.");
-        return;
-      }
-
-      setSupplierDefaultInput(data.settings.supplierDefaultPercent.toFixed(2));
-      setCardFeeInput(data.settings.cardGatewayFeePercent.toFixed(2));
-      setCashbackInput(data.settings.cashbackPercent.toFixed(2));
-      setOperationalReserveInput(data.settings.operationalReservePercent.toFixed(2));
-      setSettingsMessage("Configuração financeira salva. A alteração vale para novas ordens.");
-    } catch (error) {
-      setSettingsError(error instanceof Error ? error.message : "Não foi possível salvar a configuração financeira.");
-    } finally {
-      setSavingSettings(false);
-    }
-  }
 
   return (
     <div className="min-h-screen bg-[#0F1117] text-white">
@@ -1059,9 +643,7 @@ export function DashboardClient({
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Lucro líquido ajustado</p>
                 <p className="mt-2 text-3xl font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  BRL: {formatMoneyBrlFromUsdCents(totalNetProfit, usdToBrlRate)}
-                </p>
+                <p className="mt-1 text-xs text-slate-500">Com base nos custos dos pedidos</p>
               </div>
             </div>
 
@@ -1080,39 +662,16 @@ export function DashboardClient({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setOperationalCostsOpen(true)}
-              className="mt-5 block w-full rounded-2xl border border-fuchsia-500/35 bg-fuchsia-500/10 p-4 text-left transition hover:border-fuchsia-400/50 hover:bg-fuchsia-500/15"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-fuchsia-200">Custo Operacional</p>
-                  <p className="mt-1 text-sm text-fuchsia-100/90">
-                    Clique para cadastrar e editar custos operacionais (fixos e percentuais).
-                  </p>
-                  <p className="mt-1 text-xs text-fuchsia-200/80">
-                    Lucro líquido base dos pedidos: {formatMoney(orderNetProfit)}
-                  </p>
-                </div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-fuchsia-200">Abrir</p>
-              </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Lucro bruto</p>
-                  <p className="mt-1 text-sm font-bold text-cyan-200">{formatMoney(totalGrossProfit)}</p>
-                </div>
-                <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Custo operacional total</p>
-                  <p className="mt-1 text-sm font-bold text-amber-200">{formatMoney(operationalCostTotal)}</p>
-                </div>
-                <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Lucro líquido</p>
-                  <p className="mt-1 text-sm font-bold text-fuchsia-200">{formatMoney(totalNetProfit)}</p>
-                </div>
-              </div>
-            </button>
+            <div className="mt-5 rounded-2xl border border-cyan-500/25 bg-cyan-500/10 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200">Configuracoes financeiras</p>
+              <p className="mt-1 text-sm text-cyan-100/90">As edicoes de percentuais e custos operacionais ficam somente na Calculadora Financeira.</p>
+              <Link
+                href="/admin/calculadora-financeira"
+                className="mt-3 inline-flex items-center rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/20"
+              >
+                Abrir Calculadora Financeira
+              </Link>
+            </div>
           </article>
 
           <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-8">
@@ -1155,22 +714,13 @@ export function DashboardClient({
                   <span className="font-black text-rose-300">{formatDeduction(totalOperationalReserve)}</span>
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Custos Operacionais</span>
-                  <span className="font-black text-rose-300">{formatDeduction(operationalCostTotal)}</span>
-                </div>
               </div>
 
               <div className="my-3 border-t border-dashed border-white/15" />
 
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Lucro Líquido</span>
-                <span className="text-right text-xl font-black text-fuchsia-300">
-                  {formatMoney(totalNetProfit)}
-                  <span className="block text-xs font-semibold text-fuchsia-200/80">
-                    {formatMoneyBrlFromUsdCents(totalNetProfit, usdToBrlRate)}
-                  </span>
-                </span>
+                <span className="text-right text-xl font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</span>
               </div>
             </article>
 
@@ -1194,92 +744,12 @@ export function DashboardClient({
                   <span className="font-semibold text-slate-300">Reserva Operacional</span>
                   <span className="font-semibold text-rose-300">{formatDeduction(totalOperationalReserve)}</span>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">Custo Operacional</span>
-                  <span className="font-semibold text-rose-300">{formatDeduction(operationalCostTotal)}</span>
-                </div>
                 <div className="flex items-center justify-between gap-3 pt-1">
                   <span className="font-black text-white">Lucro Líquido</span>
-                  <span className="text-right font-black text-fuchsia-300">
-                    {formatMoney(totalNetProfit)}
-                    <span className="block text-[11px] font-semibold text-fuchsia-200/80">
-                      {formatMoneyBrlFromUsdCents(totalNetProfit, usdToBrlRate)}
-                    </span>
-                  </span>
+                  <span className="text-right font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</span>
                 </div>
               </div>
             </article>
-
-            <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Configuração financeira</p>
-              <p className="mt-1 text-sm text-slate-400">Valores padrão aplicados apenas em novas ordens da plataforma.</p>
-
-              <div className="mt-4 flex flex-wrap items-end gap-3">
-                <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                  Fornecedor padrão (%)
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={supplierDefaultInput}
-                    onChange={(event) => setSupplierDefaultInput(event.target.value)}
-                    className="min-h-[44px] w-48 rounded-xl border border-white/10 bg-black/50 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-400"
-                  />
-                </label>
-
-                <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                  Gateway de pagamento (%)
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={cardFeeInput}
-                    onChange={(event) => setCardFeeInput(event.target.value)}
-                    className="min-h-[44px] w-48 rounded-xl border border-white/10 bg-black/50 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-400"
-                  />
-                </label>
-
-                <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                  Cashback (%)
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={cashbackInput}
-                    onChange={(event) => setCashbackInput(event.target.value)}
-                    className="min-h-[44px] w-48 rounded-xl border border-white/10 bg-black/50 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-400"
-                  />
-                </label>
-
-                <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                  Reserva operacional (%)
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={operationalReserveInput}
-                    onChange={(event) => setOperationalReserveInput(event.target.value)}
-                    className="min-h-[44px] w-48 rounded-xl border border-white/10 bg-black/50 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-400"
-                  />
-                </label>
-
-                <button
-                  type="button"
-                  onClick={() => void saveFinancialSettings()}
-                  disabled={savingSettings}
-                  className="inline-flex min-h-[44px] items-center rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 text-sm font-semibold text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {savingSettings ? "Salvando..." : "Salvar configuração financeira"}
-                </button>
-              </div>
-
-              {settingsMessage ? <p className="mt-3 text-xs font-semibold text-emerald-300">{settingsMessage}</p> : null}
-              {settingsError ? <p className="mt-3 text-xs font-semibold text-rose-300">{settingsError}</p> : null}
-            </div>
           </article>
         </section>
 
@@ -1653,236 +1123,6 @@ export function DashboardClient({
         )}
       </main>
 
-      {operationalCostsOpen ? (
-        <div className="fixed inset-0 z-[120]">
-          <button
-            type="button"
-            onClick={() => setOperationalCostsOpen(false)}
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            aria-label="Fechar custos operacionais"
-          />
-
-          <aside className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-3xl border border-white/10 bg-[#121721] p-5 shadow-[0_-24px_60px_rgba(0,0,0,0.55)] md:inset-y-0 md:right-0 md:left-auto md:max-h-none md:w-[560px] md:rounded-none md:rounded-l-3xl md:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-fuchsia-300">Custo Operacional</p>
-                <h3 className="mt-2 text-2xl font-black text-white">Cadastro de custos</h3>
-                <p className="mt-2 text-sm text-slate-400">
-                  Cadastre custos fixos ou percentuais com frequência unica, mensal ou por pedido.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setOperationalCostsOpen(false)}
-                className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-200 transition hover:bg-white/10"
-              >
-                Fechar
-              </button>
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Lucro bruto</p>
-                <p className="mt-1 text-sm font-black text-cyan-300">{formatMoney(totalGrossProfit)}</p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Custos operacionais</p>
-                <p className="mt-1 text-sm font-black text-amber-300">{formatMoney(operationalCostTotal)}</p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Lucro líquido</p>
-                <p className="mt-1 text-sm font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</p>
-              </div>
-            </div>
-
-            <div className="mt-3 max-w-xs">
-              <div className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-300">
-                Cotação automática USD/BRL: <span className="font-semibold text-cyan-300">{usdToBrlRate.toFixed(4)}</span>
-              </div>
-            </div>
-
-            <p className="mt-4 text-xs text-slate-500">
-              Período atual: {daysInPeriod} dia(s), {monthsInPeriod} mes(es), {totalOrders} pedido(s). Custos percentuais usam como base o faturamento.
-            </p>
-
-            <div className="mt-4 space-y-3">
-              {operationalCostItems.map((item) => {
-                const itemTotal = computeOperationalCostItemTotal(item);
-                const perOrderRate = totalOrders > 0 ? Math.round(itemTotal / totalOrders) : 0;
-
-                return (
-                  <div key={item.id} className="rounded-2xl border border-white/10 bg-black/25 p-3">
-                    <div className="grid gap-2 sm:grid-cols-[1.4fr_0.9fr]">
-                      <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                        Nome
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={(event) => updateOperationalCostItem(item.id, { name: event.target.value })}
-                          className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                        />
-                      </label>
-
-                      <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                        Valor
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.value}
-                          onChange={(event) => updateOperationalCostItem(item.id, { value: Number(event.target.value) || 0 })}
-                          className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                        />
-                      </label>
-                    </div>
-
-                    <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
-                      <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                        Tipo
-                        <select
-                          value={item.valueType}
-                          onChange={(event) =>
-                            updateOperationalCostItem(item.id, {
-                              valueType: event.target.value as OperationalCostValueType,
-                            })
-                          }
-                          className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                        >
-                          <option value="fixed">Valor fixo (USD/BRL)</option>
-                          <option value="percent">Percentual (%)</option>
-                        </select>
-                      </label>
-
-                      <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                        Moeda
-                        <select
-                          value={item.currency}
-                          disabled={item.valueType === "percent"}
-                          onChange={(event) =>
-                            updateOperationalCostItem(item.id, {
-                              currency: event.target.value as OperationalCostCurrency,
-                            })
-                          }
-                          className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400 disabled:opacity-50"
-                        >
-                          <option value="USD">USD</option>
-                          <option value="BRL">BRL</option>
-                        </select>
-                      </label>
-
-                      <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                        Frequência
-                        <select
-                          value={item.frequency}
-                          onChange={(event) =>
-                            updateOperationalCostItem(item.id, {
-                              frequency: event.target.value as OperationalCostFrequency,
-                            })
-                          }
-                          className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                        >
-                          <option value="once">Único</option>
-                          <option value="daily">Diário</option>
-                          <option value="weekly">Semanal</option>
-                          <option value="monthly">Mensal</option>
-                          <option value="annual">Anual</option>
-                          <option value="per_order">Por pedido</option>
-                        </select>
-                      </label>
-
-                      <button
-                        type="button"
-                        onClick={() => removeOperationalCostItem(item.id)}
-                        className="min-h-[40px] rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 text-xs font-bold uppercase tracking-[0.12em] text-rose-200 transition hover:bg-rose-500/20"
-                      >
-                        Remover
-                      </button>
-                    </div>
-
-                    <label className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-slate-300">
-                      <input
-                        type="checkbox"
-                        checked={item.isActive}
-                        onChange={(event) => updateOperationalCostItem(item.id, { isActive: event.target.checked })}
-                        className="h-4 w-4 rounded border-white/20 bg-black"
-                      />
-                      {item.isActive ? "Ativo" : "Inativo"}
-                    </label>
-
-                    <p className="mt-2 text-xs text-slate-400">
-                      Custo no período: <span className="font-semibold text-amber-300">{formatMoney(itemTotal)}</span>
-                      {totalOrders > 0 ? (
-                        <span className="ml-2 text-slate-500">({formatMoney(perOrderRate)} por pedido)</span>
-                      ) : null}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Adicionar novo custo</p>
-
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <input
-                  type="text"
-                  value={newOperationalCostName}
-                  onChange={(event) => setNewOperationalCostName(event.target.value)}
-                  placeholder="Nome do custo"
-                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newOperationalCostValue}
-                  onChange={(event) => setNewOperationalCostValue(event.target.value)}
-                  placeholder="Valor"
-                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                />
-                <select
-                  value={newOperationalCostValueType}
-                  onChange={(event) => setNewOperationalCostValueType(event.target.value as OperationalCostValueType)}
-                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                >
-                  <option value="fixed">Valor fixo (USD/BRL)</option>
-                  <option value="percent">Percentual (%)</option>
-                </select>
-                <select
-                  value={newOperationalCostCurrency}
-                  disabled={newOperationalCostValueType === "percent"}
-                  onChange={(event) => setNewOperationalCostCurrency(event.target.value as OperationalCostCurrency)}
-                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400 disabled:opacity-50"
-                >
-                  <option value="USD">USD</option>
-                  <option value="BRL">BRL</option>
-                </select>
-                <select
-                  value={newOperationalCostFrequency}
-                  onChange={(event) => setNewOperationalCostFrequency(event.target.value as OperationalCostFrequency)}
-                  className="min-h-[40px] rounded-lg border border-white/10 bg-black/60 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                >
-                  <option value="once">Único</option>
-                  <option value="daily">Diário</option>
-                  <option value="weekly">Semanal</option>
-                  <option value="monthly">Mensal</option>
-                  <option value="annual">Anual</option>
-                  <option value="per_order">Por pedido</option>
-                </select>
-              </div>
-
-              <button
-                type="button"
-                onClick={addOperationalCostItem}
-                className="mt-3 min-h-[40px] rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-4 text-xs font-bold uppercase tracking-[0.12em] text-cyan-200 transition hover:bg-cyan-500/20"
-              >
-                Adicionar custo
-              </button>
-            </div>
-          </aside>
-        </div>
-      ) : null}
     </div>
   );
 }

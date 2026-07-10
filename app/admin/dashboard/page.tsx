@@ -198,14 +198,7 @@ export default async function DashboardPage() {
         </div>
 
         <section className="mt-8">
-          <DashboardClient
-            orders={orders}
-            loadError={loadError}
-            initialSupplierDefaultPercent={supplierDefaultPercent}
-            initialCardGatewayFeePercent={cardGatewayFeePercent}
-            initialCashbackPercent={cashbackPercent}
-            initialOperationalReservePercent={operationalReservePercent}
-          />
+          <DashboardClient orders={orders} loadError={loadError} />
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">
