@@ -454,20 +454,18 @@ export function DashboardClient({
     } satisfies DashboardOrder;
   });
 
-  const revenueByCurrency = {
-    BRL: dashboardFilteredOrders.reduce(
-      (acc, order) => acc + convertAmountCents(order.amountTotal, normalizeCurrency(order.currency), "BRL", currencyRates),
-      0,
-    ),
-    USD: dashboardFilteredOrders.reduce(
-      (acc, order) => acc + convertAmountCents(order.amountTotal, normalizeCurrency(order.currency), "USD", currencyRates),
-      0,
-    ),
-    EUR: dashboardFilteredOrders.reduce(
-      (acc, order) => acc + convertAmountCents(order.amountTotal, normalizeCurrency(order.currency), "EUR", currencyRates),
-      0,
-    ),
-  } satisfies Record<DashboardCurrency, number>;
+  const revenueByCurrency = dashboardFilteredOrders.reduce<Record<DashboardCurrency, number>>(
+    (acc, order) => {
+      const orderCurrency = normalizeCurrency(order.currency);
+      acc[orderCurrency] += order.amountTotal;
+      return acc;
+    },
+    {
+      BRL: 0,
+      USD: 0,
+      EUR: 0,
+    },
+  );
 
   const nowMs = Date.now();
   const totalRevenue = displayOrders.reduce((acc, order) => acc + order.amountTotal, 0);
@@ -762,20 +760,20 @@ export function DashboardClient({
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Receita em BRL</p>
                 <p className="mt-2 text-3xl font-black text-cyan-300">{formatMoney(revenueByCurrency.BRL, "BRL")}</p>
-                <p className="mt-1 text-xs text-slate-500">Conversao automatica</p>
+                <p className="mt-1 text-xs text-slate-500">Valor direto das ordens em BRL</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Receita em USD</p>
                 <p className="mt-2 text-3xl font-black text-emerald-300">{formatMoney(revenueByCurrency.USD, "USD")}</p>
-                <p className="mt-1 text-xs text-slate-500">Conversao automatica</p>
+                <p className="mt-1 text-xs text-slate-500">Valor direto das ordens em USD</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Receita em EUR</p>
                 <p className="mt-2 text-3xl font-black text-fuchsia-300">{formatMoney(revenueByCurrency.EUR, "EUR")}</p>
-                <p className="mt-1 text-xs text-slate-500">Conversao automatica</p>
+                <p className="mt-1 text-xs text-slate-500">Valor direto das ordens em EUR</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Receita Total ({displayCurrency})</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Receita Total Convertido ({displayCurrency})</p>
                 <p className="mt-2 text-3xl font-black text-white">{formatMoney(totalRevenue, displayCurrency)}</p>
                 <p className="mt-1 text-xs text-slate-500">Convertida para a moeda selecionada</p>
               </div>
