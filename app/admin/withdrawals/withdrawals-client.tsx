@@ -2,6 +2,7 @@
 
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { auth } from "@/lib/firebase";
@@ -24,9 +25,15 @@ type Props = {
 
 export default function WithdrawalsClient({ rows }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const initialStatus = searchParams.get("status");
+  const pendingRows = rows.filter((row) => row.status === "pending_review");
+  const approvedRows = rows.filter((row) => row.status === "approved");
+  const rejectedRows = rows.filter((row) => row.status === "rejected");
 
   useEffect(() => {
     if (!auth) {
@@ -75,6 +82,73 @@ export default function WithdrawalsClient({ rows }: Props) {
     }
   };
 
+  const renderTable = (sectionRows: WithdrawalRow[], sectionEmptyText: string) => {
+    if (sectionRows.length === 0) {
+      return <p className="px-5 py-4 text-sm text-green-600">{sectionEmptyText}</p>;
+    }
+
+    return (
+      <table className="w-full text-left text-sm">
+        <thead>
+          <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
+            <th className="px-4 py-3">Request</th>
+            <th className="px-4 py-3">User</th>
+            <th className="px-4 py-3">Amount</th>
+            <th className="px-4 py-3">Method</th>
+            <th className="px-4 py-3">Destination</th>
+            <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3">Created</th>
+            <th className="px-4 py-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sectionRows.map((row, index) => {
+            const isPending = row.status === "pending_review";
+            const busy = busyId === row.requestId;
+
+            return (
+              <tr key={row.requestId} className={`border-b border-green-950 ${index % 2 === 0 ? "" : "bg-green-950/20"}`}>
+                <td className="px-4 py-3 text-xs text-green-500">{row.requestId}</td>
+                <td className="px-4 py-3 text-xs text-green-400">
+                  <p>{row.email || "No email"}</p>
+                  <p className="text-green-700">{row.uid}</p>
+                </td>
+                <td className="px-4 py-3 font-semibold text-green-300">{row.amount.toFixed(2)} Loot</td>
+                <td className="px-4 py-3 uppercase text-green-500">{row.payoutMethod}</td>
+                <td className="px-4 py-3 text-xs text-green-500">{row.payoutReference}</td>
+                <td className="px-4 py-3 text-xs font-semibold uppercase text-green-400">{row.status.replace("_", " ")}</td>
+                <td className="px-4 py-3 text-xs text-green-500">
+                  <p>{row.createdAtLabel}</p>
+                  {row.reviewedAtLabel !== "--" ? <p className="text-green-700">Reviewed: {row.reviewedAtLabel}</p> : null}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void review(row.requestId, "approve")}
+                      disabled={!isAuthenticated || !isPending || busy}
+                      className="inline-flex rounded-md border border-emerald-700 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {busy ? "Working..." : "Approve"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void review(row.requestId, "reject")}
+                      disabled={!isAuthenticated || !isPending || busy}
+                      className="inline-flex rounded-md border border-rose-700 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-950/40 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {busy ? "Working..." : "Reject"}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  };
+
   return (
     <section className="space-y-5">
       {!isAuthenticated ? (
@@ -87,70 +161,26 @@ export default function WithdrawalsClient({ rows }: Props) {
         <p className="rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">{errorMessage}</p>
       ) : null}
 
-      <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
-        {rows.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-green-600">No withdrawal requests found.</p>
-        ) : (
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
-                <th className="px-4 py-3">Request</th>
-                <th className="px-4 py-3">User</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Method</th>
-                <th className="px-4 py-3">Destination</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => {
-                const isPending = row.status === "pending_review";
-                const busy = busyId === row.requestId;
+      <details open={initialStatus !== "approved" && initialStatus !== "rejected"} className="overflow-hidden rounded-xl border border-green-900 bg-black">
+        <summary className="cursor-pointer list-none border-b border-green-900 px-4 py-3 text-sm font-black uppercase tracking-[0.14em] text-green-300">
+          Aprovar Saque ({pendingRows.length})
+        </summary>
+        <div className="overflow-x-auto">{renderTable(pendingRows, "No pending withdrawal requests.")}</div>
+      </details>
 
-                return (
-                  <tr key={row.requestId} className={`border-b border-green-950 ${index % 2 === 0 ? "" : "bg-green-950/20"}`}>
-                    <td className="px-4 py-3 text-xs text-green-500">{row.requestId}</td>
-                    <td className="px-4 py-3 text-xs text-green-400">
-                      <p>{row.email || "No email"}</p>
-                      <p className="text-green-700">{row.uid}</p>
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-green-300">{row.amount.toFixed(2)} Loot</td>
-                    <td className="px-4 py-3 uppercase text-green-500">{row.payoutMethod}</td>
-                    <td className="px-4 py-3 text-xs text-green-500">{row.payoutReference}</td>
-                    <td className="px-4 py-3 text-xs font-semibold uppercase text-green-400">{row.status.replace("_", " ")}</td>
-                    <td className="px-4 py-3 text-xs text-green-500">
-                      <p>{row.createdAtLabel}</p>
-                      {row.reviewedAtLabel !== "--" ? <p className="text-green-700">Reviewed: {row.reviewedAtLabel}</p> : null}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => void review(row.requestId, "approve")}
-                          disabled={!isAuthenticated || !isPending || busy}
-                          className="inline-flex rounded-md border border-emerald-700 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          {busy ? "Working..." : "Approve"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void review(row.requestId, "reject")}
-                          disabled={!isAuthenticated || !isPending || busy}
-                          className="inline-flex rounded-md border border-rose-700 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-950/40 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          {busy ? "Working..." : "Reject"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </article>
+      <details open={initialStatus === "approved"} className="overflow-hidden rounded-xl border border-green-900 bg-black">
+        <summary className="cursor-pointer list-none border-b border-green-900 px-4 py-3 text-sm font-black uppercase tracking-[0.14em] text-green-300">
+          Saques Aprovados ({approvedRows.length})
+        </summary>
+        <div className="overflow-x-auto">{renderTable(approvedRows, "No approved withdrawals yet.")}</div>
+      </details>
+
+      <details open={initialStatus === "rejected"} className="overflow-hidden rounded-xl border border-green-900 bg-black">
+        <summary className="cursor-pointer list-none border-b border-green-900 px-4 py-3 text-sm font-black uppercase tracking-[0.14em] text-green-300">
+          Saques Rejeitados ({rejectedRows.length})
+        </summary>
+        <div className="overflow-x-auto">{renderTable(rejectedRows, "No rejected withdrawals.")}</div>
+      </details>
     </section>
   );
 }
