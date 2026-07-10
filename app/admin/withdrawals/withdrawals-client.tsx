@@ -83,6 +83,59 @@ export default function WithdrawalsClient({ rows, mode }: Props) {
         ? "No approved withdrawals yet."
         : "No rejected withdrawals.";
 
+  const canDownloadSpreadsheet = mode === "approved" || mode === "rejected";
+
+  const downloadSpreadsheet = () => {
+    if (!canDownloadSpreadsheet || rows.length === 0) {
+      return;
+    }
+
+    const escapeCell = (value: string | number) => {
+      const text = String(value);
+      if (/[",\n;]/.test(text)) {
+        return `"${text.replace(/"/g, '""')}"`;
+      }
+      return text;
+    };
+
+    const header = [
+      "Request",
+      "UID",
+      "Email",
+      "Amount Loot",
+      "Method",
+      "Destination",
+      "Status",
+      "Created At",
+      "Reviewed At",
+    ];
+
+    const body = rows.map((row) => [
+      row.requestId,
+      row.uid,
+      row.email,
+      row.amount.toFixed(2),
+      row.payoutMethod,
+      row.payoutReference,
+      row.status,
+      row.createdAtLabel,
+      row.reviewedAtLabel,
+    ]);
+
+    const csv = [header, ...body].map((line) => line.map(escapeCell).join(";")).join("\n");
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    const dateTag = new Date().toISOString().slice(0, 10);
+
+    anchor.href = url;
+    anchor.download = `saques-${mode}-${dateTag}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <section className="space-y-5">
       {!isAuthenticated ? (
@@ -93,6 +146,19 @@ export default function WithdrawalsClient({ rows, mode }: Props) {
 
       {errorMessage ? (
         <p className="rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">{errorMessage}</p>
+      ) : null}
+
+      {canDownloadSpreadsheet ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={downloadSpreadsheet}
+            disabled={rows.length === 0}
+            className="inline-flex rounded-md border border-green-700 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-green-200 transition hover:bg-green-950/40 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Download planilha (CSV)
+          </button>
+        </div>
       ) : null}
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
