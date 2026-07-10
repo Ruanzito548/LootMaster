@@ -103,7 +103,7 @@ export async function POST(request: Request): Promise<Response> {
       paymentMethod: "pix",
       hasServerOptions: true,
       supplierId: "",
-      supplierName: "Fornecedor Teste",
+      supplierName: "",
       supplierPercentage: financials.supplierPercentage,
       grossRevenue: financials.grossRevenue,
       supplierPayout: financials.supplierPayout,
