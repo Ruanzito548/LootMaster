@@ -5,7 +5,6 @@ import { requireAuthenticatedAdminPage } from "@/lib/server-session-auth";
 const adminNavItems = [
   { href: "/admin", label: "Central", icon: Home },
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/orders", label: "Pedidos", icon: ListChecks },
   { href: "/admin/items", label: "Itens", icon: Package },
   { href: "/admin/games", label: "Configuracoes", icon: Settings },
 ];
@@ -70,11 +69,25 @@ export default async function AdminLayout({
             <details className="group rounded-xl border border-transparent open:border-green-700/40 open:bg-green-950/20">
               <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-green-300/80 transition hover:border-green-700/40 hover:bg-green-950/40 hover:text-green-200">
                 <Wallet className="h-4 w-4 text-green-500 group-open:text-green-300" />
-                <span className="flex-1">Saques</span>
+                <span className="flex-1">Extrato</span>
                 <ChevronDown className="h-4 w-4 text-green-500 transition-transform group-open:rotate-180" />
               </summary>
 
               <div className="mb-2 ml-4 mr-2 mt-1 grid gap-1 border-l border-green-900/50 pl-3">
+                <Link
+                  href="/admin/orders/abertas"
+                  className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
+                >
+                  <ListChecks className="h-3.5 w-3.5" />
+                  Ordens Abertas
+                </Link>
+                <Link
+                  href="/admin/orders/completas"
+                  className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
+                >
+                  <ListChecks className="h-3.5 w-3.5" />
+                  Ordens Completas
+                </Link>
                 <Link
                   href="/admin/withdrawals/aprovar"
                   className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
