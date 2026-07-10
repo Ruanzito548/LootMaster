@@ -1,105 +1,53 @@
 import Link from "next/link";
 
-import { getAdminDb } from "@/lib/firebase-admin";
-
-import WithdrawalsClient from "./withdrawals-client";
+import { loadWithdrawalRows } from "./withdrawals-data";
 
 export const dynamic = "force-dynamic";
 
-type WithdrawalRow = {
-  requestId: string;
-  uid: string;
-  email: string;
-  amount: number;
-  payoutMethod: string;
-  payoutReference: string;
-  status: string;
-  createdAtLabel: string;
-  reviewedAtLabel: string;
-};
-
-function formatTimestamp(value: unknown): string {
-  if (!value || typeof value !== "object") {
-    return "--";
-  }
-
-  const parsed = value as { toDate?: () => Date };
-  if (typeof parsed.toDate !== "function") {
-    return "--";
-  }
-
-  const date = parsed.toDate();
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-    return "--";
-  }
-
-  return date.toLocaleString("en-US");
-}
-
 export default async function AdminWithdrawalsPage() {
-  let rows: WithdrawalRow[] = [];
+  let pendingCount = 0;
+  let approvedCount = 0;
+  let rejectedCount = 0;
   let loadError: string | null = null;
 
   try {
-    const adminDb = getAdminDb();
-    const snapshot = await adminDb
-      .collection("withdraw-requests")
-      .orderBy("createdAt", "desc")
-      .limit(200)
-      .get();
-
-    rows = snapshot.docs.map((docRow) => {
-      const data = docRow.data() as Record<string, unknown>;
-      return {
-        requestId: docRow.id,
-        uid: typeof data.uid === "string" ? data.uid : "",
-        email: typeof data.email === "string" ? data.email : "",
-        amount: typeof data.amount === "number" && Number.isFinite(data.amount) ? data.amount : 0,
-        payoutMethod: typeof data.payoutMethod === "string" ? data.payoutMethod : "--",
-        payoutReference: typeof data.payoutReference === "string" ? data.payoutReference : "--",
-        status: typeof data.status === "string" ? data.status : "pending_review",
-        createdAtLabel: formatTimestamp(data.createdAt),
-        reviewedAtLabel: formatTimestamp(data.reviewedAt),
-      };
-    });
+    const rows = await loadWithdrawalRows();
+    pendingCount = rows.filter((row) => row.status === "pending_review").length;
+    approvedCount = rows.filter((row) => row.status === "approved").length;
+    rejectedCount = rows.filter((row) => row.status === "rejected").length;
   } catch (error) {
     loadError = error instanceof Error ? error.message : "Could not load withdrawal requests.";
   }
 
   return (
-    <div className="min-h-screen bg-black text-green-400">
-      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin</p>
-            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Withdrawals</h1>
-            <p className="mt-2 text-sm text-green-600">Approve or reject supplier cashout requests.</p>
-          </div>
-        </div>
+    <div className="text-green-300">
+      <div className="space-y-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin</p>
+        <h1 className="text-3xl font-semibold text-green-200 sm:text-4xl">Saques</h1>
+        <p className="text-sm text-green-500">Selecione a pagina que deseja gerenciar.</p>
+      </div>
 
-        {loadError ? (
-          <p className="mt-6 rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">{loadError}</p>
-        ) : (
-          <div className="mt-6">
-            <WithdrawalsClient rows={rows} />
-          </div>
-        )}
-
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href="/admin"
-            className="inline-flex items-center rounded-md border border-green-800 px-4 py-2 text-sm font-medium text-green-400 transition hover:bg-green-950"
-          >
-            Back to admin
+      {loadError ? (
+        <p className="mt-6 rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">{loadError}</p>
+      ) : (
+        <section className="mt-6 grid gap-4 md:grid-cols-3">
+          <Link href="/admin/withdrawals/aprovar" className="rounded-xl border border-green-800/60 bg-black/40 p-4 transition hover:border-green-600/70 hover:bg-green-950/30">
+            <p className="text-xs uppercase tracking-[0.14em] text-green-600">Aprovar Saque</p>
+            <p className="mt-2 text-2xl font-black text-green-200">{pendingCount}</p>
+            <p className="mt-1 text-sm text-green-500">Solicitacoes pendentes de revisao.</p>
           </Link>
-          <Link
-            href="/admin/orders"
-            className="inline-flex items-center rounded-md border border-green-800 px-4 py-2 text-sm font-medium text-green-400 transition hover:bg-green-950"
-          >
-            Open orders
+          <Link href="/admin/withdrawals/aprovados" className="rounded-xl border border-green-800/60 bg-black/40 p-4 transition hover:border-green-600/70 hover:bg-green-950/30">
+            <p className="text-xs uppercase tracking-[0.14em] text-green-600">Saques Aprovados</p>
+            <p className="mt-2 text-2xl font-black text-green-200">{approvedCount}</p>
+            <p className="mt-1 text-sm text-green-500">Saques ja aprovados pela equipe.</p>
           </Link>
-        </div>
-      </main>
+          <Link href="/admin/withdrawals/rejeitados" className="rounded-xl border border-green-800/60 bg-black/40 p-4 transition hover:border-green-600/70 hover:bg-green-950/30">
+            <p className="text-xs uppercase tracking-[0.14em] text-green-600">Saques Rejeitados</p>
+            <p className="mt-2 text-2xl font-black text-green-200">{rejectedCount}</p>
+            <p className="mt-1 text-sm text-green-500">Historico de recusas e estornos.</p>
+          </Link>
+        </section>
+      )}
     </div>
   );
 }

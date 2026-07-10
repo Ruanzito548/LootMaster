@@ -76,19 +76,19 @@ export default async function AdminLayout({
 
               <div className="mb-2 ml-4 mr-2 mt-1 grid gap-1 border-l border-green-900/50 pl-3">
                 <Link
-                  href="/admin/withdrawals?status=pending"
+                  href="/admin/withdrawals/aprovar"
                   className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
                 >
                   Aprovar Saque
                 </Link>
                 <Link
-                  href="/admin/withdrawals?status=approved"
+                  href="/admin/withdrawals/aprovados"
                   className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
                 >
                   Saques Aprovados
                 </Link>
                 <Link
-                  href="/admin/withdrawals?status=rejected"
+                  href="/admin/withdrawals/rejeitados"
                   className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
                 >
                   Saques Rejeitados
