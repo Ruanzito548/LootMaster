@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronDown, FolderPlus, Home, LayoutDashboard, ListChecks, Package, Settings, UserCog, Users, Wallet } from "lucide-react";
+import { ChevronDown, FolderPlus, Home, LayoutDashboard, Package, Settings, UserCog, Users, Wallet } from "lucide-react";
 import { requireAuthenticatedAdminPage } from "@/lib/server-session-auth";
 
 const adminNavItems = [
@@ -78,14 +78,12 @@ export default async function AdminLayout({
                   href="/admin/orders/abertas"
                   className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
                 >
-                  <ListChecks className="h-3.5 w-3.5" />
                   Ordens Abertas
                 </Link>
                 <Link
                   href="/admin/orders/completas"
                   className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
                 >
-                  <ListChecks className="h-3.5 w-3.5" />
                   Ordens Completas
                 </Link>
                 <Link
