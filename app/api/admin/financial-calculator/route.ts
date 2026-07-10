@@ -7,6 +7,11 @@ import {
   sanitizeFinancialCalculatorConfig,
 } from "@/lib/financial-calculator-config";
 import { getAdminDb } from "@/lib/firebase-admin";
+import {
+  SITE_FEE_SETTINGS_DOC_ID,
+  buildDefaultSiteFeeSettings,
+  sanitizeSiteFeeSettings,
+} from "@/lib/site-fee-settings";
 
 type PutBody = {
   config?: unknown;
@@ -87,11 +92,26 @@ export async function GET(request: Request): Promise<Response> {
     await requireAuthenticatedAdminRequest(request);
 
     const adminDb = getAdminDb();
-    const snapshot = await adminDb.collection("app-config").doc(FINANCIAL_CALCULATOR_CONFIG_DOC_ID).get();
-    const snapshotData = snapshot.exists ? (snapshot.data() as Record<string, unknown>) : null;
+    const calculatorSnapshot = await adminDb.collection("app-config").doc(FINANCIAL_CALCULATOR_CONFIG_DOC_ID).get();
+    const calculatorSnapshotData = calculatorSnapshot.exists ? (calculatorSnapshot.data() as Record<string, unknown>) : null;
+    const siteFeeSnapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
 
-    const config = snapshot.exists ? sanitizeFinancialCalculatorConfig(snapshot.data()) : buildDefaultFinancialCalculatorConfig();
-    const history = buildHistory(snapshotData);
+    const calculatorConfig = calculatorSnapshot.exists
+      ? sanitizeFinancialCalculatorConfig(calculatorSnapshot.data())
+      : buildDefaultFinancialCalculatorConfig();
+    const siteFeeSettings = siteFeeSnapshot.exists
+      ? sanitizeSiteFeeSettings(siteFeeSnapshot.data())
+      : buildDefaultSiteFeeSettings();
+
+    const config = {
+      ...calculatorConfig,
+      supplierPercentage: siteFeeSettings.supplierDefaultPercent,
+      cardGatewayFeePercent: siteFeeSettings.cardGatewayFeePercent,
+      cashbackPercent: siteFeeSettings.cashbackPercent,
+      operationalReservePercent: siteFeeSettings.operationalReservePercent,
+    };
+
+    const history = buildHistory(calculatorSnapshotData);
 
     return Response.json({ ok: true, config, history });
   } catch (error) {
@@ -119,12 +139,38 @@ export async function PUT(request: Request): Promise<Response> {
   try {
     const adminDb = getAdminDb();
     const sanitized = sanitizeFinancialCalculatorConfig(body.config);
-    const snapshot = await adminDb.collection("app-config").doc(FINANCIAL_CALCULATOR_CONFIG_DOC_ID).get();
-    const snapshotData = snapshot.exists ? (snapshot.data() as Record<string, unknown>) : null;
-    const currentConfig = snapshot.exists ? sanitizeFinancialCalculatorConfig(snapshot.data()) : null;
+    const calculatorSnapshot = await adminDb.collection("app-config").doc(FINANCIAL_CALCULATOR_CONFIG_DOC_ID).get();
+    const snapshotData = calculatorSnapshot.exists ? (calculatorSnapshot.data() as Record<string, unknown>) : null;
+    const currentConfig = calculatorSnapshot.exists ? sanitizeFinancialCalculatorConfig(calculatorSnapshot.data()) : null;
+    const siteFeeSnapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
+    const currentSiteFee = siteFeeSnapshot.exists
+      ? sanitizeSiteFeeSettings(siteFeeSnapshot.data())
+      : buildDefaultSiteFeeSettings();
     const adminUserDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
     const adminUserData = adminUserDoc.exists ? (adminUserDoc.data() as Record<string, unknown>) : null;
     const adminLabel = getAdminLabel(adminUserData, decodedToken.uid);
+
+    const syncedSiteFee = sanitizeSiteFeeSettings({
+      ...currentSiteFee,
+      supplierDefaultPercent: sanitized.supplierPercentage,
+      cardGatewayFeePercent: sanitized.cardGatewayFeePercent,
+      cashbackPercent: sanitized.cashbackPercent,
+      operationalReservePercent: sanitized.operationalReservePercent,
+      updatedAtMs: Date.now(),
+    });
+
+    await adminDb
+      .collection("app-config")
+      .doc(SITE_FEE_SETTINGS_DOC_ID)
+      .set(
+        {
+          ...syncedSiteFee,
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: decodedToken.uid,
+          updatedByLabel: adminLabel,
+        },
+        { merge: true },
+      );
 
     await adminDb
       .collection("app-config")
@@ -146,7 +192,13 @@ export async function PUT(request: Request): Promise<Response> {
 
     return Response.json({
       ok: true,
-      config: sanitized,
+      config: {
+        ...sanitized,
+        supplierPercentage: syncedSiteFee.supplierDefaultPercent,
+        cardGatewayFeePercent: syncedSiteFee.cardGatewayFeePercent,
+        cashbackPercent: syncedSiteFee.cashbackPercent,
+        operationalReservePercent: syncedSiteFee.operationalReservePercent,
+      },
       history: {
         previousConfig: currentConfig,
         updatedAt: new Date().toISOString(),
