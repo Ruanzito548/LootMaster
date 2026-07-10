@@ -35,6 +35,11 @@ type DashboardClientProps = {
 
 type RangeValue = "7" | "30" | "90" | "all" | "custom";
 type ChartScope = "monthly" | "yearly";
+type DashboardCurrency = "BRL" | "USD" | "EUR";
+type CurrencyRates = {
+  usdToBrl: number;
+  usdToEur: number;
+};
 
 type RevenueBucket = {
   key: string;
@@ -46,6 +51,20 @@ type RevenueBucket = {
   ordersCount: number;
 };
 
+const FALLBACK_RATES: CurrencyRates = {
+  usdToBrl: 5.5,
+  usdToEur: 0.92,
+};
+
+function normalizeCurrency(value: string | null | undefined): DashboardCurrency {
+  const normalized = (value ?? "").toUpperCase();
+  if (normalized === "BRL" || normalized === "EUR") {
+    return normalized;
+  }
+
+  return "USD";
+}
+
 function resolveGatewayLabel(paymentMethod: string) {
   const normalized = paymentMethod.trim().toLowerCase();
 
@@ -56,15 +75,17 @@ function resolveGatewayLabel(paymentMethod: string) {
   return `Gateway ${paymentMethod}`;
 }
 
-function formatMoney(amountInCents: number) {
-  return new Intl.NumberFormat("en-US", {
+function formatMoney(amountInCents: number, currency: DashboardCurrency) {
+  const locale = currency === "BRL" ? "pt-BR" : currency === "EUR" ? "de-DE" : "en-US";
+
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "USD",
+    currency,
   }).format(amountInCents / 100);
 }
 
-function formatDeduction(amountInCents: number) {
-  return `-${formatMoney(Math.abs(amountInCents))}`;
+function formatDeduction(amountInCents: number, currency: DashboardCurrency) {
+  return `-${formatMoney(Math.abs(amountInCents), currency)}`;
 }
 
 function formatPercent(value: number) {
@@ -277,6 +298,34 @@ function buildReferenceLines(scaleMaxValue: number, ticks: number[]) {
   });
 }
 
+function convertAmountCents(
+  amountInCents: number,
+  fromCurrency: DashboardCurrency,
+  toCurrency: DashboardCurrency,
+  rates: CurrencyRates,
+) {
+  if (fromCurrency === toCurrency) {
+    return amountInCents;
+  }
+
+  const amount = amountInCents / 100;
+  const usdAmount =
+    fromCurrency === "USD"
+      ? amount
+      : fromCurrency === "BRL"
+        ? amount / rates.usdToBrl
+        : amount / rates.usdToEur;
+
+  const convertedAmount =
+    toCurrency === "USD"
+      ? usdAmount
+      : toCurrency === "BRL"
+        ? usdAmount * rates.usdToBrl
+        : usdAmount * rates.usdToEur;
+
+  return Math.round(convertedAmount * 100);
+}
+
 export function DashboardClient({
   orders,
   loadError,
@@ -293,8 +342,49 @@ export function DashboardClient({
   const [statusFilter, setStatusFilter] = useState("all");
   const [gameFilter, setGameFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
+  const [displayCurrency, setDisplayCurrency] = useState<DashboardCurrency>("BRL");
+  const [currencyRates, setCurrencyRates] = useState<CurrencyRates>(FALLBACK_RATES);
   const [hoveredBarKey, setHoveredBarKey] = useState<string | null>(null);
   const [chartAnimated, setChartAnimated] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadRates = async () => {
+      try {
+        const response = await fetch("/api/fx/usd-rates", { cache: "no-store" });
+        const payload = (await response.json()) as Partial<CurrencyRates>;
+
+        if (ignore) {
+          return;
+        }
+
+        if (
+          typeof payload.usdToBrl === "number" &&
+          Number.isFinite(payload.usdToBrl) &&
+          payload.usdToBrl > 0 &&
+          typeof payload.usdToEur === "number" &&
+          Number.isFinite(payload.usdToEur) &&
+          payload.usdToEur > 0
+        ) {
+          setCurrencyRates({
+            usdToBrl: payload.usdToBrl,
+            usdToEur: payload.usdToEur,
+          });
+        }
+      } catch {
+        if (!ignore) {
+          setCurrencyRates(FALLBACK_RATES);
+        }
+      }
+    };
+
+    void loadRates();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     setChartAnimated(false);
@@ -348,27 +438,58 @@ export function DashboardClient({
     return rangeStart ? createdMs >= rangeStart : true;
   });
 
+  const displayOrders = dashboardFilteredOrders.map((order) => {
+    const orderCurrency = normalizeCurrency(order.currency);
+
+    return {
+      ...order,
+      amountTotal: convertAmountCents(order.amountTotal, orderCurrency, displayCurrency, currencyRates),
+      supplierPayout: convertAmountCents(order.supplierPayout, orderCurrency, displayCurrency, currencyRates),
+      grossProfit: convertAmountCents(order.grossProfit, orderCurrency, displayCurrency, currencyRates),
+      cardFee: convertAmountCents(order.cardFee, orderCurrency, displayCurrency, currencyRates),
+      cashback: convertAmountCents(order.cashback, orderCurrency, displayCurrency, currencyRates),
+      operationalReserve: convertAmountCents(order.operationalReserve, orderCurrency, displayCurrency, currencyRates),
+      netProfit: convertAmountCents(order.netProfit, orderCurrency, displayCurrency, currencyRates),
+      currency: displayCurrency,
+    } satisfies DashboardOrder;
+  });
+
+  const revenueByCurrency = {
+    BRL: dashboardFilteredOrders.reduce(
+      (acc, order) => acc + convertAmountCents(order.amountTotal, normalizeCurrency(order.currency), "BRL", currencyRates),
+      0,
+    ),
+    USD: dashboardFilteredOrders.reduce(
+      (acc, order) => acc + convertAmountCents(order.amountTotal, normalizeCurrency(order.currency), "USD", currencyRates),
+      0,
+    ),
+    EUR: dashboardFilteredOrders.reduce(
+      (acc, order) => acc + convertAmountCents(order.amountTotal, normalizeCurrency(order.currency), "EUR", currencyRates),
+      0,
+    ),
+  } satisfies Record<DashboardCurrency, number>;
+
   const nowMs = Date.now();
-  const totalRevenue = dashboardFilteredOrders.reduce((acc, order) => acc + order.amountTotal, 0);
-  const totalPayout = dashboardFilteredOrders.reduce((acc, order) => acc + order.supplierPayout, 0);
-  const totalGatewayFee = dashboardFilteredOrders.reduce((acc, order) => acc + order.cardFee, 0);
-  const totalCashback = dashboardFilteredOrders.reduce((acc, order) => acc + order.cashback, 0);
-  const totalOperationalReserve = dashboardFilteredOrders.reduce((acc, order) => acc + order.operationalReserve, 0);
-  const totalGrossProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.grossProfit, 0);
-  const orderNetProfit = dashboardFilteredOrders.reduce((acc, order) => acc + order.netProfit, 0);
-  const totalOrders = dashboardFilteredOrders.length;
+  const totalRevenue = displayOrders.reduce((acc, order) => acc + order.amountTotal, 0);
+  const totalPayout = displayOrders.reduce((acc, order) => acc + order.supplierPayout, 0);
+  const totalGatewayFee = displayOrders.reduce((acc, order) => acc + order.cardFee, 0);
+  const totalCashback = displayOrders.reduce((acc, order) => acc + order.cashback, 0);
+  const totalOperationalReserve = displayOrders.reduce((acc, order) => acc + order.operationalReserve, 0);
+  const totalGrossProfit = displayOrders.reduce((acc, order) => acc + order.grossProfit, 0);
+  const orderNetProfit = displayOrders.reduce((acc, order) => acc + order.netProfit, 0);
+  const totalOrders = displayOrders.length;
   const totalNetProfit = orderNetProfit;
-  const gatewayMethods = Array.from(new Set(dashboardFilteredOrders.map((order) => resolveGatewayLabel(order.paymentMethod))));
+  const gatewayMethods = Array.from(new Set(displayOrders.map((order) => resolveGatewayLabel(order.paymentMethod))));
   const gatewayLabel = gatewayMethods.length === 1 ? gatewayMethods[0] : "Gateway (misto)";
 
-  const paidOrders = dashboardFilteredOrders.filter((order) => {
+  const paidOrders = displayOrders.filter((order) => {
     const label = order.statusLabel.toLowerCase();
     return label === "paid" || label === "pago" || label === "completed" || label === "concluido";
   }).length;
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
   const statusGrouped = new Map<string, number>();
-  for (const order of dashboardFilteredOrders) {
+  for (const order of displayOrders) {
     statusGrouped.set(order.statusLabel, (statusGrouped.get(order.statusLabel) || 0) + 1);
   }
 
@@ -381,7 +502,7 @@ export function DashboardClient({
     .sort((a, b) => b.count - a.count);
 
   const gameRevenueGrouped = new Map<string, number>();
-  for (const order of dashboardFilteredOrders) {
+  for (const order of displayOrders) {
     gameRevenueGrouped.set(order.gameTitle, (gameRevenueGrouped.get(order.gameTitle) || 0) + order.amountTotal);
   }
 
@@ -393,7 +514,7 @@ export function DashboardClient({
   const topGameMax = Math.max(...gameRevenue.map((item) => item.value), 1);
 
   const paymentMixGrouped = new Map<string, { count: number; value: number }>();
-  for (const order of dashboardFilteredOrders) {
+  for (const order of displayOrders) {
     const key = order.paymentMethod || "--";
     const current = paymentMixGrouped.get(key) ?? { count: 0, value: 0 };
     paymentMixGrouped.set(key, {
@@ -406,13 +527,13 @@ export function DashboardClient({
     .map(([method, value]) => ({ method, ...value }))
     .sort((a, b) => b.value - a.value);
 
-  const recentOrders = [...dashboardFilteredOrders].sort((a, b) => b.createdUnix - a.createdUnix).slice(0, 8);
+  const recentOrders = [...displayOrders].sort((a, b) => b.createdUnix - a.createdUnix).slice(0, 8);
 
   const normalizedCurrentAnchor = normalizePeriodAnchorMs(chartScope, nowMs, nowMs);
   const canNavigateNext = chartAnchorMs < normalizedCurrentAnchor;
-  const currentBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, chartAnchorMs), dashboardFilteredOrders);
+  const currentBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, chartAnchorMs), displayOrders);
   const previousAnchorMs = shiftPeriodAnchorMs(chartScope, chartAnchorMs, -1, nowMs);
-  const previousBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, previousAnchorMs), dashboardFilteredOrders);
+  const previousBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, previousAnchorMs), displayOrders);
   const chartPeriodLabel = formatPeriodLabel(chartScope, chartAnchorMs);
   const periodUnitLabel = getScopeUnitLabel(chartScope);
   const periodAverageLabel = `Média por ${periodUnitLabel}`;
@@ -420,7 +541,7 @@ export function DashboardClient({
   const worstPeriodLabel = chartScope === "yearly" ? "Pior mês" : "Pior período";
 
   const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-  const orderYears = Array.from(new Set(dashboardFilteredOrders.map((order) => new Date(order.createdUnix * 1000).getFullYear())));
+  const orderYears = Array.from(new Set(displayOrders.map((order) => new Date(order.createdUnix * 1000).getFullYear())));
   if (!orderYears.includes(new Date(nowMs).getFullYear())) {
     orderYears.push(new Date(nowMs).getFullYear());
   }
@@ -582,6 +703,19 @@ export function DashboardClient({
                   ))}
                 </select>
               </label>
+
+              <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                Moeda
+                <select
+                  className="min-h-[48px] w-full rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  value={displayCurrency}
+                  onChange={(event) => setDisplayCurrency(event.target.value as DashboardCurrency)}
+                >
+                  <option value="BRL">BRL</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </label>
             </div>
           </article>
 
@@ -626,39 +760,39 @@ export function DashboardClient({
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Pedidos filtrados</p>
-                <p className="mt-2 text-3xl font-black text-white">{totalOrders}</p>
-                <p className="mt-1 text-xs text-slate-500">{paidOrders} pagos / {statusBreakdown.length} status</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Receita em BRL</p>
+                <p className="mt-2 text-3xl font-black text-cyan-300">{formatMoney(revenueByCurrency.BRL, "BRL")}</p>
+                <p className="mt-1 text-xs text-slate-500">Conversao automatica</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Faturamento bruto</p>
-                <p className="mt-2 text-3xl font-black text-cyan-300">{formatMoney(totalRevenue)}</p>
-                <p className="mt-1 text-xs text-slate-500">Base dos pedidos selecionados</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Receita em USD</p>
+                <p className="mt-2 text-3xl font-black text-emerald-300">{formatMoney(revenueByCurrency.USD, "USD")}</p>
+                <p className="mt-1 text-xs text-slate-500">Conversao automatica</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Repasse total</p>
-                <p className="mt-2 text-3xl font-black text-emerald-300">{formatMoney(totalPayout)}</p>
-                <p className="mt-1 text-xs text-slate-500">Valor para fornecedores</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Receita em EUR</p>
+                <p className="mt-2 text-3xl font-black text-fuchsia-300">{formatMoney(revenueByCurrency.EUR, "EUR")}</p>
+                <p className="mt-1 text-xs text-slate-500">Conversao automatica</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Lucro líquido ajustado</p>
-                <p className="mt-2 text-3xl font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</p>
-                <p className="mt-1 text-xs text-slate-500">Com base nos custos dos pedidos</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Receita Total ({displayCurrency})</p>
+                <p className="mt-2 text-3xl font-black text-white">{formatMoney(totalRevenue, displayCurrency)}</p>
+                <p className="mt-1 text-xs text-slate-500">Convertida para a moeda selecionada</p>
               </div>
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Ticket médio</p>
-                <p className="mt-2 text-2xl font-black text-white">{formatMoney(avgTicket)}</p>
+                <p className="mt-2 text-2xl font-black text-white">{formatMoney(avgTicket, displayCurrency)}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Pedidos completos</p>
                 <p className="mt-2 text-2xl font-black text-emerald-300">{statusBreakdown.find((item) => item.label === "Completed")?.count ?? 0}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Pedidos pagos</p>
-                <p className="mt-2 text-2xl font-black text-cyan-300">{paidOrders}</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Pedidos filtrados</p>
+                <p className="mt-2 text-2xl font-black text-cyan-300">{totalOrders}</p>
               </div>
             </div>
 
@@ -691,27 +825,27 @@ export function DashboardClient({
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-200">Faturamento Bruto</span>
-                  <span className="font-black text-cyan-200">{formatMoney(totalRevenue)}</span>
+                  <span className="font-black text-cyan-200">{formatMoney(totalRevenue, displayCurrency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-300">- Repasse Fornecedor</span>
-                  <span className="font-black text-rose-300">{formatDeduction(totalPayout)}</span>
+                  <span className="font-black text-rose-300">{formatDeduction(totalPayout, displayCurrency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-300">- {gatewayLabel}</span>
-                  <span className="font-black text-rose-300">{formatDeduction(totalGatewayFee)}</span>
+                  <span className="font-black text-rose-300">{formatDeduction(totalGatewayFee, displayCurrency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-300">- Cashback / Loot Coins</span>
-                  <span className="font-black text-rose-300">{formatDeduction(totalCashback)}</span>
+                  <span className="font-black text-rose-300">{formatDeduction(totalCashback, displayCurrency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-300">- Reserva Operacional</span>
-                  <span className="font-black text-rose-300">{formatDeduction(totalOperationalReserve)}</span>
+                  <span className="font-black text-rose-300">{formatDeduction(totalOperationalReserve, displayCurrency)}</span>
                 </div>
 
               </div>
@@ -720,7 +854,7 @@ export function DashboardClient({
 
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Lucro Líquido</span>
-                <span className="text-right text-xl font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</span>
+                <span className="text-right text-xl font-black text-fuchsia-300">{formatMoney(totalNetProfit, displayCurrency)}</span>
               </div>
             </article>
 
@@ -730,23 +864,23 @@ export function DashboardClient({
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-300">Receita</span>
-                  <span className="font-semibold text-cyan-300">{formatMoney(totalRevenue)}</span>
+                  <span className="font-semibold text-cyan-300">{formatMoney(totalRevenue, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-300">Fornecedor</span>
-                  <span className="font-semibold text-rose-300">{formatDeduction(totalPayout)}</span>
+                  <span className="font-semibold text-rose-300">{formatDeduction(totalPayout, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-300">Gateway</span>
-                  <span className="font-semibold text-rose-300">{formatDeduction(totalGatewayFee)}</span>
+                  <span className="font-semibold text-rose-300">{formatDeduction(totalGatewayFee, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-300">Reserva Operacional</span>
-                  <span className="font-semibold text-rose-300">{formatDeduction(totalOperationalReserve)}</span>
+                  <span className="font-semibold text-rose-300">{formatDeduction(totalOperationalReserve, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3 pt-1">
                   <span className="font-black text-white">Lucro Líquido</span>
-                  <span className="text-right font-black text-fuchsia-300">{formatMoney(totalNetProfit)}</span>
+                  <span className="text-right font-black text-fuchsia-300">{formatMoney(totalNetProfit, displayCurrency)}</span>
                 </div>
               </div>
             </article>
@@ -869,11 +1003,11 @@ export function DashboardClient({
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Receita</p>
-                    <p className="mt-1 text-sm font-semibold text-white">{formatMoney(chartTotalRevenue)}</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{formatMoney(chartTotalRevenue, displayCurrency)}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{periodAverageLabel}</p>
-                    <p className="mt-1 text-sm font-semibold text-cyan-300">{formatMoney(chartAverageRevenue)}</p>
+                    <p className="mt-1 text-sm font-semibold text-cyan-300">{formatMoney(chartAverageRevenue, displayCurrency)}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Total de pedidos</p>
@@ -891,7 +1025,7 @@ export function DashboardClient({
                   <div className="relative" style={{ minWidth: `${chartMinWidth}px` }}>
                     <div className="relative h-80 rounded-2xl border border-white/10 bg-black/30 p-4 sm:p-5">
                       <span className="pointer-events-none absolute left-2 top-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                        USD
+                        {displayCurrency}
                       </span>
 
                       {chartReferenceLines.map((line) => (
@@ -909,7 +1043,7 @@ export function DashboardClient({
                               className="absolute -top-2 rounded bg-[#0F1117] px-1 text-[10px] font-semibold text-slate-400"
                               style={{ left: `${-chartYAxisGutterPx + 6}px` }}
                             >
-                              {formatMoney(line.value)}
+                              {formatMoney(line.value, displayCurrency)}
                             </span>
                           </div>
                         </div>
@@ -977,7 +1111,7 @@ export function DashboardClient({
                                       className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 rounded-md bg-[#0F1117]/90 px-1.5 py-0.5 text-[10px] font-bold text-cyan-200"
                                       style={{ bottom: `calc(${heightPercent}% + 8px)` }}
                                     >
-                                      {formatMoney(bucket.revenueCents)}
+                                      {formatMoney(bucket.revenueCents, displayCurrency)}
                                     </p>
                                   ) : null}
                                 </div>
@@ -987,9 +1121,9 @@ export function DashboardClient({
                                   style={{ bottom: `calc(${tooltipBottomPercent}% + 18px)` }}
                                 >
                                   <p className="font-semibold text-white">{bucket.fullLabel}</p>
-                                  <p className="mt-1 text-slate-300">Receita: <span className="font-semibold text-cyan-300">{formatMoney(bucket.revenueCents)}</span></p>
+                                  <p className="mt-1 text-slate-300">Receita: <span className="font-semibold text-cyan-300">{formatMoney(bucket.revenueCents, displayCurrency)}</span></p>
                                   <p className="mt-1 text-slate-300">Pedidos: <span className="font-semibold text-emerald-300">{bucket.ordersCount}</span></p>
-                                  <p className="mt-1 text-slate-300">Ticket Médio: <span className="font-semibold text-fuchsia-300">{formatMoney(averageTicket)}</span></p>
+                                  <p className="mt-1 text-slate-300">Ticket Médio: <span className="font-semibold text-fuchsia-300">{formatMoney(averageTicket, displayCurrency)}</span></p>
                                 </div>
                               </div>
 
@@ -1007,22 +1141,22 @@ export function DashboardClient({
                 <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                   <div className="rounded-xl border border-white/10 bg-black/30 p-3">
                     <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Receita Total</p>
-                    <p className="mt-1 text-lg font-black text-cyan-300">{formatMoney(chartTotalRevenue)}</p>
+                    <p className="mt-1 text-lg font-black text-cyan-300">{formatMoney(chartTotalRevenue, displayCurrency)}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 p-3">
                     <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Ticket Médio</p>
-                    <p className="mt-1 text-lg font-black text-emerald-300">{formatMoney(chartTicketAverage)}</p>
+                    <p className="mt-1 text-lg font-black text-emerald-300">{formatMoney(chartTicketAverage, displayCurrency)}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 p-3">
                     <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">{bestPeriodLabel}</p>
                     <p className="mt-1 text-sm font-semibold text-white">
-                      {chartBestBucket ? `${chartBestBucket.label} - ${formatMoney(chartBestBucket.revenueCents)}` : "Sem vendas"}
+                      {chartBestBucket ? `${chartBestBucket.label} - ${formatMoney(chartBestBucket.revenueCents, displayCurrency)}` : "Sem vendas"}
                     </p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 p-3">
                     <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">{worstPeriodLabel}</p>
                     <p className="mt-1 text-sm font-semibold text-white">
-                      {chartWorstBucket ? `${chartWorstBucket.label} - ${formatMoney(chartWorstBucket.revenueCents)}` : "Sem vendas"}
+                      {chartWorstBucket ? `${chartWorstBucket.label} - ${formatMoney(chartWorstBucket.revenueCents, displayCurrency)}` : "Sem vendas"}
                     </p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/30 p-3">
@@ -1031,7 +1165,7 @@ export function DashboardClient({
                       {growthPercent >= 0 ? "+" : ""}
                       {growthPercent.toFixed(2)}%
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">Anterior: {formatMoney(previousRevenue)}</p>
+                    <p className="mt-1 text-xs text-slate-500">Anterior: {formatMoney(previousRevenue, displayCurrency)}</p>
                   </div>
                 </div>
 
@@ -1074,7 +1208,7 @@ export function DashboardClient({
                       <div key={item.game} className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-semibold text-slate-300">{item.game}</span>
-                          <span className="text-slate-500">{formatMoney(item.value)}</span>
+                          <span className="text-slate-500">{formatMoney(item.value, displayCurrency)}</span>
                         </div>
                         <div className="h-2 rounded-full bg-white/5">
                           <div className="h-2 rounded-full bg-[linear-gradient(90deg,#34d399,#86efac)]" style={{ width: `${widthPct}%` }} />
@@ -1111,7 +1245,7 @@ export function DashboardClient({
                         <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-600">{order.statusLabel}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-black text-cyan-300">{formatMoney(order.amountTotal)}</p>
+                        <p className="text-sm font-black text-cyan-300">{formatMoney(order.amountTotal, displayCurrency)}</p>
                         <p className="mt-1 text-[11px] text-slate-500">{order.paymentMethod}</p>
                       </div>
                     </Link>
