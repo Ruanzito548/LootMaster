@@ -6,11 +6,30 @@ import { buildDefaultSiteFeeSettings } from "@/lib/site-fee-settings";
 
 import type { OrderRow } from "./export-button";
 
-function formatMoney(amountInCents: number | null) {
+type SupportedCurrency = "USD" | "BRL" | "EUR";
+
+function normalizeCurrency(value: unknown): SupportedCurrency {
+  if (typeof value !== "string") return "USD";
+
+  const normalized = value.trim().toUpperCase();
+  if (normalized === "BRL" || normalized === "EUR") {
+    return normalized;
+  }
+
+  return "USD";
+}
+
+function getCurrencyLocale(currency: SupportedCurrency) {
+  if (currency === "BRL") return "pt-BR";
+  if (currency === "EUR") return "de-DE";
+  return "en-US";
+}
+
+function formatMoney(amountInCents: number | null, currency: SupportedCurrency) {
   if (typeof amountInCents !== "number") return "--";
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(getCurrencyLocale(currency), {
     style: "currency",
-    currency: "USD",
+    currency,
   }).format(amountInCents / 100);
 }
 
@@ -99,6 +118,7 @@ export async function loadOrdersRows(): Promise<{ rows: OrderRow[]; loadError: s
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
       const assignedAgent = assignedAgentId ? agentByUid.get(assignedAgentId) : null;
       const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
+      const currency = normalizeCurrency(data.currency);
       const financials = buildOrderFinancialSnapshot(data, {
         supplierDefaultPercent: buildDefaultSiteFeeSettings().supplierDefaultPercent,
         cardGatewayFeePercent: 0,
@@ -130,8 +150,8 @@ export async function loadOrdersRows(): Promise<{ rows: OrderRow[]; loadError: s
         faction: typeof data.faction === "string" && data.faction ? data.faction : "--",
         deliveryMethod: typeof data.deliveryMethod === "string" && data.deliveryMethod ? data.deliveryMethod : "--",
         paymentMethod: typeof data.paymentMethod === "string" && data.paymentMethod ? data.paymentMethod : "--",
-        total: formatMoney(totalCents),
-        currency: "usd",
+        total: formatMoney(totalCents, currency),
+        currency: currency.toLowerCase(),
         totalCents,
         supplierName: typeof data.supplierName === "string" && data.supplierName ? data.supplierName : "--",
         supplierPercentage: financials.supplierPercentage,
@@ -184,8 +204,8 @@ export async function loadOrdersRows(): Promise<{ rows: OrderRow[]; loadError: s
       faction: s.metadata?.faction || "--",
       deliveryMethod: s.metadata?.deliveryMethod || "--",
       paymentMethod: s.metadata?.paymentMethod || "--",
-      total: formatMoney(s.amount_total),
-      currency: s.currency ?? "usd",
+      total: formatMoney(s.amount_total, normalizeCurrency(s.currency)),
+      currency: normalizeCurrency(s.currency).toLowerCase(),
       totalCents: s.amount_total ?? 0,
       supplierName: "--",
       supplierPercentage: 75,

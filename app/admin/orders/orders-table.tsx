@@ -6,10 +6,14 @@ import { useMemo, useState } from "react";
 
 import type { OrderRow } from "./export-button";
 
-function formatMoney(cents: number): string {
-  return new Intl.NumberFormat("en-US", {
+function formatMoney(cents: number, currencyCode: string): string {
+  const currency = currencyCode.trim().toUpperCase();
+  const supportedCurrency = currency === "BRL" || currency === "EUR" ? currency : "USD";
+  const locale = supportedCurrency === "BRL" ? "pt-BR" : supportedCurrency === "EUR" ? "de-DE" : "en-US";
+
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "USD",
+    currency: supportedCurrency,
   }).format(cents / 100);
 }
 
@@ -191,10 +195,10 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
         row.goldAmount,
         row.server,
         row.faction,
-        formatMoney(row.totalCents),
-        formatMoney(row.supplierPayout),
-        formatMoney(row.grossProfit),
-        formatMoney(row.netProfit),
+        formatMoney(row.totalCents, row.currency),
+        formatMoney(row.supplierPayout, row.currency),
+        formatMoney(row.grossProfit, row.currency),
+        formatMoney(row.netProfit, row.currency),
         row.supplierName,
         `${row.supplierPercentage}%`,
         row.deliveryMethod,
@@ -370,9 +374,9 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                   {row.faction !== "--" ? ` / ${row.faction}` : ""}
                   {row.server === "--" && row.faction === "--" ? "--" : ""}
                 </td>
-                <td className="px-2 py-2 font-semibold text-green-300">{formatMoney(row.totalCents)}</td>
-                <td className="px-2 py-2 text-amber-300">{formatMoney(row.supplierPayout)}</td>
-                <td className="px-2 py-2 text-cyan-300">{formatMoney(row.grossProfit)}</td>
+                <td className="px-2 py-2 font-semibold text-green-300">{formatMoney(row.totalCents, row.currency)}</td>
+                <td className="px-2 py-2 text-amber-300">{formatMoney(row.supplierPayout, row.currency)}</td>
+                <td className="px-2 py-2 text-cyan-300">{formatMoney(row.grossProfit, row.currency)}</td>
                 <td className="px-2 py-2">
                   {isEditing ? (
                     <div className="flex flex-wrap items-center gap-1">
@@ -386,7 +390,7 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
                         className="w-16 rounded border border-green-800 bg-black px-1 py-1 text-xs text-green-300"
                       />
                       <span className="text-xs text-green-500">%</span>
-                      <span className="text-xs text-amber-300">{formatMoney(row.totalCents * (editingSupplierPercent / 100))}</span>
+                      <span className="text-xs text-amber-300">{formatMoney(row.totalCents * (editingSupplierPercent / 100), row.currency)}</span>
                       <button
                         type="button"
                         onClick={() => void saveSupplier(row.id)}

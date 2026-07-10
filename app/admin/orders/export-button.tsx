@@ -25,10 +25,14 @@ export type OrderRow = {
   netProfit: number;
 };
 
-function formatMoney(cents: number): string {
-  return new Intl.NumberFormat("en-US", {
+function formatMoney(cents: number, currencyCode: string): string {
+  const currency = currencyCode.trim().toUpperCase();
+  const supportedCurrency = currency === "BRL" || currency === "EUR" ? currency : "USD";
+  const locale = supportedCurrency === "BRL" ? "pt-BR" : supportedCurrency === "EUR" ? "de-DE" : "en-US";
+
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "USD",
+    currency: supportedCurrency,
   }).format(cents / 100);
 }
 
@@ -71,10 +75,10 @@ export default function OrdersExportButton({ orders }: { orders: OrderRow[] }) {
         o.categoryTitle,
         o.goldAmount,
         o.server,
-        formatMoney(o.totalCents),
-        formatMoney(o.supplierPayout),
-        formatMoney(o.grossProfit),
-        formatMoney(o.netProfit),
+        formatMoney(o.totalCents, o.currency),
+        formatMoney(o.supplierPayout, o.currency),
+        formatMoney(o.grossProfit, o.currency),
+        formatMoney(o.netProfit, o.currency),
         o.supplierName,
         `${o.supplierPercentage}%`,
         o.faction,
