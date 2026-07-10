@@ -71,47 +71,91 @@ const adminSections = [
 
 export default function AdminPage() {
   return (
-    <div className="min-h-screen bg-black text-green-400">
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
-        <div className="space-y-4">
-          <p className="text-sm font-bold uppercase tracking-[0.28em] text-green-600">
-            Admin
-          </p>
-          <h1 className="text-4xl font-black leading-tight text-green-300 sm:text-5xl lg:text-6xl">
-            Control Center
-          </h1>
-          <p className="max-w-3xl text-base leading-8 text-green-600">
-            Centralize catalog management, highlighted games, and checkout operations in one place.
-            Pick a section below to continue.
-          </p>
+    <div className="text-green-300">
+      <div className="rounded-2xl border border-green-900/45 bg-black/20 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-green-600">Central</p>
+            <h1 className="mt-1 text-3xl font-black text-green-200 sm:text-4xl">Painel Administrativo</h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="rounded-lg border border-green-700/60 bg-green-500/90 px-4 py-2 text-sm font-black text-black transition hover:brightness-105"
+            >
+              Imprimir
+            </button>
+            <button
+              type="button"
+              className="rounded-lg border border-green-700/60 bg-green-500/90 px-4 py-2 text-sm font-black text-black transition hover:brightness-105"
+            >
+              Download
+            </button>
+          </div>
         </div>
 
-        <section className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {adminSections.map((section) => (
-            <Link
-              key={section.id}
-              href={section.href}
-              className="rounded-[1.75rem] border border-green-900 bg-green-950/20 p-7 transition-all hover:-translate-y-0.5 hover:border-green-700/50 hover:bg-green-950/40"
-            >
-              <p className="text-sm font-bold uppercase tracking-[0.24em] text-green-600">
-                Section {section.id}
-              </p>
-              <h2 className="mt-3 text-3xl font-black text-green-300">{section.title}</h2>
-              <p className="mt-3 text-base leading-8 text-green-600">{section.description}</p>
-              <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-green-500">Open section</p>
-            </Link>
-          ))}
-        </section>
+        <div className="mt-5 grid gap-3 lg:grid-cols-[220px_220px_180px_1fr]">
+          <input
+            type="text"
+            placeholder="Data inicial"
+            className="rounded-lg border border-green-900/50 bg-black/40 px-3 py-2 text-sm text-green-200 outline-none placeholder:text-green-700 focus:border-green-600"
+          />
+          <input
+            type="text"
+            placeholder="Data final"
+            className="rounded-lg border border-green-900/50 bg-black/40 px-3 py-2 text-sm text-green-200 outline-none placeholder:text-green-700 focus:border-green-600"
+          />
+          <button
+            type="button"
+            className="rounded-lg border border-green-700/60 bg-green-600/85 px-4 py-2 text-sm font-black text-black transition hover:brightness-105"
+          >
+            Filtrar
+          </button>
+          <input
+            type="text"
+            placeholder="Pesquisar secao"
+            className="rounded-lg border border-green-900/50 bg-black/40 px-3 py-2 text-sm text-green-200 outline-none placeholder:text-green-700 focus:border-green-600"
+          />
+        </div>
 
-        <div className="mt-8">
+        <div className="mt-5 overflow-hidden rounded-xl border border-green-900/50">
+          <div className="grid grid-cols-[70px_220px_1fr_160px_120px] gap-3 bg-green-900/35 px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-green-200">
+            <span>ID</span>
+            <span>Secao</span>
+            <span>Descricao</span>
+            <span>Status</span>
+            <span>Acao</span>
+          </div>
+
+          <div className="divide-y divide-green-950/70 bg-black/30">
+            {adminSections.map((section) => (
+              <div key={section.id} className="grid grid-cols-[70px_220px_1fr_160px_120px] gap-3 px-3 py-3 text-sm">
+                <span className="font-bold text-green-500">{section.id}</span>
+                <span className="font-semibold text-green-200">{section.title}</span>
+                <span className="text-green-400/90">{section.description}</span>
+                <span className="inline-flex h-fit w-fit rounded-full border border-green-700/60 bg-green-600/25 px-2 py-0.5 text-xs font-bold text-green-300">
+                  Ativo
+                </span>
+                <Link
+                  href={section.href}
+                  className="inline-flex h-fit w-fit rounded-md border border-green-700/60 bg-green-500/90 px-3 py-1 text-xs font-black text-black transition hover:brightness-105"
+                >
+                  Abrir
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-5">
           <Link
             href="/"
-            className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950"
+            className="inline-flex rounded-md border border-green-800 px-5 py-2.5 text-sm font-semibold text-green-400 transition hover:bg-green-950"
           >
-            Back to home
+            Voltar para home
           </Link>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

@@ -187,12 +187,12 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-green-400">
-      <main className="flex w-full flex-1 flex-col px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+    <div className="text-green-300">
+      <main className="flex w-full flex-1 flex-col">
         <div className="space-y-4">
-          <p className="text-sm font-bold uppercase tracking-[0.28em] text-green-600">Admin</p>
-          <h1 className="text-4xl font-black leading-tight text-green-300 sm:text-5xl">Dashboard</h1>
-          <p className="max-w-2xl text-base leading-8 text-green-600">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-green-600">Central</p>
+          <h1 className="text-3xl font-black leading-tight text-green-200 sm:text-4xl">Dashboard</h1>
+          <p className="max-w-2xl text-base leading-8 text-green-500">
             Visualize os valores de pedidos com filtros por periodo, status, jogo e pagamento.
           </p>
         </div>
@@ -211,13 +211,13 @@ export default async function DashboardPage() {
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
             href="/admin/orders"
-            className="inline-flex rounded-md border border-green-600 bg-green-950 px-5 py-3 text-sm font-semibold text-green-300 transition hover:bg-green-900"
+            className="inline-flex rounded-md border border-green-700/60 bg-green-500/90 px-5 py-3 text-sm font-semibold text-black transition hover:brightness-105"
           >
             Ver pedidos
           </Link>
           <Link
             href="/admin"
-            className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950"
+            className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950/50"
           >
             Voltar ao admin
           </Link>
