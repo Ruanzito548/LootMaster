@@ -104,22 +104,6 @@ export default async function AdminLayout({
         </aside>
 
         <div className="min-w-0 flex-1 lg:ml-[260px]">
-          <header className="sticky top-20 z-20 border-b border-green-900/35 bg-black/70 px-4 py-3 backdrop-blur lg:px-8">
-            <div className="flex items-center justify-between gap-4">
-              <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-green-300">
-                <LayoutDashboard className="h-4 w-4" />
-                Central
-              </div>
-              <div className="w-full max-w-md">
-                <input
-                  type="text"
-                  placeholder="Pesquisar no admin"
-                  className="w-full rounded-xl border border-green-900/50 bg-green-950/20 px-3 py-2 text-sm text-green-100 outline-none transition placeholder:text-green-600 focus:border-green-600"
-                />
-              </div>
-            </div>
-          </header>
-
           <main className="px-4 py-5 lg:px-8">
             <div className="rounded-2xl border border-green-900/40 bg-[#111317] p-4 sm:p-5">{children}</div>
           </main>
