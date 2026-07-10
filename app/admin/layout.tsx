@@ -19,8 +19,8 @@ export default async function AdminLayout({
 
   return (
     <div className="admin-dashboard-theme min-h-screen bg-[#0b0c10] text-green-200">
-      <div className="mx-auto flex w-full max-w-[1900px]">
-        <aside className="sticky top-0 hidden h-screen w-[260px] shrink-0 border-r border-green-900/40 bg-black/80 p-4 lg:flex lg:flex-col">
+      <div className="flex w-full">
+        <aside className="fixed inset-y-0 left-0 z-30 hidden h-screen w-[260px] border-r border-green-900/40 bg-black/80 p-4 lg:flex lg:flex-col">
           <div className="rounded-2xl border border-green-900/50 bg-green-950/20 p-4">
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-green-500">Admin</p>
             <p className="mt-2 text-xl font-black text-green-200">Loot Master</p>
@@ -103,7 +103,7 @@ export default async function AdminLayout({
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 lg:ml-[260px]">
           <header className="sticky top-0 z-20 border-b border-green-900/35 bg-black/70 px-4 py-3 backdrop-blur lg:px-8">
             <div className="flex items-center justify-between gap-4">
               <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-green-300">
