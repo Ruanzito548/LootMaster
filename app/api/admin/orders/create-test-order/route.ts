@@ -39,9 +39,26 @@ function resolveTestChannelId(gameId: string, categoryId: string): string | null
   return channelMap[key] ?? process.env.DISCORD_CHANNEL_DEFAULT ?? null;
 }
 
+type CreateTestOrderBody = {
+  currency?: string;
+};
+
+function normalizeCurrency(value: unknown): "brl" | "usd" | "eur" {
+  if (typeof value !== "string") return "brl";
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "usd" || normalized === "eur") {
+    return normalized;
+  }
+
+  return "brl";
+}
+
 export async function POST(request: Request): Promise<Response> {
   try {
     await requireAuthenticatedAdminRequest(request);
+    const body = (await request.json().catch(() => ({}))) as CreateTestOrderBody;
+    const selectedCurrency = normalizeCurrency(body.currency);
 
     const now = new Date();
     const game = pickOne(games);
@@ -87,7 +104,7 @@ export async function POST(request: Request): Promise<Response> {
       orderStatus: "paid",
       amountTotalCents,
       finalAmountCents: amountTotalCents,
-      currency: "brl",
+      currency: selectedCurrency,
       customerEmail: `test+${suffix}@lootmaster.local`,
       gameId: game.gameId,
       gameTitle: game.gameTitle,
@@ -100,7 +117,7 @@ export async function POST(request: Request): Promise<Response> {
       faction: pickOne(factions),
       deliveryMethod: "mail",
       nickname: pickOne(nicknames),
-      paymentMethod: "pix",
+      paymentMethod: selectedCurrency === "brl" ? "pix" : "card",
       hasServerOptions: true,
       supplierId: "",
       supplierName: "",
