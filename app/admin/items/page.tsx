@@ -123,6 +123,7 @@ export default async function AdminItemsPage() {
                   <th className="px-3 py-2">XP acumulado</th>
                   <th className="px-3 py-2">Gasto minimo (USD)</th>
                   <th className="px-3 py-2">Reward</th>
+                  <th className="px-3 py-2">Valor recompensa</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,6 +131,20 @@ export default async function AdminItemsPage() {
                   const level = index + 1;
                   const thresholdXp = getXpThresholdForLevel(level);
                   const minUsd = thresholdXp / Math.max(1, XP_PER_USD);
+                  const reward = buildLevelReward(level, `admin-items-reward-value-${level}`);
+                  const estimatedRewardValue = Object.entries(reward.chestBundle).reduce((sum, [chestId, quantity]) => {
+                    if (typeof quantity !== "number" || quantity <= 0) {
+                      return sum;
+                    }
+
+                    const chestProfile = chestConfig.byChest[chestId as keyof typeof chestConfig.byChest];
+                    if (!chestProfile) {
+                      return sum;
+                    }
+
+                    const averageCoins = (chestProfile.coinRange.min + chestProfile.coinRange.max) / 2;
+                    return sum + averageCoins * quantity;
+                  }, 0);
 
                   return (
                     <tr key={level} className={`border-b border-green-950 ${level % 2 === 0 ? "bg-green-950/10" : ""}`}>
@@ -137,6 +152,7 @@ export default async function AdminItemsPage() {
                       <td className="px-3 py-2 text-green-400">{thresholdXp.toLocaleString("en-US")}</td>
                       <td className="px-3 py-2 text-green-300">${formatMoneyUsd(minUsd)}</td>
                       <td className="px-3 py-2 text-green-500">{formatRewardBundle(level)}</td>
+                      <td className="px-3 py-2 font-semibold text-green-300">~{estimatedRewardValue.toLocaleString("en-US", { maximumFractionDigits: 0 })} moedas</td>
                     </tr>
                   );
                 })}
