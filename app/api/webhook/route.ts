@@ -646,6 +646,8 @@ export async function POST(request: Request): Promise<Response> {
     // Only notify for fully paid sessions
     if (session.payment_status === "paid") {
       const supplierPercentage = await resolveSessionSupplierPercent(session);
+      const amountTotalCents = session.amount_total ?? 0;
+      const supplierPayoutCents = Math.round(amountTotalCents * (supplierPercentage / 100));
 
       try {
         await persistPaidOrder(session, supplierPercentage);
@@ -666,9 +668,6 @@ export async function POST(request: Request): Promise<Response> {
       }
 
       try {
-        const amountTotalCents = session.amount_total ?? 0;
-        const supplierPayoutCents = Math.round(amountTotalCents * (supplierPercentage / 100));
-
         await syncPaidOrderToWalletBackend({
           orderId: session.id,
           customerId: session.customer_email ?? null,
@@ -706,6 +705,7 @@ export async function POST(request: Request): Promise<Response> {
           nickname: meta.nickname ?? "—",
           paymentMethod: meta.paymentMethod ?? "—",
           finalAmountCents: meta.finalAmountCents ?? String(session.amount_total ?? 0),
+          supplierPayoutCents: String(supplierPayoutCents),
           currency: session.currency ?? "brl",
           email: session.customer_email ?? "—",
         });

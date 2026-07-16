@@ -24,9 +24,87 @@ type SendOrderNotificationInput = {
   nickname: string;
   paymentMethod: string;
   finalAmountCents: string;
+  supplierPayoutCents?: string;
   currency: string;
   email: string;
 };
+
+type UsdRates = {
+  brlPerUsd: number;
+  eurPerUsd: number;
+};
+
+const DEFAULT_USD_RATES: UsdRates = {
+  brlPerUsd: 5.5,
+  eurPerUsd: 0.92,
+};
+
+let usdRatesCache: { value: UsdRates; expiresAt: number } | null = null;
+
+function normalizeCurrency(value: string): "USD" | "BRL" | "EUR" {
+  const normalized = value.trim().toUpperCase();
+  if (normalized === "BRL" || normalized === "EUR") {
+    return normalized;
+  }
+
+  return "USD";
+}
+
+async function getUsdRates(): Promise<UsdRates> {
+  const now = Date.now();
+  if (usdRatesCache && usdRatesCache.expiresAt > now) {
+    return usdRatesCache.value;
+  }
+
+  try {
+    const response = await fetch("https://open.er-api.com/v6/latest/USD", {
+      next: { revalidate: 300 },
+    });
+
+    if (!response.ok) {
+      return DEFAULT_USD_RATES;
+    }
+
+    const payload = (await response.json()) as { rates?: Record<string, number> };
+    const brlPerUsd = payload?.rates?.BRL;
+    const eurPerUsd = payload?.rates?.EUR;
+
+    if (
+      typeof brlPerUsd !== "number" ||
+      !Number.isFinite(brlPerUsd) ||
+      brlPerUsd <= 0 ||
+      typeof eurPerUsd !== "number" ||
+      !Number.isFinite(eurPerUsd) ||
+      eurPerUsd <= 0
+    ) {
+      return DEFAULT_USD_RATES;
+    }
+
+    const value = { brlPerUsd, eurPerUsd };
+    usdRatesCache = {
+      value,
+      expiresAt: now + 5 * 60 * 1000,
+    };
+
+    return value;
+  } catch {
+    return DEFAULT_USD_RATES;
+  }
+}
+
+async function convertToUsdCents(amountCents: number, currency: string): Promise<number> {
+  const normalizedCurrency = normalizeCurrency(currency);
+  if (normalizedCurrency === "USD") {
+    return amountCents;
+  }
+
+  const rates = await getUsdRates();
+  const amount = amountCents / 100;
+  const usdAmount =
+    normalizedCurrency === "BRL" ? amount / rates.brlPerUsd : amount / rates.eurPerUsd;
+
+  return Math.round(usdAmount * 100);
+}
 
 type SendSupplierPayoutMessageInput = {
   channelId: string;
@@ -271,8 +349,20 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
     return;
   }
 
-  const supplierPayoutCents = Math.round(Number(input.finalAmountCents) * 0.85);
-  const supplierPayoutLabel = (supplierPayoutCents / 100).toLocaleString("en-US", {
+  const totalOrderCents = Number(input.finalAmountCents) || 0;
+  const payoutFromOrderCents =
+    typeof input.supplierPayoutCents === "string" && input.supplierPayoutCents.trim().length > 0
+      ? Number(input.supplierPayoutCents)
+      : 0;
+  const supplierPayoutCents = Number.isFinite(payoutFromOrderCents) ? Math.max(0, payoutFromOrderCents) : 0;
+  const orderTotalUsdCents = await convertToUsdCents(Math.max(0, totalOrderCents), input.currency);
+  const payoutUsdCents = await convertToUsdCents(supplierPayoutCents, input.currency);
+
+  const orderTotalUsdLabel = (orderTotalUsdCents / 100).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+  const supplierPayoutLabel = (payoutUsdCents / 100).toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
   });
@@ -283,6 +373,7 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
     { name: "Gold Amount", value: `${Number(input.goldAmount || "0").toLocaleString("en-US")} gold`, inline: true },
     { name: "Server", value: input.server || "-", inline: true },
     { name: "Faction", value: input.faction || "-", inline: true },
+    { name: "Order Total (USD)", value: orderTotalUsdLabel, inline: true },
     { name: "Supplier Payout", value: supplierPayoutLabel, inline: true },
   ];
 

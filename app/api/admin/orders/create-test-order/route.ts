@@ -154,6 +154,7 @@ export async function POST(request: Request): Promise<Response> {
         nickname: payload.nickname,
         paymentMethod: payload.paymentMethod,
         finalAmountCents: String(amountTotalCents),
+        supplierPayoutCents: String(financials.supplierPayout),
         currency: payload.currency,
         email: payload.customerEmail,
       });

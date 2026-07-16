@@ -77,6 +77,13 @@ export async function POST(request: Request): Promise<Response> {
           ? orderData.amountTotalCents
           : 0,
       ),
+      supplierPayoutCents: String(
+        typeof orderData.supplierPayout === "number"
+          ? orderData.supplierPayout
+          : typeof orderData.sellerAmountCents === "number"
+          ? orderData.sellerAmountCents
+          : 0,
+      ),
       currency: typeof orderData.currency === "string" ? orderData.currency : "brl",
       email: typeof orderData.customerEmail === "string" ? orderData.customerEmail : "—",
     });
