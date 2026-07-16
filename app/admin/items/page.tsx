@@ -4,7 +4,7 @@ import { InventoryItemsAdmin } from "../../components/inventory-items-admin";
 import { GrantRandomChestButton } from "../dashboard/grant-random-chest-button";
 import { getLiveChestSystemConfig } from "@/lib/chest-config";
 import { CHEST_DEFINITIONS, CHEST_IDS } from "@/lib/chests";
-import { LEVEL_CAP, XP_PER_USD, buildLevelReward, formatMoneyUsd, getXpThresholdForLevel } from "@/lib/level-rewards";
+import { LEVEL_CAP, XP_PER_USD, buildLevelReward, formatMoneyUsd, getXpRequiredToNextLevel, getXpThresholdForLevel } from "@/lib/level-rewards";
 
 function formatDropType(type: string): string {
   if (type === "coins") {
@@ -122,6 +122,7 @@ export default async function AdminItemsPage() {
                   <th className="px-3 py-2">Nivel</th>
                   <th className="px-3 py-2">XP acumulado</th>
                   <th className="px-3 py-2">Gasto minimo (USD)</th>
+                  <th className="px-3 py-2">USD para upar</th>
                   <th className="px-3 py-2">Reward</th>
                   <th className="px-3 py-2">Valor recompensa (USD)</th>
                 </tr>
@@ -131,6 +132,8 @@ export default async function AdminItemsPage() {
                   const level = index + 1;
                   const thresholdXp = getXpThresholdForLevel(level);
                   const minUsd = thresholdXp / Math.max(1, XP_PER_USD);
+                  const xpToNextLevel = getXpRequiredToNextLevel(level);
+                  const usdToNextLevel = xpToNextLevel / Math.max(1, XP_PER_USD);
                   const reward = buildLevelReward(level, `admin-items-reward-value-${level}`);
                   const estimatedRewardValue = Object.entries(reward.chestBundle).reduce((sum, [chestId, quantity]) => {
                     if (typeof quantity !== "number" || quantity <= 0) {
@@ -151,6 +154,7 @@ export default async function AdminItemsPage() {
                       <td className="px-3 py-2 font-black text-green-300">{level}</td>
                       <td className="px-3 py-2 text-green-400">{thresholdXp.toLocaleString("en-US")}</td>
                       <td className="px-3 py-2 text-green-300">${formatMoneyUsd(minUsd)}</td>
+                      <td className="px-3 py-2 text-green-300">{level >= LEVEL_CAP ? "-" : `$${formatMoneyUsd(usdToNextLevel)}`}</td>
                       <td className="px-3 py-2 text-green-500">{formatRewardBundle(level)}</td>
                       <td className="px-3 py-2 font-semibold text-green-300">~${formatMoneyUsd(estimatedRewardValue)}</td>
                     </tr>
