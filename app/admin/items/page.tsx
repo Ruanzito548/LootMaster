@@ -4,6 +4,7 @@ import { InventoryItemsAdmin } from "../../components/inventory-items-admin";
 import { GrantRandomChestButton } from "../dashboard/grant-random-chest-button";
 import { getLiveChestSystemConfig } from "@/lib/chest-config";
 import { CHEST_DEFINITIONS, CHEST_IDS } from "@/lib/chests";
+import { LEVEL_CAP, XP_PER_USD, buildLevelReward, formatMoneyUsd, getXpThresholdForLevel } from "@/lib/level-rewards";
 
 function formatDropType(type: string): string {
   if (type === "coins") {
@@ -23,6 +24,19 @@ function formatDropType(type: string): string {
   }
 
   return type;
+}
+
+function formatRewardBundle(level: number): string {
+  const reward = buildLevelReward(level, `admin-items-reward-${level}`);
+  const parts = Object.entries(reward.chestBundle)
+    .filter((entry): entry is [string, number] => typeof entry[1] === "number" && entry[1] > 0)
+    .map(([chestId, quantity]) => `${quantity}x ${chestId}`);
+
+  if (parts.length === 0) {
+    return "Sem bundle";
+  }
+
+  return parts.join(" + ");
 }
 
 export const dynamic = "force-dynamic";
@@ -87,6 +101,47 @@ export default async function AdminItemsPage() {
                 </article>
               );
             })}
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[1.2rem] border border-green-900 bg-black/40 p-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">Rewards Progression</p>
+              <h2 className="mt-1 text-lg font-black text-green-200">Tabela de niveis e gasto minimo (rewards)</h2>
+            </div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-green-700">
+              Regra: 1 USD = {XP_PER_USD} XP
+            </p>
+          </div>
+
+          <div className="mt-4 overflow-x-auto rounded-xl border border-green-900/70 bg-black/30">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-green-900 text-[11px] font-bold uppercase tracking-[0.12em] text-green-600">
+                  <th className="px-3 py-2">Nivel</th>
+                  <th className="px-3 py-2">XP acumulado</th>
+                  <th className="px-3 py-2">Gasto minimo (USD)</th>
+                  <th className="px-3 py-2">Reward</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: LEVEL_CAP }, (_, index) => {
+                  const level = index + 1;
+                  const thresholdXp = getXpThresholdForLevel(level);
+                  const minUsd = thresholdXp / Math.max(1, XP_PER_USD);
+
+                  return (
+                    <tr key={level} className={`border-b border-green-950 ${level % 2 === 0 ? "bg-green-950/10" : ""}`}>
+                      <td className="px-3 py-2 font-black text-green-300">{level}</td>
+                      <td className="px-3 py-2 text-green-400">{thresholdXp.toLocaleString("en-US")}</td>
+                      <td className="px-3 py-2 text-green-300">${formatMoneyUsd(minUsd)}</td>
+                      <td className="px-3 py-2 text-green-500">{formatRewardBundle(level)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </section>
 
