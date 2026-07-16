@@ -715,6 +715,10 @@ export function DashboardClient({
                 </select>
               </label>
             </div>
+
+            <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 px-3 py-2 text-xs text-slate-400">
+              Cotacao usada na conversao: 1 USD = {currencyRates.usdToBrl.toFixed(4)} BRL | 1 USD = {currencyRates.usdToEur.toFixed(4)} EUR
+            </div>
           </article>
 
           <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-8">
