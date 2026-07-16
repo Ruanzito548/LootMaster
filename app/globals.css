@@ -1,19 +1,11 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: "Energy";
-  src: url("/fonts/energy_3/Energy.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   --background: #060b16;
   --foreground: #f5f9ff;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Energy", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Code", "Consolas", monospace;
   --loot-ink: #070b12;
   --loot-panel: rgba(7, 13, 22, 0.84);
@@ -48,7 +40,7 @@ body {
   overflow-x: hidden;
   background: #08090c;
   color: var(--foreground);
-  font-family: "Energy", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 #__next {
@@ -75,7 +67,7 @@ body {
 }
 
 .font-throne {
-  font-family: "Energy", "Times New Roman", serif;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   letter-spacing: 0.04em;
 }
 
