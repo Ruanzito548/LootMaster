@@ -28,6 +28,13 @@ type OpenChestApiResponse = {
   inventorySlotLimit: number;
 };
 
+type RedeemGiftcardResponse = {
+  ok?: boolean;
+  error?: string;
+  claimId?: string;
+  giftCardTitle?: string;
+};
+
 type CraftRecipe = (typeof CRAFT_RECIPES)[number];
 type RecipeCategory = "gift-cards" | "chests";
 
@@ -144,6 +151,22 @@ function isChestItem(item: InventoryItem): boolean {
   return item.category.toLowerCase() === "chest" || item.id.startsWith("chest-");
 }
 
+function isRedeemableGiftCard(item: InventoryItem): boolean {
+  const category = item.category.trim().toLowerCase();
+  const id = item.id.trim().toLowerCase();
+  const name = item.name.trim().toLowerCase();
+
+  if (category !== "gift card") {
+    return false;
+  }
+
+  if (id === "gift-card-fragment" || name.includes("fragment")) {
+    return false;
+  }
+
+  return item.quantity > 0;
+}
+
 function sortInventory(items: InventoryItem[]): InventoryItem[] {
   return [...items].sort((a, b) => {
     const rarityDelta = (RARITY_ORDER[b.rarity] ?? 0) - (RARITY_ORDER[a.rarity] ?? 0);
@@ -170,11 +193,16 @@ export default function InventoryPage() {
   const [showMarketModal, setShowMarketModal] = useState(false);
   const [showRewardsModal, setShowRewardsModal] = useState(false);
   const [showCraftMenu, setShowCraftMenu] = useState(false);
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [openCraftCategory, setOpenCraftCategory] = useState<RecipeCategory | null>("gift-cards");
 
   const [listingPrice, setListingPrice] = useState(1000);
   const [listingQuantity, setListingQuantity] = useState(1);
   const [marketBusy, setMarketBusy] = useState(false);
+  const [redeemBusy, setRedeemBusy] = useState(false);
+  const [redeemItem, setRedeemItem] = useState<InventoryItem | null>(null);
+  const [redeemEmail, setRedeemEmail] = useState("");
+  const [redeemCountry, setRedeemCountry] = useState("");
 
   const [craftRecipes, setCraftRecipes] = useState<CraftRecipe[]>(CRAFT_RECIPES);
   const [craftBusyId, setCraftBusyId] = useState<string | null>(null);
@@ -461,6 +489,53 @@ export default function InventoryPage() {
     }
   };
 
+  const redeemGiftcard = async () => {
+    if (!user || !redeemItem || redeemBusy) {
+      return;
+    }
+
+    const trimmedEmail = redeemEmail.trim();
+    const trimmedCountry = redeemCountry.trim();
+
+    if (!trimmedEmail || !trimmedCountry) {
+      pushToast("error", "Preencha email e pais para resgatar.");
+      return;
+    }
+
+    setRedeemBusy(true);
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/profile/giftcards/redeem", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          itemId: redeemItem.id,
+          email: trimmedEmail,
+          country: trimmedCountry,
+        }),
+      });
+
+      const payload = (await response.json()) as RedeemGiftcardResponse;
+      if (!response.ok || !payload.ok) {
+        pushToast("error", payload.error ?? "Nao foi possivel resgatar giftcard.");
+        return;
+      }
+
+      pushToast("success", `Reivindicacao criada para ${payload.giftCardTitle ?? redeemItem.name}.`);
+      setShowRedeemModal(false);
+      setRedeemItem(null);
+      reload();
+    } catch {
+      pushToast("error", "Servico de resgate indisponivel.");
+    } finally {
+      setRedeemBusy(false);
+    }
+  };
+
   if (status === "loading") {
     return (
       <div className="loot-shell">
@@ -575,7 +650,7 @@ export default function InventoryPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="font-throne text-3xl font-black text-white">Inventory Grid</h2>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#a6c0df]">Click chest items for contextual actions</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#a6c0df]">Click chest or gift card items for contextual actions</p>
             </div>
             <span className={`rounded-full border px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.15em] ${usedSlots >= slotLimit ? "border-rose-300/45 bg-rose-500/15 text-rose-100" : "border-emerald-300/45 bg-emerald-500/15 text-emerald-100"}`}>
               {usedSlots >= slotLimit ? "Inventory Full" : "Space Available"}
@@ -592,29 +667,36 @@ export default function InventoryPage() {
 
               const rarityClass = RARITY_GLOW[item.rarity] ?? "border-white/25";
               const itemIsChest = isChestItem(item);
+              const itemIsRedeemableGiftCard = isRedeemableGiftCard(item);
               const itemIconSrc = itemIsChest ? "/chest.png" : item.iconPath || "/itens/general/ticket.png";
 
               return (
                 <motion.button
                   key={`${item.id}-${slotIndex}`}
                   type="button"
-                  className={`group relative aspect-square overflow-hidden rounded-xl border bg-[linear-gradient(180deg,rgba(9,16,29,0.96),rgba(5,10,20,0.94))] p-2 text-left transition-all ${rarityClass} ${itemIsChest ? "cursor-pointer" : "cursor-default"}`}
+                  className={`group relative aspect-square overflow-hidden rounded-xl border bg-[linear-gradient(180deg,rgba(9,16,29,0.96),rgba(5,10,20,0.94))] p-2 text-left transition-all ${rarityClass} ${itemIsChest || itemIsRedeemableGiftCard ? "cursor-pointer" : "cursor-default"}`}
                   whileHover={{ y: -3, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onMouseEnter={() => setHoveredItem(item)}
                   onMouseLeave={() => setHoveredItem((current) => (current?.id === item.id ? null : current))}
                   onClick={() => {
-                    if (!itemIsChest) {
+                    if (itemIsChest) {
+                      const chestId = getChestIdByInventoryItem(item);
+                      if (!chestId) {
+                        pushToast("error", "This chest is not mapped in chest definitions.");
+                        return;
+                      }
+
+                      setChestMenu({ item, chestId });
                       return;
                     }
 
-                    const chestId = getChestIdByInventoryItem(item);
-                    if (!chestId) {
-                      pushToast("error", "This chest is not mapped in chest definitions.");
-                      return;
+                    if (itemIsRedeemableGiftCard) {
+                      setRedeemItem(item);
+                      setRedeemEmail(user.email ?? "");
+                      setRedeemCountry("");
+                      setShowRedeemModal(true);
                     }
-
-                    setChestMenu({ item, chestId });
                   }}
                 >
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_22%,rgba(255,255,255,0.16),transparent_60%)]" />
@@ -794,6 +876,71 @@ export default function InventoryPage() {
             <div className={`rounded-2xl border px-4 py-3 text-sm font-semibold backdrop-blur ${toast.kind === "success" ? "border-emerald-300/35 bg-emerald-500/16 text-emerald-100" : toast.kind === "error" ? "border-rose-300/35 bg-rose-500/16 text-rose-100" : "border-sky-300/35 bg-sky-500/16 text-sky-100"}`}>
               {toast.text}
             </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showRedeemModal && redeemItem ? (
+          <motion.div className="fixed inset-0 z-[176]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/70 backdrop-blur-[6px]"
+              onClick={() => setShowRedeemModal(false)}
+              aria-label="Close redeem modal"
+            />
+
+            <motion.section
+              className="absolute left-1/2 top-1/2 w-[min(94vw,520px)] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/18 bg-[linear-gradient(180deg,rgba(11,22,38,0.98),rgba(7,13,22,0.98))] p-6"
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+            >
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#9ad6ff]">Redeem Giftcard</p>
+              <h3 className="mt-2 text-2xl font-black text-white">{redeemItem.name}</h3>
+              <p className="mt-2 text-sm text-[#c2d7ee]">Informe email e pais para abrir sua reivindicacao de giftcard.</p>
+
+              <div className="mt-4 grid gap-3">
+                <label className="grid gap-1 text-sm font-semibold text-[#cde1f8]">
+                  Email de resgate
+                  <input
+                    type="email"
+                    value={redeemEmail}
+                    onChange={(event) => setRedeemEmail(event.target.value)}
+                    className="rounded-xl border border-white/16 bg-black/35 px-3 py-2 outline-none"
+                    placeholder="seu-email@provedor.com"
+                  />
+                </label>
+                <label className="grid gap-1 text-sm font-semibold text-[#cde1f8]">
+                  Pais
+                  <input
+                    type="text"
+                    value={redeemCountry}
+                    onChange={(event) => setRedeemCountry(event.target.value)}
+                    className="rounded-xl border border-white/16 bg-black/35 px-3 py-2 outline-none"
+                    placeholder="Brasil"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-5 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void redeemGiftcard()}
+                  disabled={redeemBusy}
+                  className="loot-gold-button flex-1 rounded-full px-4 py-3 text-xs font-black uppercase tracking-[0.14em] disabled:cursor-not-allowed"
+                >
+                  {redeemBusy ? "Resgatando..." : "Confirmar resgate"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRedeemModal(false)}
+                  className="loot-secondary-button rounded-full px-4 py-3 text-xs font-black uppercase tracking-[0.14em]"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </motion.section>
           </motion.div>
         ) : null}
       </AnimatePresence>

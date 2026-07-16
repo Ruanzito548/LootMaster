@@ -121,6 +121,18 @@ export default async function AdminLayout({
                 >
                   Saques Rejeitados
                 </Link>
+                <Link
+                  href="/admin/giftcard-claims/abertas"
+                  className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
+                >
+                  Reinvidicacoes de Gifcards Abertas
+                </Link>
+                <Link
+                  href="/admin/giftcard-claims/completas"
+                  className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
+                >
+                  Reinvidicacoes de Gifcards Completas
+                </Link>
               </div>
             </details>
           </nav>
