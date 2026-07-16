@@ -166,6 +166,13 @@ export default async function AdminItemsPage() {
         </section>
 
         <Link
+          href="/admin/chests"
+          className="mt-6 mr-3 inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950"
+        >
+          Abrir Config dos Baus
+        </Link>
+
+        <Link
           href="/admin"
           className="mt-6 inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950"
         >
