@@ -178,7 +178,7 @@ export async function POST(request: Request): Promise<Response> {
         quantity: 1,
         rarity: selectedItem.rarity,
         origin: "profile:giftcard-redeem",
-        status: "open",
+        status: "pending",
         tags: ["giftcard", "redeem", "claim"],
         metadata: {
           claimId: claimRef.id,
