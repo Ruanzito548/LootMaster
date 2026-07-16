@@ -123,7 +123,7 @@ export default async function AdminItemsPage() {
                   <th className="px-3 py-2">XP acumulado</th>
                   <th className="px-3 py-2">Gasto minimo (USD)</th>
                   <th className="px-3 py-2">Reward</th>
-                  <th className="px-3 py-2">Valor recompensa</th>
+                  <th className="px-3 py-2">Valor recompensa (USD)</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,7 +152,7 @@ export default async function AdminItemsPage() {
                       <td className="px-3 py-2 text-green-400">{thresholdXp.toLocaleString("en-US")}</td>
                       <td className="px-3 py-2 text-green-300">${formatMoneyUsd(minUsd)}</td>
                       <td className="px-3 py-2 text-green-500">{formatRewardBundle(level)}</td>
-                      <td className="px-3 py-2 font-semibold text-green-300">~{estimatedRewardValue.toLocaleString("en-US", { maximumFractionDigits: 0 })} moedas</td>
+                      <td className="px-3 py-2 font-semibold text-green-300">~${formatMoneyUsd(estimatedRewardValue)}</td>
                     </tr>
                   );
                 })}
