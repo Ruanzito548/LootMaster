@@ -6,7 +6,7 @@ import { getChestDefinition, type ChestId } from "@/lib/chests";
 import { CHEST_EXPECTED_VALUE_USD, rollChestLoot } from "@/lib/chest-loot";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
-import { applyXpGain, getInventorySlotLimitFromLevel, mergeItemIntoInventory } from "@/lib/rpg-system";
+import { getInventorySlotLimitFromLevel, mergeItemIntoInventory } from "@/lib/rpg-system";
 
 type OpenChestBody = {
   chestId?: string;
@@ -35,15 +35,6 @@ type OpenChestResponse = {
 };
 
 const REQUEST_ID_PATTERN = /^[a-zA-Z0-9_-]{8,64}$/;
-
-const XP_GAIN_BY_CHEST: Record<ChestId, number> = {
-  common: 4,
-  uncommon: 6,
-  rare: 10,
-  epic: 14,
-  legendary: 18,
-  mythic: 24,
-};
 
 function isInventoryItem(value: unknown): value is InventoryItem {
   if (!value || typeof value !== "object") {
@@ -212,8 +203,7 @@ export async function POST(request: Request): Promise<Response> {
         ...(singleInventoryReward ? { inventoryItem: singleInventoryReward } : {}),
       };
 
-      const xpGain = XP_GAIN_BY_CHEST[chestDefinition.id];
-      const progression = applyXpGain(mappedProfile.rpgXp ?? 0, xpGain);
+      const xpGain = 0;
 
       const responsePayload: OpenChestResponse = {
         ok: true,
@@ -223,9 +213,9 @@ export async function POST(request: Request): Promise<Response> {
         lootCoins: nextLootCoins,
         inventory: nextInventory,
         xpGain,
-        rpgXp: progression.xp,
-        rpgLevel: progression.level,
-        inventorySlotLimit: progression.slotLimit,
+        rpgXp: mappedProfile.rpgXp ?? 0,
+        rpgLevel: mappedProfile.rpgLevel ?? 1,
+        inventorySlotLimit: mappedProfile.inventorySlotLimit ?? slotLimit,
       };
 
       tx.set(
@@ -233,9 +223,6 @@ export async function POST(request: Request): Promise<Response> {
         {
           inventory: nextInventory,
           lootCoins: nextLootCoins,
-          rpgXp: progression.xp,
-          rpgLevel: progression.level,
-          inventorySlotLimit: progression.slotLimit,
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true },
