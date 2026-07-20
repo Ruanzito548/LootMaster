@@ -81,6 +81,12 @@ export default async function AdminLayout({
                   Calculadora Financeira
                 </Link>
                 <Link
+                  href="/admin/game-configuration"
+                  className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
+                >
+                  Game Configuration
+                </Link>
+                <Link
                   href="/admin/chests"
                   className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
                 >

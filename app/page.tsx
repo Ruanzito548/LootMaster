@@ -6,6 +6,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Flame, Gift, ShieldCheck, Sparkles, Trophy } from "lucide-react";
 
 import { defaultHotGameIds, games, serviceCategories } from "./data/games";
+import { useProfileSession } from "./profile/use-profile-session";
+import {
+  buildDefaultGameConfiguration,
+  canAccessCategory,
+  canAccessGame,
+  sanitizeGameConfiguration,
+  type GameConfiguration,
+} from "@/lib/game-configuration";
 
 const heroArtByGame: Record<string, string> = {
   "tbc-anniversary": "/wow/wow-tbc/tbc-logo.jpg",
@@ -15,13 +23,52 @@ const heroArtByGame: Record<string, string> = {
 };
 
 export default function Home() {
+  const { profile } = useProfileSession();
+  const isAdmin = profile?.isAdmin === true;
+  const [gameConfig, setGameConfig] = useState<GameConfiguration>(() => buildDefaultGameConfiguration());
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadConfig = async () => {
+      try {
+        const response = await fetch("/api/game-configuration", { cache: "no-store" });
+        const payload = (await response.json()) as { config?: unknown };
+
+        if (!cancelled && payload?.config) {
+          setGameConfig(sanitizeGameConfiguration(payload.config));
+        }
+      } catch {
+        // Keep defaults if request fails.
+      }
+    };
+
+    void loadConfig();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const visibleGames = useMemo(
+    () => games.filter((game) => canAccessGame(gameConfig, game.id, isAdmin)),
+    [gameConfig, isAdmin],
+  );
+
   const featuredGames = useMemo(
-    () => games.filter((game) => defaultHotGameIds.includes(game.id)).concat(games.filter((game) => !defaultHotGameIds.includes(game.id))),
-    [],
+    () =>
+      visibleGames
+        .filter((game) => defaultHotGameIds.includes(game.id))
+        .concat(visibleGames.filter((game) => !defaultHotGameIds.includes(game.id))),
+    [visibleGames],
   );
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
+    if (featuredGames.length <= 1) {
+      return;
+    }
+
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % featuredGames.length);
     }, 4200);
@@ -29,7 +76,16 @@ export default function Home() {
     return () => window.clearInterval(timer);
   }, [featuredGames.length]);
 
-  const activeGame = featuredGames[activeIndex] ?? featuredGames[0];
+  useEffect(() => {
+    if (activeIndex >= featuredGames.length) {
+      setActiveIndex(0);
+    }
+  }, [activeIndex, featuredGames.length]);
+
+  const activeGame = featuredGames[activeIndex] ?? featuredGames[0] ?? null;
+  const visibleCategories = activeGame
+    ? serviceCategories.filter((category) => canAccessCategory(gameConfig, activeGame.id, category.id, isAdmin))
+    : [];
 
   return (
     <div className="loot-shell gm-shell">
@@ -55,8 +111,8 @@ export default function Home() {
               </p>
 
               <div className="flex flex-wrap gap-3">
-                <Link href={`/games/${activeGame?.id ?? "retail"}`} className="gm-button gm-button-primary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
-                  Enter {activeGame?.shortTitle ?? "Midnight"}
+                <Link href={activeGame ? `/games/${activeGame.id}` : "/games"} className="gm-button gm-button-primary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
+                  Enter {activeGame?.shortTitle ?? "Launcher"}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 <Link href="/rewards" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
@@ -88,14 +144,14 @@ export default function Home() {
             <div className="relative h-[20rem] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#111317] sm:h-[24rem]">
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={activeGame.id}
+                  key={activeGame?.id ?? "no-game"}
                   initial={{ opacity: 0, scale: 1.03 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.02 }}
                   transition={{ duration: 0.45 }}
                   className="absolute inset-0"
                   style={{
-                    backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.32)), url('${heroArtByGame[activeGame.id] ?? heroArtByGame.retail}')`,
+                    backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.32)), url('${heroArtByGame[activeGame?.id ?? "retail"] ?? heroArtByGame.retail}')`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}
@@ -106,7 +162,7 @@ export default function Home() {
 
               <div className="absolute bottom-0 left-0 right-0 p-5">
                 <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">Featured game</p>
-                <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">{activeGame.title}</h2>
+                <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">{activeGame?.title ?? "No game available"}</h2>
                 <div className="mt-3 flex items-center gap-2">
                   {featuredGames.map((game, index) => (
                     <button
@@ -171,7 +227,10 @@ export default function Home() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {games.map((game) => (
+            {visibleGames.map((game) => {
+              const isDisabledForPublic = !gameConfig.byGame[game.id]?.enabled;
+
+              return (
               <motion.article
                 key={game.id}
                 whileHover={{ y: -6 }}
@@ -193,9 +252,15 @@ export default function Home() {
                   <div className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(10,11,14,0.54),rgba(10,11,14,0.82))] px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-[2px]">
                     <div className="flex items-center justify-between gap-2">
                       <h3 className="text-sm font-black text-[color:var(--text-main)]">{game.shortTitle}</h3>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-main)]">
-                        Popular
-                      </span>
+                      {isDisabledForPublic ? (
+                        <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em] text-amber-100">
+                          Disabled (Admin Only)
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-main)]">
+                          Popular
+                        </span>
+                      )}
                     </div>
                     <p className="mt-2 text-[0.7rem] leading-5 text-[color:var(--text-muted)]">{game.description}</p>
                     <Link href={`/games/${game.id}`} className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
@@ -205,7 +270,8 @@ export default function Home() {
                   </div>
                 </div>
               </motion.article>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -213,7 +279,7 @@ export default function Home() {
           <h2 className="font-throne text-3xl font-black text-[color:var(--text-main)] sm:text-4xl">Marketplace Categories</h2>
 
           <div className="grid gap-4 md:grid-cols-3">
-            {serviceCategories.map((category, index) => (
+            {visibleCategories.map((category, index) => (
               <motion.article
                 key={category.id}
                 initial={{ opacity: 0, y: 12 }}

@@ -5,15 +5,20 @@ import { ArrowLeft, CircleDollarSign, Package, Server, Swords } from "lucide-rea
 import { AccountsMarket } from "../../../components/accounts-market";
 import { GoldPurchaseMenu } from "../../../components/gold-purchase-menu";
 import { getGameById, getServersByGameId, getServiceCategoryById } from "../../../data/games";
+import { canAccessCategory, canAccessGame } from "@/lib/game-configuration";
+import { getLiveGameConfiguration, isCurrentSessionAdmin } from "@/lib/game-configuration.server";
 
 export default async function ServerSelectionPage(props: PageProps<"/games/[gameId]/[category]">) {
   const { gameId, category } = await props.params;
   const game = getGameById(gameId);
   const selectedCategory = getServiceCategoryById(category);
+  const [config, isAdmin] = await Promise.all([getLiveGameConfiguration(), isCurrentSessionAdmin()]);
 
-  if (!game || !selectedCategory) {
+  if (!game || !selectedCategory || !canAccessGame(config, gameId, isAdmin) || !canAccessCategory(config, gameId, category, isAdmin)) {
     notFound();
   }
+
+  const disabledForPublic = !config.byGame[game.id]?.enabled || !config.byGame[game.id]?.[selectedCategory.id];
 
   const servers = getServersByGameId(game.id);
   const hasServers = servers.length > 0;
@@ -29,6 +34,11 @@ export default async function ServerSelectionPage(props: PageProps<"/games/[game
             </Link>
             <span className="gm-badge px-3 py-1 text-[0.6rem] font-bold uppercase tracking-[0.17em]">{game.tag}</span>
             <span className="gm-badge px-3 py-1 text-[0.6rem] font-bold uppercase tracking-[0.17em]">{selectedCategory.title}</span>
+            {disabledForPublic ? (
+              <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-3 py-1 text-[0.6rem] font-bold uppercase tracking-[0.17em] text-amber-100">
+                Disabled (Admin Only)
+              </span>
+            ) : null}
           </div>
 
           <div className="mt-5 grid gap-3 lg:grid-cols-2">

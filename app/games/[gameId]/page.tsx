@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { ArrowRight, Coins, Gift, ShieldCheck, Sparkles, Swords, UserRound } from "lucide-react";
 
 import { getGameById, serviceCategories } from "../../data/games";
+import { canAccessCategory, canAccessGame } from "@/lib/game-configuration";
+import { getLiveGameConfiguration, isCurrentSessionAdmin } from "@/lib/game-configuration.server";
 
 const coverByGame: Record<string, string> = {
   "tbc-anniversary": "/wow/wow-tbc/tbc-logo.avif",
@@ -51,10 +53,14 @@ const categoryCoverByGame: Record<string, Record<string, string>> = {
 export default async function GamePage(props: PageProps<"/games/[gameId]">) {
   const { gameId } = await props.params;
   const game = getGameById(gameId);
+  const [config, isAdmin] = await Promise.all([getLiveGameConfiguration(), isCurrentSessionAdmin()]);
 
-  if (!game) {
+  if (!game || !canAccessGame(config, gameId, isAdmin)) {
     notFound();
   }
+
+  const visibleCategories = serviceCategories.filter((category) => canAccessCategory(config, game.id, category.id, isAdmin));
+  const gameDisabledForPublic = !config.byGame[game.id]?.enabled;
 
   const categoryCover = categoryCoverByGame[game.id] ?? {};
   const categoryIcons = {
@@ -90,6 +96,11 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
 
             <div className="max-w-3xl space-y-4">
               <h1 className="font-throne text-5xl font-black leading-[0.95] text-[color:var(--text-main)] sm:text-6xl lg:text-7xl">{game.title}</h1>
+              {gameDisabledForPublic ? (
+                <p className="inline-flex rounded-full border border-amber-500/50 bg-amber-500/15 px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.15em] text-amber-100">
+                  Disabled (Admin Only)
+                </p>
+              ) : null}
               <p className="text-sm leading-7 text-[color:var(--text-muted)] sm:text-base">
                 Fast access to services and checkout.
               </p>
@@ -114,7 +125,10 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
 
         <section className="grid gap-5 lg:grid-cols-[1fr_18rem]">
           <div className="grid gap-5 md:grid-cols-3">
-            {serviceCategories.map((category) => (
+            {visibleCategories.map((category) => {
+              const categoryDisabledForPublic = !config.byGame[game.id]?.[category.id];
+
+              return (
               <Link
                 key={category.id}
                 href={`/games/${game.id}/${category.id}`}
@@ -137,10 +151,16 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                         <p className="text-[0.56rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-muted)]">Marketplace category</p>
                         <h2 className="mt-1 text-xl font-black text-[color:var(--text-main)]">{category.title}</h2>
                       </div>
-                      {(() => {
+                      {categoryDisabledForPublic ? (
+                        <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-1 text-[0.52rem] font-bold uppercase tracking-[0.15em] text-amber-100">
+                          Admin Only
+                        </span>
+                      ) : (
+                        (() => {
                         const Icon = categoryIcons[category.id];
                         return <Icon className="h-4 w-4 text-[color:var(--theme-accent)]" />;
-                      })()}
+                        })()
+                      )}
                     </div>
                     <p className="mt-2 text-sm leading-6 text-[color:var(--text-muted)]">{category.description}</p>
                     <span className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
@@ -150,7 +170,8 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                   </div>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
 
           <aside className="space-y-4">

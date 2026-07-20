@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowRight, Flame, ShieldCheck, Sparkles } from "lucide-react";
 
 import { games, serviceCategories } from "../data/games";
+import { canAccessCategory, canAccessGame } from "@/lib/game-configuration";
+import { getLiveGameConfiguration, isCurrentSessionAdmin } from "@/lib/game-configuration.server";
 
 const heroArtByGame: Record<string, string> = {
   "tbc-anniversary": "/wow/wow-tbc/tbc-logo.avif",
@@ -10,7 +12,13 @@ const heroArtByGame: Record<string, string> = {
   "mist-of-pandaria": "/wow/wow-pandaria/pandaria-logo.jpg",
 };
 
-export default function GamesIndexPage() {
+export default async function GamesIndexPage() {
+  const [config, isAdmin] = await Promise.all([getLiveGameConfiguration(), isCurrentSessionAdmin()]);
+  const visibleGames = games.filter((game) => canAccessGame(config, game.id, isAdmin));
+  const visibleCategories = serviceCategories.filter((category) =>
+    visibleGames.some((game) => canAccessCategory(config, game.id, category.id, isAdmin)),
+  );
+
   return (
     <div className="loot-shell gm-shell">
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
@@ -61,7 +69,7 @@ export default function GamesIndexPage() {
               <article className="gm-panel rounded-xl px-4 py-3 sm:col-span-2">
                 <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Available services</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {serviceCategories.map((category) => (
+                  {visibleCategories.map((category) => (
                     <span key={category.id} className="rounded-full bg-white/8 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.13em] text-[color:var(--text-main)]">
                       {category.title}
                     </span>
@@ -73,7 +81,10 @@ export default function GamesIndexPage() {
         </section>
 
         <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {games.map((game) => (
+          {visibleGames.map((game) => {
+            const isDisabledForPublic = !config.byGame[game.id]?.enabled;
+
+            return (
             <Link key={game.id} href={`/games/${game.id}`} className="group relative overflow-hidden rounded-[1.35rem] border border-white/8 bg-[#171a20]">
               <div
                 className="h-72 transition-transform duration-500 group-hover:scale-110"
@@ -94,7 +105,13 @@ export default function GamesIndexPage() {
                       <p className="text-[0.56rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-muted)]">{game.tag}</p>
                       <h2 className="mt-1 text-2xl font-black text-[color:var(--text-main)]">{game.shortTitle}</h2>
                     </div>
-                    <span className="gm-badge px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em]">Live</span>
+                    {isDisabledForPublic ? (
+                      <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em] text-amber-100">
+                        Disabled (Admin Only)
+                      </span>
+                    ) : (
+                      <span className="gm-badge px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em]">Live</span>
+                    )}
                   </div>
                   <p className="mt-2 text-sm leading-6 text-[color:var(--text-muted)]">{game.description}</p>
                   <span className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
@@ -104,7 +121,8 @@ export default function GamesIndexPage() {
                 </div>
               </div>
             </Link>
-          ))}
+            );
+          })}
         </section>
       </main>
     </div>
