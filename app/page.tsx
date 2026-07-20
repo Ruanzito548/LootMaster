@@ -8,7 +8,6 @@ import { ArrowRight, Flame, Gift, ShieldCheck, Sparkles, Trophy } from "lucide-r
 import { defaultHotGameIds, games, serviceCategories } from "./data/games";
 import { useProfileSession } from "./profile/use-profile-session";
 import {
-  buildDefaultGameConfiguration,
   canAccessCategory,
   canAccessGame,
   sanitizeGameConfiguration,
@@ -25,7 +24,7 @@ const heroArtByGame: Record<string, string> = {
 export default function Home() {
   const { profile } = useProfileSession();
   const isAdmin = profile?.isAdmin === true;
-  const [gameConfig, setGameConfig] = useState<GameConfiguration>(() => buildDefaultGameConfiguration());
+  const [gameConfig, setGameConfig] = useState<GameConfiguration | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,7 +38,9 @@ export default function Home() {
           setGameConfig(sanitizeGameConfiguration(payload.config));
         }
       } catch {
-        // Keep defaults if request fails.
+        if (!cancelled) {
+          setGameConfig(null);
+        }
       }
     };
 
@@ -51,7 +52,7 @@ export default function Home() {
   }, []);
 
   const visibleGames = useMemo(
-    () => games.filter((game) => canAccessGame(gameConfig, game.id, isAdmin)),
+    () => (gameConfig ? games.filter((game) => canAccessGame(gameConfig, game.id, isAdmin)) : []),
     [gameConfig, isAdmin],
   );
 
@@ -84,7 +85,7 @@ export default function Home() {
 
   const activeGame = featuredGames[activeIndex] ?? featuredGames[0] ?? null;
   const visibleCategories = activeGame
-    ? serviceCategories.filter((category) => canAccessCategory(gameConfig, activeGame.id, category.id, isAdmin))
+    ? serviceCategories.filter((category) => gameConfig && canAccessCategory(gameConfig, activeGame.id, category.id, isAdmin))
     : [];
 
   return (
@@ -151,7 +152,9 @@ export default function Home() {
                   transition={{ duration: 0.45 }}
                   className="absolute inset-0"
                   style={{
-                    backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.32)), url('${heroArtByGame[activeGame?.id ?? "retail"] ?? heroArtByGame.retail}')`,
+                    backgroundImage: activeGame
+                      ? `linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.32)), url('${heroArtByGame[activeGame.id] ?? heroArtByGame.retail}')`
+                      : "linear-gradient(180deg,rgba(0,0,0,0.24),rgba(0,0,0,0.62))",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}
@@ -162,7 +165,9 @@ export default function Home() {
 
               <div className="absolute bottom-0 left-0 right-0 p-5">
                 <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">Featured game</p>
-                <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">{activeGame?.title ?? "No game available"}</h2>
+                <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">
+                  {gameConfig === null ? "Loading games..." : activeGame?.title ?? "No game available"}
+                </h2>
                 <div className="mt-3 flex items-center gap-2">
                   {featuredGames.map((game, index) => (
                     <button
