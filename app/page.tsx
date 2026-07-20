@@ -233,7 +233,7 @@ export default function Home() {
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             {visibleGames.map((game) => {
-              const isDisabledForPublic = !gameConfig.byGame[game.id]?.enabled;
+              const isDisabledForPublic = gameConfig ? !gameConfig.byGame[game.id]?.enabled : false;
 
               return (
               <motion.article
