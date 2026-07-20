@@ -9,6 +9,8 @@ export type FinancialCalculatorConfig = {
   cardGatewayFeePercent: number;
   cashbackPercent: number;
   operationalReservePercent: number;
+  agentCommissionPercent: number;
+  otherProjectsInvestmentPercent: number;
   defaultSalesPerDay: number;
   defaultAverageTicket: number;
   defaultActiveDays: number;
@@ -68,6 +70,8 @@ export function buildDefaultFinancialCalculatorConfig(): FinancialCalculatorConf
     cardGatewayFeePercent: 2,
     cashbackPercent: 7,
     operationalReservePercent: 3,
+    agentCommissionPercent: 0,
+    otherProjectsInvestmentPercent: 0,
     defaultSalesPerDay: 12,
     defaultAverageTicket: 100,
     defaultActiveDays: 30,
@@ -101,6 +105,11 @@ export function sanitizeFinancialCalculatorConfig(source: unknown): FinancialCal
     cardGatewayFeePercent: clampPercent(parsed.cardGatewayFeePercent, legacyPlatformFee),
     cashbackPercent: clampPercent(parsed.cashbackPercent, legacyRetentionFund),
     operationalReservePercent: clampPercent(parsed.operationalReservePercent, legacyOtherCosts),
+    agentCommissionPercent: clampPercent(parsed.agentCommissionPercent, fallback.agentCommissionPercent),
+    otherProjectsInvestmentPercent: clampPercent(
+      parsed.otherProjectsInvestmentPercent,
+      fallback.otherProjectsInvestmentPercent,
+    ),
     defaultSalesPerDay: clampNonNegativeInt(parsed.defaultSalesPerDay, fallback.defaultSalesPerDay),
     defaultAverageTicket: clampNonNegativeInt(parsed.defaultAverageTicket, fallback.defaultAverageTicket),
     defaultActiveDays: clampNonNegativeInt(parsed.defaultActiveDays, fallback.defaultActiveDays),

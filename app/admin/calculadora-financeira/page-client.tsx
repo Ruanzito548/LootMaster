@@ -42,6 +42,8 @@ type ScenarioInputs = {
   cardGatewayFeePercent: string;
   cashbackPercent: string;
   operationalReservePercent: string;
+  agentCommissionPercent: string;
+  otherProjectsInvestmentPercent: string;
 };
 
 type OperationalCostValueType = "percent" | "fixed";
@@ -180,6 +182,8 @@ function toScenarioInputs(config: FinancialCalculatorConfig): ScenarioInputs {
     cardGatewayFeePercent: String(config.cardGatewayFeePercent),
     cashbackPercent: String(config.cashbackPercent),
     operationalReservePercent: String(config.operationalReservePercent),
+    agentCommissionPercent: String(config.agentCommissionPercent),
+    otherProjectsInvestmentPercent: String(config.otherProjectsInvestmentPercent),
   };
 }
 
@@ -370,9 +374,38 @@ export function FinancialCalculatorClient() {
     );
   }, [monthlyRevenueCents, scenarioInputs]);
 
+  const agentCommissionPercent = useMemo(
+    () => parseDecimalInput(scenarioInputs.agentCommissionPercent),
+    [scenarioInputs.agentCommissionPercent],
+  );
+  const otherProjectsInvestmentPercent = useMemo(
+    () => parseDecimalInput(scenarioInputs.otherProjectsInvestmentPercent),
+    [scenarioInputs.otherProjectsInvestmentPercent],
+  );
+
+  const agentCommissionCost = useMemo(
+    () => Math.max(0, Math.round(scenario.grossRevenue * (agentCommissionPercent / 100))),
+    [agentCommissionPercent, scenario.grossRevenue],
+  );
+
+  const netProfit = useMemo(
+    () => scenario.netProfit - agentCommissionCost,
+    [agentCommissionCost, scenario.netProfit],
+  );
+
+  const investmentInOtherProjects = useMemo(
+    () => (netProfit > 0 ? Math.max(0, Math.round(netProfit * (otherProjectsInvestmentPercent / 100))) : 0),
+    [netProfit, otherProjectsInvestmentPercent],
+  );
+
+  const finalNetProfit = useMemo(
+    () => netProfit - investmentInOtherProjects,
+    [investmentInOtherProjects, netProfit],
+  );
+
   const marginPercent = useMemo(
-    () => (scenario.grossRevenue > 0 ? (scenario.netProfit / scenario.grossRevenue) * 100 : 0),
-    [scenario.grossRevenue, scenario.netProfit],
+    () => (scenario.grossRevenue > 0 ? (netProfit / scenario.grossRevenue) * 100 : 0),
+    [netProfit, scenario.grossRevenue],
   );
 
   const totalOrders = Math.max(0, Math.round(salesPerDay * activeDays));
@@ -412,7 +445,7 @@ export function FinancialCalculatorClient() {
 
   const operationalCostTotal = operationalCostRows.reduce((acc, item) => acc + item.totalCents, 0);
   const operationalCostPerOrder = totalOrders > 0 ? Math.round(operationalCostTotal / totalOrders) : 0;
-  const netAfterOperationalCosts = scenario.netProfit - operationalCostTotal;
+  const netAfterOperationalCosts = finalNetProfit - operationalCostTotal;
   const marginAfterOperationalCosts = scenario.grossRevenue > 0 ? (netAfterOperationalCosts / scenario.grossRevenue) * 100 : 0;
 
   const hasUnsavedChanges = useMemo(() => {
@@ -421,6 +454,8 @@ export function FinancialCalculatorClient() {
       parseDecimalInput(scenarioInputs.cardGatewayFeePercent) !== config.cardGatewayFeePercent ||
       parseDecimalInput(scenarioInputs.cashbackPercent) !== config.cashbackPercent ||
       parseDecimalInput(scenarioInputs.operationalReservePercent) !== config.operationalReservePercent ||
+      parseDecimalInput(scenarioInputs.agentCommissionPercent) !== config.agentCommissionPercent ||
+      parseDecimalInput(scenarioInputs.otherProjectsInvestmentPercent) !== config.otherProjectsInvestmentPercent ||
       Math.round(parseDecimalInput(salesPerDayInput)) !== config.defaultSalesPerDay ||
       Math.round(parseDecimalInput(averageSaleValueInput)) !== config.defaultAverageTicket ||
       Math.round(parseDecimalInput(activeDaysInput)) !== config.defaultActiveDays
@@ -436,16 +471,25 @@ export function FinancialCalculatorClient() {
       `Taxa cartao (${formatPercent(parseDecimalInput(scenarioInputs.cardGatewayFeePercent))}): ${formatUsdFromCents(scenario.cardFee)}`,
       `Cashback (${formatPercent(parseDecimalInput(scenarioInputs.cashbackPercent))}): ${formatUsdFromCents(scenario.cashback)}`,
       `Reserva operacional (${formatPercent(parseDecimalInput(scenarioInputs.operationalReservePercent))}): ${formatUsdFromCents(scenario.operationalReserve)}`,
-      `Lucro liquido: ${formatUsdFromCents(scenario.netProfit)}`,
+      `Comissao do agente (${formatPercent(agentCommissionPercent)}): ${formatUsdFromCents(agentCommissionCost)}`,
+      `Lucro liquido: ${formatUsdFromCents(netProfit)}`,
+      `Investimento em outros projetos (${formatPercent(otherProjectsInvestmentPercent)}): ${formatUsdFromCents(investmentInOtherProjects)}`,
+      `Lucro liquido final: ${formatUsdFromCents(finalNetProfit)}`,
       `Margem liquida: ${formatPercent(marginPercent)}`,
       `Custos operacionais extras: ${formatUsdFromCents(operationalCostTotal)}`,
       `Lucro liquido apos custos extras: ${formatUsdFromCents(netAfterOperationalCosts)}`,
       `Margem apos custos extras: ${formatPercent(marginAfterOperationalCosts)}`,
     ].join("\n");
   }, [
+    agentCommissionCost,
+    agentCommissionPercent,
+    finalNetProfit,
+    investmentInOtherProjects,
     marginAfterOperationalCosts,
     marginPercent,
     netAfterOperationalCosts,
+    netProfit,
+    otherProjectsInvestmentPercent,
     operationalCostTotal,
     scenario,
     scenarioInputs.cardGatewayFeePercent,
@@ -543,6 +587,8 @@ export function FinancialCalculatorClient() {
       cardGatewayFeePercent: parseDecimalInput(scenarioInputs.cardGatewayFeePercent),
       cashbackPercent: parseDecimalInput(scenarioInputs.cashbackPercent),
       operationalReservePercent: parseDecimalInput(scenarioInputs.operationalReservePercent),
+      agentCommissionPercent: parseDecimalInput(scenarioInputs.agentCommissionPercent),
+      otherProjectsInvestmentPercent: parseDecimalInput(scenarioInputs.otherProjectsInvestmentPercent),
       defaultSalesPerDay: Math.round(parseDecimalInput(salesPerDayInput)),
       defaultAverageTicket: Math.round(parseDecimalInput(averageSaleValueInput)),
       defaultActiveDays: Math.round(parseDecimalInput(activeDaysInput)),
@@ -595,7 +641,8 @@ export function FinancialCalculatorClient() {
               </p>
               <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">Calculadora Financeira</h1>
               <p className="max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
-                Simule cenarios com o mesmo metodo do dashboard: fornecedor, gateway de pagamento, cashback e reserva operacional.
+                Simule cenarios com o mesmo metodo do dashboard: fornecedor, gateway, cashback, reserva operacional,
+                comissao do agente e investimento em outros projetos.
               </p>
             </div>
 
@@ -704,6 +751,20 @@ export function FinancialCalculatorClient() {
                 value={scenarioInputs.operationalReservePercent}
                 onChange={(next) => setScenarioInputs((current) => ({ ...current, operationalReservePercent: next }))}
               />
+              <PercentRow
+                label="Comissao do Agente (%)"
+                helper="Comissao paga ao agente sobre a receita"
+                value={scenarioInputs.agentCommissionPercent}
+                onChange={(next) => setScenarioInputs((current) => ({ ...current, agentCommissionPercent: next }))}
+              />
+              <PercentRow
+                label="Investimento em Outros Projetos (%)"
+                helper="Percentual aplicado sobre o lucro liquido"
+                value={scenarioInputs.otherProjectsInvestmentPercent}
+                onChange={(next) =>
+                  setScenarioInputs((current) => ({ ...current, otherProjectsInvestmentPercent: next }))
+                }
+              />
             </div>
 
             <div className="mt-5 overflow-hidden rounded-2xl border border-white/10">
@@ -721,8 +782,35 @@ export function FinancialCalculatorClient() {
                     <td className="px-4 py-3 text-slate-300">Reserva operacional</td>
                     <td className="px-4 py-3 text-right font-black text-cyan-300 tabular-nums">{formatUsdFromCents(scenario.operationalReserve)}</td>
                   </tr>
+                  <tr className="bg-white/[0.03]">
+                    <td className="px-4 py-3 text-slate-300">Comissao do Agente</td>
+                    <td className="px-4 py-3 text-right font-black text-cyan-300 tabular-nums">{formatUsdFromCents(agentCommissionCost)}</td>
+                  </tr>
+                  <tr className="bg-white/[0.03]">
+                    <td className="px-4 py-3 text-slate-300">Investimento em Outros Projetos</td>
+                    <td className="px-4 py-3 text-right font-black text-cyan-300 tabular-nums">{formatUsdFromCents(investmentInOtherProjects)}</td>
+                  </tr>
                 </tbody>
               </table>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Lucro Bruto</p>
+                <p className="mt-1 text-sm font-black text-white">{formatUsdFromCents(scenario.grossProfit)}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Lucro Liquido</p>
+                <p className="mt-1 text-sm font-black text-white">{formatUsdFromCents(netProfit)}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Investimento em Outros Projetos</p>
+                <p className="mt-1 text-sm font-black text-cyan-300">{formatUsdFromCents(investmentInOtherProjects)}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Lucro Liquido Final</p>
+                <p className="mt-1 text-sm font-black text-emerald-300">{formatUsdFromCents(finalNetProfit)}</p>
+              </div>
             </div>
           </article>
 
@@ -804,7 +892,7 @@ export function FinancialCalculatorClient() {
               </div>
               <div className="rounded-xl border border-white/10 bg-black/25 p-3">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Lucro liquido base</p>
-                <p className="mt-1 text-sm font-black text-white">{formatUsdFromCents(scenario.netProfit)}</p>
+                <p className="mt-1 text-sm font-black text-white">{formatUsdFromCents(finalNetProfit)}</p>
               </div>
               <div className="rounded-xl border border-white/10 bg-black/25 p-3">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Liquido apos custos</p>
