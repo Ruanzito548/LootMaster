@@ -1,8 +1,8 @@
 import { FieldValue } from "firebase-admin/firestore";
 
-import { clampPercent } from "@/lib/agency";
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { clampPercent } from "@/lib/percent-utils";
 
 type RequestBody = {
   agentUid?: string;

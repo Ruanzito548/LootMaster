@@ -12,14 +12,18 @@ import {
 const SESSION_COOKIE_NAME = "__session";
 
 export async function getLiveGameConfiguration(): Promise<GameConfiguration> {
-  const adminDb = getAdminDb();
-  const snapshot = await adminDb.collection(GAME_CONFIGURATION_COLLECTION).doc(GAME_CONFIGURATION_DOC_ID).get();
+  try {
+    const adminDb = getAdminDb();
+    const snapshot = await adminDb.collection(GAME_CONFIGURATION_COLLECTION).doc(GAME_CONFIGURATION_DOC_ID).get();
 
-  if (!snapshot.exists) {
+    if (!snapshot.exists) {
+      return buildDefaultGameConfiguration();
+    }
+
+    return sanitizeGameConfiguration(snapshot.data());
+  } catch {
     return buildDefaultGameConfiguration();
   }
-
-  return sanitizeGameConfiguration(snapshot.data());
 }
 
 export async function isCurrentSessionAdmin(): Promise<boolean> {
