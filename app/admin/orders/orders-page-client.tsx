@@ -11,7 +11,7 @@ import { OrdersTableWithActions } from "./orders-table";
 
 const PAGE_SIZE = 50;
 
-type OrdersStatusMode = "open" | "completed";
+type OrdersStatusMode = "all" | "open" | "completed";
 
 async function getAuthorizationHeader(user: User | null) {
   const token = await user?.getIdToken();
@@ -111,7 +111,7 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
 
         void (async () => {
           setLoadingMore(true);
-+          setErrorMessage(null);
+          setErrorMessage(null);
           try {
             const page = await fetchOrdersPage({ user, mode, cursor: nextCursor });
             setRows((current) => {
@@ -140,16 +140,18 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin / Extrato</p>
             <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">
-              {mode === "open" ? "Ordens Abertas" : "Ordens Completas"}
+              {mode === "open" ? "Ordens Abertas" : mode === "completed" ? "Ordens Completas" : "Ordens"}
             </h1>
             <p className="mt-2 text-sm text-green-600">
               {mode === "open"
                 ? "Ordens pendentes ou pagas aguardando conclusao."
-                : "Historico de ordens marcadas como concluidas."}
+                : mode === "completed"
+                  ? "Historico de ordens marcadas como concluidas."
+                  : "Lista geral de ordens com filtros e acoes administrativas."}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {mode === "open" ? <CreateTestOrderButton onCreated={reload} /> : null}
+            {mode !== "completed" ? <CreateTestOrderButton onCreated={reload} /> : null}
           </div>
         </div>
 
@@ -166,7 +168,7 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
         ) : rows.length === 0 ? (
           <section className="mt-6 overflow-x-auto rounded-xl border border-green-900 bg-black">
             <p className="px-5 py-4 text-sm text-green-600">
-              {mode === "open" ? "Nenhuma ordem aberta." : "Nenhuma ordem completa."}
+              {mode === "open" ? "Nenhuma ordem aberta." : mode === "completed" ? "Nenhuma ordem completa." : "Nenhuma ordem encontrada."}
             </p>
           </section>
         ) : (

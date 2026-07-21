@@ -5,18 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 
 import { auth } from "@/lib/firebase";
-
-type WithdrawalRow = {
-  requestId: string;
-  uid: string;
-  email: string;
-  amount: number;
-  payoutMethod: string;
-  payoutReference: string;
-  status: string;
-  createdAtLabel: string;
-  reviewedAtLabel: string;
-};
+import type { WithdrawalRow } from "./withdrawals-types";
 
 type Props = {
   mode: "pending" | "approved" | "rejected";

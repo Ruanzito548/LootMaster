@@ -1,7 +1,7 @@
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
 
-import type { WithdrawalRow } from "@/app/admin/withdrawals/withdrawals-data";
+import type { WithdrawalRow } from "@/app/admin/withdrawals/withdrawals-types";
 
 type TimestampLike = {
   toDate?: () => Date;

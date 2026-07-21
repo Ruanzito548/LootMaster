@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { loadWithdrawalRows } from "./withdrawals-data";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -11,10 +11,17 @@ export default async function AdminWithdrawalsPage() {
   let loadError: string | null = null;
 
   try {
-    const rows = await loadWithdrawalRows();
-    pendingCount = rows.filter((row) => row.status === "pending_review").length;
-    approvedCount = rows.filter((row) => row.status === "approved").length;
-    rejectedCount = rows.filter((row) => row.status === "rejected").length;
+    const adminDb = getAdminDb();
+
+    const [pendingAgg, approvedAgg, rejectedAgg] = await Promise.all([
+      adminDb.collection("withdraw-requests").where("status", "==", "pending_review").count().get(),
+      adminDb.collection("withdraw-requests").where("status", "==", "approved").count().get(),
+      adminDb.collection("withdraw-requests").where("status", "==", "rejected").count().get(),
+    ]);
+
+    pendingCount = pendingAgg.data().count;
+    approvedCount = approvedAgg.data().count;
+    rejectedCount = rejectedAgg.data().count;
   } catch (error) {
     loadError = error instanceof Error ? error.message : "Could not load withdrawal requests.";
   }
