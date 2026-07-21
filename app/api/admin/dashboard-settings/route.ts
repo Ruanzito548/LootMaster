@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   SITE_FEE_SETTINGS_DOC_ID,
@@ -100,10 +101,9 @@ export async function PUT(request: Request): Promise<Response> {
     const adminUserData = adminUserDoc.exists ? (adminUserDoc.data() as Record<string, unknown>) : null;
     const adminLabel = getAdminLabel(adminUserData, decodedToken.uid);
 
-    await adminDb
-      .collection("app-config")
-      .doc(SITE_FEE_SETTINGS_DOC_ID)
-      .set(
+    await adminDb.runTransaction(async (tx) => {
+      tx.set(
+        adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID),
         {
           ...settings,
           updatedAt: FieldValue.serverTimestamp(),
@@ -112,6 +112,30 @@ export async function PUT(request: Request): Promise<Response> {
         },
         { merge: true },
       );
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "admin",
+        actionType: "admin_dashboard_settings_updated",
+        category: "admin",
+        description: "Admin updated default dashboard fee settings.",
+        origin: "admin.dashboard-settings.put",
+        status: "admin_action",
+        tags: ["admin", "finance", "fees", "dashboard-settings"],
+        metadata: {
+          previousSupplierDefaultPercent: base.supplierDefaultPercent,
+          nextSupplierDefaultPercent: settings.supplierDefaultPercent,
+          previousCardGatewayFeePercent: base.cardGatewayFeePercent,
+          nextCardGatewayFeePercent: settings.cardGatewayFeePercent,
+          previousCashbackPercent: base.cashbackPercent,
+          nextCashbackPercent: settings.cashbackPercent,
+          previousOperationalReservePercent: base.operationalReservePercent,
+          nextOperationalReservePercent: settings.operationalReservePercent,
+        },
+        mirrorToAdminAudit: true,
+      });
+    });
 
     return Response.json({ ok: true, settings });
   } catch (error) {

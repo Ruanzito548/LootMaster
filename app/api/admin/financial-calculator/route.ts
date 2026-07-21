@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import {
   FINANCIAL_CALCULATOR_CONFIG_DOC_ID,
   buildDefaultFinancialCalculatorConfig,
@@ -159,10 +160,9 @@ export async function PUT(request: Request): Promise<Response> {
       updatedAtMs: Date.now(),
     });
 
-    await adminDb
-      .collection("app-config")
-      .doc(SITE_FEE_SETTINGS_DOC_ID)
-      .set(
+    await adminDb.runTransaction(async (tx) => {
+      tx.set(
+        adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID),
         {
           ...syncedSiteFee,
           updatedAt: FieldValue.serverTimestamp(),
@@ -172,10 +172,8 @@ export async function PUT(request: Request): Promise<Response> {
         { merge: true },
       );
 
-    await adminDb
-      .collection("app-config")
-      .doc(FINANCIAL_CALCULATOR_CONFIG_DOC_ID)
-      .set(
+      tx.set(
+        adminDb.collection("app-config").doc(FINANCIAL_CALCULATOR_CONFIG_DOC_ID),
         {
           ...sanitized,
           updatedAtMs: Date.now(),
@@ -189,6 +187,35 @@ export async function PUT(request: Request): Promise<Response> {
         },
         { merge: true },
       );
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "admin",
+        actionType: "admin_financial_calculator_updated",
+        category: "admin",
+        description: "Admin updated financial calculator settings and synced base site fee percentages.",
+        origin: "admin.financial-calculator.put",
+        status: "admin_action",
+        tags: ["admin", "finance", "calculator", "settings"],
+        metadata: {
+          previousSupplierPercentage: currentConfig?.supplierPercentage ?? currentSiteFee.supplierDefaultPercent,
+          nextSupplierPercentage: sanitized.supplierPercentage,
+          previousCardGatewayFeePercent: currentConfig?.cardGatewayFeePercent ?? currentSiteFee.cardGatewayFeePercent,
+          nextCardGatewayFeePercent: sanitized.cardGatewayFeePercent,
+          previousCashbackPercent: currentConfig?.cashbackPercent ?? currentSiteFee.cashbackPercent,
+          nextCashbackPercent: sanitized.cashbackPercent,
+          previousOperationalReservePercent:
+            currentConfig?.operationalReservePercent ?? currentSiteFee.operationalReservePercent,
+          nextOperationalReservePercent: sanitized.operationalReservePercent,
+          previousAgentCommissionPercent: currentConfig?.agentCommissionPercent ?? 0,
+          nextAgentCommissionPercent: sanitized.agentCommissionPercent,
+          previousOtherProjectsInvestmentPercent: currentConfig?.otherProjectsInvestmentPercent ?? 0,
+          nextOtherProjectsInvestmentPercent: sanitized.otherProjectsInvestmentPercent,
+        },
+        mirrorToAdminAudit: true,
+      });
+    });
 
     return Response.json({
       ok: true,
