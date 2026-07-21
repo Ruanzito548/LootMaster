@@ -181,8 +181,8 @@ export default function AdminGameConfigurationPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin / Configurações</p>
-            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Configurações</h1>
-            <p className="mt-2 text-sm text-green-500">Controle central de jogos, baús, preços de gold e market de accounts com refletimento imediato no site.</p>
+            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Game Configuration</h1>
+            <p className="mt-2 text-sm text-green-500">Controle central sem duplicações: disponibilidade de jogos/categorias e edição direta de Gold e Accounts no mesmo fluxo.</p>
           </div>
           {hasAnyDisabled ? (
             <span className="rounded-full border border-amber-600/50 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-amber-200">
@@ -191,46 +191,26 @@ export default function AdminGameConfigurationPage() {
           ) : null}
         </div>
 
-        <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <article className="rounded-2xl border border-green-900 bg-green-950/15 p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-500">Games</p>
-            <h2 className="mt-1 text-lg font-black text-green-200">Game Configuration</h2>
-            <p className="mt-2 text-sm text-green-600">Liga/desliga jogos e categorias do marketplace.</p>
-            <Link href="#game-configuration" className="mt-4 inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-400 transition hover:bg-green-950">
-              Abrir
+        <section className="mt-6 rounded-2xl border border-green-900 bg-green-950/15 p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-500">Acessos Rápidos</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="#game-configuration" className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-400 transition hover:bg-green-950">
+              Disponibilidade de Jogos
             </Link>
-          </article>
-
-          <article className="rounded-2xl border border-green-900 bg-green-950/15 p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-500">Gold</p>
-            <h2 className="mt-1 text-lg font-black text-green-200">Preço de Gold</h2>
-            <p className="mt-2 text-sm text-green-600">Editar preço por mil gold, mínimo e escopo por jogo/servidor/facção.</p>
-            <Link href="/admin/games/wow/gold-settings" className="mt-4 inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-400 transition hover:bg-green-950">
-              Abrir editor
+            <Link href="#gold-configuration" className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-400 transition hover:bg-green-950">
+              Preço de Gold
             </Link>
-          </article>
-
-          <article className="rounded-2xl border border-green-900 bg-green-950/15 p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-500">Accounts</p>
-            <h2 className="mt-1 text-lg font-black text-green-200">Marketplace de Accounts</h2>
-            <p className="mt-2 text-sm text-green-600">Cadastrar e gerenciar contas do market.</p>
-            <Link href="/admin/games/wow/accounts" className="mt-4 inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-400 transition hover:bg-green-950">
-              Abrir editor
+            <Link href="#accounts-market-configuration" className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-400 transition hover:bg-green-950">
+              Marketplace de Accounts
             </Link>
-          </article>
-
-          <article className="rounded-2xl border border-green-900 bg-green-950/15 p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-500">Chests</p>
-            <h2 className="mt-1 text-lg font-black text-green-200">Config dos Baus</h2>
-            <p className="mt-2 text-sm text-green-600">Balanco e chances em tempo real.</p>
-            <Link href="/admin/chests" className="mt-4 inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-400 transition hover:bg-green-950">
-              Abrir editor
+            <Link href="/admin/chests" className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-400 transition hover:bg-green-950">
+              Config dos Baus
             </Link>
-          </article>
+          </div>
         </section>
 
         <section className="mt-6 space-y-3">
-          <details className="group rounded-2xl border border-green-900 bg-green-950/15">
+          <details id="gold-configuration" className="group rounded-2xl border border-green-900 bg-green-950/15">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-500">Gold</p>
@@ -243,7 +223,7 @@ export default function AdminGameConfigurationPage() {
             </div>
           </details>
 
-          <details className="group rounded-2xl border border-green-900 bg-green-950/15">
+          <details id="accounts-market-configuration" className="group rounded-2xl border border-green-900 bg-green-950/15">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-500">Accounts</p>
