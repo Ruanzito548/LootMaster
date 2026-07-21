@@ -1,19 +1,13 @@
 import { getAdminDb } from "@/lib/firebase-admin";
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 import { computeOrderFinancials } from "@/lib/order-financials";
+import { clampPercent } from "@/lib/percent-utils";
 
 type RequestBody = {
   orderId?: string;
   supplierName?: string;
   supplierPercentage?: number;
 };
-
-function clampPercent(value: number): number {
-  if (Number.isNaN(value)) return 0;
-  if (value < 0) return 0;
-  if (value > 100) return 100;
-  return Math.round(value * 100) / 100;
-}
 
 export async function POST(request: Request): Promise<Response> {
   let body: RequestBody;

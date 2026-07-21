@@ -1,3 +1,5 @@
+import { clampPercent } from "./percent-utils";
+
 export const SITE_FEE_SETTINGS_SCHEMA_VERSION = 1;
 export const SITE_FEE_SETTINGS_DOC_ID = "site-fee-settings";
 
@@ -16,15 +18,6 @@ function asFiniteNumber(value: unknown): number | null {
   }
 
   return value;
-}
-
-function clampPercent(value: unknown, fallback: number) {
-  const parsed = asFiniteNumber(value);
-  if (parsed === null) {
-    return fallback;
-  }
-
-  return Math.max(0, Math.min(100, Number(parsed.toFixed(2))));
 }
 
 export function buildDefaultSiteFeeSettings(): SiteFeeSettings {

@@ -1,3 +1,4 @@
+import { ADMIN_GIFTCARD_CLAIMS_QUERY_LIMIT } from "@/lib/admin-query-limits";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 export type GiftcardClaimRow = {
@@ -37,7 +38,7 @@ export async function loadGiftcardClaimRows(): Promise<GiftcardClaimRow[]> {
   const snapshot = await adminDb
     .collection("giftcard-claims")
     .orderBy("createdAt", "desc")
-    .limit(300)
+    .limit(ADMIN_GIFTCARD_CLAIMS_QUERY_LIMIT)
     .get();
 
   return snapshot.docs.map((row) => {

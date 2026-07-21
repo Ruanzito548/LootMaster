@@ -1,8 +1,13 @@
 import Stripe from "stripe";
 
+import { ADMIN_ORDERS_QUERY_LIMIT } from "@/lib/admin-query-limits";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { buildOrderFinancialSnapshot } from "@/lib/order-financials";
-import { buildDefaultSiteFeeSettings } from "@/lib/site-fee-settings";
+import {
+  SITE_FEE_SETTINGS_DOC_ID,
+  buildDefaultSiteFeeSettings,
+  sanitizeSiteFeeSettings,
+} from "@/lib/site-fee-settings";
 
 import type { OrderRow } from "./export-button";
 
@@ -59,10 +64,12 @@ function getStatus(
 
 export async function loadOrdersRows(): Promise<{ rows: OrderRow[]; loadError: string | null }> {
   const secretKey = process.env.STRIPE_SECRET_KEY;
+  const defaultSiteFeeSettings = buildDefaultSiteFeeSettings();
   let sessions: Stripe.Checkout.Session[] = [];
   let rows: OrderRow[] = [];
   let loadError: string | null = null;
   let completedOrderIds = new Set<string>();
+  let siteFeeSettings = defaultSiteFeeSettings;
 
   try {
     const adminDb = getAdminDb();
@@ -81,8 +88,13 @@ export async function loadOrdersRows(): Promise<{ rows: OrderRow[]; loadError: s
     const snapshot = await adminDb
       .collection("order-checkouts")
       .orderBy("updatedAt", "desc")
-      .limit(200)
+      .limit(ADMIN_ORDERS_QUERY_LIMIT)
       .get();
+
+    const siteFeeSnapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
+    siteFeeSettings = siteFeeSnapshot.exists
+      ? sanitizeSiteFeeSettings(siteFeeSnapshot.data())
+      : defaultSiteFeeSettings;
 
     const assignedAgentIds = Array.from(
       new Set(
@@ -119,12 +131,7 @@ export async function loadOrdersRows(): Promise<{ rows: OrderRow[]; loadError: s
       const assignedAgent = assignedAgentId ? agentByUid.get(assignedAgentId) : null;
       const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
       const currency = normalizeCurrency(data.currency);
-      const financials = buildOrderFinancialSnapshot(data, {
-        supplierDefaultPercent: buildDefaultSiteFeeSettings().supplierDefaultPercent,
-        cardGatewayFeePercent: 0,
-        cashbackPercent: 0,
-        operationalReservePercent: 0,
-      });
+      const financials = buildOrderFinancialSnapshot(data, siteFeeSettings);
 
       return {
         id: orderId,
@@ -208,10 +215,10 @@ export async function loadOrdersRows(): Promise<{ rows: OrderRow[]; loadError: s
       currency: normalizeCurrency(s.currency).toLowerCase(),
       totalCents: s.amount_total ?? 0,
       supplierName: "--",
-      supplierPercentage: 75,
-      supplierPayout: Math.round((s.amount_total ?? 0) * 0.75),
-      grossProfit: (s.amount_total ?? 0) - Math.round((s.amount_total ?? 0) * 0.75),
-      netProfit: (s.amount_total ?? 0) - Math.round((s.amount_total ?? 0) * 0.75),
+      supplierPercentage: siteFeeSettings.supplierDefaultPercent,
+      supplierPayout: Math.round((s.amount_total ?? 0) * (siteFeeSettings.supplierDefaultPercent / 100)),
+      grossProfit: (s.amount_total ?? 0) - Math.round((s.amount_total ?? 0) * (siteFeeSettings.supplierDefaultPercent / 100)),
+      netProfit: (s.amount_total ?? 0) - Math.round((s.amount_total ?? 0) * (siteFeeSettings.supplierDefaultPercent / 100)),
     }));
   }
 

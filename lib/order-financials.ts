@@ -1,3 +1,5 @@
+import { clampPercent as sharedClampPercent } from "./percent-utils";
+
 export type FinancialSettings = {
   supplierDefaultPercent: number;
   cardGatewayFeePercent: number;
@@ -24,12 +26,7 @@ function asFiniteNumber(value: unknown): number | null {
   return value;
 }
 
-export function clampPercent(value: number) {
-  if (!Number.isFinite(value)) return 0;
-  if (value < 0) return 0;
-  if (value > 100) return 100;
-  return Math.round(value * 100) / 100;
-}
+export const clampPercent = sharedClampPercent;
 
 export function computeOrderFinancials(
   grossRevenueCents: number,

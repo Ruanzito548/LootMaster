@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getAdminDb } from "@/lib/firebase-admin";
+import { ADMIN_USERS_QUERY_LIMIT } from "@/lib/admin-query-limits";
 
 import ClientesAdminClient from "./clientes-client";
 
@@ -22,7 +23,7 @@ export default async function AdminClientesTodosPage() {
 
   try {
     const adminDb = getAdminDb();
-    const snapshot = await adminDb.collection("users").limit(500).get();
+    const snapshot = await adminDb.collection("users").limit(ADMIN_USERS_QUERY_LIMIT).get();
 
     rows = snapshot.docs.map((docRow) => {
       const data = docRow.data() as Record<string, unknown>;
@@ -52,6 +53,9 @@ export default async function AdminClientesTodosPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin / Clientes</p>
             <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Todos os clientes</h1>
+            <p className="mt-3 text-xs font-medium uppercase tracking-[0.12em] text-green-700">
+              Exibindo os perfis mais recentes dentro do limite atual do painel.
+            </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getAdminDb } from "@/lib/firebase-admin";
+import { ADMIN_USERS_QUERY_LIMIT } from "@/lib/admin-query-limits";
 
 import AgentesAdminClient from "./agentes-client";
 
@@ -23,7 +24,7 @@ export default async function AdminAgentesPage() {
     const snapshot = await adminDb
       .collection("users")
       .where("isAgent", "==", true)
-      .limit(500)
+      .limit(ADMIN_USERS_QUERY_LIMIT)
       .get();
 
     rows = snapshot.docs.map((docRow) => {
@@ -52,6 +53,9 @@ export default async function AdminAgentesPage() {
             <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Agentes</h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-green-600">
               Ajuste a porcentagem da taxa da plataforma que cada agente recebe por compras dos clientes vinculados.
+            </p>
+            <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-green-700">
+              Exibindo os agentes mais recentes dentro do limite atual do painel.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

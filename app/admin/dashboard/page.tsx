@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Stripe from "stripe";
+import { ADMIN_DASHBOARD_ORDERS_QUERY_LIMIT } from "@/lib/admin-query-limits";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   SITE_FEE_SETTINGS_DOC_ID,
@@ -21,13 +22,14 @@ function parseIsoToUnixSeconds(iso: string | null | undefined): number {
 
 export default async function DashboardPage() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
+  const defaultSiteFeeSettings = buildDefaultSiteFeeSettings();
   let sessions: Stripe.Checkout.Session[] = [];
   let orders: DashboardOrder[] = [];
   let loadError: string | null = null;
-  let supplierDefaultPercent = buildDefaultSiteFeeSettings().supplierDefaultPercent;
-  let cardGatewayFeePercent = buildDefaultSiteFeeSettings().cardGatewayFeePercent;
-  let cashbackPercent = buildDefaultSiteFeeSettings().cashbackPercent;
-  let operationalReservePercent = buildDefaultSiteFeeSettings().operationalReservePercent;
+  let supplierDefaultPercent = defaultSiteFeeSettings.supplierDefaultPercent;
+  let cardGatewayFeePercent = defaultSiteFeeSettings.cardGatewayFeePercent;
+  let cashbackPercent = defaultSiteFeeSettings.cashbackPercent;
+  let operationalReservePercent = defaultSiteFeeSettings.operationalReservePercent;
   let completedOrderIds = new Set<string>();
 
   try {
@@ -47,13 +49,13 @@ export default async function DashboardPage() {
     const snapshot = await adminDb
       .collection("order-checkouts")
       .orderBy("updatedAt", "desc")
-      .limit(300)
+      .limit(ADMIN_DASHBOARD_ORDERS_QUERY_LIMIT)
       .get();
 
     const siteFeeSnapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
     const siteFeeSettings = siteFeeSnapshot.exists
       ? sanitizeSiteFeeSettings(siteFeeSnapshot.data())
-      : buildDefaultSiteFeeSettings();
+      : defaultSiteFeeSettings;
 
     supplierDefaultPercent = siteFeeSettings.supplierDefaultPercent;
     cardGatewayFeePercent = siteFeeSettings.cardGatewayFeePercent;

@@ -1,18 +1,13 @@
 export const DEFAULT_PLATFORM_FEE_PERCENT = 15;
 export const DEFAULT_AGENT_FEE_SHARE_PERCENT = 50;
 
+import { clampPercent } from "./percent-utils";
+
 export type FeeBreakdown = {
   platformFeeCents: number;
   agentPayoutCents: number;
   lootmasterFeeCents: number;
 };
-
-export function clampPercent(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  if (value < 0) return 0;
-  if (value > 100) return 100;
-  return Math.round(value * 100) / 100;
-}
 
 export function computeFeeBreakdown(
   totalCents: number,

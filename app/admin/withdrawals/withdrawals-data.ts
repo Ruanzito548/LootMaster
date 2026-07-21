@@ -1,3 +1,4 @@
+import { ADMIN_WITHDRAWALS_QUERY_LIMIT } from "@/lib/admin-query-limits";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 export type WithdrawalRow = {
@@ -27,7 +28,7 @@ function formatTimestamp(value: unknown): string {
     return "--";
   }
 
-  return date.toLocaleString("en-US");
+  return date.toLocaleString("pt-BR");
 }
 
 export async function loadWithdrawalRows() {
@@ -35,7 +36,7 @@ export async function loadWithdrawalRows() {
   const snapshot = await adminDb
     .collection("withdraw-requests")
     .orderBy("createdAt", "desc")
-    .limit(200)
+    .limit(ADMIN_WITHDRAWALS_QUERY_LIMIT)
     .get();
 
   return snapshot.docs.map((docRow) => {

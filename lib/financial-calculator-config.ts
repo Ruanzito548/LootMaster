@@ -1,3 +1,5 @@
+import { clampPercent } from "./percent-utils";
+
 export const FINANCIAL_CALCULATOR_CONFIG_VERSION = 1;
 export const FINANCIAL_CALCULATOR_CONFIG_DOC_ID = "financial-calculator";
 
@@ -22,15 +24,6 @@ function asFiniteNumber(value: unknown): number | null {
   }
 
   return value;
-}
-
-function clampPercent(value: unknown, fallback: number) {
-  const parsed = asFiniteNumber(value);
-  if (parsed === null) {
-    return fallback;
-  }
-
-  return Math.max(0, Math.min(100, Number(parsed.toFixed(2))));
 }
 
 function clampNonNegativeInt(value: unknown, fallback: number) {

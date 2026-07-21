@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ADMIN_FEE_TRANSFERS_QUERY_LIMIT } from "@/lib/admin-query-limits";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,8 @@ type FeeTransferRow = {
   createdAt: string | null;
 };
 
+type SupportedCurrency = "USD" | "BRL" | "EUR";
+
 function serializeTimestamp(value: unknown): string | null {
   if (!value || typeof value !== "object") {
     return null;
@@ -39,10 +42,29 @@ function serializeTimestamp(value: unknown): string | null {
   return date.toISOString();
 }
 
-function formatMoneyUsd(cents: number) {
-  return new Intl.NumberFormat("en-US", {
+function normalizeCurrency(value: unknown): SupportedCurrency {
+  if (typeof value !== "string") {
+    return "USD";
+  }
+
+  const normalized = value.trim().toUpperCase();
+  if (normalized === "BRL" || normalized === "EUR") {
+    return normalized;
+  }
+
+  return "USD";
+}
+
+function getCurrencyLocale(currency: SupportedCurrency) {
+  if (currency === "BRL") return "pt-BR";
+  if (currency === "EUR") return "de-DE";
+  return "en-US";
+}
+
+function formatMoney(cents: number, currency: SupportedCurrency) {
+  return new Intl.NumberFormat(getCurrencyLocale(currency), {
     style: "currency",
-    currency: "USD",
+    currency,
   }).format((Number.isFinite(cents) ? cents : 0) / 100);
 }
 
@@ -55,7 +77,7 @@ export default async function AdminTaxasPage() {
     const snapshot = await adminDb
       .collection("fee-transfers")
       .orderBy("createdAt", "desc")
-      .limit(300)
+      .limit(ADMIN_FEE_TRANSFERS_QUERY_LIMIT)
       .get();
 
     rows = snapshot.docs.map((docRow) => {
@@ -66,7 +88,7 @@ export default async function AdminTaxasPage() {
         orderId: typeof data.orderId === "string" ? data.orderId : docRow.id,
         customerUid: typeof data.customerUid === "string" ? data.customerUid : null,
         customerEmail: typeof data.customerEmail === "string" ? data.customerEmail : "",
-        currency: typeof data.currency === "string" ? data.currency : "brl",
+        currency: normalizeCurrency(data.currency),
         amountTotalCents: typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0,
         commissionPercent: typeof data.commissionPercent === "number" ? data.commissionPercent : 15,
         platformFeeCents: typeof data.platformFeeCents === "number" ? data.platformFeeCents : 0,
@@ -91,6 +113,9 @@ export default async function AdminTaxasPage() {
             <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Taxas</h1>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-green-600">
               Registro de repasses de taxa por compra para agentes e para a LootMaster.
+            </p>
+            <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-green-700">
+              Exibindo os registros mais recentes dentro do limite atual do painel.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -143,18 +168,18 @@ export default async function AdminTaxasPage() {
                       <p>{row.customerUid ?? "--"}</p>
                       <p className="mt-1">{row.customerEmail || "--"}</p>
                     </td>
-                    <td className="px-4 py-3 text-xs text-green-300">{formatMoneyUsd(row.amountTotalCents)}</td>
+                    <td className="px-4 py-3 text-xs text-green-300">{formatMoney(row.amountTotalCents, normalizeCurrency(row.currency))}</td>
                     <td className="px-4 py-3 text-xs text-green-300">
-                      {formatMoneyUsd(row.platformFeeCents)} ({row.commissionPercent.toFixed(2)}%)
+                      {formatMoney(row.platformFeeCents, normalizeCurrency(row.currency))} ({row.commissionPercent.toFixed(2)}%)
                     </td>
                     <td className="px-4 py-3 text-xs text-green-500">
                       {row.agentUid ? `${row.agentUid} (${row.agentFeeSharePercent.toFixed(2)}%)` : "Sem agente"}
                     </td>
                     <td className="px-4 py-3 text-xs font-semibold text-emerald-300">
-                      {formatMoneyUsd(row.agentPayoutCents)}
+                      {formatMoney(row.agentPayoutCents, normalizeCurrency(row.currency))}
                     </td>
                     <td className="px-4 py-3 text-xs font-semibold text-green-300">
-                      {formatMoneyUsd(row.lootmasterFeeCents)}
+                      {formatMoney(row.lootmasterFeeCents, normalizeCurrency(row.currency))}
                     </td>
                     <td className="px-4 py-3 text-xs font-semibold text-amber-300">
                       {row.status.replace(/_/g, " ")}
