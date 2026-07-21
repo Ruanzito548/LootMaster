@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { startTransition, useEffect, useMemo, useState } from "react";
 
 import {
@@ -25,6 +24,7 @@ import {
 
 type AccountsMarketAdminProps = {
   defaultWowGameId?: string;
+  embedded?: boolean;
 };
 
 const wowGameOptions = [
@@ -67,7 +67,7 @@ function defaultForm(serverId: string): FormState {
   };
 }
 
-export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: AccountsMarketAdminProps) {
+export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary", embedded = false }: AccountsMarketAdminProps) {
   const [selectedWowGameId, setSelectedWowGameId] = useState(defaultWowGameId);
   const selectedWowGame =
     wowGameOptions.find((game) => game.id === selectedWowGameId) ?? wowGameOptions[0];
@@ -211,8 +211,8 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
   };
 
   return (
-    <div className="min-h-screen bg-black text-green-400">
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
+    <div className={embedded ? "text-green-400" : "min-h-screen bg-black text-green-400"}>
+      <main className={embedded ? "flex w-full flex-1 flex-col" : "mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8"}>
         <div className="space-y-4">
           <p className="text-sm font-bold uppercase tracking-[0.28em] text-green-600">Admin / Games / Accounts</p>
           <h1 className="text-4xl font-black leading-tight text-green-300 sm:text-5xl">{selectedWowGame.title} accounts</h1>
@@ -533,11 +533,13 @@ export function AccountsMarketAdmin({ defaultWowGameId = "tbc-anniversary" }: Ac
           </div>
         </section>
 
-        <div className="mt-8">
-          <Link href="/admin/games/wow" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
-            Back to WOW sections
-          </Link>
-        </div>
+        {embedded ? null : (
+          <div className="mt-8">
+            <a href="/admin/games/wow" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
+              Back to WOW sections
+            </a>
+          </div>
+        )}
       </main>
     </div>
   );

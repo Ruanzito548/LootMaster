@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { onAuthStateChanged } from "firebase/auth";
 import { startTransition, useEffect, useState } from "react";
 
@@ -20,7 +19,11 @@ import {
   subscribeToGoldConfig,
 } from "../../lib/gold-config";
 
-export function GoldConfigAdmin() {
+type GoldConfigAdminProps = {
+  embedded?: boolean;
+};
+
+export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
   const [savedConfig, setSavedConfig] = useState<GoldConfig>(emptyGoldConfig);
   const [draftEntry, setDraftEntry] = useState<GoldConfigEntry | null>(null);
   const [saving, setSaving] = useState(false);
@@ -247,8 +250,8 @@ export function GoldConfigAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-green-400">
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8">
+    <div className={embedded ? "text-green-400" : "min-h-screen bg-black text-green-400"}>
+      <main className={embedded ? "flex w-full flex-1 flex-col" : "mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8"}>
         <div className="space-y-4">
           <p className="text-sm font-bold uppercase tracking-[0.28em] text-green-600">
             Admin
@@ -532,14 +535,16 @@ export function GoldConfigAdmin() {
 
         </section>
 
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/admin" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
-            Back to admin
-          </Link>
-          <Link href="/" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
-            Back to home
-          </Link>
-        </div>
+        {embedded ? null : (
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a href="/admin" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
+              Back to admin
+            </a>
+            <a href="/" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
+              Back to home
+            </a>
+          </div>
+        )}
       </main>
     </div>
   );

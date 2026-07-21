@@ -2,14 +2,14 @@ import Link from "next/link";
 
 const sections = [
   {
-    id: "gold-settings",
-    title: "Gold settings",
-    description: "Configure price, minimum, and maximum per server and faction.",
+    id: "game-configuration",
+    title: "Configurações",
+    description: "Controle jogos, baús, gold e accounts em um unico painel.",
   },
   {
-    id: "accounts",
-    title: "Accounts",
-    description: "Area for managing game accounts.",
+    id: "chests",
+    title: "Config dos Baus",
+    description: "Balanco, chances e loot table dos baus.",
   },
   {
     id: "boosts",
@@ -34,7 +34,7 @@ export default function WowGamesPage() {
           {sections.map((section) => (
             <Link
               key={section.id}
-              href={`/admin/games/wow/${section.id}`}
+              href={section.id === "game-configuration" ? "/admin/game-configuration" : `/admin/${section.id}`}
               className="rounded-[1.75rem] border border-green-900 bg-green-950/20 p-8 transition-colors hover:border-green-700/50 hover:bg-green-950/40"
             >
               <p className="text-sm font-bold uppercase tracking-[0.24em] text-green-600">Section</p>

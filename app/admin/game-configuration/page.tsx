@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useProfileSession } from "@/app/profile/use-profile-session";
 import { games } from "@/app/data/games";
+import { AccountsMarketAdmin } from "@/app/components/accounts-market-admin";
+import { GoldConfigAdmin } from "@/app/components/gold-config-admin";
 import {
   CONFIGURABLE_CATEGORY_IDS,
   CONFIGURABLE_GAME_IDS,
@@ -225,6 +227,34 @@ export default function AdminGameConfigurationPage() {
               Abrir editor
             </Link>
           </article>
+        </section>
+
+        <section className="mt-6 space-y-3">
+          <details className="group rounded-2xl border border-green-900 bg-green-950/15">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-500">Gold</p>
+                <h2 className="mt-1 text-lg font-black text-green-200">Preço de Gold</h2>
+              </div>
+              <span className="text-xs text-green-600 transition group-open:rotate-180">▼</span>
+            </summary>
+            <div className="border-t border-green-900/60 p-4">
+              <GoldConfigAdmin embedded />
+            </div>
+          </details>
+
+          <details className="group rounded-2xl border border-green-900 bg-green-950/15">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-500">Accounts</p>
+                <h2 className="mt-1 text-lg font-black text-green-200">Marketplace de Accounts</h2>
+              </div>
+              <span className="text-xs text-green-600 transition group-open:rotate-180">▼</span>
+            </summary>
+            <div className="border-t border-green-900/60 p-4">
+              <AccountsMarketAdmin embedded />
+            </div>
+          </details>
         </section>
 
         {loading || status === "loading" ? (
