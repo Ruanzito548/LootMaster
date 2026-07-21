@@ -6,7 +6,6 @@ const adminNavItems = [
   { href: "/admin", label: "Central", icon: Home },
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/items", label: "Itens", icon: Package },
-  { href: "/admin/games", label: "Jogos", icon: Settings },
 ];
 
 export default async function AdminLayout({
