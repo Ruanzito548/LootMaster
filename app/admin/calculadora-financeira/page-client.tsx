@@ -639,7 +639,7 @@ export function FinancialCalculatorClient() {
                 <Sparkles className="h-3.5 w-3.5" />
                 Admin / Financeiro
               </p>
-              <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">Calculadora Financeira</h1>
+              <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">Ajustes Financeiros</h1>
               <p className="max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
                 Simule cenarios com o mesmo metodo do dashboard: fornecedor, gateway, cashback, reserva operacional,
                 comissao do agente e investimento em outros projetos.

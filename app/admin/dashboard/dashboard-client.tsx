@@ -800,12 +800,12 @@ export function DashboardClient({
 
             <div className="mt-5 rounded-2xl border border-cyan-500/25 bg-cyan-500/10 p-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200">Configuracoes financeiras</p>
-              <p className="mt-1 text-sm text-cyan-100/90">As edicoes de percentuais e custos operacionais ficam somente na Calculadora Financeira.</p>
+              <p className="mt-1 text-sm text-cyan-100/90">As edicoes de percentuais e custos operacionais ficam somente em Ajustes Financeiros.</p>
               <Link
                 href="/admin/calculadora-financeira"
                 className="mt-3 inline-flex items-center rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/20"
               >
-                Abrir Calculadora Financeira
+                Abrir Ajustes Financeiros
               </Link>
             </div>
           </article>

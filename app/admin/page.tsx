@@ -33,8 +33,8 @@ const adminSections = [
   },
   {
     id: "06",
-    title: "Inventory Items",
-    description: "Create item name, WoW rarity, and icon path for inventory slots.",
+    title: "Itens",
+    description: "Consulte loot tables, recompensas por nivel e utilitarios do inventario.",
     href: "/admin/items",
   },
   {
@@ -63,7 +63,7 @@ const adminSections = [
   },
   {
     id: "11",
-    title: "Calculadora Financeira",
+    title: "Ajustes Financeiros",
     description: "Simulate sales distribution, persist percentages, and validate financial splits.",
     href: "/admin/calculadora-financeira",
   },

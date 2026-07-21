@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { InventoryItemsAdmin } from "../../components/inventory-items-admin";
 import { GrantRandomChestButton } from "../dashboard/grant-random-chest-button";
 import { getLiveChestSystemConfig } from "@/lib/chest-config";
 import { CHEST_DEFINITIONS, CHEST_IDS } from "@/lib/chests";
@@ -45,9 +44,16 @@ export default async function AdminItemsPage() {
   const chestConfig = await getLiveChestSystemConfig();
 
   return (
-    <>
-      <InventoryItemsAdmin />
-      <div className="mx-auto w-full max-w-5xl px-6 pb-12 lg:px-8">
+    <div className="mx-auto w-full max-w-5xl px-6 pb-12 pt-6 lg:px-8">
+      <div className="space-y-3">
+        <p className="text-sm font-bold uppercase tracking-[0.24em] text-green-600">Admin / Itens</p>
+        <h1 className="text-4xl font-black leading-tight text-green-200 sm:text-5xl">Itens e Rewards</h1>
+        <p className="max-w-3xl text-sm leading-7 text-green-600">
+          Consulte drops dos baus, progressao de rewards e use os atalhos operacionais do inventario.
+        </p>
+      </div>
+
+      <div>
         <GrantRandomChestButton />
 
         <section className="mt-6 rounded-[1.2rem] border border-green-900 bg-black/40 p-4">
@@ -179,6 +185,6 @@ export default async function AdminItemsPage() {
           Back to admin
         </Link>
       </div>
-    </>
+    </div>
   );
 }
