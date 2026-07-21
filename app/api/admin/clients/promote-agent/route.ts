@@ -2,6 +2,8 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { buildAgentReferralCode, DEFAULT_AGENT_FEE_SHARE_PERCENT } from "@/lib/agency";
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import { buildUserAdminSearchIndex } from "@/lib/admin-search";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 type RequestBody = {
@@ -9,10 +11,11 @@ type RequestBody = {
 };
 
 export async function POST(request: Request): Promise<Response> {
+  let adminToken: Awaited<ReturnType<typeof requireAuthenticatedAdminRequest>>;
   let body: RequestBody;
 
   try {
-    await requireAuthenticatedAdminRequest(request);
+    adminToken = await requireAuthenticatedAdminRequest(request);
     body = (await request.json()) as RequestBody;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unauthorized request.";
@@ -47,17 +50,45 @@ export async function POST(request: Request): Promise<Response> {
       typeof userData.agentReferralCode === "string" && userData.agentReferralCode.trim()
         ? userData.agentReferralCode.trim().toUpperCase()
         : buildAgentReferralCode(clientUid);
+    const adminSearch = buildUserAdminSearchIndex({
+      uid: clientUid,
+      username: typeof userData.username === "string" ? userData.username : null,
+      email: typeof userData.email === "string" ? userData.email : null,
+      agentReferralCode: referralCode,
+    });
 
-    await userRef.set(
-      {
-        isAgent: true,
-        agentFeeSharePercent: currentShare,
-        agentReferralCode: referralCode,
-        promotedToAgentAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
+    await adminDb.runTransaction(async (tx) => {
+      tx.set(
+        userRef,
+        {
+          isAgent: true,
+          agentFeeSharePercent: currentShare,
+          agentReferralCode: referralCode,
+          promotedToAgentAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+          ...adminSearch,
+        },
+        { merge: true },
+      );
+
+      writeActivityLog(tx, adminDb, {
+        userUid: clientUid,
+        actorUid: adminToken.uid,
+        actorRole: "admin",
+        actionType: "admin_client_promoted_agent",
+        category: "admin",
+        description: "Admin promoted a client to agent.",
+        origin: "admin:clients:promote-agent",
+        status: "admin_action",
+        tags: ["admin", "clients", "agents", "promotion"],
+        metadata: {
+          clientUid,
+          agentReferralCode: referralCode,
+          agentFeeSharePercent: currentShare,
+        },
+        mirrorToAdminAudit: true,
+      });
+    });
 
     return Response.json({ ok: true, referralCode });
   } catch (error) {

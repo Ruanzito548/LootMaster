@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildUserAdminSearchIndex } from "@/lib/admin-search";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { calculateLevelProgress } from "@/lib/level-rewards";
 import { consumeDiscordLinkTokenWithWalletBackend } from "@/lib/wallet-backend";
@@ -116,6 +117,11 @@ export async function GET(request: NextRequest) {
 
   if (!snapshot.exists) {
     const initialProgress = calculateLevelProgress(0);
+    const adminSearch = buildUserAdminSearchIndex({
+      uid: firebaseUid,
+      username: displayName,
+      email,
+    });
 
     await userRef.set({
       uid: firebaseUid,
@@ -151,15 +157,23 @@ export async function GET(request: NextRequest) {
       totalRewardsClaimed: 0,
       authProvider: "discord",
       createdAt: new Date().toISOString(),
+      ...adminSearch,
     });
   } else {
     // Always refresh Discord-sourced fields
+    const adminSearch = buildUserAdminSearchIndex({
+      uid: firebaseUid,
+      username: displayName,
+      email,
+    });
+
     await userRef.update({
       discordId: discordUser.id,
       discordUsername: discordUser.username,
       photoURL: avatarUrl,
       ...(displayName && { username: displayName }),
       ...(email && { email }),
+      ...adminSearch,
     });
   }
 

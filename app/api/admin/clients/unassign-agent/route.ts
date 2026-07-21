@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 type RequestBody = {
@@ -8,10 +9,11 @@ type RequestBody = {
 };
 
 export async function POST(request: Request): Promise<Response> {
+  let adminToken: Awaited<ReturnType<typeof requireAuthenticatedAdminRequest>>;
   let body: RequestBody;
 
   try {
-    await requireAuthenticatedAdminRequest(request);
+    adminToken = await requireAuthenticatedAdminRequest(request);
     body = (await request.json()) as RequestBody;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unauthorized request.";
@@ -30,19 +32,50 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const adminDb = getAdminDb();
+    const clientRef = adminDb.collection("users").doc(clientUid);
 
-    await adminDb.collection("users").doc(clientUid).set(
-      {
-        assignedAgentId: null,
-        unassignedAgentAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
+    await adminDb.runTransaction(async (tx) => {
+      const clientDoc = await tx.get(clientRef);
+      if (!clientDoc.exists) {
+        throw new Error("Client not found.");
+      }
+
+      const clientData = clientDoc.data() as Record<string, unknown>;
+      const previousAgentUid = typeof clientData.assignedAgentId === "string" ? clientData.assignedAgentId : null;
+
+      tx.set(
+        clientRef,
+        {
+          assignedAgentId: null,
+          unassignedAgentAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      writeActivityLog(tx, adminDb, {
+        userUid: clientUid,
+        actorUid: adminToken.uid,
+        actorRole: "admin",
+        actionType: "admin_client_agent_unassigned",
+        category: "admin",
+        description: "Admin removed the assigned agent from a client.",
+        relatedUserUid: previousAgentUid,
+        origin: "admin:clients:unassign-agent",
+        status: "admin_action",
+        tags: ["admin", "clients", "agents", "unassignment"],
+        metadata: {
+          clientUid,
+          previousAgentUid,
+        },
+        mirrorToAdminAudit: true,
+      });
+    });
 
     return Response.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not unassign agent.";
-    return Response.json({ error: message }, { status: 500 });
+    const status = message.includes("not found") ? 404 : 500;
+    return Response.json({ error: message }, { status });
   }
 }

@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 type RequestBody = {
@@ -9,10 +10,11 @@ type RequestBody = {
 };
 
 export async function POST(request: Request): Promise<Response> {
+  let adminToken: Awaited<ReturnType<typeof requireAuthenticatedAdminRequest>>;
   let body: RequestBody;
 
   try {
-    await requireAuthenticatedAdminRequest(request);
+    adminToken = await requireAuthenticatedAdminRequest(request);
     body = (await request.json()) as RequestBody;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unauthorized request.";
@@ -54,14 +56,36 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ error: "Selected user is not an agent." }, { status: 409 });
     }
 
-    await adminDb.collection("users").doc(clientUid).set(
-      {
-        assignedAgentId: agentUid,
-        assignedAgentAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
+    await adminDb.runTransaction(async (tx) => {
+      tx.set(
+        adminDb.collection("users").doc(clientUid),
+        {
+          assignedAgentId: agentUid,
+          assignedAgentAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      writeActivityLog(tx, adminDb, {
+        userUid: clientUid,
+        actorUid: adminToken.uid,
+        actorRole: "admin",
+        actionType: "admin_client_agent_assigned",
+        category: "admin",
+        description: "Admin assigned an agent to a client.",
+        relatedUserUid: agentUid,
+        relatedUserName: typeof agentData.username === "string" ? agentData.username : null,
+        origin: "admin:clients:assign-agent",
+        status: "admin_action",
+        tags: ["admin", "clients", "agents", "assignment"],
+        metadata: {
+          clientUid,
+          agentUid,
+        },
+        mirrorToAdminAudit: true,
+      });
+    });
 
     return Response.json({ ok: true });
   } catch (error) {

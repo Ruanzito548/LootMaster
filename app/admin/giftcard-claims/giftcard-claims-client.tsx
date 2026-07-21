@@ -3,6 +3,7 @@
 import { onAuthStateChanged } from "firebase/auth";
 import { useDeferredValue, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { auth } from "@/lib/firebase";
 
@@ -63,6 +64,9 @@ async function fetchClaimsPage(input: {
 }
 
 export default function GiftcardClaimsClient({ mode }: Props) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -70,9 +74,29 @@ export default function GiftcardClaimsClient({ mode }: Props) {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState(() => searchParams.get("q") ?? "");
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const deferredSearchText = useDeferredValue(searchText);
+
+  useEffect(() => {
+    const nextSearch = searchParams.get("q") ?? "";
+    if (nextSearch !== searchText) {
+      setSearchText(nextSearch);
+    }
+  }, [searchParams, searchText]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const normalized = deferredSearchText.trim();
+    if (normalized) {
+      params.set("q", normalized);
+    } else {
+      params.delete("q");
+    }
+
+    const nextUrl = params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  }, [deferredSearchText, pathname, router, searchParams]);
 
   useEffect(() => {
     if (!auth) {
@@ -219,14 +243,17 @@ export default function GiftcardClaimsClient({ mode }: Props) {
         <label className="text-xs font-semibold uppercase tracking-[0.14em] text-green-600" htmlFor="giftcard-claims-search">
           Buscar por usuario, email ou giftcard
         </label>
-        <input
-          id="giftcard-claims-search"
-          type="search"
-          value={searchText}
-          onChange={(event) => setSearchText(event.target.value)}
-          placeholder="Digite username, email ou titulo"
-          className="w-full rounded-md border border-green-800 bg-black px-3 py-2 text-sm text-green-200 outline-none transition placeholder:text-green-800 focus:border-emerald-500 sm:max-w-sm"
-        />
+        <div className="flex w-full items-center gap-3 sm:max-w-md">
+          <input
+            id="giftcard-claims-search"
+            type="search"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            placeholder="Digite claim, usuario, email ou titulo"
+            className="w-full rounded-md border border-green-800 bg-black px-3 py-2 text-sm text-green-200 outline-none transition placeholder:text-green-800 focus:border-emerald-500"
+          />
+          <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-green-700">{rows.length} carregados</span>
+        </div>
       </div>
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">

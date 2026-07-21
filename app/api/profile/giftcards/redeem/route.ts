@@ -2,6 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
 import { writeActivityLog } from "@/lib/activity-history.server";
+import { buildGiftcardClaimAdminSearchIndex } from "@/lib/admin-search";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
 import { normalizeInventory, removeItemQuantity } from "@/lib/rpg-system";
@@ -135,6 +136,15 @@ export async function POST(request: Request): Promise<Response> {
       }
 
       const claimRef = adminDb.collection("giftcard-claims").doc();
+      const adminSearch = buildGiftcardClaimAdminSearchIndex({
+        claimId: claimRef.id,
+        uid: decodedToken.uid,
+        username: profile.username,
+        accountEmail: profile.email,
+        redeemEmail: targetEmail,
+        giftCardTitle: selectedItem.name,
+        country,
+      });
 
       tx.set(
         claimRef,
@@ -152,6 +162,7 @@ export async function POST(request: Request): Promise<Response> {
           updatedAt: FieldValue.serverTimestamp(),
           completedAt: null,
           completedByUid: null,
+          ...adminSearch,
         },
         { merge: true },
       );

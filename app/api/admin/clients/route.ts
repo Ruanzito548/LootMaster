@@ -1,6 +1,7 @@
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import { matchesAdminSearchText, normalizeAdminSearchValue } from "@/lib/admin-search";
 import { getAdminDb } from "@/lib/firebase-admin";
-import type { DocumentData, Query } from "firebase-admin/firestore";
+import type { DocumentData, Query, QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 import type { AgentRow, ClientRow } from "@/app/admin/clientes/clientes-types";
 
@@ -28,7 +29,7 @@ function normalizeMode(value: string | null): ClientsMode {
 }
 
 function normalizeSearch(value: string | null): string {
-  return value?.trim().toLocaleLowerCase() ?? "";
+  return normalizeAdminSearchValue(value);
 }
 
 function toSortableTimestamp(value: unknown): number {
@@ -78,6 +79,66 @@ function mapAgentRow(uid: string, data: Record<string, unknown>): AgentRow {
   };
 }
 
+async function loadIndexedUserDocs(input: {
+  adminDb: ReturnType<typeof getAdminDb>;
+  mode: ClientsMode;
+  cursor: string | null;
+  limit: number;
+  search: string;
+}) {
+  const batchSize = Math.max(input.limit, 50);
+  let query: Query<DocumentData> = input.adminDb
+    .collection("users")
+    .where("adminSearchPrefixes", "array-contains", input.search)
+    .limit(batchSize);
+
+  if (input.cursor) {
+    const cursorSnapshot = await input.adminDb.collection("users").doc(input.cursor).get();
+    if (cursorSnapshot.exists) {
+      query = query.startAfter(cursorSnapshot);
+    }
+  }
+
+  const collected: QueryDocumentSnapshot<DocumentData>[] = [];
+  let nextCursor: string | null = null;
+
+  while (collected.length < input.limit) {
+    const snapshot = await query.get();
+    if (snapshot.empty) {
+      nextCursor = null;
+      break;
+    }
+
+    collected.push(
+      ...snapshot.docs.filter((docRow) => {
+        if (input.mode === "all") {
+          return true;
+        }
+
+        const data = docRow.data() as Record<string, unknown>;
+        return data.isAgent === true;
+      }),
+    );
+
+    const lastDoc = snapshot.docs[snapshot.docs.length - 1] ?? null;
+    nextCursor = snapshot.docs.length === batchSize && lastDoc ? lastDoc.id : null;
+    if (snapshot.docs.length < batchSize || !lastDoc) {
+      break;
+    }
+
+    query = input.adminDb
+      .collection("users")
+      .where("adminSearchPrefixes", "array-contains", input.search)
+      .startAfter(lastDoc)
+      .limit(batchSize);
+  }
+
+  return {
+    docs: collected.slice(0, input.limit),
+    nextCursor,
+  };
+}
+
 export async function GET(request: Request): Promise<Response> {
   try {
     await requireAuthenticatedAdminRequest(request);
@@ -88,6 +149,26 @@ export async function GET(request: Request): Promise<Response> {
     const limit = normalizeLimit(url.searchParams.get("limit"));
     const search = normalizeSearch(url.searchParams.get("q"));
     const adminDb = getAdminDb();
+
+    if (search) {
+      const indexedResult = await loadIndexedUserDocs({
+        adminDb,
+        mode,
+        cursor,
+        limit,
+        search,
+      });
+
+      if (indexedResult.docs.length > 0) {
+        if (mode === "agents") {
+          const items = indexedResult.docs.map((docRow) => mapAgentRow(docRow.id, docRow.data() as Record<string, unknown>));
+          return Response.json({ items, nextCursor: indexedResult.nextCursor });
+        }
+
+        const items = indexedResult.docs.map((docRow) => mapClientRow(docRow.id, docRow.data() as Record<string, unknown>));
+        return Response.json({ items, nextCursor: indexedResult.nextCursor });
+      }
+    }
 
     let query: Query<DocumentData> = adminDb.collection("users");
     if (mode === "agents") {
@@ -102,9 +183,15 @@ export async function GET(request: Request): Promise<Response> {
       }
 
       const data = docRow.data() as Record<string, unknown>;
-      const username = typeof data.username === "string" ? data.username.toLocaleLowerCase() : "";
-      const email = typeof data.email === "string" ? data.email.toLocaleLowerCase() : "";
-      return username.includes(search) || email.includes(search);
+      return matchesAdminSearchText(
+        [
+          docRow.id,
+          typeof data.username === "string" ? data.username : "",
+          typeof data.email === "string" ? data.email : "",
+          typeof data.agentReferralCode === "string" ? data.agentReferralCode : "",
+        ],
+        search,
+      );
     });
 
     const sortedDocs = [...matchingDocs].sort((left, right) => {
