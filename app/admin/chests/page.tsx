@@ -168,7 +168,6 @@ export default function AdminChestConfigPage() {
               return (
                 <article key={chestId} className="rounded-2xl border border-green-900 bg-black/30 p-3">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-500">{chestId}</p>
-                  <p className="mt-1 text-xl font-black text-green-200">{profile?.xpGain ?? 0} XP</p>
                   <p className="mt-1 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-green-600">Weight total: {totalWeight}</p>
                 </article>
               );
