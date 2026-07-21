@@ -1,7 +1,11 @@
-import { FieldPath } from "firebase-admin/firestore";
+import { FieldPath, FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
-import { buildGiftcardClaimAdminSearchIndex, buildUserAdminSearchIndex } from "@/lib/admin-search";
+import {
+  ADMIN_SEARCH_INDEX_STATUS_DOC_ID,
+  buildGiftcardClaimAdminSearchIndex,
+  buildUserAdminSearchIndex,
+} from "@/lib/admin-search";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 type Scope = "users" | "giftcard-claims" | "all";
@@ -122,6 +126,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
+    const adminDb = getAdminDb();
     const scope = normalizeScope(body.scope);
     const limit = normalizeLimit(body.limit);
     const result = {
@@ -131,10 +136,24 @@ export async function POST(request: Request): Promise<Response> {
 
     if (scope === "all" || scope === "users") {
       result.users = await reindexUsers(body.usersCursor?.trim() || null, limit);
+      await adminDb.collection("app-config").doc(ADMIN_SEARCH_INDEX_STATUS_DOC_ID).set(
+        {
+          usersComplete: result.users.nextCursor === null,
+          usersUpdatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
     }
 
     if (scope === "all" || scope === "giftcard-claims") {
       result.claims = await reindexClaims(body.claimsCursor?.trim() || null, limit);
+      await adminDb.collection("app-config").doc(ADMIN_SEARCH_INDEX_STATUS_DOC_ID).set(
+        {
+          claimsComplete: result.claims.nextCursor === null,
+          claimsUpdatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
     }
 
     return Response.json({ ok: true, scope, limit, ...result });

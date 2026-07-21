@@ -1,5 +1,9 @@
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
-import { matchesAdminSearchText, normalizeAdminSearchValue } from "@/lib/admin-search";
+import {
+  ADMIN_SEARCH_INDEX_STATUS_DOC_ID,
+  matchesAdminSearchText,
+  normalizeAdminSearchValue,
+} from "@/lib/admin-search";
 import { getAdminDb } from "@/lib/firebase-admin";
 import type { DocumentData, Query, QueryDocumentSnapshot } from "firebase-admin/firestore";
 
@@ -92,20 +96,11 @@ async function loadIndexedUserDocs(input: {
     .where("adminSearchPrefixes", "array-contains", input.search)
     .limit(batchSize);
 
-  if (input.cursor) {
-    const cursorSnapshot = await input.adminDb.collection("users").doc(input.cursor).get();
-    if (cursorSnapshot.exists) {
-      query = query.startAfter(cursorSnapshot);
-    }
-  }
-
   const collected: QueryDocumentSnapshot<DocumentData>[] = [];
-  let nextCursor: string | null = null;
 
-  while (collected.length < input.limit) {
+  while (true) {
     const snapshot = await query.get();
     if (snapshot.empty) {
-      nextCursor = null;
       break;
     }
 
@@ -121,7 +116,6 @@ async function loadIndexedUserDocs(input: {
     );
 
     const lastDoc = snapshot.docs[snapshot.docs.length - 1] ?? null;
-    nextCursor = snapshot.docs.length === batchSize && lastDoc ? lastDoc.id : null;
     if (snapshot.docs.length < batchSize || !lastDoc) {
       break;
     }
@@ -133,10 +127,37 @@ async function loadIndexedUserDocs(input: {
       .limit(batchSize);
   }
 
+  const sortedDocs = [...collected].sort((left, right) => {
+    const leftData = left.data() as Record<string, unknown>;
+    const rightData = right.data() as Record<string, unknown>;
+    const leftTs = toSortableTimestamp(leftData.updatedAt) || toSortableTimestamp(leftData.createdAt);
+    const rightTs = toSortableTimestamp(rightData.updatedAt) || toSortableTimestamp(rightData.createdAt);
+    return rightTs - leftTs;
+  });
+
+  const startIndex = input.cursor
+    ? Math.max(
+        0,
+        sortedDocs.findIndex((docRow) => docRow.id === input.cursor) + 1,
+      )
+    : 0;
+  const pageDocs = sortedDocs.slice(startIndex, startIndex + input.limit);
+  const nextCursor = startIndex + input.limit < sortedDocs.length ? pageDocs[pageDocs.length - 1]?.id ?? null : null;
+
   return {
-    docs: collected.slice(0, input.limit),
+    docs: pageDocs,
     nextCursor,
   };
+}
+
+async function isUsersIndexComplete(adminDb: ReturnType<typeof getAdminDb>) {
+  const snapshot = await adminDb.collection("app-config").doc(ADMIN_SEARCH_INDEX_STATUS_DOC_ID).get();
+  if (!snapshot.exists) {
+    return false;
+  }
+
+  const data = snapshot.data() as Record<string, unknown>;
+  return data.usersComplete === true;
 }
 
 export async function GET(request: Request): Promise<Response> {
@@ -150,7 +171,7 @@ export async function GET(request: Request): Promise<Response> {
     const search = normalizeSearch(url.searchParams.get("q"));
     const adminDb = getAdminDb();
 
-    if (search) {
+    if (search && (await isUsersIndexComplete(adminDb))) {
       const indexedResult = await loadIndexedUserDocs({
         adminDb,
         mode,

@@ -2,6 +2,8 @@ const SEARCH_TOKEN_PATTERN = /[a-z0-9@._:-]+/g;
 const MAX_PREFIX_LENGTH = 40;
 const MAX_PREFIXES = 160;
 
+export const ADMIN_SEARCH_INDEX_STATUS_DOC_ID = "admin-search-index-status";
+
 function stripDiacritics(value: string): string {
   return value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
 }

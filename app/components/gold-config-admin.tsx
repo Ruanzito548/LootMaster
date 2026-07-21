@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { onAuthStateChanged } from "firebase/auth";
 import { startTransition, useEffect, useState } from "react";
 
@@ -537,12 +538,12 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
 
         {embedded ? null : (
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="/admin" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
+            <Link href="/admin" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
               Back to admin
-            </a>
-            <a href="/" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
+            </Link>
+            <Link href="/" className="inline-flex rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950">
               Back to home
-            </a>
+            </Link>
           </div>
         )}
       </main>

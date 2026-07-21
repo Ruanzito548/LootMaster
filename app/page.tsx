@@ -77,13 +77,8 @@ export default function Home() {
     return () => window.clearInterval(timer);
   }, [featuredGames.length]);
 
-  useEffect(() => {
-    if (activeIndex >= featuredGames.length) {
-      setActiveIndex(0);
-    }
-  }, [activeIndex, featuredGames.length]);
-
-  const activeGame = featuredGames[activeIndex] ?? featuredGames[0] ?? null;
+  const safeActiveIndex = featuredGames.length > 0 ? activeIndex % featuredGames.length : 0;
+  const activeGame = featuredGames[safeActiveIndex] ?? featuredGames[0] ?? null;
   const visibleCategories = activeGame
     ? serviceCategories.filter((category) => gameConfig && canAccessCategory(gameConfig, activeGame.id, category.id, isAdmin))
     : [];
@@ -174,7 +169,7 @@ export default function Home() {
                       key={game.id}
                       type="button"
                       onClick={() => setActiveIndex(index)}
-                      className={`h-1.5 rounded-full transition-all ${index === activeIndex ? "w-8 bg-[#6ee7ff]" : "w-3 bg-white/35"}`}
+                      className={`h-1.5 rounded-full transition-all ${index === safeActiveIndex ? "w-8 bg-[#6ee7ff]" : "w-3 bg-white/35"}`}
                       aria-label={`Show ${game.title}`}
                     />
                   ))}

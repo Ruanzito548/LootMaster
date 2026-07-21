@@ -1,5 +1,9 @@
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
-import { matchesAdminSearchText, normalizeAdminSearchValue } from "@/lib/admin-search";
+import {
+  ADMIN_SEARCH_INDEX_STATUS_DOC_ID,
+  matchesAdminSearchText,
+  normalizeAdminSearchValue,
+} from "@/lib/admin-search";
 import { getAdminDb } from "@/lib/firebase-admin";
 import type { DocumentData, Query, QueryDocumentSnapshot } from "firebase-admin/firestore";
 
@@ -50,6 +54,24 @@ function formatTimestamp(value: unknown): string {
   return date.toLocaleString("pt-BR");
 }
 
+function toSortableTimestamp(value: unknown): number {
+  if (!value || typeof value !== "object") {
+    return 0;
+  }
+
+  const parsed = value as TimestampLike;
+  if (typeof parsed.toDate !== "function") {
+    return 0;
+  }
+
+  const date = parsed.toDate();
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return 0;
+  }
+
+  return date.getTime();
+}
+
 function mapRow(docId: string, data: Record<string, unknown>): GiftcardClaimRow {
   return {
     claimId: docId,
@@ -79,20 +101,11 @@ async function loadIndexedClaimDocs(input: {
     .where("adminSearchPrefixes", "array-contains", input.search)
     .limit(batchSize);
 
-  if (input.cursor) {
-    const cursorSnapshot = await input.adminDb.collection("giftcard-claims").doc(input.cursor).get();
-    if (cursorSnapshot.exists) {
-      query = query.startAfter(cursorSnapshot);
-    }
-  }
-
   const collected: QueryDocumentSnapshot<DocumentData>[] = [];
-  let nextCursor: string | null = null;
 
-  while (collected.length < input.limit) {
+  while (true) {
     const snapshot = await query.get();
     if (snapshot.empty) {
-      nextCursor = null;
       break;
     }
 
@@ -104,7 +117,6 @@ async function loadIndexedClaimDocs(input: {
     );
 
     const lastDoc = snapshot.docs[snapshot.docs.length - 1] ?? null;
-    nextCursor = snapshot.docs.length === batchSize && lastDoc ? lastDoc.id : null;
     if (snapshot.docs.length < batchSize || !lastDoc) {
       break;
     }
@@ -116,10 +128,35 @@ async function loadIndexedClaimDocs(input: {
       .limit(batchSize);
   }
 
+  const sortedDocs = [...collected].sort((left, right) => {
+    const leftData = left.data() as Record<string, unknown>;
+    const rightData = right.data() as Record<string, unknown>;
+    return toSortableTimestamp(rightData.createdAt) - toSortableTimestamp(leftData.createdAt);
+  });
+
+  const startIndex = input.cursor
+    ? Math.max(
+        0,
+        sortedDocs.findIndex((docRow) => docRow.id === input.cursor) + 1,
+      )
+    : 0;
+  const pageDocs = sortedDocs.slice(startIndex, startIndex + input.limit);
+  const nextCursor = startIndex + input.limit < sortedDocs.length ? pageDocs[pageDocs.length - 1]?.id ?? null : null;
+
   return {
-    docs: collected.slice(0, input.limit),
+    docs: pageDocs,
     nextCursor,
   };
+}
+
+async function isClaimsIndexComplete(adminDb: ReturnType<typeof getAdminDb>) {
+  const snapshot = await adminDb.collection("app-config").doc(ADMIN_SEARCH_INDEX_STATUS_DOC_ID).get();
+  if (!snapshot.exists) {
+    return false;
+  }
+
+  const data = snapshot.data() as Record<string, unknown>;
+  return data.claimsComplete === true;
 }
 
 export async function GET(request: Request): Promise<Response> {
@@ -133,7 +170,7 @@ export async function GET(request: Request): Promise<Response> {
     const search = normalizeSearch(url.searchParams.get("q"));
     const adminDb = getAdminDb();
 
-    if (search) {
+    if (search && (await isClaimsIndexComplete(adminDb))) {
       const indexedResult = await loadIndexedClaimDocs({
         adminDb,
         mode,
@@ -146,39 +183,6 @@ export async function GET(request: Request): Promise<Response> {
         const items = indexedResult.docs.map((docRow) => mapRow(docRow.id, docRow.data() as Record<string, unknown>));
         return Response.json({ items, nextCursor: indexedResult.nextCursor });
       }
-
-      const fallbackSnapshot = await adminDb
-        .collection("giftcard-claims")
-        .where("status", "==", mode)
-        .orderBy("createdAt", "desc")
-        .get();
-
-      const matchingDocs = fallbackSnapshot.docs.filter((docRow) => {
-        const data = docRow.data() as Record<string, unknown>;
-        return matchesAdminSearchText(
-          [
-            docRow.id,
-            typeof data.uid === "string" ? data.uid : "",
-            typeof data.username === "string" ? data.username : "",
-            typeof data.accountEmail === "string" ? data.accountEmail : "",
-            typeof data.redeemEmail === "string" ? data.redeemEmail : "",
-            typeof data.giftCardTitle === "string" ? data.giftCardTitle : "",
-            typeof data.country === "string" ? data.country : "",
-          ],
-          search,
-        );
-      });
-
-      const startIndex = cursor
-        ? Math.max(
-            0,
-            matchingDocs.findIndex((docRow) => docRow.id === cursor) + 1,
-          )
-        : 0;
-      const pageDocs = matchingDocs.slice(startIndex, startIndex + limit);
-      const items = pageDocs.map((docRow) => mapRow(docRow.id, docRow.data() as Record<string, unknown>));
-      const nextCursor = startIndex + limit < matchingDocs.length ? pageDocs[pageDocs.length - 1]?.id ?? null : null;
-      return Response.json({ items, nextCursor });
     }
 
     let query = adminDb

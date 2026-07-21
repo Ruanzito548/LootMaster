@@ -88,12 +88,12 @@ function formatDeduction(amountInCents: number, currency: DashboardCurrency) {
   return `-${formatMoney(Math.abs(amountInCents), currency)}`;
 }
 
-function formatPercent(value: number) {
-  return `${value.toFixed(2)}%`;
-}
-
 function formatDateTime(unixSeconds: number) {
   return new Date(unixSeconds * 1000).toLocaleString("pt-BR");
+}
+
+function getNowMs() {
+  return Date.now();
 }
 
 function formatDateInputFromMs(ms: number) {
@@ -330,14 +330,14 @@ export function DashboardClient({
   orders,
   loadError,
 }: DashboardClientProps) {
-  const initialNowMs = Date.now();
-  const initialRangeEndDate = formatDateInputFromMs(initialNowMs);
-  const initialRangeStartDate = formatDateInputFromMs(initialNowMs - 29 * 24 * 60 * 60 * 1000);
+  const [currentNowMs, setCurrentNowMs] = useState(() => getNowMs());
+  const initialRangeEndDate = formatDateInputFromMs(currentNowMs);
+  const initialRangeStartDate = formatDateInputFromMs(currentNowMs - 29 * 24 * 60 * 60 * 1000);
   const [range, setRange] = useState<RangeValue>("30");
   const [customRangeStartDate, setCustomRangeStartDate] = useState(initialRangeStartDate);
   const [customRangeEndDate, setCustomRangeEndDate] = useState(initialRangeEndDate);
   const [chartScope, setChartScope] = useState<ChartScope>("monthly");
-  const [chartAnchorMs, setChartAnchorMs] = useState(() => normalizePeriodAnchorMs("monthly", initialNowMs, initialNowMs));
+  const [chartAnchorMs, setChartAnchorMs] = useState(() => normalizePeriodAnchorMs("monthly", currentNowMs, currentNowMs));
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [gameFilter, setGameFilter] = useState("all");
@@ -345,7 +345,6 @@ export function DashboardClient({
   const [displayCurrency, setDisplayCurrency] = useState<DashboardCurrency>("BRL");
   const [currencyRates, setCurrencyRates] = useState<CurrencyRates>(FALLBACK_RATES);
   const [hoveredBarKey, setHoveredBarKey] = useState<string | null>(null);
-  const [chartAnimated, setChartAnimated] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -387,24 +386,24 @@ export function DashboardClient({
   }, []);
 
   useEffect(() => {
-    setChartAnimated(false);
-    const animationFrame = window.requestAnimationFrame(() => {
-      setChartAnimated(true);
-    });
+    const refreshClock = () => {
+      setCurrentNowMs(getNowMs());
+    };
 
-    return () => window.cancelAnimationFrame(animationFrame);
-  }, [chartScope, chartAnchorMs, range, customRangeStartDate, customRangeEndDate, statusFilter, gameFilter, paymentFilter]);
+    const intervalId = window.setInterval(refreshClock, 60_000);
+    window.addEventListener("focus", refreshClock);
+    document.addEventListener("visibilitychange", refreshClock);
 
-  useEffect(() => {
-    const nowMs = Date.now();
-    setChartAnchorMs((current) => normalizePeriodAnchorMs(chartScope, current, nowMs));
-  }, [chartScope]);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshClock);
+      document.removeEventListener("visibilitychange", refreshClock);
+    };
+  }, []);
 
-  useEffect(() => {
-    if (chartScope !== "monthly") {
-      setMonthPickerOpen(false);
-    }
-  }, [chartScope]);
+  const normalizedChartAnchorMs = normalizePeriodAnchorMs(chartScope, chartAnchorMs, currentNowMs);
+  const isMonthPickerOpen = chartScope === "monthly" && monthPickerOpen;
+  const chartAnimated = true;
 
   const statusOptions = ["all", ...Array.from(new Set(orders.map((order) => order.statusLabel)))];
   const gameOptions = ["all", ...Array.from(new Set(orders.map((order) => order.gameTitle)))];
@@ -467,23 +466,16 @@ export function DashboardClient({
     },
   );
 
-  const nowMs = Date.now();
   const totalRevenue = displayOrders.reduce((acc, order) => acc + order.amountTotal, 0);
   const totalPayout = displayOrders.reduce((acc, order) => acc + order.supplierPayout, 0);
   const totalGatewayFee = displayOrders.reduce((acc, order) => acc + order.cardFee, 0);
   const totalCashback = displayOrders.reduce((acc, order) => acc + order.cashback, 0);
   const totalOperationalReserve = displayOrders.reduce((acc, order) => acc + order.operationalReserve, 0);
-  const totalGrossProfit = displayOrders.reduce((acc, order) => acc + order.grossProfit, 0);
   const orderNetProfit = displayOrders.reduce((acc, order) => acc + order.netProfit, 0);
   const totalOrders = displayOrders.length;
   const totalNetProfit = orderNetProfit;
   const gatewayMethods = Array.from(new Set(displayOrders.map((order) => resolveGatewayLabel(order.paymentMethod))));
   const gatewayLabel = gatewayMethods.length === 1 ? gatewayMethods[0] : "Gateway (misto)";
-
-  const paidOrders = displayOrders.filter((order) => {
-    const label = order.statusLabel.toLowerCase();
-    return label === "paid" || label === "pago" || label === "completed" || label === "concluido";
-  }).length;
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
   const statusGrouped = new Map<string, number>();
@@ -527,12 +519,12 @@ export function DashboardClient({
 
   const recentOrders = [...displayOrders].sort((a, b) => b.createdUnix - a.createdUnix).slice(0, 8);
 
-  const normalizedCurrentAnchor = normalizePeriodAnchorMs(chartScope, nowMs, nowMs);
-  const canNavigateNext = chartAnchorMs < normalizedCurrentAnchor;
-  const currentBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, chartAnchorMs), displayOrders);
-  const previousAnchorMs = shiftPeriodAnchorMs(chartScope, chartAnchorMs, -1, nowMs);
+  const normalizedCurrentAnchor = normalizePeriodAnchorMs(chartScope, currentNowMs, currentNowMs);
+  const canNavigateNext = normalizedChartAnchorMs < normalizedCurrentAnchor;
+  const currentBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, normalizedChartAnchorMs), displayOrders);
+  const previousAnchorMs = shiftPeriodAnchorMs(chartScope, normalizedChartAnchorMs, -1, currentNowMs);
   const previousBuckets = fillBucketsWithOrders(buildPeriodBuckets(chartScope, previousAnchorMs), displayOrders);
-  const chartPeriodLabel = formatPeriodLabel(chartScope, chartAnchorMs);
+  const chartPeriodLabel = formatPeriodLabel(chartScope, normalizedChartAnchorMs);
   const periodUnitLabel = getScopeUnitLabel(chartScope);
   const periodAverageLabel = `Média por ${periodUnitLabel}`;
   const bestPeriodLabel = chartScope === "yearly" ? "Melhor mês" : "Melhor período";
@@ -540,12 +532,12 @@ export function DashboardClient({
 
   const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const orderYears = Array.from(new Set(displayOrders.map((order) => new Date(order.createdUnix * 1000).getFullYear())));
-  if (!orderYears.includes(new Date(nowMs).getFullYear())) {
-    orderYears.push(new Date(nowMs).getFullYear());
+  if (!orderYears.includes(new Date(currentNowMs).getFullYear())) {
+    orderYears.push(new Date(currentNowMs).getFullYear());
   }
   const availableYears = orderYears.sort((a, b) => b - a);
-  const selectedMonth = new Date(chartAnchorMs).getMonth();
-  const selectedYear = new Date(chartAnchorMs).getFullYear();
+  const selectedMonth = new Date(normalizedChartAnchorMs).getMonth();
+  const selectedYear = new Date(normalizedChartAnchorMs).getFullYear();
   const chartGridTemplateColumns = `repeat(${Math.max(currentBuckets.length, 1)}, minmax(0, 1fr))`;
   const chartMinWidth = Math.max(960, currentBuckets.length * 38);
   const chartYAxisGutterPx = 64;
@@ -581,7 +573,7 @@ export function DashboardClient({
 
   function navigatePeriod(step: number) {
     setHoveredBarKey(null);
-    setChartAnchorMs((current) => shiftPeriodAnchorMs(chartScope, current, step, Date.now()));
+    setChartAnchorMs(shiftPeriodAnchorMs(chartScope, normalizedChartAnchorMs, step, currentNowMs));
   }
 
   function drillDownToMonthly(bucketStartMs: number) {
@@ -589,25 +581,22 @@ export function DashboardClient({
       return;
     }
 
-    const now = Date.now();
     setHoveredBarKey(null);
     setMonthPickerOpen(false);
-    setChartAnchorMs(normalizePeriodAnchorMs("monthly", bucketStartMs, now));
+    setChartAnchorMs(normalizePeriodAnchorMs("monthly", bucketStartMs, currentNowMs));
     setChartScope("monthly");
   }
 
   function applyMonthlyYear(year: number) {
-    const anchor = new Date(chartAnchorMs);
+    const anchor = new Date(normalizedChartAnchorMs);
     const target = new Date(year, anchor.getMonth(), 1, 12, 0, 0, 0).getTime();
-    const now = Date.now();
-    setChartAnchorMs(normalizePeriodAnchorMs("monthly", target, now));
+    setChartAnchorMs(normalizePeriodAnchorMs("monthly", target, currentNowMs));
   }
 
   function applyMonthlyMonth(monthIndex: number) {
-    const anchor = new Date(chartAnchorMs);
+    const anchor = new Date(normalizedChartAnchorMs);
     const target = new Date(anchor.getFullYear(), monthIndex, 1, 12, 0, 0, 0).getTime();
-    const now = Date.now();
-    setChartAnchorMs(normalizePeriodAnchorMs("monthly", target, now));
+    setChartAnchorMs(normalizePeriodAnchorMs("monthly", target, currentNowMs));
     setMonthPickerOpen(false);
   }
 
@@ -966,7 +955,7 @@ export function DashboardClient({
                   </div>
                 </div>
 
-                {chartScope === "monthly" && monthPickerOpen ? (
+                {isMonthPickerOpen ? (
                   <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Selecionar mês</p>
