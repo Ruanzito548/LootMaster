@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
+import { writeActivityLog } from "@/lib/activity-history.server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   GAME_CONFIGURATION_COLLECTION,
@@ -12,6 +13,21 @@ import {
 type PutBody = {
   config?: unknown;
 };
+
+function summarizeGameConfiguration(config: ReturnType<typeof sanitizeGameConfiguration>) {
+  const entries = Object.values(config.byGame);
+  const disabledGames = entries.filter((entry) => !entry.enabled).length;
+  const disabledGold = entries.filter((entry) => entry.enabled && !entry.gold).length;
+  const disabledBoost = entries.filter((entry) => entry.enabled && !entry.boost).length;
+  const disabledAccounts = entries.filter((entry) => entry.enabled && !entry.accounts).length;
+
+  return {
+    disabledGames,
+    disabledGold,
+    disabledBoost,
+    disabledAccounts,
+  };
+}
 
 function statusFromErrorMessage(message: string): number {
   if (message.includes("authorization") || message.includes("token") || message.includes("admin")) {
@@ -59,12 +75,15 @@ export async function PUT(request: Request): Promise<Response> {
 
   try {
     const adminDb = getAdminDb();
+    const currentSnapshot = await adminDb.collection(GAME_CONFIGURATION_COLLECTION).doc(GAME_CONFIGURATION_DOC_ID).get();
+    const currentConfig = currentSnapshot.exists
+      ? sanitizeGameConfiguration(currentSnapshot.data())
+      : buildDefaultGameConfiguration();
     const sanitized = sanitizeGameConfiguration(body.config);
 
-    await adminDb
-      .collection(GAME_CONFIGURATION_COLLECTION)
-      .doc(GAME_CONFIGURATION_DOC_ID)
-      .set(
+    await adminDb.runTransaction(async (tx) => {
+      tx.set(
+        adminDb.collection(GAME_CONFIGURATION_COLLECTION).doc(GAME_CONFIGURATION_DOC_ID),
         {
           ...sanitized,
           updatedAtMs: Date.now(),
@@ -73,6 +92,33 @@ export async function PUT(request: Request): Promise<Response> {
         },
         { merge: true },
       );
+
+      const previousSummary = summarizeGameConfiguration(currentConfig);
+      const nextSummary = summarizeGameConfiguration(sanitized);
+
+      writeActivityLog(tx, adminDb, {
+        userUid: decodedToken.uid,
+        actorUid: decodedToken.uid,
+        actorRole: "admin",
+        actionType: "admin_game_configuration_updated",
+        category: "admin",
+        description: "Admin updated game and category availability settings.",
+        origin: "admin.game-configuration.put",
+        status: "admin_action",
+        tags: ["admin", "game-configuration", "settings"],
+        metadata: {
+          previousDisabledGames: previousSummary.disabledGames,
+          nextDisabledGames: nextSummary.disabledGames,
+          previousDisabledGold: previousSummary.disabledGold,
+          nextDisabledGold: nextSummary.disabledGold,
+          previousDisabledBoost: previousSummary.disabledBoost,
+          nextDisabledBoost: nextSummary.disabledBoost,
+          previousDisabledAccounts: previousSummary.disabledAccounts,
+          nextDisabledAccounts: nextSummary.disabledAccounts,
+        },
+        mirrorToAdminAudit: true,
+      });
+    });
 
     return Response.json({ ok: true, config: sanitized });
   } catch (error) {

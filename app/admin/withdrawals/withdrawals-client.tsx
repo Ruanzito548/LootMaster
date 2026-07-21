@@ -1,8 +1,8 @@
 "use client";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { User } from "firebase/auth";
 
 import { auth } from "@/lib/firebase";
 
@@ -19,15 +19,76 @@ type WithdrawalRow = {
 };
 
 type Props = {
-  rows: WithdrawalRow[];
   mode: "pending" | "approved" | "rejected";
 };
 
-export default function WithdrawalsClient({ rows, mode }: Props) {
-  const router = useRouter();
+const PAGE_SIZE = 50;
+
+function toStatusFilter(mode: Props["mode"]): "pending_review" | "approved" | "rejected" {
+  if (mode === "approved") {
+    return "approved";
+  }
+
+  if (mode === "rejected") {
+    return "rejected";
+  }
+
+  return "pending_review";
+}
+
+async function getAuthorizationHeader(user: User | null) {
+  const token = await user?.getIdToken();
+  return token ? { Authorization: `Bearer ${token}` } : null;
+}
+
+async function fetchWithdrawalsPage(input: {
+  user: User | null;
+  mode: Props["mode"];
+  cursor?: string | null;
+}) {
+  const headers = await getAuthorizationHeader(input.user);
+  if (!headers) {
+    throw new Error("Your session is not ready. Please wait a few seconds and try again.");
+  }
+
+  const url = new URL("/api/admin/withdrawals", window.location.origin);
+  url.searchParams.set("limit", String(PAGE_SIZE));
+  url.searchParams.set("status", toStatusFilter(input.mode));
+  if (input.cursor) {
+    url.searchParams.set("cursor", input.cursor);
+  }
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+
+  const payload = (await response.json()) as {
+    error?: string;
+    items?: WithdrawalRow[];
+    nextCursor?: string | null;
+  };
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Could not load withdrawal requests.");
+  }
+
+  return {
+    items: Array.isArray(payload.items) ? payload.items : [],
+    nextCursor: typeof payload.nextCursor === "string" ? payload.nextCursor : null,
+  };
+}
+
+export default function WithdrawalsClient({ mode }: Props) {
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [rows, setRows] = useState<WithdrawalRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!auth) {
@@ -38,6 +99,73 @@ export default function WithdrawalsClient({ rows, mode }: Props) {
       setIsAuthenticated(Boolean(user));
     });
   }, []);
+
+  const reload = useCallback(async () => {
+    const currentUser = auth?.currentUser ?? null;
+    if (!currentUser) {
+      setRows([]);
+      setNextCursor(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const page = await fetchWithdrawalsPage({ user: currentUser, mode });
+      setRows(page.items);
+      setNextCursor(page.nextCursor);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not load withdrawal requests.");
+    } finally {
+      setLoading(false);
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  useEffect(() => {
+    if (!loadMoreRef.current || !nextCursor || loading || loadingMore) {
+      return;
+    }
+
+    const node = loadMoreRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) {
+          return;
+        }
+
+        void (async () => {
+          const currentUser = auth?.currentUser ?? null;
+          if (!currentUser) {
+            return;
+          }
+
+          setLoadingMore(true);
+          try {
+            const page = await fetchWithdrawalsPage({ user: currentUser, mode, cursor: nextCursor });
+            setRows((current) => {
+              const merged = [...current, ...page.items];
+              return Array.from(new Map(merged.map((item) => [item.requestId, item])).values());
+            });
+            setNextCursor(page.nextCursor);
+          } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : "Could not load more withdrawals.");
+          } finally {
+            setLoadingMore(false);
+          }
+        })();
+      },
+      { rootMargin: "220px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [loading, loadingMore, mode, nextCursor]);
 
   const review = async (requestId: string, action: "approve" | "reject") => {
     if (!auth?.currentUser || busyId) {
@@ -68,7 +196,7 @@ export default function WithdrawalsClient({ rows, mode }: Props) {
         return;
       }
 
-      router.refresh();
+      setRows((current) => current.filter((row) => row.requestId !== requestId));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not review withdrawal request.");
     } finally {
@@ -162,7 +290,9 @@ export default function WithdrawalsClient({ rows, mode }: Props) {
       ) : null}
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
-        {rows.length === 0 ? (
+        {loading ? (
+          <p className="px-5 py-4 text-sm text-green-600">Loading withdrawal requests...</p>
+        ) : rows.length === 0 ? (
           <p className="px-5 py-4 text-sm text-green-600">{sectionEmptyText}</p>
         ) : (
           <table className="w-full text-left text-sm">
@@ -225,6 +355,12 @@ export default function WithdrawalsClient({ rows, mode }: Props) {
           </table>
         )}
       </article>
+
+      <div ref={loadMoreRef} className="flex justify-center">
+        <span className="inline-flex items-center gap-2 rounded-full border border-green-900 bg-black/25 px-4 py-2 text-[0.66rem] font-bold uppercase tracking-[0.14em] text-green-600">
+          {loadingMore ? "Loading more..." : nextCursor ? "Scroll to load more" : "No more rows"}
+        </span>
+      </div>
     </section>
   );
 }

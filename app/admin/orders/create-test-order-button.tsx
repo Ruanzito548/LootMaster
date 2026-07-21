@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function CreateTestOrderButton() {
+type CreateTestOrderButtonProps = {
+  onCreated?: () => void | Promise<void>;
+};
+
+export default function CreateTestOrderButton({ onCreated }: CreateTestOrderButtonProps) {
   const router = useRouter();
   const [loadingCurrency, setLoadingCurrency] = useState<"usd" | "eur" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +32,11 @@ export default function CreateTestOrderButton() {
         return;
       }
 
-      router.refresh();
+      if (onCreated) {
+        await onCreated();
+      } else {
+        router.refresh();
+      }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Could not create test order.");
     } finally {

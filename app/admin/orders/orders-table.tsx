@@ -18,6 +18,15 @@ function formatMoney(cents: number, currencyCode: string): string {
 }
 
 export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
+  return <OrdersTableWithActions rows={rows} />;
+}
+
+type OrdersTableWithActionsProps = {
+  rows: OrderRow[];
+  onReload?: () => void | Promise<void>;
+};
+
+export function OrdersTableWithActions({ rows, onReload }: OrdersTableWithActionsProps) {
   const router = useRouter();
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editingSupplierPercent, setEditingSupplierPercent] = useState<number>(0);
@@ -250,7 +259,11 @@ export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
       }
 
       setEditingOrderId(null);
-      router.refresh();
+      if (onReload) {
+        await onReload();
+      } else {
+        router.refresh();
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not update supplier.");
     } finally {

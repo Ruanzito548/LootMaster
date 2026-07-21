@@ -1,20 +1,10 @@
 import Link from "next/link";
 
 import WithdrawalsClient from "../withdrawals-client";
-import { type WithdrawalRow, loadWithdrawalRows } from "../withdrawals-data";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminWithdrawalsApprovedPage() {
-  let loadError: string | null = null;
-  let rows: WithdrawalRow[] = [];
-
-  try {
-    const allRows = await loadWithdrawalRows();
-    rows = allRows.filter((row) => row.status === "approved");
-  } catch (error) {
-    loadError = error instanceof Error ? error.message : "Could not load withdrawal requests.";
-  }
+export default function AdminWithdrawalsApprovedPage() {
 
   return (
     <div className="text-green-300">
@@ -26,13 +16,9 @@ export default async function AdminWithdrawalsApprovedPage() {
         </div>
       </div>
 
-      {loadError ? (
-        <p className="mt-6 rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">{loadError}</p>
-      ) : (
-        <div className="mt-6">
-          <WithdrawalsClient rows={rows} mode="approved" />
-        </div>
-      )}
+      <div className="mt-6">
+        <WithdrawalsClient mode="approved" />
+      </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
