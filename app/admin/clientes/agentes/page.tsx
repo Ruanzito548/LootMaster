@@ -1,49 +1,10 @@
 import Link from "next/link";
 
-import { getAdminDb } from "@/lib/firebase-admin";
-import { ADMIN_USERS_QUERY_LIMIT } from "@/lib/admin-query-limits";
-
 import AgentesAdminClient from "./agentes-client";
 
 export const dynamic = "force-dynamic";
 
-type AgentRow = {
-  uid: string;
-  username: string;
-  email: string;
-  agentFeeSharePercent: number;
-  agentReferralCode: string;
-};
-
-export default async function AdminAgentesPage() {
-  let rows: AgentRow[] = [];
-  let loadError: string | null = null;
-
-  try {
-    const adminDb = getAdminDb();
-    const snapshot = await adminDb
-      .collection("users")
-      .where("isAgent", "==", true)
-      .limit(ADMIN_USERS_QUERY_LIMIT)
-      .get();
-
-    rows = snapshot.docs.map((docRow) => {
-      const data = docRow.data() as Record<string, unknown>;
-      return {
-        uid: docRow.id,
-        username: typeof data.username === "string" ? data.username : "--",
-        email: typeof data.email === "string" ? data.email : "--",
-        agentFeeSharePercent:
-          typeof data.agentFeeSharePercent === "number" && Number.isFinite(data.agentFeeSharePercent)
-            ? data.agentFeeSharePercent
-            : 50,
-        agentReferralCode: typeof data.agentReferralCode === "string" ? data.agentReferralCode : "",
-      };
-    });
-  } catch (error) {
-    loadError = error instanceof Error ? error.message : "Could not load agents.";
-  }
-
+export default function AdminAgentesPage() {
   return (
     <div className="min-h-screen bg-black text-green-400">
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -55,7 +16,7 @@ export default async function AdminAgentesPage() {
               Ajuste a porcentagem da taxa da plataforma que cada agente recebe por compras dos clientes vinculados.
             </p>
             <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-green-700">
-              Exibindo os agentes mais recentes dentro do limite atual do painel.
+              Carregamento incremental dos agentes mais recentes do painel.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -74,13 +35,7 @@ export default async function AdminAgentesPage() {
           </div>
         </div>
 
-        {loadError ? (
-          <p className="mt-6 rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">
-            {loadError}
-          </p>
-        ) : null}
-
-        <AgentesAdminClient rows={rows} />
+        <AgentesAdminClient />
       </main>
     </div>
   );

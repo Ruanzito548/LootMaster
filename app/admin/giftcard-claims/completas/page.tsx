@@ -1,21 +1,10 @@
 import Link from "next/link";
 
 import GiftcardClaimsClient from "../giftcard-claims-client";
-import { loadGiftcardClaimRows, type GiftcardClaimRow } from "../giftcard-claims-data";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminGiftcardClaimsCompletedPage() {
-  let loadError: string | null = null;
-  let rows: GiftcardClaimRow[] = [];
-
-  try {
-    const allRows = await loadGiftcardClaimRows();
-    rows = allRows.filter((row) => row.status === "completed");
-  } catch (error) {
-    loadError = error instanceof Error ? error.message : "Could not load gift card claims.";
-  }
-
+export default function AdminGiftcardClaimsCompletedPage() {
   return (
     <div className="text-green-300">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -26,13 +15,9 @@ export default async function AdminGiftcardClaimsCompletedPage() {
         </div>
       </div>
 
-      {loadError ? (
-        <p className="mt-6 rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">{loadError}</p>
-      ) : (
-        <div className="mt-6">
-          <GiftcardClaimsClient rows={rows} mode="completed" />
-        </div>
-      )}
+      <div className="mt-6">
+        <GiftcardClaimsClient mode="completed" />
+      </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Link

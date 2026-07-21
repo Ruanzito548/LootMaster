@@ -1,23 +1,72 @@
 "use client";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { User } from "firebase/auth";
 
 import { auth } from "@/lib/firebase";
 
-import type { GiftcardClaimRow } from "./giftcard-claims-data";
+import type { GiftcardClaimRow } from "./giftcard-claims-types";
 
 type Props = {
-  rows: GiftcardClaimRow[];
   mode: "open" | "completed";
 };
 
-export default function GiftcardClaimsClient({ rows, mode }: Props) {
-  const router = useRouter();
+const PAGE_SIZE = 50;
+
+async function getAuthorizationHeader(user: User | null) {
+  const token = await user?.getIdToken();
+  return token ? { Authorization: `Bearer ${token}` } : null;
+}
+
+async function fetchClaimsPage(input: {
+  user: User | null;
+  mode: Props["mode"];
+  cursor?: string | null;
+}) {
+  const headers = await getAuthorizationHeader(input.user);
+  if (!headers) {
+    throw new Error("Your session is not ready. Please wait a few seconds and try again.");
+  }
+
+  const url = new URL("/api/admin/giftcard-claims", window.location.origin);
+  url.searchParams.set("limit", String(PAGE_SIZE));
+  url.searchParams.set("mode", input.mode);
+  if (input.cursor) {
+    url.searchParams.set("cursor", input.cursor);
+  }
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+
+  const payload = (await response.json()) as {
+    error?: string;
+    items?: GiftcardClaimRow[];
+    nextCursor?: string | null;
+  };
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Could not load gift card claims.");
+  }
+
+  return {
+    items: Array.isArray(payload.items) ? payload.items : [],
+    nextCursor: typeof payload.nextCursor === "string" ? payload.nextCursor : null,
+  };
+}
+
+export default function GiftcardClaimsClient({ mode }: Props) {
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [rows, setRows] = useState<GiftcardClaimRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!auth) {
@@ -28,6 +77,89 @@ export default function GiftcardClaimsClient({ rows, mode }: Props) {
       setIsAuthenticated(Boolean(user));
     });
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      const currentUser = auth?.currentUser ?? null;
+      if (!currentUser) {
+        if (!cancelled) {
+          setRows([]);
+          setNextCursor(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (!cancelled) {
+        setLoading(true);
+        setErrorMessage(null);
+      }
+
+      try {
+        const page = await fetchClaimsPage({ user: currentUser, mode });
+        if (!cancelled) {
+          setRows(page.items);
+          setNextCursor(page.nextCursor);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setErrorMessage(error instanceof Error ? error.message : "Could not load gift card claims.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
+
+  useEffect(() => {
+    if (!loadMoreRef.current || !nextCursor || loading || loadingMore) {
+      return;
+    }
+
+    const node = loadMoreRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) {
+          return;
+        }
+
+        void (async () => {
+          const currentUser = auth?.currentUser ?? null;
+          if (!currentUser) {
+            return;
+          }
+
+          setLoadingMore(true);
+          try {
+            const page = await fetchClaimsPage({ user: currentUser, mode, cursor: nextCursor });
+            setRows((current) => {
+              const merged = [...current, ...page.items];
+              return Array.from(new Map(merged.map((item) => [item.claimId, item])).values());
+            });
+            setNextCursor(page.nextCursor);
+          } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : "Could not load more gift card claims.");
+          } finally {
+            setLoadingMore(false);
+          }
+        })();
+      },
+      { rootMargin: "220px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [loading, loadingMore, mode, nextCursor]);
 
   const markSent = async (claimId: string) => {
     if (!auth?.currentUser || busyId) {
@@ -55,7 +187,7 @@ export default function GiftcardClaimsClient({ rows, mode }: Props) {
         return;
       }
 
-      router.refresh();
+      setRows((current) => current.filter((row) => row.claimId !== claimId));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not complete gift card claim.");
     } finally {
@@ -78,7 +210,9 @@ export default function GiftcardClaimsClient({ rows, mode }: Props) {
       ) : null}
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
-        {rows.length === 0 ? (
+        {loading ? (
+          <p className="px-5 py-4 text-sm text-green-600">Carregando reivindicacoes...</p>
+        ) : rows.length === 0 ? (
           <p className="px-5 py-4 text-sm text-green-600">{emptyText}</p>
         ) : (
           <table className="w-full text-left text-sm">
@@ -138,6 +272,12 @@ export default function GiftcardClaimsClient({ rows, mode }: Props) {
           </table>
         )}
       </article>
+
+      <div ref={loadMoreRef} className="flex justify-center">
+        <span className="inline-flex items-center gap-2 rounded-full border border-green-900 bg-black/25 px-4 py-2 text-[0.66rem] font-bold uppercase tracking-[0.14em] text-green-600">
+          {loadingMore ? "Carregando mais..." : nextCursor ? "Role para carregar mais" : "Sem mais reivindicacoes"}
+        </span>
+      </div>
     </section>
   );
 }

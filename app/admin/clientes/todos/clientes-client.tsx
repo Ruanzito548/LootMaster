@@ -1,30 +1,63 @@
 "use client";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { User } from "firebase/auth";
 
 import { auth } from "@/lib/firebase";
+import type { ClientRow } from "../clientes-types";
 
-type ClientRow = {
-  uid: string;
-  username: string;
-  email: string;
-  assignedAgentId: string | null;
-  isAgent: boolean;
-  agentFeeSharePercent: number;
-  agentReferralCode: string;
-};
+const PAGE_SIZE = 50;
 
-type Props = {
-  rows: ClientRow[];
-};
+async function getAuthorizationHeader(user: User | null) {
+  const token = await user?.getIdToken();
+  return token ? { Authorization: `Bearer ${token}` } : null;
+}
 
-export default function ClientesAdminClient({ rows }: Props) {
-  const router = useRouter();
+async function fetchClientsPage(input: { user: User | null; cursor?: string | null }) {
+  const headers = await getAuthorizationHeader(input.user);
+  if (!headers) {
+    throw new Error("Your session is not ready. Please wait a few seconds and try again.");
+  }
+
+  const url = new URL("/api/admin/clients", window.location.origin);
+  url.searchParams.set("mode", "all");
+  url.searchParams.set("limit", String(PAGE_SIZE));
+  if (input.cursor) {
+    url.searchParams.set("cursor", input.cursor);
+  }
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+
+  const payload = (await response.json()) as {
+    error?: string;
+    items?: ClientRow[];
+    nextCursor?: string | null;
+  };
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Could not load clients.");
+  }
+
+  return {
+    items: Array.isArray(payload.items) ? payload.items : [],
+    nextCursor: typeof payload.nextCursor === "string" ? payload.nextCursor : null,
+  };
+}
+
+export default function ClientesAdminClient() {
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser));
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [rows, setRows] = useState<ClientRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!auth) {
@@ -35,6 +68,89 @@ export default function ClientesAdminClient({ rows }: Props) {
       setIsAuthenticated(Boolean(user));
     });
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      const currentUser = auth?.currentUser ?? null;
+      if (!currentUser) {
+        if (!cancelled) {
+          setRows([]);
+          setNextCursor(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (!cancelled) {
+        setLoading(true);
+        setErrorMessage(null);
+      }
+
+      try {
+        const page = await fetchClientsPage({ user: currentUser });
+        if (!cancelled) {
+          setRows(page.items);
+          setNextCursor(page.nextCursor);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setErrorMessage(error instanceof Error ? error.message : "Could not load clients.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!loadMoreRef.current || !nextCursor || loading || loadingMore) {
+      return;
+    }
+
+    const node = loadMoreRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) {
+          return;
+        }
+
+        void (async () => {
+          const currentUser = auth?.currentUser ?? null;
+          if (!currentUser) {
+            return;
+          }
+
+          setLoadingMore(true);
+          try {
+            const page = await fetchClientsPage({ user: currentUser, cursor: nextCursor });
+            setRows((current) => {
+              const merged = [...current, ...page.items];
+              return Array.from(new Map(merged.map((item) => [item.uid, item])).values());
+            });
+            setNextCursor(page.nextCursor);
+          } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : "Could not load more clients.");
+          } finally {
+            setLoadingMore(false);
+          }
+        })();
+      },
+      { rootMargin: "240px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [loading, loadingMore, nextCursor]);
 
   const agents = useMemo(() => rows.filter((row) => row.isAgent), [rows]);
 
@@ -71,7 +187,7 @@ export default function ClientesAdminClient({ rows }: Props) {
 
     try {
       await authorizedRequest("/api/admin/clients/assign-agent", { clientUid, agentUid });
-      router.refresh();
+      setRows((current) => current.map((row) => (row.uid === clientUid ? { ...row, assignedAgentId: agentUid } : row)));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not assign agent.");
     } finally {
@@ -86,7 +202,7 @@ export default function ClientesAdminClient({ rows }: Props) {
 
     try {
       await authorizedRequest("/api/admin/clients/unassign-agent", { clientUid });
-      router.refresh();
+      setRows((current) => current.map((row) => (row.uid === clientUid ? { ...row, assignedAgentId: null } : row)));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not unassign agent.");
     } finally {
@@ -101,7 +217,7 @@ export default function ClientesAdminClient({ rows }: Props) {
 
     try {
       await authorizedRequest("/api/admin/clients/promote-agent", { clientUid });
-      router.refresh();
+      setRows((current) => current.map((row) => (row.uid === clientUid ? { ...row, isAgent: true } : row)));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not promote client to agent.");
     } finally {
@@ -126,7 +242,9 @@ export default function ClientesAdminClient({ rows }: Props) {
       ) : null}
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
-        {rows.length === 0 ? (
+        {loading ? (
+          <p className="px-5 py-4 text-sm text-green-600">Carregando clientes...</p>
+        ) : rows.length === 0 ? (
           <p className="px-5 py-4 text-sm text-green-600">No clients found.</p>
         ) : (
           <table className="w-full text-left text-sm">
@@ -204,6 +322,12 @@ export default function ClientesAdminClient({ rows }: Props) {
           </table>
         )}
       </article>
+
+      <div ref={loadMoreRef} className="flex justify-center">
+        <span className="inline-flex items-center gap-2 rounded-full border border-green-900 bg-black/25 px-4 py-2 text-[0.66rem] font-bold uppercase tracking-[0.14em] text-green-600">
+          {loadingMore ? "Carregando mais..." : nextCursor ? "Role para carregar mais" : "Sem mais clientes"}
+        </span>
+      </div>
     </section>
   );
 }

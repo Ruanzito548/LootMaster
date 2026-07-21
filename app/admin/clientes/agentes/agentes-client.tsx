@@ -1,31 +1,64 @@
 "use client";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { User } from "firebase/auth";
 
 import { auth } from "@/lib/firebase";
+import type { AgentRow } from "../clientes-types";
 
-type AgentRow = {
-  uid: string;
-  username: string;
-  email: string;
-  agentFeeSharePercent: number;
-  agentReferralCode: string;
-};
+const PAGE_SIZE = 50;
 
-type Props = {
-  rows: AgentRow[];
-};
+async function getAuthorizationHeader(user: User | null) {
+  const token = await user?.getIdToken();
+  return token ? { Authorization: `Bearer ${token}` } : null;
+}
 
-export default function AgentesAdminClient({ rows }: Props) {
-  const router = useRouter();
+async function fetchAgentsPage(input: { user: User | null; cursor?: string | null }) {
+  const headers = await getAuthorizationHeader(input.user);
+  if (!headers) {
+    throw new Error("Your session is not ready. Please wait a few seconds and try again.");
+  }
+
+  const url = new URL("/api/admin/clients", window.location.origin);
+  url.searchParams.set("mode", "agents");
+  url.searchParams.set("limit", String(PAGE_SIZE));
+  if (input.cursor) {
+    url.searchParams.set("cursor", input.cursor);
+  }
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+
+  const payload = (await response.json()) as {
+    error?: string;
+    items?: AgentRow[];
+    nextCursor?: string | null;
+  };
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Could not load agents.");
+  }
+
+  return {
+    items: Array.isArray(payload.items) ? payload.items : [],
+    nextCursor: typeof payload.nextCursor === "string" ? payload.nextCursor : null,
+  };
+}
+
+export default function AgentesAdminClient() {
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser));
   const [loadingUid, setLoadingUid] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [draftValues, setDraftValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(rows.map((row) => [row.uid, row.agentFeeSharePercent.toString()])),
-  );
+  const [rows, setRows] = useState<AgentRow[]>([]);
+  const [draftValues, setDraftValues] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!auth) {
@@ -36,6 +69,95 @@ export default function AgentesAdminClient({ rows }: Props) {
       setIsAuthenticated(Boolean(user));
     });
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      const currentUser = auth?.currentUser ?? null;
+      if (!currentUser) {
+        if (!cancelled) {
+          setRows([]);
+          setDraftValues({});
+          setNextCursor(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (!cancelled) {
+        setLoading(true);
+        setErrorMessage(null);
+      }
+
+      try {
+        const page = await fetchAgentsPage({ user: currentUser });
+        if (!cancelled) {
+          setRows(page.items);
+          setDraftValues(Object.fromEntries(page.items.map((row) => [row.uid, row.agentFeeSharePercent.toString()])));
+          setNextCursor(page.nextCursor);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setErrorMessage(error instanceof Error ? error.message : "Could not load agents.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!loadMoreRef.current || !nextCursor || loading || loadingMore) {
+      return;
+    }
+
+    const node = loadMoreRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) {
+          return;
+        }
+
+        void (async () => {
+          const currentUser = auth?.currentUser ?? null;
+          if (!currentUser) {
+            return;
+          }
+
+          setLoadingMore(true);
+          try {
+            const page = await fetchAgentsPage({ user: currentUser, cursor: nextCursor });
+            setRows((current) => {
+              const merged = [...current, ...page.items];
+              return Array.from(new Map(merged.map((item) => [item.uid, item])).values());
+            });
+            setDraftValues((current) => ({
+              ...current,
+              ...Object.fromEntries(page.items.map((row) => [row.uid, row.agentFeeSharePercent.toString()])),
+            }));
+            setNextCursor(page.nextCursor);
+          } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : "Could not load more agents.");
+          } finally {
+            setLoadingMore(false);
+          }
+        })();
+      },
+      { rootMargin: "240px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [loading, loadingMore, nextCursor]);
 
   const saveFeeShare = async (agentUid: string) => {
     if (!auth?.currentUser) {
@@ -72,7 +194,16 @@ export default function AgentesAdminClient({ rows }: Props) {
         throw new Error(data.error ?? "Could not update agent percentage.");
       }
 
-      router.refresh();
+      setRows((current) =>
+        current.map((row) =>
+          row.uid === agentUid
+            ? {
+                ...row,
+                agentFeeSharePercent: nextValue,
+              }
+            : row,
+        ),
+      );
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not update agent percentage.");
     } finally {
@@ -97,7 +228,9 @@ export default function AgentesAdminClient({ rows }: Props) {
       ) : null}
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
-        {rows.length === 0 ? (
+        {loading ? (
+          <p className="px-5 py-4 text-sm text-green-600">Carregando agentes...</p>
+        ) : rows.length === 0 ? (
           <p className="px-5 py-4 text-sm text-green-600">No agents found.</p>
         ) : (
           <table className="w-full text-left text-sm">
@@ -151,6 +284,12 @@ export default function AgentesAdminClient({ rows }: Props) {
           </table>
         )}
       </article>
+
+      <div ref={loadMoreRef} className="flex justify-center">
+        <span className="inline-flex items-center gap-2 rounded-full border border-green-900 bg-black/25 px-4 py-2 text-[0.66rem] font-bold uppercase tracking-[0.14em] text-green-600">
+          {loadingMore ? "Carregando mais..." : nextCursor ? "Role para carregar mais" : "Sem mais agentes"}
+        </span>
+      </div>
     </section>
   );
 }
