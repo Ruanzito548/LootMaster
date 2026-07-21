@@ -1,7 +1,7 @@
 "use client";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { useEffect, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 
 import { auth } from "@/lib/firebase";
@@ -14,7 +14,7 @@ async function getAuthorizationHeader(user: User | null) {
   return token ? { Authorization: `Bearer ${token}` } : null;
 }
 
-async function fetchAgentsPage(input: { user: User | null; cursor?: string | null }) {
+async function fetchAgentsPage(input: { user: User | null; cursor?: string | null; search?: string }) {
   const headers = await getAuthorizationHeader(input.user);
   if (!headers) {
     throw new Error("Your session is not ready. Please wait a few seconds and try again.");
@@ -23,6 +23,9 @@ async function fetchAgentsPage(input: { user: User | null; cursor?: string | nul
   const url = new URL("/api/admin/clients", window.location.origin);
   url.searchParams.set("mode", "agents");
   url.searchParams.set("limit", String(PAGE_SIZE));
+  if (input.search?.trim()) {
+    url.searchParams.set("q", input.search.trim());
+  }
   if (input.cursor) {
     url.searchParams.set("cursor", input.cursor);
   }
@@ -58,7 +61,9 @@ export default function AgentesAdminClient() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState("");
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const deferredSearchText = useDeferredValue(searchText);
 
   useEffect(() => {
     if (!auth) {
@@ -91,7 +96,7 @@ export default function AgentesAdminClient() {
       }
 
       try {
-        const page = await fetchAgentsPage({ user: currentUser });
+        const page = await fetchAgentsPage({ user: currentUser, search: deferredSearchText });
         if (!cancelled) {
           setRows(page.items);
           setDraftValues(Object.fromEntries(page.items.map((row) => [row.uid, row.agentFeeSharePercent.toString()])));
@@ -113,7 +118,7 @@ export default function AgentesAdminClient() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [deferredSearchText]);
 
   useEffect(() => {
     if (!loadMoreRef.current || !nextCursor || loading || loadingMore) {
@@ -135,7 +140,7 @@ export default function AgentesAdminClient() {
 
           setLoadingMore(true);
           try {
-            const page = await fetchAgentsPage({ user: currentUser, cursor: nextCursor });
+            const page = await fetchAgentsPage({ user: currentUser, cursor: nextCursor, search: deferredSearchText });
             setRows((current) => {
               const merged = [...current, ...page.items];
               return Array.from(new Map(merged.map((item) => [item.uid, item])).values());
@@ -157,7 +162,7 @@ export default function AgentesAdminClient() {
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [loading, loadingMore, nextCursor]);
+  }, [deferredSearchText, loading, loadingMore, nextCursor]);
 
   const saveFeeShare = async (agentUid: string) => {
     if (!auth?.currentUser) {
@@ -226,6 +231,20 @@ export default function AgentesAdminClient() {
           {errorMessage}
         </p>
       ) : null}
+
+      <div className="flex flex-col gap-2 rounded-xl border border-green-900 bg-black/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <label className="text-xs font-semibold uppercase tracking-[0.14em] text-green-600" htmlFor="agents-search">
+          Buscar por agente ou email
+        </label>
+        <input
+          id="agents-search"
+          type="search"
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+          placeholder="Digite username ou email"
+          className="w-full rounded-md border border-green-800 bg-black px-3 py-2 text-sm text-green-200 outline-none transition placeholder:text-green-800 focus:border-emerald-500 sm:max-w-sm"
+        />
+      </div>
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
         {loading ? (

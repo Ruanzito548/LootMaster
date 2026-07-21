@@ -26,6 +26,10 @@ function normalizeMode(value: string | null): GiftcardClaimMode {
   return "open";
 }
 
+function normalizeSearch(value: string | null): string {
+  return value?.trim().toLocaleLowerCase() ?? "";
+}
+
 function formatTimestamp(value: unknown): string {
   if (!value || typeof value !== "object") {
     return "--";
@@ -68,6 +72,7 @@ export async function GET(request: Request): Promise<Response> {
     const mode = normalizeMode(url.searchParams.get("mode"));
     const cursor = url.searchParams.get("cursor")?.trim() || null;
     const limit = normalizeLimit(url.searchParams.get("limit"));
+    const search = normalizeSearch(url.searchParams.get("q"));
     const adminDb = getAdminDb();
 
     let query = adminDb
@@ -85,8 +90,35 @@ export async function GET(request: Request): Promise<Response> {
     }
 
     const snapshot = await query.get();
-    const items = snapshot.docs.map((docRow) => mapRow(docRow.id, docRow.data() as Record<string, unknown>));
-    const nextCursor = snapshot.docs.length === limit ? snapshot.docs[snapshot.docs.length - 1]?.id ?? null : null;
+    const matchingDocs = snapshot.docs.filter((docRow) => {
+      if (!search) {
+        return true;
+      }
+
+      const data = docRow.data() as Record<string, unknown>;
+      const username = typeof data.username === "string" ? data.username.toLocaleLowerCase() : "";
+      const accountEmail = typeof data.accountEmail === "string" ? data.accountEmail.toLocaleLowerCase() : "";
+      const redeemEmail = typeof data.redeemEmail === "string" ? data.redeemEmail.toLocaleLowerCase() : "";
+      const giftCardTitle = typeof data.giftCardTitle === "string" ? data.giftCardTitle.toLocaleLowerCase() : "";
+
+      return (
+        username.includes(search) ||
+        accountEmail.includes(search) ||
+        redeemEmail.includes(search) ||
+        giftCardTitle.includes(search)
+      );
+    });
+
+    const startIndex = cursor
+      ? Math.max(
+          0,
+          matchingDocs.findIndex((docRow) => docRow.id === cursor) + 1,
+        )
+      : 0;
+
+    const pageDocs = matchingDocs.slice(startIndex, startIndex + limit);
+    const items = pageDocs.map((docRow) => mapRow(docRow.id, docRow.data() as Record<string, unknown>));
+    const nextCursor = startIndex + limit < matchingDocs.length ? pageDocs[pageDocs.length - 1]?.id ?? null : null;
 
     return Response.json({ items, nextCursor });
   } catch (error) {

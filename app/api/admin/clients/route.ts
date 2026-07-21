@@ -27,6 +27,10 @@ function normalizeMode(value: string | null): ClientsMode {
   return "all";
 }
 
+function normalizeSearch(value: string | null): string {
+  return value?.trim().toLocaleLowerCase() ?? "";
+}
+
 function toSortableTimestamp(value: unknown): number {
   if (!value || typeof value !== "object") {
     return 0;
@@ -82,6 +86,7 @@ export async function GET(request: Request): Promise<Response> {
     const mode = normalizeMode(url.searchParams.get("mode"));
     const cursor = url.searchParams.get("cursor")?.trim() || null;
     const limit = normalizeLimit(url.searchParams.get("limit"));
+    const search = normalizeSearch(url.searchParams.get("q"));
     const adminDb = getAdminDb();
 
     let query: Query<DocumentData> = adminDb.collection("users");
@@ -91,7 +96,18 @@ export async function GET(request: Request): Promise<Response> {
 
     const snapshot = await query.get();
 
-    const sortedDocs = [...snapshot.docs].sort((left, right) => {
+    const matchingDocs = snapshot.docs.filter((docRow) => {
+      if (!search) {
+        return true;
+      }
+
+      const data = docRow.data() as Record<string, unknown>;
+      const username = typeof data.username === "string" ? data.username.toLocaleLowerCase() : "";
+      const email = typeof data.email === "string" ? data.email.toLocaleLowerCase() : "";
+      return username.includes(search) || email.includes(search);
+    });
+
+    const sortedDocs = [...matchingDocs].sort((left, right) => {
       const leftData = left.data() as Record<string, unknown>;
       const rightData = right.data() as Record<string, unknown>;
       const leftTs = toSortableTimestamp(leftData.updatedAt) || toSortableTimestamp(leftData.createdAt);

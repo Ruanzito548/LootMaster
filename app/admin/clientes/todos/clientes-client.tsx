@@ -1,7 +1,7 @@
 "use client";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 
 import { auth } from "@/lib/firebase";
@@ -14,7 +14,7 @@ async function getAuthorizationHeader(user: User | null) {
   return token ? { Authorization: `Bearer ${token}` } : null;
 }
 
-async function fetchClientsPage(input: { user: User | null; cursor?: string | null }) {
+async function fetchClientsPage(input: { user: User | null; cursor?: string | null; search?: string }) {
   const headers = await getAuthorizationHeader(input.user);
   if (!headers) {
     throw new Error("Your session is not ready. Please wait a few seconds and try again.");
@@ -23,6 +23,9 @@ async function fetchClientsPage(input: { user: User | null; cursor?: string | nu
   const url = new URL("/api/admin/clients", window.location.origin);
   url.searchParams.set("mode", "all");
   url.searchParams.set("limit", String(PAGE_SIZE));
+  if (input.search?.trim()) {
+    url.searchParams.set("q", input.search.trim());
+  }
   if (input.cursor) {
     url.searchParams.set("cursor", input.cursor);
   }
@@ -57,7 +60,9 @@ export default function ClientesAdminClient() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState("");
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const deferredSearchText = useDeferredValue(searchText);
 
   useEffect(() => {
     if (!auth) {
@@ -89,7 +94,7 @@ export default function ClientesAdminClient() {
       }
 
       try {
-        const page = await fetchClientsPage({ user: currentUser });
+        const page = await fetchClientsPage({ user: currentUser, search: deferredSearchText });
         if (!cancelled) {
           setRows(page.items);
           setNextCursor(page.nextCursor);
@@ -110,7 +115,7 @@ export default function ClientesAdminClient() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [deferredSearchText]);
 
   useEffect(() => {
     if (!loadMoreRef.current || !nextCursor || loading || loadingMore) {
@@ -132,7 +137,7 @@ export default function ClientesAdminClient() {
 
           setLoadingMore(true);
           try {
-            const page = await fetchClientsPage({ user: currentUser, cursor: nextCursor });
+            const page = await fetchClientsPage({ user: currentUser, cursor: nextCursor, search: deferredSearchText });
             setRows((current) => {
               const merged = [...current, ...page.items];
               return Array.from(new Map(merged.map((item) => [item.uid, item])).values());
@@ -150,7 +155,7 @@ export default function ClientesAdminClient() {
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [loading, loadingMore, nextCursor]);
+  }, [deferredSearchText, loading, loadingMore, nextCursor]);
 
   const agents = useMemo(() => rows.filter((row) => row.isAgent), [rows]);
 
@@ -240,6 +245,20 @@ export default function ClientesAdminClient() {
           {errorMessage}
         </p>
       ) : null}
+
+      <div className="flex flex-col gap-2 rounded-xl border border-green-900 bg-black/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <label className="text-xs font-semibold uppercase tracking-[0.14em] text-green-600" htmlFor="clients-search">
+          Buscar por usuario ou email
+        </label>
+        <input
+          id="clients-search"
+          type="search"
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+          placeholder="Digite username ou email"
+          className="w-full rounded-md border border-green-800 bg-black px-3 py-2 text-sm text-green-200 outline-none transition placeholder:text-green-800 focus:border-emerald-500 sm:max-w-sm"
+        />
+      </div>
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
         {loading ? (

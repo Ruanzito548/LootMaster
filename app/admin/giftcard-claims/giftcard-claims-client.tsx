@@ -1,7 +1,7 @@
 "use client";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { useEffect, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 
 import { auth } from "@/lib/firebase";
@@ -23,6 +23,7 @@ async function fetchClaimsPage(input: {
   user: User | null;
   mode: Props["mode"];
   cursor?: string | null;
+  search?: string;
 }) {
   const headers = await getAuthorizationHeader(input.user);
   if (!headers) {
@@ -32,6 +33,9 @@ async function fetchClaimsPage(input: {
   const url = new URL("/api/admin/giftcard-claims", window.location.origin);
   url.searchParams.set("limit", String(PAGE_SIZE));
   url.searchParams.set("mode", input.mode);
+  if (input.search?.trim()) {
+    url.searchParams.set("q", input.search.trim());
+  }
   if (input.cursor) {
     url.searchParams.set("cursor", input.cursor);
   }
@@ -66,7 +70,9 @@ export default function GiftcardClaimsClient({ mode }: Props) {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState("");
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const deferredSearchText = useDeferredValue(searchText);
 
   useEffect(() => {
     if (!auth) {
@@ -98,7 +104,7 @@ export default function GiftcardClaimsClient({ mode }: Props) {
       }
 
       try {
-        const page = await fetchClaimsPage({ user: currentUser, mode });
+        const page = await fetchClaimsPage({ user: currentUser, mode, search: deferredSearchText });
         if (!cancelled) {
           setRows(page.items);
           setNextCursor(page.nextCursor);
@@ -119,7 +125,7 @@ export default function GiftcardClaimsClient({ mode }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [mode]);
+  }, [deferredSearchText, mode]);
 
   useEffect(() => {
     if (!loadMoreRef.current || !nextCursor || loading || loadingMore) {
@@ -141,7 +147,7 @@ export default function GiftcardClaimsClient({ mode }: Props) {
 
           setLoadingMore(true);
           try {
-            const page = await fetchClaimsPage({ user: currentUser, mode, cursor: nextCursor });
+            const page = await fetchClaimsPage({ user: currentUser, mode, cursor: nextCursor, search: deferredSearchText });
             setRows((current) => {
               const merged = [...current, ...page.items];
               return Array.from(new Map(merged.map((item) => [item.claimId, item])).values());
@@ -159,7 +165,7 @@ export default function GiftcardClaimsClient({ mode }: Props) {
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [loading, loadingMore, mode, nextCursor]);
+  }, [deferredSearchText, loading, loadingMore, mode, nextCursor]);
 
   const markSent = async (claimId: string) => {
     if (!auth?.currentUser || busyId) {
@@ -208,6 +214,20 @@ export default function GiftcardClaimsClient({ mode }: Props) {
       {errorMessage ? (
         <p className="rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">{errorMessage}</p>
       ) : null}
+
+      <div className="flex flex-col gap-2 rounded-xl border border-green-900 bg-black/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <label className="text-xs font-semibold uppercase tracking-[0.14em] text-green-600" htmlFor="giftcard-claims-search">
+          Buscar por usuario, email ou giftcard
+        </label>
+        <input
+          id="giftcard-claims-search"
+          type="search"
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+          placeholder="Digite username, email ou titulo"
+          className="w-full rounded-md border border-green-800 bg-black px-3 py-2 text-sm text-green-200 outline-none transition placeholder:text-green-800 focus:border-emerald-500 sm:max-w-sm"
+        />
+      </div>
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
         {loading ? (
