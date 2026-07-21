@@ -32,7 +32,7 @@ export function GameThemeProvider({ children }: GameThemeProviderProps) {
   const value = useMemo(
     () => ({
       theme,
-      setTheme: (_nextTheme: GameThemeKey) => {
+      setTheme: () => {
         // Global theme is fixed to TBC for the whole site.
       },
     }),

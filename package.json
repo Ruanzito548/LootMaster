@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "reindex:admin-search": "node scripts/reindex-admin-search.mjs"
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.3.1",

@@ -36,7 +36,6 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
   const [selectedServerId, setSelectedServerId] = useState<string>("");
   const [selectedFaction, setSelectedFaction] = useState<string>("");
 
-  const selectedGame = games.find((g) => g.id === selectedGameId);
   const servers = selectedGameId ? getServersByGameId(selectedGameId) : [];
   const requiresServerSelection = servers.length > 0;
   const requiresFactionSelection = requiresServerSelection && selectedGameId !== "retail";

@@ -2,7 +2,7 @@ export type GameThemeKey = "tbc-anniversary";
 
 export const GAME_THEME_STORAGE_KEY = "lootmaster:selected-theme";
 
-export function resolveThemeFromPath(_pathname: string): GameThemeKey | null {
+export function resolveThemeFromPath(): GameThemeKey | null {
   return "tbc-anniversary";
 }
 

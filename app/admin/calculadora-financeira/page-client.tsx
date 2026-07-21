@@ -10,7 +10,6 @@ import {
   Sparkles,
   TrendingUp,
   Wallet,
-  CreditCard,
   PiggyBank,
   Shield,
 } from "lucide-react";

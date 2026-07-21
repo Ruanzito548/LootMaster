@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Lottie from "lottie-react";
@@ -320,9 +321,12 @@ export function ChestOpeningAnimation({ isOpen, openSequence, onComplete, chestR
                   <source src={selectedFile.src} type={selectedFile.extension === "webm" ? "video/webm" : "video/mp4"} />
                 </video>
               ) : selectedFile ? (
-                <img
+                <NextImage
                   src={selectedFile.src}
                   alt="Chest opening"
+                  fill
+                  unoptimized
+                  sizes="100vw"
                   className="h-full w-full object-cover"
                   onLoad={() => setReady(true)}
                 />

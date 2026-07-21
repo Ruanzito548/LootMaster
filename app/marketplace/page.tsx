@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import type { User } from "firebase/auth";
 
 import { useProfileSession } from "@/app/profile/use-profile-session";
 import { MARKETPLACE_MIN_PRICE } from "@/lib/rpg-system";
@@ -32,6 +33,19 @@ type SaleHistory = {
   totalPrice: number;
   createdAtMs: number;
 };
+
+async function fetchMarketplacePayload(user: User) {
+  const token = await user.getIdToken();
+  const response = await fetch("/api/marketplace/listings", {
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  const payload = (await response.json()) as { listings?: Listing[]; salesHistory?: SaleHistory[]; error?: string };
+  return { response, payload };
+}
 
 const rarityOrder: Record<string, number> = {
   poor: 1,
@@ -86,23 +100,11 @@ export default function MarketplacePage() {
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(0);
 
-  const loadMarketplace = async () => {
-    if (!user) {
-      return;
-    }
-
+  const loadMarketplace = async (activeUser: User) => {
     setError(null);
 
     try {
-      const token = await user.getIdToken();
-      const response = await fetch("/api/marketplace/listings", {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
-      });
-
-      const payload = (await response.json()) as { listings?: Listing[]; salesHistory?: SaleHistory[]; error?: string };
+      const { response, payload } = await fetchMarketplacePayload(activeUser);
 
       if (!response.ok) {
         setError(payload.error ?? "Could not load marketplace.");
@@ -116,8 +118,16 @@ export default function MarketplacePage() {
     }
   };
 
+  const syncMarketplaceFromEffect = useEffectEvent(async () => {
+    if (!user) {
+      return;
+    }
+
+    await loadMarketplace(user);
+  });
+
   useEffect(() => {
-    void loadMarketplace();
+    void syncMarketplaceFromEffect();
   }, [user]);
 
   const filtered = useMemo(() => {
@@ -193,7 +203,7 @@ export default function MarketplacePage() {
         return;
       }
 
-      await loadMarketplace();
+      await loadMarketplace(user);
       reload();
     } catch {
       setError("Network error while buying listing.");
@@ -225,7 +235,7 @@ export default function MarketplacePage() {
         return;
       }
 
-      await loadMarketplace();
+      await loadMarketplace(user);
       reload();
     } catch {
       setError("Network error while removing listing.");

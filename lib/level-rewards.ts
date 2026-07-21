@@ -271,7 +271,7 @@ function buildSummaryItem(level: number, rarity: RewardRarity): InventoryItem {
   };
 }
 
-export function buildLevelReward(level: number, _sourceId = `level-${level}`): LevelRewardPreview {
+export function buildLevelReward(level: number, sourceId = `level-${level}`): LevelRewardPreview {
   const normalizedLevel = Math.max(1, Math.min(LEVEL_CAP, Math.floor(level)));
   const chestBundle = BATTLE_PASS_REWARDS[normalizedLevel] ?? {};
   const grantedItems = (Object.keys(chestBundle) as BattlePassChestId[])
@@ -287,7 +287,7 @@ export function buildLevelReward(level: number, _sourceId = `level-${level}`): L
     rarity,
     title,
     shortLabel: title,
-    description: `Battle Pass reward unlocked at level ${normalizedLevel}.`,
+    description: `Battle Pass reward unlocked at level ${normalizedLevel}. Source: ${sourceId}.`,
     icon: getBundleIcon(chestBundle),
     badge: rarityBadgeLabel[rarity],
     inventoryItem: buildSummaryItem(normalizedLevel, rarity),
