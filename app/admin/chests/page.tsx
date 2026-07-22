@@ -174,7 +174,7 @@ export default function AdminChestConfigPage() {
     };
   }, [user]);
 
-  const saveConfig = async (nextWalletEconomy?: { [key: string]: number | string }) => {
+  const saveConfig = async (nextWalletEconomy?: Record<string, unknown>) => {
     if (!user || saving) {
       return;
     }

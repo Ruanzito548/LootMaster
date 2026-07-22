@@ -196,33 +196,51 @@ async function fundChestEconomyFromCashback(orderId: string, cashbackCents: numb
     const snapshot = await tx.get(configDocRef);
     const currentData = snapshot.exists ? (snapshot.data() as Record<string, unknown> | undefined) : undefined;
     const walletConfig = sanitizeChestWalletEconomyConfig(currentData?.walletEconomy);
-    const walletState = currentData?.walletEconomyState
+    const walletEconomyState = currentData?.walletEconomyState as Record<string, unknown> | undefined;
+    const walletStateMap = (walletEconomyState?.wallets as Record<string, unknown> | undefined) ?? {};
+    const normalWallet = (walletStateMap["normal"] as Record<string, unknown> | undefined) ?? {};
+    const jackpotCommonWallet = (walletStateMap["jackpotCommon"] as Record<string, unknown> | undefined) ?? {};
+    const jackpotRareWallet = (walletStateMap["jackpotRare"] as Record<string, unknown> | undefined) ?? {};
+    const walletState = walletEconomyState
       ? {
           wallets: {
             normal: {
-              balanceUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.normal?.balanceUsd ?? 0),
-              totalReceivedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.normal?.totalReceivedUsd ?? 0),
-              totalDistributedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.normal?.totalDistributedUsd ?? 0),
-              rewardCount: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.normal?.rewardCount ?? 0),
-              lastMovementAtMs: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.normal?.lastMovementAtMs ?? Date.now()),
+              balanceUsd: Number(normalWallet.balanceUsd ?? 0),
+              totalReceivedUsd: Number(normalWallet.totalReceivedUsd ?? 0),
+              totalDistributedUsd: Number(normalWallet.totalDistributedUsd ?? 0),
+              rewardCount: Number(normalWallet.rewardCount ?? 0),
+              lastMovementAtMs: Number(normalWallet.lastMovementAtMs ?? Date.now()),
             },
             jackpotCommon: {
-              balanceUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotCommon?.balanceUsd ?? 0),
-              totalReceivedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotCommon?.totalReceivedUsd ?? 0),
-              totalDistributedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotCommon?.totalDistributedUsd ?? 0),
-              rewardCount: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotCommon?.rewardCount ?? 0),
-              lastMovementAtMs: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotCommon?.lastMovementAtMs ?? Date.now()),
+              balanceUsd: Number(jackpotCommonWallet.balanceUsd ?? 0),
+              totalReceivedUsd: Number(jackpotCommonWallet.totalReceivedUsd ?? 0),
+              totalDistributedUsd: Number(jackpotCommonWallet.totalDistributedUsd ?? 0),
+              rewardCount: Number(jackpotCommonWallet.rewardCount ?? 0),
+              lastMovementAtMs: Number(jackpotCommonWallet.lastMovementAtMs ?? Date.now()),
             },
             jackpotRare: {
-              balanceUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotRare?.balanceUsd ?? 0),
-              totalReceivedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotRare?.totalReceivedUsd ?? 0),
-              totalDistributedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotRare?.totalDistributedUsd ?? 0),
-              rewardCount: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotRare?.rewardCount ?? 0),
-              lastMovementAtMs: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotRare?.lastMovementAtMs ?? Date.now()),
+              balanceUsd: Number(jackpotRareWallet.balanceUsd ?? 0),
+              totalReceivedUsd: Number(jackpotRareWallet.totalReceivedUsd ?? 0),
+              totalDistributedUsd: Number(jackpotRareWallet.totalDistributedUsd ?? 0),
+              rewardCount: Number(jackpotRareWallet.rewardCount ?? 0),
+              lastMovementAtMs: Number(jackpotRareWallet.lastMovementAtMs ?? Date.now()),
             },
           },
-          ledger: Array.isArray((currentData.walletEconomyState as Record<string, unknown>).ledger) ? ((currentData.walletEconomyState as Record<string, unknown>).ledger as unknown[]) : [],
-          updatedAtMs: Number((currentData.walletEconomyState as Record<string, unknown>).updatedAtMs ?? Date.now()),
+          ledger: Array.isArray(walletEconomyState.ledger)
+            ? ((walletEconomyState.ledger as Array<Record<string, unknown>>).map((entry) => ({
+                id: String(entry.id ?? ""),
+                walletKey: (entry.walletKey as "normal" | "jackpotCommon" | "jackpotRare") ?? "normal",
+                movementType: (entry.movementType as "credit" | "reward" | "jackpot" | "adjustment" | "refund") ?? "adjustment",
+                amountUsd: Number(entry.amountUsd ?? 0),
+                balanceBeforeUsd: Number(entry.balanceBeforeUsd ?? 0),
+                balanceAfterUsd: Number(entry.balanceAfterUsd ?? 0),
+                source: String(entry.source ?? "unknown"),
+                referenceId: entry.referenceId ? String(entry.referenceId) : undefined,
+                createdAtMs: Number(entry.createdAtMs ?? Date.now()),
+                metadata: entry.metadata && typeof entry.metadata === "object" ? (entry.metadata as Record<string, unknown>) : undefined,
+              })))
+            : [],
+          updatedAtMs: Number(walletEconomyState.updatedAtMs ?? Date.now()),
         }
       : {
           wallets: {
