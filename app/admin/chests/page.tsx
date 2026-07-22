@@ -49,6 +49,13 @@ function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
+function formatLootCoinsFromCents(value: number): string {
+  return (value / 100).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export default function AdminChestConfigPage() {
   const { user, status } = useProfileSession();
 
@@ -118,15 +125,6 @@ export default function AdminChestConfigPage() {
             jackpot200xChancePercent: String(config.economy?.jackpot200xChancePercent ?? 0.5),
             jackpot20xMultiplier: String(config.economy?.jackpot20xMultiplier ?? 20),
             jackpot200xMultiplier: String(config.economy?.jackpot200xMultiplier ?? 200),
-          });
-          setEconomyInputs({
-            normalRewardPercent: String(payload.config?.economy?.normalRewardPercent ?? 5),
-            jackpot20xPercent: String(payload.config?.economy?.jackpot20xPercent ?? 1),
-            jackpot200xPercent: String(payload.config?.economy?.jackpot200xPercent ?? 1),
-            jackpot20xChancePercent: String(payload.config?.economy?.jackpot20xChancePercent ?? 2),
-            jackpot200xChancePercent: String(payload.config?.economy?.jackpot200xChancePercent ?? 0.5),
-            jackpot20xMultiplier: String(payload.config?.economy?.jackpot20xMultiplier ?? 20),
-            jackpot200xMultiplier: String(payload.config?.economy?.jackpot200xMultiplier ?? 200),
           });
         }
       } catch (error) {
@@ -289,6 +287,52 @@ export default function AdminChestConfigPage() {
                 />
               </div>
             </label>
+          </div>
+        </section>
+
+        <section className="mt-4 rounded-3xl border border-green-900 bg-green-950/20 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-green-600">Resumo da economia</p>
+              <h2 className="mt-1 text-xl font-black text-green-200">Pools de cashback e jackpots</h2>
+            </div>
+            <div className="rounded-full border border-green-800 bg-black/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-green-500">
+              Saldo persistido
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Pool normal</p>
+              <p className="mt-2 text-2xl font-black text-green-200">{formatLootCoinsFromCents(parsedSummary?.economyState?.normalBalanceCents ?? 0)} LC</p>
+              <p className="mt-1 text-xs text-green-700">Saldo para recompensas comuns dos baús</p>
+            </article>
+            <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Jackpot 20x</p>
+              <p className="mt-2 text-2xl font-black text-amber-300">{formatLootCoinsFromCents(parsedSummary?.economyState?.jackpot20xBalanceCents ?? 0)} LC</p>
+              <p className="mt-1 text-xs text-green-700">Fundo acumulado para o prêmio 20x</p>
+            </article>
+            <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Jackpot 200x</p>
+              <p className="mt-2 text-2xl font-black text-fuchsia-300">{formatLootCoinsFromCents(parsedSummary?.economyState?.jackpot200xBalanceCents ?? 0)} LC</p>
+              <p className="mt-1 text-xs text-green-700">Fundo acumulado para o prêmio 200x</p>
+            </article>
+            <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Total distribuído</p>
+              <p className="mt-2 text-2xl font-black text-cyan-300">{formatLootCoinsFromCents(parsedSummary?.economyState?.totalDistributedCents ?? 0)} LC</p>
+              <p className="mt-1 text-xs text-green-700">Valor já pago em recompensas e jackpots</p>
+            </article>
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
+              <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Fundos captados</p>
+              <p className="mt-2 text-xl font-black text-green-200">{formatLootCoinsFromCents(parsedSummary?.economyState?.totalFundedCents ?? 0)} LC</p>
+            </article>
+            <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
+              <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Prêmios jackpot pagos</p>
+              <p className="mt-2 text-xl font-black text-green-200">{formatLootCoinsFromCents(parsedSummary?.economyState?.totalJackpotAwardsCents ?? 0)} LC</p>
+            </article>
           </div>
         </section>
 
