@@ -56,6 +56,29 @@ function formatLootCoinsFromCents(value: number): string {
   });
 }
 
+function formatRelativeTime(value?: number): string {
+  if (!value) {
+    return "sem atualização";
+  }
+
+  const diffMinutes = Math.max(0, Math.round((Date.now() - value) / 60000));
+  if (diffMinutes < 1) {
+    return "agora mesmo";
+  }
+
+  if (diffMinutes < 60) {
+    return `${diffMinutes} min`;
+  }
+
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `${diffHours} h`;
+  }
+
+  const diffDays = Math.round(diffHours / 24);
+  return `${diffDays} d`;
+}
+
 export default function AdminChestConfigPage() {
   const { user, status } = useProfileSession();
 
@@ -86,6 +109,24 @@ export default function AdminChestConfigPage() {
       return null;
     }
   }, [rawJson]);
+
+  const policySnapshot = useMemo(() => {
+    const economyState = parsedSummary?.economyState;
+    const totalPoolBalanceCents =
+      (economyState?.normalBalanceCents ?? 0) +
+      (economyState?.jackpot20xBalanceCents ?? 0) +
+      (economyState?.jackpot200xBalanceCents ?? 0);
+    const totalFundedCents = economyState?.totalFundedCents ?? 0;
+    const balanceCoveragePercent = totalFundedCents > 0 ? (totalPoolBalanceCents / totalFundedCents) * 100 : 0;
+    const jackpotChancePercent =
+      Number(economyInputs.jackpot20xChancePercent) + Number(economyInputs.jackpot200xChancePercent);
+
+    return {
+      totalPoolBalanceCents,
+      balanceCoveragePercent,
+      jackpotChancePercent,
+    };
+  }, [economyInputs, parsedSummary]);
 
   useEffect(() => {
     let cancelled = false;
@@ -287,6 +328,52 @@ export default function AdminChestConfigPage() {
                 />
               </div>
             </label>
+          </div>
+        </section>
+
+        <section className="mt-4 rounded-3xl border border-green-900 bg-green-950/20 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-green-600">Resumo operacional</p>
+              <h2 className="mt-1 text-xl font-black text-green-200">Política atual dos baús</h2>
+            </div>
+            <div className="rounded-full border border-green-800 bg-black/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-green-500">
+              {parsedSummary?.economyState?.updatedAtMs ? `Atualizado ${formatRelativeTime(parsedSummary.economyState.updatedAtMs)}` : "Sem atualização"}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Reserva normal</p>
+              <p className="mt-2 text-2xl font-black text-green-200">{Number(economyInputs.normalRewardPercent).toFixed(2)}%</p>
+              <p className="mt-1 text-xs text-green-700">Percentual do cashback que alimenta recompensas comuns</p>
+            </article>
+            <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Jackpot 20x</p>
+              <p className="mt-2 text-2xl font-black text-amber-300">{Number(economyInputs.jackpot20xPercent).toFixed(2)}%</p>
+              <p className="mt-1 text-xs text-green-700">Alocação do cashback para o fundo jackpot 20x</p>
+            </article>
+            <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Jackpot 200x</p>
+              <p className="mt-2 text-2xl font-black text-fuchsia-300">{Number(economyInputs.jackpot200xPercent).toFixed(2)}%</p>
+              <p className="mt-1 text-xs text-green-700">Alocação do cashback para o fundo jackpot 200x</p>
+            </article>
+            <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Chance total de jackpots</p>
+              <p className="mt-2 text-2xl font-black text-cyan-300">{policySnapshot.jackpotChancePercent.toFixed(2)}%</p>
+              <p className="mt-1 text-xs text-green-700">Soma das chances de ativação dos jackpots</p>
+            </article>
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
+              <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Cobertura atual dos pools</p>
+              <p className="mt-2 text-xl font-black text-green-200">{policySnapshot.balanceCoveragePercent.toFixed(1)}%</p>
+            </article>
+            <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
+              <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Fundo vivo total</p>
+              <p className="mt-2 text-xl font-black text-green-200">{formatLootCoinsFromCents(policySnapshot.totalPoolBalanceCents)} LC</p>
+            </article>
           </div>
         </section>
 
