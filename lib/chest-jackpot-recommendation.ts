@@ -1,5 +1,6 @@
 import { buildDefaultChestEconomyConfig, type ChestEconomyConfig } from "./chest-economy";
-import { CHEST_EXPECTED_VALUE_USD, type ChestId } from "./chest-loot";
+import { CHEST_EXPECTED_VALUE_USD } from "./chest-loot";
+import type { ChestId } from "./chests";
 
 export type JackpotTierRecommendation = {
   multiplier: number;
