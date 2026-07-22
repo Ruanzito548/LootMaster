@@ -181,7 +181,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
     }).format(value);
 
   const parsePriceInput = (value: string) => {
-    const normalizedValue = value.replace(/\s/g, "").replace(",", ".");
+    const normalizedValue = value.replace(/\s/g, "");
     const parsedValue = Number(normalizedValue);
 
     return Number.isFinite(parsedValue) ? parsedValue : 0;
@@ -328,7 +328,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                         id="price-per-thousand"
                         type="text"
                         inputMode="decimal"
-                        value={activeEntry.pricePerThousand.toString().replace(".", ",")}
+                        value={activeEntry.pricePerThousand.toString()}
                         onChange={(event) =>
                           updateDraft({ pricePerThousand: parsePriceInput(event.target.value) })
                         }
@@ -336,7 +336,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                       />
                     </div>
                     <p className="mt-2 text-sm text-green-700">
-                      Ex.: 20,50 para cobrar $20,50 por 1.000 gold.
+                      Ex.: 20.50 para cobrar $20.50 por 1.000 gold.
                     </p>
                   </div>
 
