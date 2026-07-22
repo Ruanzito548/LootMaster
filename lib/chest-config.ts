@@ -1,4 +1,5 @@
 import { getAdminDb } from "@/lib/firebase-admin";
+import { buildDefaultChestEconomyConfig, buildDefaultChestEconomyState, sanitizeChestEconomyConfig, sanitizeChestEconomyState, type ChestEconomyConfig, type ChestEconomyState } from "@/lib/chest-economy";
 import { CHEST_DEFINITIONS, CHEST_IDS, type ChestDefinition, type ChestId, type ChestRewardOddsEntry, type ChestRewardType } from "@/lib/chests";
 import type { InventoryItem } from "@/lib/profile-data";
 
@@ -35,6 +36,8 @@ export type ChestSystemConfig = {
   schemaVersion: number;
   updatedAtMs: number;
   byChest: Record<ChestId, ChestDropProfile>;
+  economy: ChestEconomyConfig;
+  economyState: ChestEconomyState;
 };
 
 const CHEST_CONFIG_SCHEMA_VERSION = 2;
@@ -241,6 +244,8 @@ export function buildDefaultChestSystemConfig(): ChestSystemConfig {
     schemaVersion: CHEST_CONFIG_SCHEMA_VERSION,
     updatedAtMs: Date.now(),
     byChest,
+    economy: buildDefaultChestEconomyConfig(),
+    economyState: buildDefaultChestEconomyState(),
   };
 }
 
@@ -252,7 +257,7 @@ export function sanitizeChestSystemConfig(source: unknown): ChestSystemConfig {
   }
 
   const parsed = source as Partial<ChestSystemConfig>;
-  if (parsed.schemaVersion !== CHEST_CONFIG_SCHEMA_VERSION) {
+  if (parsed.schemaVersion !== CHEST_CONFIG_SCHEMA_VERSION && parsed.schemaVersion !== 2) {
     return fallback;
   }
 
@@ -311,6 +316,8 @@ export function sanitizeChestSystemConfig(source: unknown): ChestSystemConfig {
     schemaVersion: CHEST_CONFIG_SCHEMA_VERSION,
     updatedAtMs: asBoundedInt(parsed.updatedAtMs, Date.now(), 0, Number.MAX_SAFE_INTEGER),
     byChest,
+    economy: sanitizeChestEconomyConfig(parsed.economy),
+    economyState: sanitizeChestEconomyState(parsed.economyState),
   };
 }
 

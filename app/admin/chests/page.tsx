@@ -25,6 +25,24 @@ type ChestConfigPayload = {
   schemaVersion: number;
   updatedAtMs: number;
   byChest: Record<ChestId, ChestProfileConfig>;
+  economy?: {
+    normalRewardPercent: number;
+    jackpot20xPercent: number;
+    jackpot200xPercent: number;
+    jackpot20xChancePercent: number;
+    jackpot200xChancePercent: number;
+    jackpot20xMultiplier: number;
+    jackpot200xMultiplier: number;
+  };
+  economyState?: {
+    normalBalanceCents: number;
+    jackpot20xBalanceCents: number;
+    jackpot200xBalanceCents: number;
+    totalFundedCents: number;
+    totalDistributedCents: number;
+    totalJackpotAwardsCents: number;
+    updatedAtMs: number;
+  };
 };
 
 function formatJson(value: unknown): string {
@@ -35,6 +53,15 @@ export default function AdminChestConfigPage() {
   const { user, status } = useProfileSession();
 
   const [rawJson, setRawJson] = useState("");
+  const [economyInputs, setEconomyInputs] = useState({
+    normalRewardPercent: "5",
+    jackpot20xPercent: "1",
+    jackpot200xPercent: "1",
+    jackpot20xChancePercent: "2",
+    jackpot200xChancePercent: "0.5",
+    jackpot20xMultiplier: "20",
+    jackpot200xMultiplier: "200",
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -81,7 +108,26 @@ export default function AdminChestConfigPage() {
         }
 
         if (!cancelled) {
-          setRawJson(formatJson(payload.config));
+          const config = payload.config;
+          setRawJson(formatJson(config));
+          setEconomyInputs({
+            normalRewardPercent: String(config.economy?.normalRewardPercent ?? 5),
+            jackpot20xPercent: String(config.economy?.jackpot20xPercent ?? 1),
+            jackpot200xPercent: String(config.economy?.jackpot200xPercent ?? 1),
+            jackpot20xChancePercent: String(config.economy?.jackpot20xChancePercent ?? 2),
+            jackpot200xChancePercent: String(config.economy?.jackpot200xChancePercent ?? 0.5),
+            jackpot20xMultiplier: String(config.economy?.jackpot20xMultiplier ?? 20),
+            jackpot200xMultiplier: String(config.economy?.jackpot200xMultiplier ?? 200),
+          });
+          setEconomyInputs({
+            normalRewardPercent: String(payload.config?.economy?.normalRewardPercent ?? 5),
+            jackpot20xPercent: String(payload.config?.economy?.jackpot20xPercent ?? 1),
+            jackpot200xPercent: String(payload.config?.economy?.jackpot200xPercent ?? 1),
+            jackpot20xChancePercent: String(payload.config?.economy?.jackpot20xChancePercent ?? 2),
+            jackpot200xChancePercent: String(payload.config?.economy?.jackpot200xChancePercent ?? 0.5),
+            jackpot20xMultiplier: String(payload.config?.economy?.jackpot20xMultiplier ?? 20),
+            jackpot200xMultiplier: String(payload.config?.economy?.jackpot200xMultiplier ?? 200),
+          });
         }
       } catch (error) {
         if (!cancelled) {
@@ -113,6 +159,15 @@ export default function AdminChestConfigPage() {
     try {
       const parsed = JSON.parse(rawJson);
       const token = await user.getIdToken();
+      const nextEconomy = {
+        normalRewardPercent: Number(economyInputs.normalRewardPercent),
+        jackpot20xPercent: Number(economyInputs.jackpot20xPercent),
+        jackpot200xPercent: Number(economyInputs.jackpot200xPercent),
+        jackpot20xChancePercent: Number(economyInputs.jackpot20xChancePercent),
+        jackpot200xChancePercent: Number(economyInputs.jackpot200xChancePercent),
+        jackpot20xMultiplier: Number(economyInputs.jackpot20xMultiplier),
+        jackpot200xMultiplier: Number(economyInputs.jackpot200xMultiplier),
+      };
 
       const response = await fetch("/api/admin/rewards/chests-config", {
         method: "PUT",
@@ -120,7 +175,7 @@ export default function AdminChestConfigPage() {
           "content-type": "application/json",
           authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ config: parsed }),
+        body: JSON.stringify({ config: { ...parsed, economy: nextEconomy } }),
       });
 
       const payload = (await response.json()) as { config?: ChestConfigPayload; error?: string };
@@ -172,6 +227,68 @@ export default function AdminChestConfigPage() {
                 </article>
               );
             })}
+          </div>
+        </section>
+
+        <section className="mt-4 rounded-3xl border border-green-900 bg-green-950/20 p-5">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              { key: "normalRewardPercent", label: "Reserva para premiações normais (%)", hint: "Percentual do cashback destinado às recompensas comuns dos baús" },
+              { key: "jackpot20xPercent", label: "Reserva jackpot 20x (%)", hint: "Percentual do cashback que alimenta o fundo jackpot 20x" },
+              { key: "jackpot200xPercent", label: "Reserva jackpot 200x (%)", hint: "Percentual do cashback que alimenta o fundo jackpot 200x" },
+              { key: "jackpot20xChancePercent", label: "Chance jackpot 20x (%)", hint: "Chance de o loot ativar o jackpot 20x" },
+            ].map((field) => (
+              <label key={field.key} className="grid gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-green-600">
+                {field.label}
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={economyInputs[field.key as keyof typeof economyInputs]}
+                  onChange={(event) => setEconomyInputs((current) => ({ ...current, [field.key]: event.target.value }))}
+                  className="rounded-2xl border border-green-900 bg-black/70 px-3 py-3 text-sm font-semibold text-green-200 outline-none transition focus:border-green-600"
+                />
+                <span className="text-[11px] font-medium normal-case tracking-normal text-green-700">{field.hint}</span>
+              </label>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-green-600">
+              Chance jackpot 200x (%)
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={economyInputs.jackpot200xChancePercent}
+                onChange={(event) => setEconomyInputs((current) => ({ ...current, jackpot200xChancePercent: event.target.value }))}
+                className="rounded-2xl border border-green-900 bg-black/70 px-3 py-3 text-sm font-semibold text-green-200 outline-none transition focus:border-green-600"
+              />
+              <span className="text-[11px] font-medium normal-case tracking-normal text-green-700">Chance de ativar o jackpot 200x no loot</span>
+            </label>
+            <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-green-600">
+              Multiplicador jackpot 20x / 200x
+              <div className="grid gap-2 sm:grid-cols-2">
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={economyInputs.jackpot20xMultiplier}
+                  onChange={(event) => setEconomyInputs((current) => ({ ...current, jackpot20xMultiplier: event.target.value }))}
+                  className="rounded-2xl border border-green-900 bg-black/70 px-3 py-3 text-sm font-semibold text-green-200 outline-none transition focus:border-green-600"
+                />
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={economyInputs.jackpot200xMultiplier}
+                  onChange={(event) => setEconomyInputs((current) => ({ ...current, jackpot200xMultiplier: event.target.value }))}
+                  className="rounded-2xl border border-green-900 bg-black/70 px-3 py-3 text-sm font-semibold text-green-200 outline-none transition focus:border-green-600"
+                />
+              </div>
+            </label>
           </div>
         </section>
 

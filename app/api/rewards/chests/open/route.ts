@@ -4,6 +4,14 @@ import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { getChestDefinition, type ChestId } from "@/lib/chests";
 import { CHEST_EXPECTED_VALUE_USD, rollChestLoot } from "@/lib/chest-loot";
+import {
+  applyChestEconomyReward,
+  buildDefaultChestEconomyConfig,
+  fundChestEconomyPools,
+  resolveChestEconomyReward,
+  sanitizeChestEconomyConfig,
+  sanitizeChestEconomyState,
+} from "@/lib/chest-economy";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
 import { getInventorySlotLimitFromLevel, mergeItemIntoInventory } from "@/lib/rpg-system";
@@ -146,7 +154,11 @@ export async function POST(request: Request): Promise<Response> {
     const historyRef = adminDb.collection("reward-history").doc();
 
     const txResult = await adminDb.runTransaction<OpenChestResponse>(async (tx) => {
-      const [userSnapshot, requestSnapshot] = await Promise.all([tx.get(userRef), tx.get(requestRef)]);
+      const [userSnapshot, requestSnapshot, chestConfigSnapshot] = await Promise.all([
+        tx.get(userRef),
+        tx.get(requestRef),
+        tx.get(adminDb.collection("app-config").doc("chest-system")),
+      ]);
 
       if (requestSnapshot.exists) {
         const payload = requestSnapshot.data() as OpenChestResponse;
@@ -169,10 +181,24 @@ export async function POST(request: Request): Promise<Response> {
       let nextInventory = decrementChest(strictInventory, chestDefinition.inventoryItemId);
 
       const rolledLoot = rollChestLoot(chestDefinition.id);
+      const chestConfig = chestConfigSnapshot.exists
+        ? sanitizeChestEconomyConfig(chestConfigSnapshot.data()?.economy)
+        : buildDefaultChestEconomyConfig();
+      const chestEconomyState = sanitizeChestEconomyState(chestConfigSnapshot.data()?.economyState);
       let nextLootCoins = mappedProfile.lootCoins;
       const rewardParts: string[] = [];
       let totalCoins = 0;
       let singleInventoryReward: InventoryItem | undefined;
+      let rewardEconomy: ReturnType<typeof resolveChestEconomyReward> | null = null;
+
+      const rewardPoolState = fundChestEconomyPools(chestEconomyState, Math.max(0, Math.round(rolledLoot.totalValueUsd * 100)), chestConfig);
+      rewardEconomy = resolveChestEconomyReward(chestDefinition.id, chestConfig, rewardPoolState, Math.random() * 100);
+
+      if (rewardEconomy) {
+        rewardParts.push(`${rewardEconomy.amountCents / 100} LC (${rewardEconomy.reason})`);
+        nextLootCoins = Math.round((nextLootCoins + rewardEconomy.amountCents / 100) * 100) / 100;
+        totalCoins += rewardEconomy.amountCents / 100;
+      }
 
       for (const drop of rolledLoot.drops) {
         if (drop.kind === "coins") {
@@ -218,11 +244,23 @@ export async function POST(request: Request): Promise<Response> {
         inventorySlotLimit: mappedProfile.inventorySlotLimit ?? slotLimit,
       };
 
+      const nextEconomyState = rewardEconomy ? applyChestEconomyReward(rewardPoolState, rewardEconomy) : rewardPoolState;
+
       tx.set(
         userRef,
         {
           inventory: nextInventory,
           lootCoins: nextLootCoins,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      tx.set(
+        adminDb.collection("app-config").doc("chest-system"),
+        {
+          economy: chestConfig,
+          economyState: nextEconomyState,
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true },
@@ -242,6 +280,7 @@ export async function POST(request: Request): Promise<Response> {
         reward,
         requestId,
         createdAt: FieldValue.serverTimestamp(),
+        economyReward: rewardEconomy,
       });
 
       writeActivityLog(tx, adminDb, {

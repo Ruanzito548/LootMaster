@@ -8,6 +8,7 @@ import {
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { fundChestEconomyPools, sanitizeChestEconomyConfig, sanitizeChestEconomyState } from "@/lib/chest-economy";
 import { computeOrderFinancials } from "@/lib/order-financials";
 import {
   SITE_FEE_SETTINGS_DOC_ID,
@@ -183,6 +184,35 @@ async function resolveSessionCostPercents(session: Stripe.Checkout.Session) {
   };
 }
 
+async function fundChestEconomyFromCashback(orderId: string, cashbackCents: number): Promise<void> {
+  if (cashbackCents <= 0) {
+    return;
+  }
+
+  const adminDb = getAdminDb();
+  const configDocRef = adminDb.collection("app-config").doc("chest-system");
+
+  await adminDb.runTransaction(async (tx) => {
+    const snapshot = await tx.get(configDocRef);
+    const currentData = snapshot.exists ? (snapshot.data() as Record<string, unknown> | undefined) : undefined;
+    const config = sanitizeChestEconomyConfig(currentData?.economy);
+    const state = sanitizeChestEconomyState(currentData?.economyState);
+    const nextState = fundChestEconomyPools(state, cashbackCents, config);
+
+    tx.set(
+      configDocRef,
+      {
+        economy: config,
+        economyState: nextState,
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedAtMs: Date.now(),
+        economyUpdatedBy: orderId,
+      },
+      { merge: true },
+    );
+  });
+}
+
 async function persistPaidOrder(session: Stripe.Checkout.Session, supplierPercentage: number): Promise<void> {
   const meta = session.metadata ?? {};
   const adminDb = getAdminDb();
@@ -247,6 +277,8 @@ async function persistPaidOrder(session: Stripe.Checkout.Session, supplierPercen
     },
     { merge: true },
   );
+
+  await fundChestEconomyFromCashback(session.id, financials.cashback);
 }
 
 type ResolvedCustomerAgent = {
