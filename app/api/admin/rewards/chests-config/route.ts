@@ -112,7 +112,7 @@ export async function PUT(request: Request): Promise<Response> {
           nextTotalFragmentChance: nextSummary.totalFragmentChance,
           previousTotalFullGiftChance: previousSummary.totalFullGiftChance,
           nextTotalFullGiftChance: nextSummary.totalFullGiftChance,
-          nextEconomy: sanitized.economy,
+          nextEconomy: sanitized.economy ? JSON.stringify(sanitized.economy) : null,
         },
         mirrorToAdminAudit: true,
       });
