@@ -15,12 +15,13 @@ export default async function AdminLayout({
   await requireAuthenticatedAdminPage();
 
   return (
-    <div className="admin-dashboard-theme min-h-screen bg-[#0b0c10] text-green-200">
+    <div className="admin-dashboard-theme min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(34,197,94,0.16),_transparent_28%),linear-gradient(135deg,_#060816_0%,_#0b1118_40%,_#070b10_100%)] text-green-200">
       <div className="flex w-full">
-        <aside className="fixed left-0 top-20 z-30 hidden h-[calc(100vh-5rem)] w-[260px] border-r border-green-900/40 bg-black/80 p-4 lg:flex lg:flex-col">
-          <div className="rounded-2xl border border-green-900/50 bg-green-950/20 p-4">
+        <aside className="fixed left-0 top-20 z-30 hidden h-[calc(100vh-5rem)] w-[280px] border-r border-green-900/40 bg-black/70 p-4 shadow-[0_0_60px_rgba(0,0,0,0.35)] backdrop-blur-xl lg:flex lg:flex-col">
+          <div className="rounded-2xl border border-green-900/50 bg-gradient-to-br from-green-950/70 to-black/70 p-4">
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-green-500">Admin</p>
             <p className="mt-2 text-xl font-black text-green-200">Loot Master</p>
+            <p className="mt-2 text-sm text-green-400/70">Centro de controle operacional</p>
           </div>
 
           <nav className="mt-5 grid gap-1.5">
@@ -155,13 +156,13 @@ export default async function AdminLayout({
 
           <div className="mt-auto rounded-2xl border border-green-900/50 bg-black/50 p-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-green-600">Painel</p>
-            <p className="mt-1 text-xs text-green-300/80">Estrutura unificada com navegacao lateral e area central ampla.</p>
+            <p className="mt-1 text-xs text-green-300/80">Estrutura unificada com navegacao lateral, visão rápida e contexto operacional.</p>
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1 lg:ml-[260px]">
+        <div className="min-w-0 flex-1 lg:ml-[280px]">
           <main className="px-4 py-5 lg:px-8">
-            <div className="rounded-2xl border border-green-900/40 bg-[#111317] p-4 sm:p-5">{children}</div>
+            <div className="rounded-[28px] border border-green-900/40 bg-[#0f1318]/90 p-4 shadow-[0_0_40px_rgba(0,0,0,0.25)] sm:p-5">{children}</div>
           </main>
         </div>
       </div>
