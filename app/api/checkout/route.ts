@@ -8,6 +8,7 @@ import {
   buildDefaultSiteFeeSettings,
   sanitizeSiteFeeSettings,
 } from "@/lib/site-fee-settings";
+import { getUsdToCurrencyRate } from "@/lib/checkout-pricing";
 
 type CheckoutBody = {
   gameId: string;
@@ -235,15 +236,20 @@ export async function POST(request: Request): Promise<Response> {
   const baseAmountCents = Math.round(basePrice * 100);
   const unitAmountBrl = computeFinalAmount(basePrice, paymentMethod, cardGatewayFeePercent);
 
-  const normalizedCurrency = (currency ?? "BRL").toLowerCase();
-  const selectedCurrency = ["brl", "usd", "eur", "gbp"].includes(normalizedCurrency) ? normalizedCurrency : "brl";
+  const normalizedCurrency = (currency ?? "USD").toLowerCase();
+  const selectedCurrency = ["brl", "usd", "eur", "gbp"].includes(normalizedCurrency) ? normalizedCurrency : "usd";
   const parsedFxRate = typeof fxRateFromBrl === "number" && Number.isFinite(fxRateFromBrl) && fxRateFromBrl > 0
     ? fxRateFromBrl
     : 1;
 
-  const unitAmount = selectedCurrency === "brl"
-    ? unitAmountBrl
-    : Math.max(1, Math.round(unitAmountBrl * parsedFxRate));
+  const usdToCurrencyRate = getUsdToCurrencyRate(selectedCurrency.toUpperCase(), {
+    USD: 1,
+    BRL: selectedCurrency === "brl" ? parsedFxRate : 1,
+    EUR: selectedCurrency === "eur" ? parsedFxRate : 1,
+    GBP: selectedCurrency === "gbp" ? parsedFxRate : 1,
+  });
+
+  const unitAmount = Math.max(1, Math.round(unitAmountBrl * usdToCurrencyRate));
 
   if (unitAmount <= 0) {
     return Response.json({ error: "Invalid price." }, { status: 422 });

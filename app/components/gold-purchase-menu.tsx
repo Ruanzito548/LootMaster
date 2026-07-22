@@ -8,6 +8,7 @@ import { defaultGoldConfigEntry, emptyGoldConfig, getGoldConfigFor } from "../da
 import type { GameServer } from "../data/games";
 import { subscribeToGoldConfig } from "../../lib/gold-config";
 import { auth } from "../../lib/firebase";
+import { getUsdToCurrencyRate } from "../../lib/checkout-pricing";
 
 type GoldPurchaseMenuProps = {
   gameId: string;
@@ -191,10 +192,10 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   const selectedPayment = countryConfig.methods.find((method) => method.id === paymentMethod) ?? countryConfig.methods[0];
   const selectedCurrency = countryConfig.currency;
   const selectedLocale = countryConfig.locale;
-  const displayRate = ratesByCurrency[selectedCurrency] ?? 1;
-  const finalPriceLocalized = finalPrice * displayRate;
-  const basePriceLocalized = basePrice * displayRate;
-  const paymentAdjustmentLocalized = paymentAdjustment * displayRate;
+  const usdToCurrencyRate = getUsdToCurrencyRate(selectedCurrency, ratesByCurrency);
+  const finalPriceLocalized = finalPrice * usdToCurrencyRate;
+  const basePriceLocalized = basePrice * usdToCurrencyRate;
+  const paymentAdjustmentLocalized = paymentAdjustment * usdToCurrencyRate;
 
   const progressPercent = useMemo(() => {
     let score = 0;
@@ -230,7 +231,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
           currency: selectedCurrency,
           paymentGateway: selectedPayment?.gateway ?? "stripe",
           paymentProvider: selectedPayment?.provider ?? "Stripe",
-          fxRateFromBrl: displayRate,
+          fxRateFromBrl: usdToCurrencyRate,
           nickname: nickname.trim(),
           serverId: selectedServerId,
           server: selectedServer?.name ?? "",
