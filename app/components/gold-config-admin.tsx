@@ -28,6 +28,7 @@ type GoldConfigAdminProps = {
 export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
   const [savedConfig, setSavedConfig] = useState<GoldConfig>(emptyGoldConfig);
   const [draftEntry, setDraftEntry] = useState<GoldConfigEntry | null>(null);
+  const [priceInputText, setPriceInputText] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -101,6 +102,10 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
 
   // indica se o escopo atual tem doc proprio salvo no Firebase
   const hasSavedOverride = currentKey !== "" && !!savedConfig[currentKey];
+
+  useEffect(() => {
+    setPriceInputText(activeEntry.pricePerThousand.toString());
+  }, [activeEntry.pricePerThousand, selectedGameId, selectedServerId, selectedFaction]);
 
   useEffect(() => {
     setDraftEntry(null);
@@ -180,8 +185,6 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
       currency: "USD",
       maximumFractionDigits: 2,
     }).format(value);
-
-  const priceInputValue = activeEntry.pricePerThousand.toString();
 
   return (
     <div className={embedded ? "text-green-400" : "min-h-screen bg-black text-green-400"}>
@@ -324,14 +327,17 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                         id="price-per-thousand"
                         type="text"
                         inputMode="decimal"
-                        value={priceInputValue}
+                        value={priceInputText}
                         onChange={(event) => {
                           const normalizedValue = normalizeGoldPriceInput(event.target.value);
-                          const parsedValue = parseGoldPriceInput(normalizedValue);
+                          setPriceInputText(normalizedValue);
 
-                          updateDraft({
-                            pricePerThousand: parsedValue ?? 0,
-                          });
+                          const parsedValue = parseGoldPriceInput(normalizedValue);
+                          if (parsedValue !== null) {
+                            updateDraft({
+                              pricePerThousand: parsedValue,
+                            });
+                          }
                         }}
                         className="w-full bg-transparent outline-none"
                       />
