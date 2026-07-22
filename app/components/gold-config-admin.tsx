@@ -162,92 +162,17 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
     scopeReady &&
     (!requiresFactionSelection || selectedFaction !== "");
 
-  const dashboardByGame = games.map((game) => {
-    const gameServers = getServersByGameId(game.id);
+  const scopeTitle = selectedGameId
+    ? [
+        games.find((game) => game.id === selectedGameId)?.title ?? selectedGameId,
+        requiresServerSelection && selectedServer ? selectedServer.name : null,
+        requiresFactionSelection && selectedFaction ? selectedFaction : null,
+      ]
+        .filter(Boolean)
+        .join(" • ")
+    : "Selecione um jogo";
 
-    if (gameServers.length === 0) {
-      const key = buildGoldKey(game.id);
-      return {
-        gameId: game.id,
-        gameTitle: game.title,
-        rows: [
-          {
-            key,
-            server: "-",
-            faction: "-",
-            config: savedConfig[key],
-          },
-        ],
-      };
-    }
-
-    return {
-      gameId: game.id,
-      gameTitle: game.title,
-      rows:
-        game.id === "retail"
-          ? gameServers.map((server) => {
-              const key = buildGoldKey(game.id, server.id);
-              return {
-                key,
-                server: server.name,
-                faction: "-",
-                config: savedConfig[key],
-              };
-            })
-          : gameServers.flatMap((server) =>
-              (server.factions.length > 0 ? server.factions : ["-"]).map((faction) => {
-                const key = buildGoldKey(game.id, server.id, faction === "-" ? undefined : faction);
-                return {
-                  key,
-                  server: server.name,
-                  faction,
-                  config: savedConfig[key],
-                };
-              })
-            ),
-    };
-  });
-
-  const gameDashboardStyle = (gameId: string) => {
-    if (gameId === "tbc-anniversary") {
-      return {
-        backgroundImage:
-          'linear-gradient(rgba(8, 18, 10, 0.46), rgba(8, 18, 10, 0.58)), url("/wow/wow-tbc/tbc-logo.avif")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      };
-    }
-
-    if (gameId === "retail") {
-      return {
-        backgroundImage:
-          'linear-gradient(rgba(7, 16, 28, 0.46), rgba(7, 16, 28, 0.58)), url("/wow/wow-retail/midinight-logo.jpeg")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      };
-    }
-
-    if (gameId === "classic-era") {
-      return {
-        backgroundImage:
-          'linear-gradient(rgba(30, 21, 12, 0.46), rgba(30, 21, 12, 0.58)), url("/wow/wow-classic-era/classic-era-logo.jpg")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      };
-    }
-
-    if (gameId === "mist-of-pandaria") {
-      return {
-        backgroundImage:
-          'linear-gradient(rgba(8, 28, 22, 0.46), rgba(8, 28, 22, 0.58)), url("/wow/wow-pandaria/pandaria-logo.jpg")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      };
-    }
-
-    return undefined;
-  };
+  const scopeStatusLabel = hasSavedOverride ? "Configuração própria" : "Usando padrão";
 
   return (
     <div className={embedded ? "text-green-400" : "min-h-screen bg-black text-green-400"}>
@@ -257,10 +182,10 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
             Admin
           </p>
           <h1 className="text-4xl font-black leading-tight text-green-300 sm:text-5xl">
-            Gold settings
+            Configuração de Gold
           </h1>
           <p className="max-w-2xl text-base leading-8 text-green-600">
-            Configure gold price and minimum amount by game, server, and faction. Each combination is saved separately in Firebase.
+            Defina preço, valor mínimo e máximo para cada jogo, servidor e facção sem misturar regras.
           </p>
         </div>
 
@@ -275,52 +200,22 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
           </section>
         ) : null}
 
-        <section className="mt-8">
-          <p className="text-sm font-bold uppercase tracking-[0.24em] text-green-600">
-            Preview Dashboard
-          </p>
-          <h2 className="mt-4 text-2xl font-black text-green-300">
-            Configuration by game / server / faction
-          </h2>
+        <section className="mt-8 rounded-[1.5rem] border border-green-900 bg-green-950/20 p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.24em] text-green-600">
+                Escopo atual
+              </p>
+              <h2 className="mt-2 text-xl font-black text-green-300">{scopeTitle}</h2>
+              <p className="mt-2 text-sm text-green-600">
+                Preço: <span className="font-semibold text-green-200">${activeEntry.pricePerThousand}</span> por 1.000 gold · mínimo {activeEntry.minGold.toLocaleString()} · máximo {activeEntry.maxGold.toLocaleString()}
+              </p>
+            </div>
 
-          <div className="mt-6 grid gap-5 xl:grid-cols-2">
-            {dashboardByGame.map((gameBlock) => (
-              <article
-                key={gameBlock.gameId}
-                className="rounded-[1.4rem] border border-green-900 bg-green-950/20 p-6"
-                style={gameDashboardStyle(gameBlock.gameId)}
-              >
-                <h3 className="text-xl font-black text-green-300">{gameBlock.gameTitle}</h3>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {gameBlock.rows.map((row) => (
-                    <div
-                      key={row.key}
-                      className="rounded-[1rem] border border-green-900 bg-black/40 p-4"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-green-300">
-                          {row.faction === "-" ? row.server : `${row.server} / ${row.faction}`}
-                        </p>
-                        <span className="font-mono text-[10px] text-green-700">
-                          {row.key}
-                        </span>
-                      </div>
-
-                      {row.config ? (
-                        <div className="mt-3 grid gap-1 text-sm text-green-400">
-                          <p>Price: <span className="font-semibold">${row.config.pricePerThousand}</span></p>
-                          <p>Min: <span className="font-semibold">{row.config.minGold.toLocaleString()}</span></p>
-                          <p>Max: <span className="font-semibold">{row.config.maxGold.toLocaleString()}</span></p>
-                        </div>
-                      ) : (
-                        <p className="mt-3 text-sm font-semibold text-rose-300">Not configured</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </article>
-            ))}
+            <div className="rounded-2xl border border-green-900/70 bg-black/35 px-4 py-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-green-500">Status</p>
+              <p className="mt-2 text-sm font-semibold text-green-200">{scopeStatusLabel}</p>
+            </div>
           </div>
         </section>
 
@@ -331,7 +226,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
               {/* Game - required */}
               <div>
                 <label htmlFor="game-select" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
-                  Game
+                  Jogo
                 </label>
                 <select
                   id="game-select"
@@ -343,7 +238,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                   }}
                   className="mt-3 w-full rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600"
                 >
-                  <option value="">- Select a game -</option>
+                  <option value="">- Selecione um jogo -</option>
                   {games.map((game) => (
                     <option key={game.id} value={game.id}>
                       {game.title}
@@ -355,7 +250,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
               {/* Server */}
               <div>
                 <label htmlFor="server-select" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
-                  {requiresFactionSelection ? "Server" : "Region"}
+                  {requiresFactionSelection ? "Servidor" : "Região"}
                 </label>
                 <select
                   id="server-select"
@@ -369,10 +264,10 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                 >
                   <option value="">
                     {servers.length === 0
-                      ? "No servers registered"
+                      ? "Nenhum servidor cadastrado"
                       : requiresFactionSelection
-                      ? "Select a server"
-                      : "Select a region"}
+                      ? "Selecione um servidor"
+                      : "Selecione uma região"}
                   </option>
                   {servers.map((server) => (
                     <option key={server.id} value={server.id}>
@@ -386,7 +281,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
               {requiresFactionSelection ? (
               <div>
                 <label htmlFor="faction-select" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
-                  Faction
+                  Facção
                 </label>
                 <select
                   id="faction-select"
@@ -396,7 +291,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                   className="mt-3 w-full rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {!selectedServerId ? (
-                    <option value="">Select a server first</option>
+                    <option value="">Selecione um servidor primeiro</option>
                   ) : null}
                   {factions.map((faction) => (
                     <option key={faction} value={faction}>
@@ -412,7 +307,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                 <>
                   <div>
                     <label htmlFor="price-per-thousand" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
-                      Value per 1,000 gold
+                      Preço por 1.000 gold
                     </label>
                     <input
                       id="price-per-thousand"
@@ -426,13 +321,13 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                       className="mt-3 w-full rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600"
                     />
                     <p className="mt-2 text-sm text-green-700">
-                      Example: 20 to charge $20 per 1,000 gold.
+                      Ex.: 20 para cobrar R$20 por 1.000 gold.
                     </p>
                   </div>
 
                   <div>
                     <label htmlFor="min-gold" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
-                      Minimum purchase amount
+                      Valor mínimo
                     </label>
                     <input
                       id="min-gold"
@@ -449,7 +344,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
 
                   <div>
                     <label htmlFor="max-gold" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
-                      Maximum purchase amount
+                      Valor máximo
                     </label>
                     <input
                       id="max-gold"
@@ -467,10 +362,10 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
               ) : (
                 <p className="text-sm text-green-700">
                   {selectedGameId === ""
-                    ? "Select a game to edit the configuration."
+                    ? "Selecione um jogo para editar a configuração."
                     : requiresFactionSelection
-                    ? "Select a server to edit the configuration."
-                    : "Select a region to edit the configuration."
+                    ? "Selecione um servidor para editar a configuração."
+                    : "Selecione uma região para editar a configuração."
                   }
                 </p>
               )}
@@ -478,17 +373,13 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
 
             {scopeReady ? (
               <div className="mt-8 flex flex-col gap-4 border-t border-green-900 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col gap-1">
-                  {currentKey && (
-                    <p className="font-mono text-xs text-green-700">
-                      key: <span className="text-green-400">{currentKey}</span>
-                    </p>
-                  )}
-                  {hasSavedOverride ? (
-                    <p className="text-xs font-semibold text-emerald-500">Own configuration saved in Firebase</p>
-                  ) : (
-                    <p className="text-xs text-green-700">Using inheritance (no own configuration for this scope)</p>
-                  )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${hasSavedOverride ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-green-800/70 bg-black/30 text-green-500"}`}>
+                    {scopeStatusLabel}
+                  </span>
+                  {currentKey ? (
+                    <span className="font-mono text-[11px] text-green-700">{currentKey}</span>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -499,7 +390,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                       disabled={saving}
                       className="rounded-md border border-green-800 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      Remove config
+                      Remover
                     </button>
                   )}
                   <button
@@ -508,7 +399,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                     disabled={!canSave}
                     className="rounded-md border border-green-600 bg-green-950 px-5 py-3 text-sm font-semibold text-green-300 transition hover:bg-green-900 disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {saving ? "Saving..." : "Save"}
+                    {saving ? "Salvando..." : "Salvar"}
                   </button>
                 </div>
               </div>
@@ -516,13 +407,13 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
 
             {!isAuthenticated ? (
               <p className="mt-4 text-sm font-semibold text-amber-200">
-                Sign in with Google before saving gold settings.
+                Entre com o Google antes de salvar as configurações.
               </p>
             ) : null}
 
             {saved ? (
               <p className="mt-4 text-sm font-semibold text-emerald-500">
-                Configuration saved successfully.
+                Configuração salva com sucesso.
               </p>
             ) : null}
 
