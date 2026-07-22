@@ -19,6 +19,7 @@ import {
   saveGoldConfigEntry,
   subscribeToGoldConfig,
 } from "../../lib/gold-config";
+import { normalizeGoldPriceInput, parseGoldPriceInput } from "./gold-config-admin-utils";
 
 type GoldConfigAdminProps = {
   embedded?: boolean;
@@ -177,15 +178,10 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
-      maximumFractionDigits: 0,
+      maximumFractionDigits: 2,
     }).format(value);
 
-  const parsePriceInput = (value: string) => {
-    const normalizedValue = value.replace(/\s/g, "");
-    const parsedValue = Number(normalizedValue);
-
-    return Number.isFinite(parsedValue) ? parsedValue : 0;
-  };
+  const priceInputValue = activeEntry.pricePerThousand.toString();
 
   return (
     <div className={embedded ? "text-green-400" : "min-h-screen bg-black text-green-400"}>
@@ -328,10 +324,15 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                         id="price-per-thousand"
                         type="text"
                         inputMode="decimal"
-                        value={activeEntry.pricePerThousand.toString()}
-                        onChange={(event) =>
-                          updateDraft({ pricePerThousand: parsePriceInput(event.target.value) })
-                        }
+                        value={priceInputValue}
+                        onChange={(event) => {
+                          const normalizedValue = normalizeGoldPriceInput(event.target.value);
+                          const parsedValue = parseGoldPriceInput(normalizedValue);
+
+                          updateDraft({
+                            pricePerThousand: parsedValue ?? 0,
+                          });
+                        }}
                         className="w-full bg-transparent outline-none"
                       />
                     </div>

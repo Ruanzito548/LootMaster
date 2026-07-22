@@ -25,11 +25,18 @@ function toPositiveInt(value: unknown, fallback: number): number {
   return fallback;
 }
 
+function toPositiveNumber(value: unknown, fallback: number): number {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return value;
+  }
+  return fallback;
+}
+
 function parseEntry(data: Record<string, unknown>): GoldConfigEntry {
   const minGold = toPositiveInt(data.minGold, defaultGoldConfigEntry.minGold);
   const maxGold = toPositiveInt(data.maxGold, defaultGoldConfigEntry.maxGold);
   return {
-    pricePerThousand: toPositiveInt(data.pricePerThousand, defaultGoldConfigEntry.pricePerThousand),
+    pricePerThousand: toPositiveNumber(data.pricePerThousand, defaultGoldConfigEntry.pricePerThousand),
     minGold,
     maxGold: Math.max(maxGold, minGold),
     goldStep: toPositiveInt(data.goldStep, defaultGoldConfigEntry.goldStep),
