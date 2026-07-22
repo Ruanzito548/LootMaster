@@ -180,6 +180,13 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
       maximumFractionDigits: 0,
     }).format(value);
 
+  const parsePriceInput = (value: string) => {
+    const normalizedValue = value.replace(/\s/g, "").replace(",", ".");
+    const parsedValue = Number(normalizedValue);
+
+    return Number.isFinite(parsedValue) ? parsedValue : 0;
+  };
+
   return (
     <div className={embedded ? "text-green-400" : "min-h-screen bg-black text-green-400"}>
       <main className={embedded ? "flex w-full flex-1 flex-col" : "mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-20 pt-12 lg:px-8"}>
@@ -319,19 +326,17 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                       <span className="mr-2 text-green-400">$</span>
                       <input
                         id="price-per-thousand"
-                        type="number"
-                        min="1"
-                        step="1"
-                        inputMode="numeric"
-                        value={activeEntry.pricePerThousand}
+                        type="text"
+                        inputMode="decimal"
+                        value={activeEntry.pricePerThousand.toString().replace(".", ",")}
                         onChange={(event) =>
-                          updateDraft({ pricePerThousand: Number(event.target.value) })
+                          updateDraft({ pricePerThousand: parsePriceInput(event.target.value) })
                         }
                         className="w-full bg-transparent outline-none"
                       />
                     </div>
                     <p className="mt-2 text-sm text-green-700">
-                      Ex.: 20 para cobrar $20 por 1.000 gold.
+                      Ex.: 20,50 para cobrar $20,50 por 1.000 gold.
                     </p>
                   </div>
 
