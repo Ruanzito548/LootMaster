@@ -65,7 +65,11 @@ const FALLBACK_RATES: Record<string, number> = {
   GBP: 0.14,
 };
 
-const deliveryMethods = ["Face to face", "Auction House", "Mailbox"];
+const deliveryMethods = [
+  { value: "Face to face", feeLabel: "0%" },
+  { value: "Auction House", feeLabel: "+2%" },
+  { value: "Mailbox", feeLabel: "0%" },
+];
 
 function formatCurrency(value: number, currency: string, locale: string) {
   return new Intl.NumberFormat(locale, {
@@ -80,7 +84,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   const [selectedFaction, setSelectedFaction] = useState("");
   const [goldAmount, setGoldAmount] = useState(defaultGoldConfigEntry.minGold);
   const [nickname, setNickname] = useState("");
-  const [deliveryMethod, setDeliveryMethod] = useState(deliveryMethods[0]);
+  const [deliveryMethod, setDeliveryMethod] = useState(deliveryMethods[0].value);
   const [email, setEmail] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -484,8 +488,8 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
                 className="gm-select mt-2 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
               >
                 {deliveryMethods.map((method) => (
-                  <option key={method} value={method}>
-                    {method}
+                  <option key={method.value} value={method.value}>
+                    {method.value} · {method.feeLabel}
                   </option>
                 ))}
               </select>
@@ -556,7 +560,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Fee</span>
-              <span className="font-semibold text-[#e7f5ff]">{deliveryMethod === "Auction House" ? "+2%" : "-"}</span>
+              <span className="font-semibold text-[#e7f5ff]">{deliveryMethod === "Auction House" ? "+2%" : "0%"}</span>
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Character</span>
