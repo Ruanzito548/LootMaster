@@ -5,13 +5,12 @@ import { writeActivityLog } from "@/lib/activity-history.server";
 import { getChestDefinition, type ChestId } from "@/lib/chests";
 import { CHEST_EXPECTED_VALUE_USD, rollChestLoot } from "@/lib/chest-loot";
 import {
-  applyChestEconomyReward,
-  buildDefaultChestEconomyConfig,
-  fundChestEconomyPools,
-  resolveChestEconomyReward,
-  sanitizeChestEconomyConfig,
-  sanitizeChestEconomyState,
-} from "@/lib/chest-economy";
+  applyChestWalletReward,
+  buildDefaultChestWalletEconomyConfig,
+  fundChestWalletEconomyFromCashback,
+  resolveChestWalletReward,
+  sanitizeChestWalletEconomyConfig,
+} from "@/lib/chest-wallet-economy";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
 import { getInventorySlotLimitFromLevel, mergeItemIntoInventory } from "@/lib/rpg-system";
@@ -181,23 +180,59 @@ export async function POST(request: Request): Promise<Response> {
       let nextInventory = decrementChest(strictInventory, chestDefinition.inventoryItemId);
 
       const rolledLoot = rollChestLoot(chestDefinition.id);
-      const chestConfig = chestConfigSnapshot.exists
-        ? sanitizeChestEconomyConfig(chestConfigSnapshot.data()?.economy)
-        : buildDefaultChestEconomyConfig();
-      const chestEconomyState = sanitizeChestEconomyState(chestConfigSnapshot.data()?.economyState);
+      const walletConfig = chestConfigSnapshot.exists
+        ? sanitizeChestWalletEconomyConfig(chestConfigSnapshot.data()?.walletEconomy)
+        : buildDefaultChestWalletEconomyConfig();
+      const walletState = chestConfigSnapshot.exists && chestConfigSnapshot.data()?.walletEconomyState
+        ? {
+            wallets: {
+              normal: {
+                balanceUsd: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.normal?.balanceUsd ?? 0),
+                totalReceivedUsd: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.normal?.totalReceivedUsd ?? 0),
+                totalDistributedUsd: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.normal?.totalDistributedUsd ?? 0),
+                rewardCount: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.normal?.rewardCount ?? 0),
+                lastMovementAtMs: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.normal?.lastMovementAtMs ?? Date.now()),
+              },
+              jackpotCommon: {
+                balanceUsd: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.jackpotCommon?.balanceUsd ?? 0),
+                totalReceivedUsd: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.jackpotCommon?.totalReceivedUsd ?? 0),
+                totalDistributedUsd: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.jackpotCommon?.totalDistributedUsd ?? 0),
+                rewardCount: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.jackpotCommon?.rewardCount ?? 0),
+                lastMovementAtMs: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.jackpotCommon?.lastMovementAtMs ?? Date.now()),
+              },
+              jackpotRare: {
+                balanceUsd: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.jackpotRare?.balanceUsd ?? 0),
+                totalReceivedUsd: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.jackpotRare?.totalReceivedUsd ?? 0),
+                totalDistributedUsd: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.jackpotRare?.totalDistributedUsd ?? 0),
+                rewardCount: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.jackpotRare?.rewardCount ?? 0),
+                lastMovementAtMs: Number(chestConfigSnapshot.data()?.walletEconomyState?.wallets?.jackpotRare?.lastMovementAtMs ?? Date.now()),
+              },
+            },
+            ledger: Array.isArray(chestConfigSnapshot.data()?.walletEconomyState?.ledger) ? chestConfigSnapshot.data()?.walletEconomyState?.ledger : [],
+            updatedAtMs: Number(chestConfigSnapshot.data()?.walletEconomyState?.updatedAtMs ?? Date.now()),
+          }
+        : {
+            wallets: {
+              normal: { balanceUsd: 0, totalReceivedUsd: 0, totalDistributedUsd: 0, rewardCount: 0, lastMovementAtMs: Date.now() },
+              jackpotCommon: { balanceUsd: 0, totalReceivedUsd: 0, totalDistributedUsd: 0, rewardCount: 0, lastMovementAtMs: Date.now() },
+              jackpotRare: { balanceUsd: 0, totalReceivedUsd: 0, totalDistributedUsd: 0, rewardCount: 0, lastMovementAtMs: Date.now() },
+            },
+            ledger: [],
+            updatedAtMs: Date.now(),
+          };
       let nextLootCoins = mappedProfile.lootCoins;
       const rewardParts: string[] = [];
       let totalCoins = 0;
       let singleInventoryReward: InventoryItem | undefined;
-      let rewardEconomy: ReturnType<typeof resolveChestEconomyReward> | null = null;
+      let rewardEconomy: ReturnType<typeof resolveChestWalletReward> | null = null;
 
-      const rewardPoolState = fundChestEconomyPools(chestEconomyState, Math.max(0, Math.round(rolledLoot.totalValueUsd * 100)), chestConfig);
-      rewardEconomy = resolveChestEconomyReward(chestDefinition.id, chestConfig, rewardPoolState, Math.random() * 100);
+      const rewardPoolState = fundChestWalletEconomyFromCashback(walletState, Math.max(0, rolledLoot.totalValueUsd), walletConfig);
+      rewardEconomy = resolveChestWalletReward(chestDefinition.id, walletConfig, rewardPoolState, Math.random() * 100);
 
       if (rewardEconomy) {
-        rewardParts.push(`${rewardEconomy.amountCents / 100} LC (${rewardEconomy.reason})`);
-        nextLootCoins = Math.round((nextLootCoins + rewardEconomy.amountCents / 100) * 100) / 100;
-        totalCoins += rewardEconomy.amountCents / 100;
+        rewardParts.push(`${rewardEconomy.amountUsd.toFixed(2)} USD (${rewardEconomy.reason})`);
+        nextLootCoins = Math.round((nextLootCoins + rewardEconomy.amountUsd) * 100) / 100;
+        totalCoins += rewardEconomy.amountUsd;
       }
 
       for (const drop of rolledLoot.drops) {
@@ -244,7 +279,7 @@ export async function POST(request: Request): Promise<Response> {
         inventorySlotLimit: mappedProfile.inventorySlotLimit ?? slotLimit,
       };
 
-      const nextEconomyState = rewardEconomy ? applyChestEconomyReward(rewardPoolState, rewardEconomy) : rewardPoolState;
+      const nextEconomyState = rewardEconomy ? applyChestWalletReward(rewardPoolState, rewardEconomy) : rewardPoolState;
 
       tx.set(
         userRef,
@@ -259,8 +294,8 @@ export async function POST(request: Request): Promise<Response> {
       tx.set(
         adminDb.collection("app-config").doc("chest-system"),
         {
-          economy: chestConfig,
-          economyState: nextEconomyState,
+          walletEconomy: walletConfig,
+          walletEconomyState: nextEconomyState,
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true },

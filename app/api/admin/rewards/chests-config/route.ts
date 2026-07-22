@@ -3,7 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { buildDefaultChestSystemConfig, sanitizeChestSystemConfig } from "@/lib/chest-config";
-import { sanitizeChestEconomyConfig } from "@/lib/chest-economy";
+import { sanitizeChestWalletEconomyConfig } from "@/lib/chest-wallet-economy";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 type PutBody = {
@@ -76,8 +76,8 @@ export async function PUT(request: Request): Promise<Response> {
     const nextConfig = body.config && typeof body.config === "object" ? body.config as Record<string, unknown> : {};
     const sanitized = sanitizeChestSystemConfig({
       ...(nextConfig as Record<string, unknown>),
-      economy: sanitizeChestEconomyConfig((nextConfig as Record<string, unknown>).economy),
-      economyState: (nextConfig as Record<string, unknown>).economyState,
+      walletEconomy: sanitizeChestWalletEconomyConfig((nextConfig as Record<string, unknown>).walletEconomy),
+      walletEconomyState: (nextConfig as Record<string, unknown>).walletEconomyState,
     });
 
     await adminDb.runTransaction(async (tx) => {
@@ -112,7 +112,7 @@ export async function PUT(request: Request): Promise<Response> {
           nextTotalFragmentChance: nextSummary.totalFragmentChance,
           previousTotalFullGiftChance: previousSummary.totalFullGiftChance,
           nextTotalFullGiftChance: nextSummary.totalFullGiftChance,
-          nextEconomy: sanitized.economy ? JSON.stringify(sanitized.economy) : null,
+          nextWalletEconomy: sanitized.walletEconomy ? JSON.stringify(sanitized.walletEconomy) : null,
         },
         mirrorToAdminAudit: true,
       });

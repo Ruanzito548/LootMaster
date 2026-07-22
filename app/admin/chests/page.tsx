@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useProfileSession } from "@/app/profile/use-profile-session";
 import { CHEST_IDS, type ChestId } from "@/lib/chests";
-import { buildChestJackpotRecommendation } from "@/lib/chest-jackpot-recommendation";
+import { buildDefaultChestWalletEconomyConfig } from "@/lib/chest-wallet-economy";
 
 type RewardOdd = {
   type: string;
@@ -26,22 +26,17 @@ type ChestConfigPayload = {
   schemaVersion: number;
   updatedAtMs: number;
   byChest: Record<ChestId, ChestProfileConfig>;
-  economy?: {
-    normalRewardPercent: number;
-    jackpot20xPercent: number;
-    jackpot200xPercent: number;
-    jackpot20xChancePercent: number;
-    jackpot200xChancePercent: number;
-    jackpot20xMultiplier: number;
-    jackpot200xMultiplier: number;
+  walletEconomy?: {
+    schemaVersion: number;
+    updatedAtMs: number;
+    useUsdAsBaseCurrency: boolean;
+    jackpotCommonChancePercent: number;
+    jackpotRareChancePercent: number;
+    wallets: Record<string, { allocationPercent: number; rewardProbabilityPercent: number; rewardPercentages: number[]; safetyBufferPercent: number }>;
   };
-  economyState?: {
-    normalBalanceCents: number;
-    jackpot20xBalanceCents: number;
-    jackpot200xBalanceCents: number;
-    totalFundedCents: number;
-    totalDistributedCents: number;
-    totalJackpotAwardsCents: number;
+  walletEconomyState?: {
+    wallets: Record<string, { balanceUsd: number; totalReceivedUsd: number; totalDistributedUsd: number; rewardCount: number; lastMovementAtMs: number }>;
+    ledger: Array<Record<string, unknown>>;
     updatedAtMs: number;
   };
 };
@@ -50,8 +45,8 @@ function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
-function formatLootCoinsFromCents(value: number): string {
-  return (value / 100).toLocaleString("en-US", {
+function formatUsd(value: number): string {
+  return value.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -84,14 +79,12 @@ export default function AdminChestConfigPage() {
   const { user, status } = useProfileSession();
 
   const [rawJson, setRawJson] = useState("");
-  const [economyInputs, setEconomyInputs] = useState({
-    normalRewardPercent: "5",
-    jackpot20xPercent: "1",
-    jackpot200xPercent: "1",
-    jackpot20xChancePercent: "2",
-    jackpot200xChancePercent: "0.5",
-    jackpot20xMultiplier: "20",
-    jackpot200xMultiplier: "200",
+  const [walletInputs, setWalletInputs] = useState({
+    jackpotCommonChancePercent: "5",
+    jackpotRareChancePercent: "1",
+    normalAllocationPercent: "70",
+    jackpotCommonAllocationPercent: "25",
+    jackpotRareAllocationPercent: "5",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -112,46 +105,18 @@ export default function AdminChestConfigPage() {
   }, [rawJson]);
 
   const policySnapshot = useMemo(() => {
-    const economyState = parsedSummary?.economyState;
-    const totalPoolBalanceCents =
-      (economyState?.normalBalanceCents ?? 0) +
-      (economyState?.jackpot20xBalanceCents ?? 0) +
-      (economyState?.jackpot200xBalanceCents ?? 0);
-    const totalFundedCents = economyState?.totalFundedCents ?? 0;
-    const balanceCoveragePercent = totalFundedCents > 0 ? (totalPoolBalanceCents / totalFundedCents) * 100 : 0;
-    const jackpotChancePercent =
-      Number(economyInputs.jackpot20xChancePercent) + Number(economyInputs.jackpot200xChancePercent);
+    const state = parsedSummary?.walletEconomyState;
+    const walletBalances = Object.values(state?.wallets ?? {}).reduce((sum, wallet) => sum + (wallet?.balanceUsd ?? 0), 0);
+    const totalReceived = Object.values(state?.wallets ?? {}).reduce((sum, wallet) => sum + (wallet?.totalReceivedUsd ?? 0), 0);
+    const balanceCoveragePercent = totalReceived > 0 ? (walletBalances / totalReceived) * 100 : 0;
+    const jackpotChancePercent = Number(walletInputs.jackpotCommonChancePercent) + Number(walletInputs.jackpotRareChancePercent);
 
     return {
-      totalPoolBalanceCents,
+      totalWalletBalanceUsd: walletBalances,
       balanceCoveragePercent,
       jackpotChancePercent,
     };
-  }, [economyInputs, parsedSummary]);
-
-  const jackpotRecommendation = useMemo(() => {
-    const parsedEconomy = parsedSummary?.economy;
-
-    return buildChestJackpotRecommendation({
-      chestEconomyConfig: parsedEconomy
-        ? {
-            schemaVersion: 1,
-            updatedAtMs: Date.now(),
-            normalRewardPercent: Number(parsedEconomy.normalRewardPercent ?? 5),
-            jackpot20xPercent: Number(parsedEconomy.jackpot20xPercent ?? 1),
-            jackpot200xPercent: Number(parsedEconomy.jackpot200xPercent ?? 1),
-            jackpot20xChancePercent: Number(parsedEconomy.jackpot20xChancePercent ?? 2),
-            jackpot200xChancePercent: Number(parsedEconomy.jackpot200xChancePercent ?? 0.5),
-            jackpot20xMultiplier: Number(parsedEconomy.jackpot20xMultiplier ?? 20),
-            jackpot200xMultiplier: Number(parsedEconomy.jackpot200xMultiplier ?? 200),
-          }
-        : undefined,
-      orderValueCents: 10000,
-      cashbackPercent: 7,
-      chestOpeningsPerOrder: 1,
-      monteCarloIterations: 1000,
-    });
-  }, [parsedSummary]);
+  }, [parsedSummary, walletInputs]);
 
   useEffect(() => {
     let cancelled = false;
@@ -183,14 +148,12 @@ export default function AdminChestConfigPage() {
         if (!cancelled) {
           const config = payload.config;
           setRawJson(formatJson(config));
-          setEconomyInputs({
-            normalRewardPercent: String(config.economy?.normalRewardPercent ?? 5),
-            jackpot20xPercent: String(config.economy?.jackpot20xPercent ?? 1),
-            jackpot200xPercent: String(config.economy?.jackpot200xPercent ?? 1),
-            jackpot20xChancePercent: String(config.economy?.jackpot20xChancePercent ?? 2),
-            jackpot200xChancePercent: String(config.economy?.jackpot200xChancePercent ?? 0.5),
-            jackpot20xMultiplier: String(config.economy?.jackpot20xMultiplier ?? 20),
-            jackpot200xMultiplier: String(config.economy?.jackpot200xMultiplier ?? 200),
+          setWalletInputs({
+            jackpotCommonChancePercent: String(config.walletEconomy?.jackpotCommonChancePercent ?? 5),
+            jackpotRareChancePercent: String(config.walletEconomy?.jackpotRareChancePercent ?? 1),
+            normalAllocationPercent: String(config.walletEconomy?.wallets?.normal?.allocationPercent ?? 70),
+            jackpotCommonAllocationPercent: String(config.walletEconomy?.wallets?.jackpotCommon?.allocationPercent ?? 25),
+            jackpotRareAllocationPercent: String(config.walletEconomy?.wallets?.jackpotRare?.allocationPercent ?? 5),
           });
         }
       } catch (error) {
@@ -211,7 +174,7 @@ export default function AdminChestConfigPage() {
     };
   }, [user]);
 
-  const saveConfig = async (nextEconomy?: { [key: string]: number | string }) => {
+  const saveConfig = async (nextWalletEconomy?: { [key: string]: number | string }) => {
     if (!user || saving) {
       return;
     }
@@ -223,14 +186,32 @@ export default function AdminChestConfigPage() {
     try {
       const parsed = JSON.parse(rawJson);
       const token = await user.getIdToken();
-      const resolvedEconomy = nextEconomy ?? {
-        normalRewardPercent: Number(economyInputs.normalRewardPercent),
-        jackpot20xPercent: Number(economyInputs.jackpot20xPercent),
-        jackpot200xPercent: Number(economyInputs.jackpot200xPercent),
-        jackpot20xChancePercent: Number(economyInputs.jackpot20xChancePercent),
-        jackpot200xChancePercent: Number(economyInputs.jackpot200xChancePercent),
-        jackpot20xMultiplier: Number(economyInputs.jackpot20xMultiplier),
-        jackpot200xMultiplier: Number(economyInputs.jackpot200xMultiplier),
+      const resolvedWalletEconomy = nextWalletEconomy ?? {
+        schemaVersion: 1,
+        updatedAtMs: Date.now(),
+        useUsdAsBaseCurrency: true,
+        jackpotCommonChancePercent: Number(walletInputs.jackpotCommonChancePercent),
+        jackpotRareChancePercent: Number(walletInputs.jackpotRareChancePercent),
+        wallets: {
+          normal: {
+            allocationPercent: Number(walletInputs.normalAllocationPercent),
+            rewardProbabilityPercent: 100,
+            rewardPercentages: [5],
+            safetyBufferPercent: 0,
+          },
+          jackpotCommon: {
+            allocationPercent: Number(walletInputs.jackpotCommonAllocationPercent),
+            rewardProbabilityPercent: 10,
+            rewardPercentages: [5, 10, 20],
+            safetyBufferPercent: 10,
+          },
+          jackpotRare: {
+            allocationPercent: Number(walletInputs.jackpotRareAllocationPercent),
+            rewardProbabilityPercent: 2,
+            rewardPercentages: [25, 50, 100],
+            safetyBufferPercent: 20,
+          },
+        },
       };
 
       const response = await fetch("/api/admin/rewards/chests-config", {
@@ -239,7 +220,7 @@ export default function AdminChestConfigPage() {
           "content-type": "application/json",
           authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ config: { ...parsed, economy: resolvedEconomy } }),
+        body: JSON.stringify({ config: { ...parsed, walletEconomy: resolvedWalletEconomy } }),
       });
 
       const payload = (await response.json()) as { config?: ChestConfigPayload; error?: string };
@@ -257,17 +238,41 @@ export default function AdminChestConfigPage() {
   };
 
   const applyRecommendation = () => {
-    const recommendation = jackpotRecommendation.recommendedEconomyConfig;
-    setEconomyInputs({
-      normalRewardPercent: String(recommendation.normalRewardPercent),
-      jackpot20xPercent: String(recommendation.jackpot20xPercent),
-      jackpot200xPercent: String(recommendation.jackpot200xPercent),
-      jackpot20xChancePercent: String(recommendation.jackpot20xChancePercent),
-      jackpot200xChancePercent: String(recommendation.jackpot200xChancePercent),
-      jackpot20xMultiplier: String(recommendation.jackpot20xMultiplier),
-      jackpot200xMultiplier: String(recommendation.jackpot200xMultiplier),
+    const defaultConfig = buildDefaultChestWalletEconomyConfig();
+    setWalletInputs({
+      jackpotCommonChancePercent: String(defaultConfig.jackpotCommonChancePercent),
+      jackpotRareChancePercent: String(defaultConfig.jackpotRareChancePercent),
+      normalAllocationPercent: String(defaultConfig.wallets.normal.allocationPercent),
+      jackpotCommonAllocationPercent: String(defaultConfig.wallets.jackpotCommon.allocationPercent),
+      jackpotRareAllocationPercent: String(defaultConfig.wallets.jackpotRare.allocationPercent),
     });
-    void saveConfig(recommendation);
+    void saveConfig({
+      schemaVersion: 1,
+      updatedAtMs: Date.now(),
+      useUsdAsBaseCurrency: true,
+      jackpotCommonChancePercent: defaultConfig.jackpotCommonChancePercent,
+      jackpotRareChancePercent: defaultConfig.jackpotRareChancePercent,
+      wallets: {
+        normal: {
+          allocationPercent: defaultConfig.wallets.normal.allocationPercent,
+          rewardProbabilityPercent: defaultConfig.wallets.normal.rewardProbabilityPercent,
+          rewardPercentages: defaultConfig.wallets.normal.rewardPercentages,
+          safetyBufferPercent: defaultConfig.wallets.normal.safetyBufferPercent,
+        },
+        jackpotCommon: {
+          allocationPercent: defaultConfig.wallets.jackpotCommon.allocationPercent,
+          rewardProbabilityPercent: defaultConfig.wallets.jackpotCommon.rewardProbabilityPercent,
+          rewardPercentages: defaultConfig.wallets.jackpotCommon.rewardPercentages,
+          safetyBufferPercent: defaultConfig.wallets.jackpotCommon.safetyBufferPercent,
+        },
+        jackpotRare: {
+          allocationPercent: defaultConfig.wallets.jackpotRare.allocationPercent,
+          rewardProbabilityPercent: defaultConfig.wallets.jackpotRare.rewardProbabilityPercent,
+          rewardPercentages: defaultConfig.wallets.jackpotRare.rewardPercentages,
+          safetyBufferPercent: defaultConfig.wallets.jackpotRare.safetyBufferPercent,
+        },
+      },
+    });
   };
 
   if (status === "loading" || loading) {
@@ -311,10 +316,10 @@ export default function AdminChestConfigPage() {
         <section className="mt-4 rounded-3xl border border-green-900 bg-green-950/20 p-5">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {[
-              { key: "normalRewardPercent", label: "Reserva para premiações normais (%)", hint: "Percentual do cashback destinado às recompensas comuns dos baús" },
-              { key: "jackpot20xPercent", label: "Reserva jackpot 20x (%)", hint: "Percentual do cashback que alimenta o fundo jackpot 20x" },
-              { key: "jackpot200xPercent", label: "Reserva jackpot 200x (%)", hint: "Percentual do cashback que alimenta o fundo jackpot 200x" },
-              { key: "jackpot20xChancePercent", label: "Chance jackpot 20x (%)", hint: "Chance de o loot ativar o jackpot 20x" },
+              { key: "jackpotCommonChancePercent", label: "Chance jackpot comum (%)", hint: "Chance de o loot ativar o jackpot comum" },
+              { key: "jackpotRareChancePercent", label: "Chance jackpot raro (%)", hint: "Chance de o loot ativar o jackpot raro" },
+              { key: "normalAllocationPercent", label: "Alocação carteira normal (%)", hint: "Percentual do cashback destinado às recompensas comuns" },
+              { key: "jackpotCommonAllocationPercent", label: "Alocação carteira jackpot comum (%)", hint: "Percentual do cashback para a carteira de jackpots comuns" },
             ].map((field) => (
               <label key={field.key} className="grid gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-green-600">
                 {field.label}
@@ -323,8 +328,8 @@ export default function AdminChestConfigPage() {
                   min="0"
                   max="100"
                   step="0.01"
-                  value={economyInputs[field.key as keyof typeof economyInputs]}
-                  onChange={(event) => setEconomyInputs((current) => ({ ...current, [field.key]: event.target.value }))}
+                  value={walletInputs[field.key as keyof typeof walletInputs]}
+                  onChange={(event) => setWalletInputs((current) => ({ ...current, [field.key]: event.target.value }))}
                   className="rounded-2xl border border-green-900 bg-black/70 px-3 py-3 text-sm font-semibold text-green-200 outline-none transition focus:border-green-600"
                 />
                 <span className="text-[11px] font-medium normal-case tracking-normal text-green-700">{field.hint}</span>
@@ -334,38 +339,30 @@ export default function AdminChestConfigPage() {
 
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-green-600">
-              Chance jackpot 200x (%)
+              Alocação carteira jackpot raro (%)
               <input
                 type="number"
                 min="0"
                 max="100"
                 step="0.01"
-                value={economyInputs.jackpot200xChancePercent}
-                onChange={(event) => setEconomyInputs((current) => ({ ...current, jackpot200xChancePercent: event.target.value }))}
+                value={walletInputs.jackpotRareAllocationPercent}
+                onChange={(event) => setWalletInputs((current) => ({ ...current, jackpotRareAllocationPercent: event.target.value }))}
                 className="rounded-2xl border border-green-900 bg-black/70 px-3 py-3 text-sm font-semibold text-green-200 outline-none transition focus:border-green-600"
               />
-              <span className="text-[11px] font-medium normal-case tracking-normal text-green-700">Chance de ativar o jackpot 200x no loot</span>
+              <span className="text-[11px] font-medium normal-case tracking-normal text-green-700">Percentual do cashback destinado à carteira de jackpots raros</span>
             </label>
             <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-green-600">
-              Multiplicador jackpot 20x / 200x
-              <div className="grid gap-2 sm:grid-cols-2">
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={economyInputs.jackpot20xMultiplier}
-                  onChange={(event) => setEconomyInputs((current) => ({ ...current, jackpot20xMultiplier: event.target.value }))}
-                  className="rounded-2xl border border-green-900 bg-black/70 px-3 py-3 text-sm font-semibold text-green-200 outline-none transition focus:border-green-600"
-                />
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={economyInputs.jackpot200xMultiplier}
-                  onChange={(event) => setEconomyInputs((current) => ({ ...current, jackpot200xMultiplier: event.target.value }))}
-                  className="rounded-2xl border border-green-900 bg-black/70 px-3 py-3 text-sm font-semibold text-green-200 outline-none transition focus:border-green-600"
-                />
-              </div>
+              Alocação carteira jackpot comum (%)
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={walletInputs.jackpotCommonAllocationPercent}
+                onChange={(event) => setWalletInputs((current) => ({ ...current, jackpotCommonAllocationPercent: event.target.value }))}
+                className="rounded-2xl border border-green-900 bg-black/70 px-3 py-3 text-sm font-semibold text-green-200 outline-none transition focus:border-green-600"
+              />
+              <span className="text-[11px] font-medium normal-case tracking-normal text-green-700">Percentual do cashback destinado à carteira de jackpots comuns</span>
             </label>
           </div>
         </section>
@@ -377,24 +374,24 @@ export default function AdminChestConfigPage() {
               <h2 className="mt-1 text-xl font-black text-green-200">Política atual dos baús</h2>
             </div>
             <div className="rounded-full border border-green-800 bg-black/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-green-500">
-              {parsedSummary?.economyState?.updatedAtMs ? `Atualizado ${formatRelativeTime(parsedSummary.economyState.updatedAtMs)}` : "Sem atualização"}
+              {parsedSummary?.walletEconomyState?.updatedAtMs ? `Atualizado ${formatRelativeTime(parsedSummary.walletEconomyState.updatedAtMs)}` : "Sem atualização"}
             </div>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Reserva normal</p>
-              <p className="mt-2 text-2xl font-black text-green-200">{Number(economyInputs.normalRewardPercent).toFixed(2)}%</p>
+              <p className="mt-2 text-2xl font-black text-green-200">{Number(walletInputs.normalAllocationPercent).toFixed(2)}%</p>
               <p className="mt-1 text-xs text-green-700">Percentual do cashback que alimenta recompensas comuns</p>
             </article>
             <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Jackpot 20x</p>
-              <p className="mt-2 text-2xl font-black text-amber-300">{Number(economyInputs.jackpot20xPercent).toFixed(2)}%</p>
+              <p className="mt-2 text-2xl font-black text-amber-300">{Number(walletInputs.jackpotCommonAllocationPercent).toFixed(2)}%</p>
               <p className="mt-1 text-xs text-green-700">Alocação do cashback para o fundo jackpot 20x</p>
             </article>
             <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Jackpot 200x</p>
-              <p className="mt-2 text-2xl font-black text-fuchsia-300">{Number(economyInputs.jackpot200xPercent).toFixed(2)}%</p>
+              <p className="mt-2 text-2xl font-black text-fuchsia-300">{Number(walletInputs.jackpotRareAllocationPercent).toFixed(2)}%</p>
               <p className="mt-1 text-xs text-green-700">Alocação do cashback para o fundo jackpot 200x</p>
             </article>
             <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
@@ -411,7 +408,7 @@ export default function AdminChestConfigPage() {
             </article>
             <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
               <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Fundo vivo total</p>
-              <p className="mt-2 text-xl font-black text-green-200">{formatLootCoinsFromCents(policySnapshot.totalPoolBalanceCents)} LC</p>
+              <p className="mt-2 text-xl font-black text-green-200">{formatUsd(policySnapshot.totalWalletBalanceUsd)} USD</p>
             </article>
           </div>
         </section>
@@ -420,97 +417,44 @@ export default function AdminChestConfigPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-green-600">Resumo da economia</p>
-              <h2 className="mt-1 text-xl font-black text-green-200">Pools de cashback e jackpots</h2>
+              <h2 className="mt-1 text-xl font-black text-green-200">Carteiras de cashback e jackpots</h2>
             </div>
             <div className="rounded-full border border-green-800 bg-black/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-green-500">
               Saldo persistido
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-green-900 bg-black/20 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-green-600">Recomendação de sustentabilidade</p>
-                <p className="mt-1 text-lg font-black text-green-200">{jackpotRecommendation.summary}</p>
-              </div>
-              <div className="rounded-full border border-green-800 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-green-500">
-                {jackpotRecommendation.sustainabilityScore === "safe" ? "Seguro" : jackpotRecommendation.sustainabilityScore === "warning" ? "Atenção" : "Instável"}
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-3 lg:grid-cols-2">
-              <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Valores recomendados</p>
-                <ul className="mt-2 space-y-2 text-sm text-green-700">
-                  <li>Cashback: {jackpotRecommendation.suggestedCashbackPercent}%</li>
-                  <li>Reserva jackpot: {jackpotRecommendation.suggestedReservePercent}%</li>
-                  <li>Pool normal: {jackpotRecommendation.suggestedNormalRewardPercent}%</li>
-                  <li>Jackpot 20x: {jackpotRecommendation.suggestedJackpot20xPercent}%</li>
-                  <li>Jackpot 200x: {jackpotRecommendation.suggestedJackpot200xPercent}%</li>
-                </ul>
-              </article>
-              <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Probabilidades sugeridas</p>
-                <ul className="mt-2 space-y-2 text-sm text-green-700">
-                  {jackpotRecommendation.recommendedTiers.map((tier) => (
-                    <li key={tier.multiplier}>
-                      {tier.multiplier}x: {tier.probabilityPercent}% — {tier.rationale}
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            </div>
-
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
-                <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Monte Carlo</p>
-                <p className="mt-2 text-xl font-black text-green-200">{jackpotRecommendation.monteCarlo.positiveBalanceRate}%</p>
-                <p className="mt-1 text-xs">chance de manter saldo positivo</p>
-              </article>
-              <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
-                <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Saldo médio</p>
-                <p className="mt-2 text-xl font-black text-green-200">{jackpotRecommendation.monteCarlo.averageWalletBalanceRatio}%</p>
-                <p className="mt-1 text-xs">do fundo inicial em média</p>
-              </article>
-              <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
-                <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Pior cenário</p>
-                <p className="mt-2 text-xl font-black text-green-200">{jackpotRecommendation.monteCarlo.worstCaseBalanceRatio}%</p>
-                <p className="mt-1 text-xs">do fundo inicial no pior caso</p>
-              </article>
-            </div>
-          </div>
-
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Pool normal</p>
-              <p className="mt-2 text-2xl font-black text-green-200">{formatLootCoinsFromCents(parsedSummary?.economyState?.normalBalanceCents ?? 0)} LC</p>
-              <p className="mt-1 text-xs text-green-700">Saldo para recompensas comuns dos baús</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Carteira normal</p>
+              <p className="mt-2 text-2xl font-black text-green-200">{formatUsd(parsedSummary?.walletEconomyState?.wallets?.normal?.balanceUsd ?? 0)} USD</p>
+              <p className="mt-1 text-xs text-green-700">Saldo disponível para recompensas comuns</p>
             </article>
             <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Jackpot 20x</p>
-              <p className="mt-2 text-2xl font-black text-amber-300">{formatLootCoinsFromCents(parsedSummary?.economyState?.jackpot20xBalanceCents ?? 0)} LC</p>
-              <p className="mt-1 text-xs text-green-700">Fundo acumulado para o prêmio 20x</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Jackpot comum</p>
+              <p className="mt-2 text-2xl font-black text-amber-300">{formatUsd(parsedSummary?.walletEconomyState?.wallets?.jackpotCommon?.balanceUsd ?? 0)} USD</p>
+              <p className="mt-1 text-xs text-green-700">Saldo acumulado para jackpots comuns</p>
             </article>
             <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Jackpot 200x</p>
-              <p className="mt-2 text-2xl font-black text-fuchsia-300">{formatLootCoinsFromCents(parsedSummary?.economyState?.jackpot200xBalanceCents ?? 0)} LC</p>
-              <p className="mt-1 text-xs text-green-700">Fundo acumulado para o prêmio 200x</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Jackpot raro</p>
+              <p className="mt-2 text-2xl font-black text-fuchsia-300">{formatUsd(parsedSummary?.walletEconomyState?.wallets?.jackpotRare?.balanceUsd ?? 0)} USD</p>
+              <p className="mt-1 text-xs text-green-700">Saldo acumulado para jackpots raros</p>
             </article>
             <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Total distribuído</p>
-              <p className="mt-2 text-2xl font-black text-cyan-300">{formatLootCoinsFromCents(parsedSummary?.economyState?.totalDistributedCents ?? 0)} LC</p>
+              <p className="mt-2 text-2xl font-black text-cyan-300">{formatUsd(Object.values(parsedSummary?.walletEconomyState?.wallets ?? {}).reduce((sum, wallet) => sum + (wallet?.totalDistributedUsd ?? 0), 0))} USD</p>
               <p className="mt-1 text-xs text-green-700">Valor já pago em recompensas e jackpots</p>
             </article>
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
-              <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Fundos captados</p>
-              <p className="mt-2 text-xl font-black text-green-200">{formatLootCoinsFromCents(parsedSummary?.economyState?.totalFundedCents ?? 0)} LC</p>
+              <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Cobertura atual</p>
+              <p className="mt-2 text-xl font-black text-green-200">{policySnapshot.balanceCoveragePercent.toFixed(1)}%</p>
             </article>
             <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
-              <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Prêmios jackpot pagos</p>
-              <p className="mt-2 text-xl font-black text-green-200">{formatLootCoinsFromCents(parsedSummary?.economyState?.totalJackpotAwardsCents ?? 0)} LC</p>
+              <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Chance total de jackpots</p>
+              <p className="mt-2 text-xl font-black text-green-200">{policySnapshot.jackpotChancePercent.toFixed(2)}%</p>
             </article>
           </div>
         </section>

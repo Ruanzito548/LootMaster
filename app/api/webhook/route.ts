@@ -8,7 +8,7 @@ import {
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { fundChestEconomyPools, sanitizeChestEconomyConfig, sanitizeChestEconomyState } from "@/lib/chest-economy";
+import { fundChestWalletEconomyFromCashback, sanitizeChestWalletEconomyConfig } from "@/lib/chest-wallet-economy";
 import { computeOrderFinancials } from "@/lib/order-financials";
 import {
   SITE_FEE_SETTINGS_DOC_ID,
@@ -195,15 +195,51 @@ async function fundChestEconomyFromCashback(orderId: string, cashbackCents: numb
   await adminDb.runTransaction(async (tx) => {
     const snapshot = await tx.get(configDocRef);
     const currentData = snapshot.exists ? (snapshot.data() as Record<string, unknown> | undefined) : undefined;
-    const config = sanitizeChestEconomyConfig(currentData?.economy);
-    const state = sanitizeChestEconomyState(currentData?.economyState);
-    const nextState = fundChestEconomyPools(state, cashbackCents, config);
+    const walletConfig = sanitizeChestWalletEconomyConfig(currentData?.walletEconomy);
+    const walletState = currentData?.walletEconomyState
+      ? {
+          wallets: {
+            normal: {
+              balanceUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.normal?.balanceUsd ?? 0),
+              totalReceivedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.normal?.totalReceivedUsd ?? 0),
+              totalDistributedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.normal?.totalDistributedUsd ?? 0),
+              rewardCount: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.normal?.rewardCount ?? 0),
+              lastMovementAtMs: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.normal?.lastMovementAtMs ?? Date.now()),
+            },
+            jackpotCommon: {
+              balanceUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotCommon?.balanceUsd ?? 0),
+              totalReceivedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotCommon?.totalReceivedUsd ?? 0),
+              totalDistributedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotCommon?.totalDistributedUsd ?? 0),
+              rewardCount: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotCommon?.rewardCount ?? 0),
+              lastMovementAtMs: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotCommon?.lastMovementAtMs ?? Date.now()),
+            },
+            jackpotRare: {
+              balanceUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotRare?.balanceUsd ?? 0),
+              totalReceivedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotRare?.totalReceivedUsd ?? 0),
+              totalDistributedUsd: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotRare?.totalDistributedUsd ?? 0),
+              rewardCount: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotRare?.rewardCount ?? 0),
+              lastMovementAtMs: Number((currentData.walletEconomyState as Record<string, unknown>).wallets?.jackpotRare?.lastMovementAtMs ?? Date.now()),
+            },
+          },
+          ledger: Array.isArray((currentData.walletEconomyState as Record<string, unknown>).ledger) ? ((currentData.walletEconomyState as Record<string, unknown>).ledger as unknown[]) : [],
+          updatedAtMs: Number((currentData.walletEconomyState as Record<string, unknown>).updatedAtMs ?? Date.now()),
+        }
+      : {
+          wallets: {
+            normal: { balanceUsd: 0, totalReceivedUsd: 0, totalDistributedUsd: 0, rewardCount: 0, lastMovementAtMs: Date.now() },
+            jackpotCommon: { balanceUsd: 0, totalReceivedUsd: 0, totalDistributedUsd: 0, rewardCount: 0, lastMovementAtMs: Date.now() },
+            jackpotRare: { balanceUsd: 0, totalReceivedUsd: 0, totalDistributedUsd: 0, rewardCount: 0, lastMovementAtMs: Date.now() },
+          },
+          ledger: [],
+          updatedAtMs: Date.now(),
+        };
+    const nextState = fundChestWalletEconomyFromCashback(walletState, cashbackCents / 100, walletConfig);
 
     tx.set(
       configDocRef,
       {
-        economy: config,
-        economyState: nextState,
+        walletEconomy: walletConfig,
+        walletEconomyState: nextState,
         updatedAt: FieldValue.serverTimestamp(),
         updatedAtMs: Date.now(),
         economyUpdatedBy: orderId,
