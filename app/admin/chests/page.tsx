@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useProfileSession } from "@/app/profile/use-profile-session";
 import { CHEST_IDS, type ChestId } from "@/lib/chests";
+import { buildChestJackpotRecommendation } from "@/lib/chest-jackpot-recommendation";
 
 type RewardOdd = {
   type: string;
@@ -127,6 +128,30 @@ export default function AdminChestConfigPage() {
       jackpotChancePercent,
     };
   }, [economyInputs, parsedSummary]);
+
+  const jackpotRecommendation = useMemo(() => {
+    const parsedEconomy = parsedSummary?.economy;
+
+    return buildChestJackpotRecommendation({
+      chestEconomyConfig: parsedEconomy
+        ? {
+            schemaVersion: 1,
+            updatedAtMs: Date.now(),
+            normalRewardPercent: Number(parsedEconomy.normalRewardPercent ?? 5),
+            jackpot20xPercent: Number(parsedEconomy.jackpot20xPercent ?? 1),
+            jackpot200xPercent: Number(parsedEconomy.jackpot200xPercent ?? 1),
+            jackpot20xChancePercent: Number(parsedEconomy.jackpot20xChancePercent ?? 2),
+            jackpot200xChancePercent: Number(parsedEconomy.jackpot200xChancePercent ?? 0.5),
+            jackpot20xMultiplier: Number(parsedEconomy.jackpot20xMultiplier ?? 20),
+            jackpot200xMultiplier: Number(parsedEconomy.jackpot200xMultiplier ?? 200),
+          }
+        : undefined,
+      orderValueCents: 10000,
+      cashbackPercent: 7,
+      chestOpeningsPerOrder: 1,
+      monteCarloIterations: 1000,
+    });
+  }, [parsedSummary]);
 
   useEffect(() => {
     let cancelled = false;
@@ -385,6 +410,59 @@ export default function AdminChestConfigPage() {
             </div>
             <div className="rounded-full border border-green-800 bg-black/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-green-500">
               Saldo persistido
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-green-900 bg-black/20 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-green-600">Recomendação de sustentabilidade</p>
+                <p className="mt-1 text-lg font-black text-green-200">{jackpotRecommendation.summary}</p>
+              </div>
+              <div className="rounded-full border border-green-800 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-green-500">
+                {jackpotRecommendation.sustainabilityScore === "safe" ? "Seguro" : jackpotRecommendation.sustainabilityScore === "warning" ? "Atenção" : "Instável"}
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Valores recomendados</p>
+                <ul className="mt-2 space-y-2 text-sm text-green-700">
+                  <li>Cashback: {jackpotRecommendation.suggestedCashbackPercent}%</li>
+                  <li>Reserva jackpot: {jackpotRecommendation.suggestedReservePercent}%</li>
+                  <li>Pool normal: {jackpotRecommendation.suggestedNormalRewardPercent}%</li>
+                  <li>Jackpot 20x: {jackpotRecommendation.suggestedJackpot20xPercent}%</li>
+                  <li>Jackpot 200x: {jackpotRecommendation.suggestedJackpot200xPercent}%</li>
+                </ul>
+              </article>
+              <article className="rounded-2xl border border-green-900 bg-black/30 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-600">Probabilidades sugeridas</p>
+                <ul className="mt-2 space-y-2 text-sm text-green-700">
+                  {jackpotRecommendation.recommendedTiers.map((tier) => (
+                    <li key={tier.multiplier}>
+                      {tier.multiplier}x: {tier.probabilityPercent}% — {tier.rationale}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
+                <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Monte Carlo</p>
+                <p className="mt-2 text-xl font-black text-green-200">{jackpotRecommendation.monteCarlo.positiveBalanceRate}%</p>
+                <p className="mt-1 text-xs">chance de manter saldo positivo</p>
+              </article>
+              <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
+                <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Saldo médio</p>
+                <p className="mt-2 text-xl font-black text-green-200">{jackpotRecommendation.monteCarlo.averageWalletBalanceRatio}%</p>
+                <p className="mt-1 text-xs">do fundo inicial em média</p>
+              </article>
+              <article className="rounded-2xl border border-green-900 bg-black/20 p-4 text-sm text-green-700">
+                <p className="font-semibold uppercase tracking-[0.16em] text-green-600">Pior cenário</p>
+                <p className="mt-2 text-xl font-black text-green-200">{jackpotRecommendation.monteCarlo.worstCaseBalanceRatio}%</p>
+                <p className="mt-1 text-xs">do fundo inicial no pior caso</p>
+              </article>
             </div>
           </div>
 
