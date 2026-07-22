@@ -173,6 +173,12 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
     : "Selecione um jogo";
 
   const scopeStatusLabel = hasSavedOverride ? "Configuração própria" : "Usando padrão";
+  const formatUsd = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
 
   return (
     <div className={embedded ? "text-green-400" : "min-h-screen bg-black text-green-400"}>
@@ -208,7 +214,7 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
               </p>
               <h2 className="mt-2 text-xl font-black text-green-300">{scopeTitle}</h2>
               <p className="mt-2 text-sm text-green-600">
-                Preço: <span className="font-semibold text-green-200">${activeEntry.pricePerThousand}</span> por 1.000 gold · mínimo {activeEntry.minGold.toLocaleString()} · máximo {activeEntry.maxGold.toLocaleString()}
+                Preço: <span className="font-semibold text-green-200">{formatUsd(activeEntry.pricePerThousand)}</span> por 1.000 gold · mínimo {activeEntry.minGold.toLocaleString()} · máximo {activeEntry.maxGold.toLocaleString()}
               </p>
             </div>
 
@@ -307,21 +313,25 @@ export function GoldConfigAdmin({ embedded = false }: GoldConfigAdminProps) {
                 <>
                   <div>
                     <label htmlFor="price-per-thousand" className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
-                      Preço por 1.000 gold
+                      Preço por 1.000 gold (USD)
                     </label>
-                    <input
-                      id="price-per-thousand"
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={activeEntry.pricePerThousand}
-                      onChange={(event) =>
-                        updateDraft({ pricePerThousand: Number(event.target.value) })
-                      }
-                      className="mt-3 w-full rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus:border-green-600"
-                    />
+                    <div className="mt-3 flex items-center rounded-xl border border-green-800 bg-black px-4 py-3 text-sm font-semibold text-green-300 outline-none focus-within:border-green-600">
+                      <span className="mr-2 text-green-400">$</span>
+                      <input
+                        id="price-per-thousand"
+                        type="number"
+                        min="1"
+                        step="1"
+                        inputMode="numeric"
+                        value={activeEntry.pricePerThousand}
+                        onChange={(event) =>
+                          updateDraft({ pricePerThousand: Number(event.target.value) })
+                        }
+                        className="w-full bg-transparent outline-none"
+                      />
+                    </div>
                     <p className="mt-2 text-sm text-green-700">
-                      Ex.: 20 para cobrar R$20 por 1.000 gold.
+                      Ex.: 20 para cobrar $20 por 1.000 gold.
                     </p>
                   </div>
 
