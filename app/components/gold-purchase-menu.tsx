@@ -66,9 +66,9 @@ const FALLBACK_RATES: Record<string, number> = {
 };
 
 const deliveryMethods = [
-  { value: "Face to face", feeLabel: "0%" },
-  { value: "Auction House", feeLabel: "+2%" },
-  { value: "Mailbox", feeLabel: "0%" },
+  { value: "Face to face", feeLabel: "0% fee" },
+  { value: "Auction House", feeLabel: "+2% fee" },
+  { value: "Mailbox", feeLabel: "0% fee" },
 ];
 
 function formatCurrency(value: number, currency: string, locale: string) {
@@ -560,7 +560,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Fee</span>
-              <span className="font-semibold text-[#e7f5ff]">{deliveryMethod === "Auction House" ? "+2%" : "0%"}</span>
+              <span className="font-semibold text-[#e7f5ff]">{deliveryMethod === "Auction House" ? "+2% fee" : "0% fee"}</span>
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Character</span>
