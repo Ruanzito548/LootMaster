@@ -211,7 +211,7 @@ export default function AdminChestConfigPage() {
     };
   }, [user]);
 
-  const saveConfig = async () => {
+  const saveConfig = async (nextEconomy?: { [key: string]: number | string }) => {
     if (!user || saving) {
       return;
     }
@@ -223,7 +223,7 @@ export default function AdminChestConfigPage() {
     try {
       const parsed = JSON.parse(rawJson);
       const token = await user.getIdToken();
-      const nextEconomy = {
+      const resolvedEconomy = nextEconomy ?? {
         normalRewardPercent: Number(economyInputs.normalRewardPercent),
         jackpot20xPercent: Number(economyInputs.jackpot20xPercent),
         jackpot200xPercent: Number(economyInputs.jackpot200xPercent),
@@ -239,7 +239,7 @@ export default function AdminChestConfigPage() {
           "content-type": "application/json",
           authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ config: { ...parsed, economy: nextEconomy } }),
+        body: JSON.stringify({ config: { ...parsed, economy: resolvedEconomy } }),
       });
 
       const payload = (await response.json()) as { config?: ChestConfigPayload; error?: string };
@@ -254,6 +254,20 @@ export default function AdminChestConfigPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const applyRecommendation = () => {
+    const recommendation = jackpotRecommendation.recommendedEconomyConfig;
+    setEconomyInputs({
+      normalRewardPercent: String(recommendation.normalRewardPercent),
+      jackpot20xPercent: String(recommendation.jackpot20xPercent),
+      jackpot200xPercent: String(recommendation.jackpot200xPercent),
+      jackpot20xChancePercent: String(recommendation.jackpot20xChancePercent),
+      jackpot200xChancePercent: String(recommendation.jackpot200xChancePercent),
+      jackpot20xMultiplier: String(recommendation.jackpot20xMultiplier),
+      jackpot200xMultiplier: String(recommendation.jackpot200xMultiplier),
+    });
+    void saveConfig(recommendation);
   };
 
   if (status === "loading" || loading) {
@@ -520,6 +534,15 @@ export default function AdminChestConfigPage() {
               className="rounded-md border border-green-600 bg-green-950 px-5 py-3 text-sm font-semibold text-green-200 transition hover:bg-green-900 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {saving ? "Saving..." : "Save config"}
+            </button>
+
+            <button
+              type="button"
+              onClick={applyRecommendation}
+              disabled={!user || saving}
+              className="rounded-md border border-emerald-600 bg-emerald-950 px-5 py-3 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {saving ? "Applying..." : "Aplicar recomendação"}
             </button>
 
             <button

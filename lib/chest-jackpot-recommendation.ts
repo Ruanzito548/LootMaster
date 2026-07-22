@@ -8,6 +8,16 @@ export type JackpotTierRecommendation = {
   rationale: string;
 };
 
+export type RecommendedEconomyConfig = {
+  normalRewardPercent: number;
+  jackpot20xPercent: number;
+  jackpot200xPercent: number;
+  jackpot20xChancePercent: number;
+  jackpot200xChancePercent: number;
+  jackpot20xMultiplier: number;
+  jackpot200xMultiplier: number;
+};
+
 export type JackpotRecommendation = {
   sustainabilityScore: "safe" | "warning" | "unsafe";
   suggestedCashbackPercent: number;
@@ -15,6 +25,7 @@ export type JackpotRecommendation = {
   suggestedNormalRewardPercent: number;
   suggestedJackpot20xPercent: number;
   suggestedJackpot200xPercent: number;
+  recommendedEconomyConfig: RecommendedEconomyConfig;
   recommendedTiers: JackpotTierRecommendation[];
   suggestedWalletPercentages: Array<{ percentOfWallet: number; probabilityPercent: number }>;
   summary: string;
@@ -30,6 +41,8 @@ type RecommendationInput = {
   chestEconomyConfig?: ChestEconomyConfig;
   orderValueCents?: number;
   cashbackPercent?: number;
+  targetCashbackPercent?: number;
+  targetReservePercent?: number;
   chestOpeningsPerOrder?: number;
   monteCarloIterations?: number;
 };
@@ -87,14 +100,16 @@ export function buildChestJackpotRecommendation(input: RecommendationInput): Jac
   const config = input.chestEconomyConfig ?? buildDefaultChestEconomyConfig();
   const orderValueCents = clampNonNegative(input.orderValueCents ?? 10000);
   const cashbackPercent = clampPercent(input.cashbackPercent ?? 7, 7);
+  const targetCashbackPercent = clampPercent(input.targetCashbackPercent ?? cashbackPercent, cashbackPercent);
+  const targetReservePercent = clampPercent(input.targetReservePercent ?? config.jackpot20xPercent + config.jackpot200xPercent + 1, 2);
   const chestOpeningsPerOrder = Math.max(1, Math.round(input.chestOpeningsPerOrder ?? 1));
   const iterations = Math.max(100, Math.round(input.monteCarloIterations ?? 2000));
 
-  const suggestedCashbackPercent = clampPercent(cashbackPercent + 0.5, cashbackPercent + 0.5);
-  const suggestedReservePercent = clampPercent(config.jackpot20xPercent + config.jackpot200xPercent + 1, 2);
-  const suggestedNormalRewardPercent = clampPercent(config.normalRewardPercent + 0.5, 5.5);
-  const suggestedJackpot20xPercent = clampPercent(config.jackpot20xPercent + 0.5, 1.5);
-  const suggestedJackpot200xPercent = clampPercent(config.jackpot200xPercent + 0.5, 1.5);
+  const suggestedCashbackPercent = clampPercent(targetCashbackPercent + 0.5, targetCashbackPercent + 0.5);
+  const suggestedReservePercent = clampPercent(targetReservePercent + 0.5, targetReservePercent + 0.5);
+  const suggestedNormalRewardPercent = clampPercent(Math.max(config.normalRewardPercent, targetCashbackPercent * 0.7), 8);
+  const suggestedJackpot20xPercent = clampPercent(Math.max(0.5, suggestedReservePercent * 0.6), 3);
+  const suggestedJackpot200xPercent = clampPercent(Math.max(0.3, suggestedReservePercent * 0.4), 3);
 
   const tiers = buildTierDistribution(config).map((tier) => ({
     multiplier: tier.multiplier,
@@ -160,6 +175,15 @@ export function buildChestJackpotRecommendation(input: RecommendationInput): Jac
     suggestedNormalRewardPercent: roundPercent(suggestedNormalRewardPercent),
     suggestedJackpot20xPercent: roundPercent(suggestedJackpot20xPercent),
     suggestedJackpot200xPercent: roundPercent(suggestedJackpot200xPercent),
+    recommendedEconomyConfig: {
+      normalRewardPercent: roundPercent(suggestedNormalRewardPercent),
+      jackpot20xPercent: roundPercent(suggestedJackpot20xPercent),
+      jackpot200xPercent: roundPercent(suggestedJackpot200xPercent),
+      jackpot20xChancePercent: roundPercent(Math.min(3, Math.max(0.5, config.jackpot20xChancePercent + 0.5))),
+      jackpot200xChancePercent: roundPercent(Math.min(1.5, Math.max(0.25, config.jackpot200xChancePercent + 0.25))),
+      jackpot20xMultiplier: 5,
+      jackpot200xMultiplier: 20,
+    },
     recommendedTiers: tiers,
     suggestedWalletPercentages: [
       { percentOfWallet: 5, probabilityPercent: 65 },
