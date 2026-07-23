@@ -1,4 +1,3 @@
-import { CHEST_EXPECTED_VALUE_USD } from "./chest-loot";
 import type { ChestId } from "./chests";
 
 export type ChestWalletKey = "normal" | "jackpotCommon" | "jackpotRare";
@@ -12,9 +11,8 @@ export type ChestWalletConfig = {
   id: ChestWalletKey;
   label: string;
   allocationPercent: number;
-  rewardProbabilityPercent: number;
-  rewardPercentages: number[];
-  safetyBufferPercent: number;
+  activationChancePercent: number;
+  minimumWalletReservePercent: number;
   payoutTiers: ChestWalletPayoutTier[];
 };
 
@@ -22,21 +20,24 @@ export type ChestWalletEconomyConfig = {
   schemaVersion: number;
   updatedAtMs: number;
   wallets: Record<ChestWalletKey, ChestWalletConfig>;
-  jackpotCommonChancePercent: number;
-  jackpotRareChancePercent: number;
   useUsdAsBaseCurrency: boolean;
 };
 
 export type ChestWalletLedgerEntry = {
   id: string;
-  walletKey: ChestWalletKey;
-  movementType: "credit" | "reward" | "jackpot" | "adjustment" | "refund";
+  walletId: ChestWalletKey;
+  type: "funding" | "reward" | "jackpot" | "adjustment" | "refund";
   amountUsd: number;
   balanceBeforeUsd: number;
   balanceAfterUsd: number;
-  source: string;
+  orderId?: string;
+  rewardId?: string;
+  userId?: string;
+  description: string;
+  createdAt: string;
+  source?: string;
   referenceId?: string;
-  createdAtMs: number;
+  createdAtMs?: number;
   metadata?: Record<string, unknown>;
 };
 
@@ -92,17 +93,14 @@ function normalizePayoutTiers(walletConfig: ChestWalletConfig): ChestWalletPayou
     return normalized;
   }
 
-  return (walletConfig.rewardPercentages ?? []).map((payoutPercent, index) => ({
-    payoutPercent: clampNonNegative(payoutPercent),
-    probabilityPercent: index === 0 ? 100 : 0,
-  }));
+  return [{ payoutPercent: 5, probabilityPercent: 100 }];
 }
 
 function resolveTierPayoutPercent(walletConfig: ChestWalletConfig, randomValue: number): number {
   const tiers = normalizePayoutTiers(walletConfig);
   const totalProbability = tiers.reduce((sum, tier) => sum + tier.probabilityPercent, 0);
   if (totalProbability <= 0) {
-    return tiers[0]?.payoutPercent ?? walletConfig.rewardPercentages[0] ?? 5;
+    return tiers[0]?.payoutPercent ?? 5;
   }
 
   const normalizedValue = clampPercent(randomValue, 0);
@@ -116,7 +114,7 @@ function resolveTierPayoutPercent(walletConfig: ChestWalletConfig, randomValue: 
     }
   }
 
-  return tiers[tiers.length - 1]?.payoutPercent ?? walletConfig.rewardPercentages[0] ?? 5;
+  return tiers[tiers.length - 1]?.payoutPercent ?? 5;
 }
 
 export function buildDefaultChestWalletEconomyConfig(): ChestWalletEconomyConfig {
@@ -124,25 +122,21 @@ export function buildDefaultChestWalletEconomyConfig(): ChestWalletEconomyConfig
     schemaVersion: CHEST_WALLET_ECONOMY_SCHEMA_VERSION,
     updatedAtMs: Date.now(),
     useUsdAsBaseCurrency: true,
-    jackpotCommonChancePercent: 5,
-    jackpotRareChancePercent: 1,
     wallets: {
       normal: {
         id: "normal",
         label: "Carteira Normal",
         allocationPercent: 70,
-        rewardProbabilityPercent: 100,
-        rewardPercentages: [5],
-        safetyBufferPercent: 0,
+        activationChancePercent: 100,
+        minimumWalletReservePercent: 0,
         payoutTiers: [{ payoutPercent: 5, probabilityPercent: 100 }],
       },
       jackpotCommon: {
         id: "jackpotCommon",
         label: "Carteira Jackpot Comum",
         allocationPercent: 25,
-        rewardProbabilityPercent: 10,
-        rewardPercentages: [5, 10, 20, 40],
-        safetyBufferPercent: 10,
+        activationChancePercent: 5,
+        minimumWalletReservePercent: 10,
         payoutTiers: [
           { payoutPercent: 5, probabilityPercent: 45 },
           { payoutPercent: 10, probabilityPercent: 35 },
@@ -154,9 +148,8 @@ export function buildDefaultChestWalletEconomyConfig(): ChestWalletEconomyConfig
         id: "jackpotRare",
         label: "Carteira Jackpot Raro",
         allocationPercent: 5,
-        rewardProbabilityPercent: 2,
-        rewardPercentages: [10, 20, 40, 60, 100],
-        safetyBufferPercent: 20,
+        activationChancePercent: 1,
+        minimumWalletReservePercent: 20,
         payoutTiers: [
           { payoutPercent: 10, probabilityPercent: 25 },
           { payoutPercent: 20, probabilityPercent: 25 },
@@ -195,9 +188,8 @@ export function sanitizeChestWalletEconomyConfig(source: unknown): ChestWalletEc
       ...fallback.wallets.normal,
       ...(wallets.normal && typeof wallets.normal === "object" ? wallets.normal : {}),
       allocationPercent: clampPercent((wallets.normal as { allocationPercent?: number } | undefined)?.allocationPercent ?? fallback.wallets.normal.allocationPercent, fallback.wallets.normal.allocationPercent),
-      rewardProbabilityPercent: clampPercent((wallets.normal as { rewardProbabilityPercent?: number } | undefined)?.rewardProbabilityPercent ?? fallback.wallets.normal.rewardProbabilityPercent, fallback.wallets.normal.rewardProbabilityPercent),
-      rewardPercentages: Array.isArray((wallets.normal as { rewardPercentages?: number[] } | undefined)?.rewardPercentages) ? ((wallets.normal as { rewardPercentages?: number[] }).rewardPercentages ?? []).filter((value): value is number => typeof value === "number") : fallback.wallets.normal.rewardPercentages,
-      safetyBufferPercent: clampPercent((wallets.normal as { safetyBufferPercent?: number } | undefined)?.safetyBufferPercent ?? fallback.wallets.normal.safetyBufferPercent, fallback.wallets.normal.safetyBufferPercent),
+      activationChancePercent: clampPercent((wallets.normal as { activationChancePercent?: number; rewardProbabilityPercent?: number } | undefined)?.activationChancePercent ?? (wallets.normal as { activationChancePercent?: number; rewardProbabilityPercent?: number } | undefined)?.rewardProbabilityPercent ?? fallback.wallets.normal.activationChancePercent, fallback.wallets.normal.activationChancePercent),
+      minimumWalletReservePercent: clampPercent((wallets.normal as { minimumWalletReservePercent?: number; safetyBufferPercent?: number } | undefined)?.minimumWalletReservePercent ?? (wallets.normal as { minimumWalletReservePercent?: number; safetyBufferPercent?: number } | undefined)?.safetyBufferPercent ?? fallback.wallets.normal.minimumWalletReservePercent, fallback.wallets.normal.minimumWalletReservePercent),
       payoutTiers: Array.isArray((wallets.normal as { payoutTiers?: ChestWalletPayoutTier[] } | undefined)?.payoutTiers)
         ? ((wallets.normal as { payoutTiers?: ChestWalletPayoutTier[] }).payoutTiers ?? []).filter((tier): tier is ChestWalletPayoutTier => Boolean(tier) && typeof tier === "object")
         : fallback.wallets.normal.payoutTiers,
@@ -206,9 +198,8 @@ export function sanitizeChestWalletEconomyConfig(source: unknown): ChestWalletEc
       ...fallback.wallets.jackpotCommon,
       ...(wallets.jackpotCommon && typeof wallets.jackpotCommon === "object" ? wallets.jackpotCommon : {}),
       allocationPercent: clampPercent((wallets.jackpotCommon as { allocationPercent?: number } | undefined)?.allocationPercent ?? fallback.wallets.jackpotCommon.allocationPercent, fallback.wallets.jackpotCommon.allocationPercent),
-      rewardProbabilityPercent: clampPercent((wallets.jackpotCommon as { rewardProbabilityPercent?: number } | undefined)?.rewardProbabilityPercent ?? fallback.wallets.jackpotCommon.rewardProbabilityPercent, fallback.wallets.jackpotCommon.rewardProbabilityPercent),
-      rewardPercentages: Array.isArray((wallets.jackpotCommon as { rewardPercentages?: number[] } | undefined)?.rewardPercentages) ? ((wallets.jackpotCommon as { rewardPercentages?: number[] }).rewardPercentages ?? []).filter((value): value is number => typeof value === "number") : fallback.wallets.jackpotCommon.rewardPercentages,
-      safetyBufferPercent: clampPercent((wallets.jackpotCommon as { safetyBufferPercent?: number } | undefined)?.safetyBufferPercent ?? fallback.wallets.jackpotCommon.safetyBufferPercent, fallback.wallets.jackpotCommon.safetyBufferPercent),
+      activationChancePercent: clampPercent((wallets.jackpotCommon as { activationChancePercent?: number; rewardProbabilityPercent?: number } | undefined)?.activationChancePercent ?? (wallets.jackpotCommon as { activationChancePercent?: number; rewardProbabilityPercent?: number } | undefined)?.rewardProbabilityPercent ?? fallback.wallets.jackpotCommon.activationChancePercent, fallback.wallets.jackpotCommon.activationChancePercent),
+      minimumWalletReservePercent: clampPercent((wallets.jackpotCommon as { minimumWalletReservePercent?: number; safetyBufferPercent?: number } | undefined)?.minimumWalletReservePercent ?? (wallets.jackpotCommon as { minimumWalletReservePercent?: number; safetyBufferPercent?: number } | undefined)?.safetyBufferPercent ?? fallback.wallets.jackpotCommon.minimumWalletReservePercent, fallback.wallets.jackpotCommon.minimumWalletReservePercent),
       payoutTiers: Array.isArray((wallets.jackpotCommon as { payoutTiers?: ChestWalletPayoutTier[] } | undefined)?.payoutTiers)
         ? ((wallets.jackpotCommon as { payoutTiers?: ChestWalletPayoutTier[] }).payoutTiers ?? []).filter((tier): tier is ChestWalletPayoutTier => Boolean(tier) && typeof tier === "object")
         : fallback.wallets.jackpotCommon.payoutTiers,
@@ -217,9 +208,8 @@ export function sanitizeChestWalletEconomyConfig(source: unknown): ChestWalletEc
       ...fallback.wallets.jackpotRare,
       ...(wallets.jackpotRare && typeof wallets.jackpotRare === "object" ? wallets.jackpotRare : {}),
       allocationPercent: clampPercent((wallets.jackpotRare as { allocationPercent?: number } | undefined)?.allocationPercent ?? fallback.wallets.jackpotRare.allocationPercent, fallback.wallets.jackpotRare.allocationPercent),
-      rewardProbabilityPercent: clampPercent((wallets.jackpotRare as { rewardProbabilityPercent?: number } | undefined)?.rewardProbabilityPercent ?? fallback.wallets.jackpotRare.rewardProbabilityPercent, fallback.wallets.jackpotRare.rewardProbabilityPercent),
-      rewardPercentages: Array.isArray((wallets.jackpotRare as { rewardPercentages?: number[] } | undefined)?.rewardPercentages) ? ((wallets.jackpotRare as { rewardPercentages?: number[] }).rewardPercentages ?? []).filter((value): value is number => typeof value === "number") : fallback.wallets.jackpotRare.rewardPercentages,
-      safetyBufferPercent: clampPercent((wallets.jackpotRare as { safetyBufferPercent?: number } | undefined)?.safetyBufferPercent ?? fallback.wallets.jackpotRare.safetyBufferPercent, fallback.wallets.jackpotRare.safetyBufferPercent),
+      activationChancePercent: clampPercent((wallets.jackpotRare as { activationChancePercent?: number; rewardProbabilityPercent?: number } | undefined)?.activationChancePercent ?? (wallets.jackpotRare as { activationChancePercent?: number; rewardProbabilityPercent?: number } | undefined)?.rewardProbabilityPercent ?? fallback.wallets.jackpotRare.activationChancePercent, fallback.wallets.jackpotRare.activationChancePercent),
+      minimumWalletReservePercent: clampPercent((wallets.jackpotRare as { minimumWalletReservePercent?: number; safetyBufferPercent?: number } | undefined)?.minimumWalletReservePercent ?? (wallets.jackpotRare as { minimumWalletReservePercent?: number; safetyBufferPercent?: number } | undefined)?.safetyBufferPercent ?? fallback.wallets.jackpotRare.minimumWalletReservePercent, fallback.wallets.jackpotRare.minimumWalletReservePercent),
       payoutTiers: Array.isArray((wallets.jackpotRare as { payoutTiers?: ChestWalletPayoutTier[] } | undefined)?.payoutTiers)
         ? ((wallets.jackpotRare as { payoutTiers?: ChestWalletPayoutTier[] }).payoutTiers ?? []).filter((tier): tier is ChestWalletPayoutTier => Boolean(tier) && typeof tier === "object")
         : fallback.wallets.jackpotRare.payoutTiers,
@@ -227,7 +217,7 @@ export function sanitizeChestWalletEconomyConfig(source: unknown): ChestWalletEc
   } as Record<ChestWalletKey, ChestWalletConfig>;
 
   const totalAllocation = Object.values(normalizedWallets).reduce((sum, wallet) => sum + wallet.allocationPercent, 0);
-  if (totalAllocation !== 100) {
+  if (Math.abs(totalAllocation - 100) > 0.01) {
     normalizedWallets.normal.allocationPercent = 70;
     normalizedWallets.jackpotCommon.allocationPercent = 25;
     normalizedWallets.jackpotRare.allocationPercent = 5;
@@ -237,9 +227,78 @@ export function sanitizeChestWalletEconomyConfig(source: unknown): ChestWalletEc
     schemaVersion: CHEST_WALLET_ECONOMY_SCHEMA_VERSION,
     updatedAtMs: clampNonNegative(parsed.updatedAtMs ?? Date.now()),
     useUsdAsBaseCurrency: parsed.useUsdAsBaseCurrency ?? true,
-    jackpotCommonChancePercent: clampPercent(parsed.jackpotCommonChancePercent ?? fallback.jackpotCommonChancePercent, fallback.jackpotCommonChancePercent),
-    jackpotRareChancePercent: clampPercent(parsed.jackpotRareChancePercent ?? fallback.jackpotRareChancePercent, fallback.jackpotRareChancePercent),
     wallets: normalizedWallets,
+  };
+}
+
+export function sanitizeChestWalletEconomyState(source: unknown): ChestWalletEconomyState {
+  const fallback = buildDefaultChestWalletEconomyState();
+  if (!source || typeof source !== "object") {
+    return fallback;
+  }
+
+  const parsed = source as Partial<ChestWalletEconomyState> & { wallets?: Record<string, unknown>; ledger?: Array<Record<string, unknown>> };
+  const wallets = parsed.wallets && typeof parsed.wallets === "object" ? parsed.wallets : fallback.wallets;
+
+  const normalizedWallets = {
+    normal: {
+      balanceUsd: Number((wallets.normal as { balanceUsd?: number } | undefined)?.balanceUsd ?? 0),
+      totalReceivedUsd: Number((wallets.normal as { totalReceivedUsd?: number } | undefined)?.totalReceivedUsd ?? 0),
+      totalDistributedUsd: Number((wallets.normal as { totalDistributedUsd?: number } | undefined)?.totalDistributedUsd ?? 0),
+      rewardCount: Number((wallets.normal as { rewardCount?: number } | undefined)?.rewardCount ?? 0),
+      lastMovementAtMs: Number((wallets.normal as { lastMovementAtMs?: number } | undefined)?.lastMovementAtMs ?? Date.now()),
+    },
+    jackpotCommon: {
+      balanceUsd: Number((wallets.jackpotCommon as { balanceUsd?: number } | undefined)?.balanceUsd ?? 0),
+      totalReceivedUsd: Number((wallets.jackpotCommon as { totalReceivedUsd?: number } | undefined)?.totalReceivedUsd ?? 0),
+      totalDistributedUsd: Number((wallets.jackpotCommon as { totalDistributedUsd?: number } | undefined)?.totalDistributedUsd ?? 0),
+      rewardCount: Number((wallets.jackpotCommon as { rewardCount?: number } | undefined)?.rewardCount ?? 0),
+      lastMovementAtMs: Number((wallets.jackpotCommon as { lastMovementAtMs?: number } | undefined)?.lastMovementAtMs ?? Date.now()),
+    },
+    jackpotRare: {
+      balanceUsd: Number((wallets.jackpotRare as { balanceUsd?: number } | undefined)?.balanceUsd ?? 0),
+      totalReceivedUsd: Number((wallets.jackpotRare as { totalReceivedUsd?: number } | undefined)?.totalReceivedUsd ?? 0),
+      totalDistributedUsd: Number((wallets.jackpotRare as { totalDistributedUsd?: number } | undefined)?.totalDistributedUsd ?? 0),
+      rewardCount: Number((wallets.jackpotRare as { rewardCount?: number } | undefined)?.rewardCount ?? 0),
+      lastMovementAtMs: Number((wallets.jackpotRare as { lastMovementAtMs?: number } | undefined)?.lastMovementAtMs ?? Date.now()),
+    },
+  } as ChestWalletEconomyState["wallets"];
+
+  const ledger = Array.isArray(parsed.ledger)
+    ? parsed.ledger.map((entry) => {
+        const raw = entry as Partial<ChestWalletLedgerEntry> & Record<string, unknown>;
+        const walletId = (raw.walletId as ChestWalletKey | undefined) ?? (raw.walletKey as ChestWalletKey | undefined) ?? "normal";
+        const type = (raw.type as ChestWalletLedgerEntry["type"] | undefined) ?? (raw.movementType as ChestWalletLedgerEntry["type"] | undefined) ?? "adjustment";
+        const amountUsd = Number(raw.amountUsd ?? 0);
+        const balanceBeforeUsd = Number(raw.balanceBeforeUsd ?? 0);
+        const balanceAfterUsd = Number(raw.balanceAfterUsd ?? 0);
+        const createdAt = String(raw.createdAt ?? raw.createdAtMs ?? Date.now());
+        const description = String(raw.description ?? raw.source ?? "Wallet movement");
+
+        return {
+          id: String(raw.id ?? `entry-${Date.now()}-${Math.random()}`),
+          walletId,
+          type,
+          amountUsd,
+          balanceBeforeUsd,
+          balanceAfterUsd,
+          orderId: raw.orderId ? String(raw.orderId) : undefined,
+          rewardId: raw.rewardId ? String(raw.rewardId) : undefined,
+          userId: raw.userId ? String(raw.userId) : undefined,
+          description,
+          createdAt,
+          source: raw.source ? String(raw.source) : undefined,
+          referenceId: raw.referenceId ? String(raw.referenceId) : undefined,
+          createdAtMs: raw.createdAtMs ? Number(raw.createdAtMs) : undefined,
+          metadata: typeof raw.metadata === "object" && raw.metadata ? (raw.metadata as Record<string, unknown>) : undefined,
+        } satisfies ChestWalletLedgerEntry;
+      })
+    : [];
+
+  return {
+    wallets: normalizedWallets,
+    ledger,
+    updatedAtMs: Number(parsed.updatedAtMs ?? Date.now()),
   };
 }
 
@@ -262,12 +321,14 @@ export function fundChestWalletEconomyFromCashback(state: ChestWalletEconomyStat
     wallet.lastMovementAtMs = Date.now();
 
     nextState.ledger.push({
-      id: `credit-${walletKey}-${Date.now()}-${nextState.ledger.length}`,
-      walletKey,
-      movementType: "credit",
+      id: `funding-${walletKey}-${Date.now()}-${nextState.ledger.length}`,
+      walletId: walletKey,
+      type: "funding",
       amountUsd,
       balanceBeforeUsd: roundUsd(wallet.balanceUsd - amountUsd),
       balanceAfterUsd: roundUsd(wallet.balanceUsd),
+      description: `Cashback funding for ${walletConfig.label}`,
+      createdAt: new Date().toISOString(),
       source: "cashback",
       referenceId: "cashback",
       createdAtMs: Date.now(),
@@ -280,33 +341,68 @@ export function fundChestWalletEconomyFromCashback(state: ChestWalletEconomyStat
 }
 
 export function resolveChestWalletReward(chestId: ChestId, config: ChestWalletEconomyConfig, state: ChestWalletEconomyState, randomValue: number): ChestWalletReward | null {
-  const baseRewardUsd = Math.max(0.01, CHEST_EXPECTED_VALUE_USD[chestId] ?? 1);
-
-  const walletChance = clampPercent(config.jackpotCommonChancePercent, 5);
-  const rareWalletChance = clampPercent(config.jackpotRareChancePercent, 1);
   const randomPercent = clampPercent(randomValue, 0);
+  const walletEntries = Object.values(config.wallets).filter((walletConfig) => walletConfig.activationChancePercent > 0 && state.wallets[walletConfig.id].balanceUsd > 0);
+  const totalActivationWeight = walletEntries.reduce((sum, walletConfig) => sum + walletConfig.activationChancePercent, 0);
 
-  const commonWallet = state.wallets.jackpotCommon;
-  const rareWallet = state.wallets.jackpotRare;
-  const normalWallet = state.wallets.normal;
-
-  if (commonWallet.balanceUsd > 0 && randomPercent <= walletChance) {
-    const percentOfWallet = resolveTierPayoutPercent(config.wallets.jackpotCommon, randomPercent);
-    const payoutUsd = roundUsd(commonWallet.balanceUsd * (percentOfWallet / 100));
-    return { walletKey: "jackpotCommon", type: "jackpot-common", amountUsd: payoutUsd, percentOfWallet, reason: "jackpot-common" };
+  if (walletEntries.length === 0 || totalActivationWeight <= 0) {
+    return null;
   }
 
-  if (rareWallet.balanceUsd > 0 && randomPercent <= rareWalletChance) {
-    const percentOfWallet = resolveTierPayoutPercent(config.wallets.jackpotRare, randomPercent);
-    const payoutUsd = roundUsd(rareWallet.balanceUsd * (percentOfWallet / 100));
-    return { walletKey: "jackpotRare", type: "jackpot-rare", amountUsd: payoutUsd, percentOfWallet, reason: "jackpot-rare" };
+  const threshold = (randomPercent / 100) * totalActivationWeight;
+  let cumulative = 0;
+
+  for (const walletConfig of walletEntries) {
+    cumulative += walletConfig.activationChancePercent;
+    if (threshold <= cumulative) {
+      const walletState = state.wallets[walletConfig.id];
+      const reserveAmount = roundUsd(walletState.balanceUsd * (walletConfig.minimumWalletReservePercent / 100));
+      const maxPayoutUsd = roundUsd(Math.max(0, walletState.balanceUsd - reserveAmount));
+      if (maxPayoutUsd <= 0) {
+        return null;
+      }
+
+      const percentOfWallet = resolveTierPayoutPercent(walletConfig, randomPercent);
+      const payoutUsd = roundUsd(Math.min(walletState.balanceUsd * (percentOfWallet / 100), maxPayoutUsd));
+      if (payoutUsd <= 0) {
+        return null;
+      }
+
+      return {
+        walletKey: walletConfig.id,
+        type: walletConfig.id === "normal" ? "normal" : walletConfig.id === "jackpotCommon" ? "jackpot-common" : "jackpot-rare",
+        amountUsd: payoutUsd,
+        percentOfWallet,
+        reason: walletConfig.id === "normal" ? "normal-reward" : walletConfig.id === "jackpotCommon" ? "jackpot-common" : "jackpot-rare",
+      };
+    }
   }
 
-  if (normalWallet.balanceUsd > 0) {
-    return { walletKey: "normal", type: "normal", amountUsd: roundUsd(baseRewardUsd), percentOfWallet: 100, reason: "normal-reward" };
+  const fallbackWallet = walletEntries[walletEntries.length - 1];
+  if (!fallbackWallet) {
+    return null;
   }
 
-  return null;
+  const walletState = state.wallets[fallbackWallet.id];
+  const reserveAmount = roundUsd(walletState.balanceUsd * (fallbackWallet.minimumWalletReservePercent / 100));
+  const maxPayoutUsd = roundUsd(Math.max(0, walletState.balanceUsd - reserveAmount));
+  if (maxPayoutUsd <= 0) {
+    return null;
+  }
+
+  const percentOfWallet = resolveTierPayoutPercent(fallbackWallet, randomPercent);
+  const payoutUsd = roundUsd(Math.min(walletState.balanceUsd * (percentOfWallet / 100), maxPayoutUsd));
+  if (payoutUsd <= 0) {
+    return null;
+  }
+
+  return {
+    walletKey: fallbackWallet.id,
+    type: fallbackWallet.id === "normal" ? "normal" : fallbackWallet.id === "jackpotCommon" ? "jackpot-common" : "jackpot-rare",
+    amountUsd: payoutUsd,
+    percentOfWallet,
+    reason: fallbackWallet.id === "normal" ? "normal-reward" : fallbackWallet.id === "jackpotCommon" ? "jackpot-common" : "jackpot-rare",
+  };
 }
 
 export function applyChestWalletReward(state: ChestWalletEconomyState, reward: ChestWalletReward): ChestWalletEconomyState {
@@ -322,11 +418,13 @@ export function applyChestWalletReward(state: ChestWalletEconomyState, reward: C
 
   nextState.ledger.push({
     id: `reward-${reward.walletKey}-${Date.now()}-${nextState.ledger.length}`,
-    walletKey: reward.walletKey,
-    movementType: reward.type === "normal" ? "reward" : "jackpot",
+    walletId: reward.walletKey,
+    type: reward.type === "normal" ? "reward" : "jackpot",
     amountUsd: roundUsd(reward.amountUsd),
     balanceBeforeUsd: roundUsd(previousBalance),
     balanceAfterUsd: roundUsd(nextBalance),
+    description: reward.type === "normal" ? "Chest reward payout" : `Jackpot payout for ${reward.walletKey}`,
+    createdAt: new Date().toISOString(),
     source: reward.type === "normal" ? "chest" : "jackpot",
     referenceId: reward.type,
     createdAtMs: Date.now(),

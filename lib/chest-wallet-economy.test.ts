@@ -36,18 +36,26 @@ describe("chest wallet economy", () => {
 
   it("sanitizes wallet economy configs and preserves valid values", () => {
     const sanitized = sanitizeChestWalletEconomyConfig({
-      jackpotCommonChancePercent: 12,
-      jackpotRareChancePercent: 3,
       wallets: {
-        normal: { allocationPercent: 80, rewardProbabilityPercent: 100, rewardPercentages: [6], safetyBufferPercent: 5 },
-        jackpotCommon: { allocationPercent: 15, rewardProbabilityPercent: 8, rewardPercentages: [10], safetyBufferPercent: 10 },
-        jackpotRare: { allocationPercent: 5, rewardProbabilityPercent: 2, rewardPercentages: [30], safetyBufferPercent: 20 },
+        normal: { allocationPercent: 80, activationChancePercent: 100, minimumWalletReservePercent: 5, payoutTiers: [{ payoutPercent: 6, probabilityPercent: 100 }] },
+        jackpotCommon: { allocationPercent: 15, activationChancePercent: 8, minimumWalletReservePercent: 10, payoutTiers: [{ payoutPercent: 10, probabilityPercent: 100 }] },
+        jackpotRare: { allocationPercent: 5, activationChancePercent: 2, minimumWalletReservePercent: 20, payoutTiers: [{ payoutPercent: 30, probabilityPercent: 100 }] },
       },
     });
 
-    expect(sanitized.jackpotCommonChancePercent).toBe(12);
-    expect(sanitized.jackpotRareChancePercent).toBe(3);
     expect(sanitized.wallets.normal.allocationPercent).toBe(80);
-    expect(sanitized.wallets.jackpotCommon.rewardPercentages[0]).toBe(10);
+    expect(sanitized.wallets.jackpotCommon.activationChancePercent).toBe(8);
+    expect(sanitized.wallets.jackpotRare.payoutTiers[0]?.payoutPercent).toBe(30);
+  });
+
+  it("uses payout tiers and reserve rules to avoid invalid payout amounts", () => {
+    const config = buildDefaultChestWalletEconomyConfig();
+    const state = buildDefaultChestWalletEconomyState();
+    const fundedState = fundChestWalletEconomyFromCashback(state, 5, config);
+
+    const reward = resolveChestWalletReward("common", config, fundedState, 50);
+
+    expect(reward?.walletKey).toBe("normal");
+    expect(reward?.amountUsd).toBeLessThanOrEqual(0.05);
   });
 });

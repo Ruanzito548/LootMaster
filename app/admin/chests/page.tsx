@@ -31,9 +31,7 @@ type ChestConfigPayload = {
     schemaVersion: number;
     updatedAtMs: number;
     useUsdAsBaseCurrency: boolean;
-    jackpotCommonChancePercent: number;
-    jackpotRareChancePercent: number;
-    wallets: Record<string, { allocationPercent: number; rewardProbabilityPercent: number; rewardPercentages: number[]; safetyBufferPercent: number; payoutTiers?: Array<{ payoutPercent: number; probabilityPercent: number }> }>;
+    wallets: Record<string, { allocationPercent: number; activationChancePercent: number; minimumWalletReservePercent: number; payoutTiers?: Array<{ payoutPercent: number; probabilityPercent: number }> }>;
   };
   walletEconomyState?: {
     wallets: Record<string, { balanceUsd: number; totalReceivedUsd: number; totalDistributedUsd: number; rewardCount: number; lastMovementAtMs: number }>;
@@ -50,11 +48,15 @@ type FinancialCalculatorConfig = {
 };
 
 type WalletInputState = {
-  jackpotCommonChancePercent: string;
-  jackpotRareChancePercent: string;
   normalAllocationPercent: string;
   jackpotCommonAllocationPercent: string;
   jackpotRareAllocationPercent: string;
+  normalActivationChancePercent: string;
+  jackpotCommonActivationChancePercent: string;
+  jackpotRareActivationChancePercent: string;
+  normalMinimumReservePercent: string;
+  jackpotCommonMinimumReservePercent: string;
+  jackpotRareMinimumReservePercent: string;
 };
 
 type AssistantPreview = {
@@ -62,15 +64,17 @@ type AssistantPreview = {
     normalAllocationPercent: number;
     jackpotCommonAllocationPercent: number;
     jackpotRareAllocationPercent: number;
-    jackpotCommonChancePercent: number;
-    jackpotRareChancePercent: number;
+    normalActivationChancePercent: number;
+    jackpotCommonActivationChancePercent: number;
+    jackpotRareActivationChancePercent: number;
   };
   suggested: {
     normalAllocationPercent: number;
     jackpotCommonAllocationPercent: number;
     jackpotRareAllocationPercent: number;
-    jackpotCommonChancePercent: number;
-    jackpotRareChancePercent: number;
+    normalActivationChancePercent: number;
+    jackpotCommonActivationChancePercent: number;
+    jackpotRareActivationChancePercent: number;
   };
   notes: string[];
 };
@@ -149,17 +153,27 @@ function formatRarityWeights(weights: Array<{ rarity: string; weight: number }>)
   return weights.map((entry) => `${entry.rarity}:${entry.weight}`).join(", ");
 }
 
+function getWalletTone(walletId: "normal" | "jackpotCommon" | "jackpotRare") {
+  if (walletId === "normal") return "emerald";
+  if (walletId === "jackpotCommon") return "amber";
+  return "fuchsia";
+}
+
 export default function AdminChestConfigPage() {
   const { user, status } = useProfileSession();
 
   const [rawJson, setRawJson] = useState("");
   const [draftConfig, setDraftConfig] = useState<ChestConfigPayload | null>(null);
   const [walletInputs, setWalletInputs] = useState<WalletInputState>({
-    jackpotCommonChancePercent: "5",
-    jackpotRareChancePercent: "1",
     normalAllocationPercent: "70",
     jackpotCommonAllocationPercent: "25",
     jackpotRareAllocationPercent: "5",
+    normalActivationChancePercent: "100",
+    jackpotCommonActivationChancePercent: "5",
+    jackpotRareActivationChancePercent: "1",
+    normalMinimumReservePercent: "0",
+    jackpotCommonMinimumReservePercent: "10",
+    jackpotRareMinimumReservePercent: "20",
   });
   const [financialConfig, setFinancialConfig] = useState<FinancialCalculatorConfig | null>(null);
   const [exampleOrderUsd, setExampleOrderUsd] = useState("100");
@@ -172,8 +186,6 @@ export default function AdminChestConfigPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const parsedSummary = draftConfig;
-
-  const walletConfig = parsedSummary?.walletEconomy;
   const walletState = parsedSummary?.walletEconomyState;
 
   const allocationSnapshot = useMemo(() => {
@@ -183,28 +195,8 @@ export default function AdminChestConfigPage() {
     const total = normal + common + rare;
     const isBalanced = Math.abs(total - 100) < 0.01;
 
-    return {
-      total,
-      isBalanced,
-      normal,
-      common,
-      rare,
-    };
+    return { total, isBalanced, normal, common, rare };
   }, [walletInputs]);
-
-  const policySnapshot = useMemo(() => {
-    const state = walletState;
-    const walletBalances = Object.values(state?.wallets ?? {}).reduce((sum, wallet) => sum + (wallet?.balanceUsd ?? 0), 0);
-    const totalReceived = Object.values(state?.wallets ?? {}).reduce((sum, wallet) => sum + (wallet?.totalReceivedUsd ?? 0), 0);
-    const balanceCoveragePercent = totalReceived > 0 ? (walletBalances / totalReceived) * 100 : 0;
-    const jackpotChancePercent = Number(walletInputs.jackpotCommonChancePercent) + Number(walletInputs.jackpotRareChancePercent);
-
-    return {
-      totalWalletBalanceUsd: walletBalances,
-      balanceCoveragePercent,
-      jackpotChancePercent,
-    };
-  }, [walletState, walletInputs]);
 
   const cashbackPreview = useMemo(() => {
     const cashbackPercent = Number(financialConfig?.cashbackPercent ?? 0);
@@ -214,64 +206,62 @@ export default function AdminChestConfigPage() {
     const common = cashbackUsd * (allocationSnapshot.common / 100);
     const rare = cashbackUsd * (allocationSnapshot.rare / 100);
 
-    return {
-      cashbackPercent,
-      orderValueUsd,
-      cashbackUsd,
-      normal,
-      common,
-      rare,
-    };
+    return { cashbackPercent, orderValueUsd, cashbackUsd, normal, common, rare };
   }, [allocationSnapshot, exampleOrderUsd, financialConfig]);
 
   const simulatorPreview = useMemo(() => {
-    const baseChestValue = Number(exampleOrderUsd || 0) / 2;
-    const expectedValueUsd = Math.max(0.5, baseChestValue * (1 + Number(walletInputs.jackpotCommonChancePercent) / 100));
-    const expectedJackpotUsd = Math.max(0.01, cashbackPreview.cashbackUsd * (Number(walletInputs.jackpotCommonChancePercent) / 100));
+    const baseChestValue = Math.max(0.5, Number(exampleOrderUsd || 0) / 2);
+    const expectedChestValueUsd = baseChestValue * (1 + Number(walletInputs.jackpotCommonActivationChancePercent) / 100);
+    const expectedJackpotUsd = Math.max(0.01, cashbackPreview.common * (Number(walletInputs.jackpotCommonActivationChancePercent) / 100));
 
     return {
-      expectedChestValueUsd: expectedValueUsd,
+      expectedChestValueUsd,
       expectedJackpotUsd,
-      jackpotChancePercent: policySnapshot.jackpotChancePercent,
     };
-  }, [cashbackPreview.cashbackUsd, exampleOrderUsd, policySnapshot.jackpotChancePercent, walletInputs.jackpotCommonChancePercent]);
+  }, [cashbackPreview.common, exampleOrderUsd, walletInputs.jackpotCommonActivationChancePercent]);
+
+  const walletSupport = useMemo(() => {
+    const referenceChest = Math.max(0.01, CHEST_EXPECTED_VALUE_USD.common ?? 1);
+    const referenceJackpot = Math.max(0.01, cashbackPreview.common / 10);
+    const normalBalance = Number(walletState?.wallets?.normal?.balanceUsd ?? 0);
+    const commonBalance = Number(walletState?.wallets?.jackpotCommon?.balanceUsd ?? 0);
+    const rareBalance = Number(walletState?.wallets?.jackpotRare?.balanceUsd ?? 0);
+
+    return {
+      normalChestSupport: Math.floor(normalBalance / referenceChest),
+      commonJackpotSupport: Math.floor(commonBalance / referenceJackpot),
+      rareJackpotSupport: Math.floor(rareBalance / Math.max(0.01, referenceJackpot * 3)),
+      daysSupport: Math.max(1, Math.floor((normalBalance + commonBalance + rareBalance) / Math.max(0.01, cashbackPreview.cashbackUsd || 1))),
+    };
+  }, [cashbackPreview.cashbackUsd, cashbackPreview.common, walletState]);
+
+  const policySnapshot = useMemo(() => {
+    const state = walletState;
+    const walletBalances = Object.values(state?.wallets ?? {}).reduce((sum, wallet) => sum + (wallet?.balanceUsd ?? 0), 0);
+    const totalReceived = Object.values(state?.wallets ?? {}).reduce((sum, wallet) => sum + (wallet?.totalReceivedUsd ?? 0), 0);
+    const balanceCoveragePercent = totalReceived > 0 ? (walletBalances / totalReceived) * 100 : 0;
+
+    return { totalWalletBalanceUsd: walletBalances, balanceCoveragePercent };
+  }, [walletState]);
 
   const healthSnapshot = useMemo(() => {
-    const allocationValid = allocationSnapshot.isBalanced;
-    const walletCoverage = policySnapshot.balanceCoveragePercent;
-    const jackpotChance = policySnapshot.jackpotChancePercent;
     const warnings: string[] = [];
-
-    if (!allocationValid) {
-      warnings.push("Distribuição acima do orçamento disponível.");
+    if (!allocationSnapshot.isBalanced) {
+      warnings.push("A alocação não soma 100%.");
     }
-
-    if (walletCoverage < 50) {
-      warnings.push("Carteira normal pode esgotar rapidamente.");
+    if (policySnapshot.balanceCoveragePercent < 60) {
+      warnings.push("A cobertura atual está abaixo do ideal.");
     }
-
-    if (jackpotChance > 25) {
-      warnings.push("Chance de jackpot incompatível com o fluxo financeiro.");
-    }
-
     if (cashbackPreview.cashbackPercent < 5) {
-      warnings.push("Jackpot raro está acumulando lentamente.");
+      warnings.push("O fluxo de cashback está fraco para sustentar jackpots.");
     }
 
     let status: "healthy" | "warning" | "danger" = "healthy";
-    if (warnings.length >= 2) {
-      status = "danger";
-    } else if (warnings.length > 0) {
-      status = "warning";
-    }
+    if (warnings.length >= 2) status = "danger";
+    else if (warnings.length > 0) status = "warning";
 
-    return {
-      status,
-      warnings,
-      allocationValid,
-      coveragePercent: walletCoverage,
-    };
-  }, [allocationSnapshot.isBalanced, cashbackPreview.cashbackPercent, policySnapshot.balanceCoveragePercent, policySnapshot.jackpotChancePercent]);
+    return { status, warnings };
+  }, [allocationSnapshot.isBalanced, cashbackPreview.cashbackPercent, policySnapshot.balanceCoveragePercent]);
 
   useEffect(() => {
     let cancelled = false;
@@ -288,14 +278,8 @@ export default function AdminChestConfigPage() {
       try {
         const token = await user.getIdToken();
         const [chestResponse, financialResponse] = await Promise.all([
-          fetch("/api/admin/rewards/chests-config", {
-            headers: { authorization: `Bearer ${token}` },
-            cache: "no-store",
-          }),
-          fetch("/api/admin/financial-calculator", {
-            headers: { authorization: `Bearer ${token}` },
-            cache: "no-store",
-          }),
+          fetch("/api/admin/rewards/chests-config", { headers: { authorization: `Bearer ${token}` }, cache: "no-store" }),
+          fetch("/api/admin/financial-calculator", { headers: { authorization: `Bearer ${token}` }, cache: "no-store" }),
         ]);
 
         const chestPayload = (await chestResponse.json()) as { config?: ChestConfigPayload; error?: string };
@@ -310,11 +294,15 @@ export default function AdminChestConfigPage() {
           setDraftConfig(config);
           setRawJson(formatJson(config));
           setWalletInputs({
-            jackpotCommonChancePercent: String(config.walletEconomy?.jackpotCommonChancePercent ?? 5),
-            jackpotRareChancePercent: String(config.walletEconomy?.jackpotRareChancePercent ?? 1),
             normalAllocationPercent: String(config.walletEconomy?.wallets?.normal?.allocationPercent ?? 70),
             jackpotCommonAllocationPercent: String(config.walletEconomy?.wallets?.jackpotCommon?.allocationPercent ?? 25),
             jackpotRareAllocationPercent: String(config.walletEconomy?.wallets?.jackpotRare?.allocationPercent ?? 5),
+            normalActivationChancePercent: String(config.walletEconomy?.wallets?.normal?.activationChancePercent ?? 100),
+            jackpotCommonActivationChancePercent: String(config.walletEconomy?.wallets?.jackpotCommon?.activationChancePercent ?? 5),
+            jackpotRareActivationChancePercent: String(config.walletEconomy?.wallets?.jackpotRare?.activationChancePercent ?? 1),
+            normalMinimumReservePercent: String(config.walletEconomy?.wallets?.normal?.minimumWalletReservePercent ?? 0),
+            jackpotCommonMinimumReservePercent: String(config.walletEconomy?.wallets?.jackpotCommon?.minimumWalletReservePercent ?? 10),
+            jackpotRareMinimumReservePercent: String(config.walletEconomy?.wallets?.jackpotRare?.minimumWalletReservePercent ?? 20),
           });
           setFinancialConfig(financialPayload.config ?? null);
         }
@@ -347,11 +335,7 @@ export default function AdminChestConfigPage() {
         [chestId]: updater(current.byChest[chestId]),
       };
 
-      const nextConfig = {
-        ...current,
-        byChest: nextByChest,
-      };
-
+      const nextConfig = { ...current, byChest: nextByChest };
       setRawJson(formatJson(nextConfig));
       return nextConfig;
     });
@@ -365,10 +349,7 @@ export default function AdminChestConfigPage() {
 
       return {
         ...profile,
-        rewardOdds: [
-          { type: "coins", weight: coinWeight },
-          { type: "item", weight: itemWeight },
-        ],
+        rewardOdds: [{ type: "coins", weight: coinWeight }, { type: "item", weight: itemWeight }],
       };
     });
   };
@@ -389,27 +370,23 @@ export default function AdminChestConfigPage() {
     setSuccessMessage(null);
 
     try {
-      const payload = draftConfig ?? JSON.parse(rawJson || "{}" );
+      const payload = draftConfig ?? JSON.parse(rawJson || "{}");
       const token = await user.getIdToken();
       const resolvedWalletEconomy = nextWalletEconomy ?? {
         schemaVersion: 1,
         updatedAtMs: Date.now(),
         useUsdAsBaseCurrency: true,
-        jackpotCommonChancePercent: Number(walletInputs.jackpotCommonChancePercent),
-        jackpotRareChancePercent: Number(walletInputs.jackpotRareChancePercent),
         wallets: {
           normal: {
             allocationPercent: Number(walletInputs.normalAllocationPercent),
-            rewardProbabilityPercent: 100,
-            rewardPercentages: [5],
-            safetyBufferPercent: 0,
+            activationChancePercent: Number(walletInputs.normalActivationChancePercent),
+            minimumWalletReservePercent: Number(walletInputs.normalMinimumReservePercent),
             payoutTiers: [{ payoutPercent: 5, probabilityPercent: 100 }],
           },
           jackpotCommon: {
             allocationPercent: Number(walletInputs.jackpotCommonAllocationPercent),
-            rewardProbabilityPercent: 10,
-            rewardPercentages: [5, 10, 20, 40],
-            safetyBufferPercent: 10,
+            activationChancePercent: Number(walletInputs.jackpotCommonActivationChancePercent),
+            minimumWalletReservePercent: Number(walletInputs.jackpotCommonMinimumReservePercent),
             payoutTiers: [
               { payoutPercent: 5, probabilityPercent: 45 },
               { payoutPercent: 10, probabilityPercent: 35 },
@@ -419,9 +396,8 @@ export default function AdminChestConfigPage() {
           },
           jackpotRare: {
             allocationPercent: Number(walletInputs.jackpotRareAllocationPercent),
-            rewardProbabilityPercent: 2,
-            rewardPercentages: [10, 20, 40, 60, 100],
-            safetyBufferPercent: 20,
+            activationChancePercent: Number(walletInputs.jackpotRareActivationChancePercent),
+            minimumWalletReservePercent: Number(walletInputs.jackpotRareMinimumReservePercent),
             payoutTiers: [
               { payoutPercent: 10, probabilityPercent: 25 },
               { payoutPercent: 20, probabilityPercent: 25 },
@@ -433,11 +409,7 @@ export default function AdminChestConfigPage() {
         },
       };
 
-      const nextPayload = {
-        ...payload,
-        walletEconomy: resolvedWalletEconomy,
-      };
-
+      const nextPayload = { ...payload, walletEconomy: resolvedWalletEconomy };
       const response = await fetch("/api/admin/rewards/chests-config", {
         method: "PUT",
         headers: {
@@ -468,22 +440,24 @@ export default function AdminChestConfigPage() {
       normalAllocationPercent: Number(walletInputs.normalAllocationPercent),
       jackpotCommonAllocationPercent: Number(walletInputs.jackpotCommonAllocationPercent),
       jackpotRareAllocationPercent: Number(walletInputs.jackpotRareAllocationPercent),
-      jackpotCommonChancePercent: Number(walletInputs.jackpotCommonChancePercent),
-      jackpotRareChancePercent: Number(walletInputs.jackpotRareChancePercent),
+      normalActivationChancePercent: Number(walletInputs.normalActivationChancePercent),
+      jackpotCommonActivationChancePercent: Number(walletInputs.jackpotCommonActivationChancePercent),
+      jackpotRareActivationChancePercent: Number(walletInputs.jackpotRareActivationChancePercent),
     };
 
     const suggested = {
       normalAllocationPercent: cashbackPercent >= 7 ? 70 : 75,
       jackpotCommonAllocationPercent: cashbackPercent >= 7 ? 25 : 20,
       jackpotRareAllocationPercent: 100 - (cashbackPercent >= 7 ? 70 : 75) - (cashbackPercent >= 7 ? 25 : 20),
-      jackpotCommonChancePercent: Math.min(20, Math.max(3, cashbackPercent * 0.8)),
-      jackpotRareChancePercent: Math.min(6, Math.max(0.7, cashbackPercent * 0.25)),
+      normalActivationChancePercent: 100,
+      jackpotCommonActivationChancePercent: Math.min(20, Math.max(3, cashbackPercent * 0.8)),
+      jackpotRareActivationChancePercent: Math.min(6, Math.max(0.7, cashbackPercent * 0.25)),
     };
 
     setAssistantPreview({ current, suggested, notes: [
-      "Distribuição balanceada para manter a carteira normal saudável.",
-      "Jackpots comuns recebem uma chance maior para manter a economia fluindo.",
-      "O layout raro é ajustado para evitar excesso de pressão sobre o fundo de jackpots.",
+      "A carteira normal precisa manter um fluxo constante para recompensas comuns.",
+      "Jackpots comuns devem ter chance média para não consumir o fundo rápido.",
+      "Jackpots raros devem permanecer mais conservadores para evitar desequilíbrio.",
     ] });
   };
 
@@ -493,38 +467,37 @@ export default function AdminChestConfigPage() {
     }
 
     setWalletInputs({
-      jackpotCommonChancePercent: String(assistantPreview.suggested.jackpotCommonChancePercent),
-      jackpotRareChancePercent: String(assistantPreview.suggested.jackpotRareChancePercent),
       normalAllocationPercent: String(assistantPreview.suggested.normalAllocationPercent),
       jackpotCommonAllocationPercent: String(assistantPreview.suggested.jackpotCommonAllocationPercent),
       jackpotRareAllocationPercent: String(assistantPreview.suggested.jackpotRareAllocationPercent),
+      normalActivationChancePercent: String(assistantPreview.suggested.normalActivationChancePercent),
+      jackpotCommonActivationChancePercent: String(assistantPreview.suggested.jackpotCommonActivationChancePercent),
+      jackpotRareActivationChancePercent: String(assistantPreview.suggested.jackpotRareActivationChancePercent),
+      normalMinimumReservePercent: "0",
+      jackpotCommonMinimumReservePercent: "10",
+      jackpotRareMinimumReservePercent: "20",
     });
     void saveConfig({
       schemaVersion: 1,
       updatedAtMs: Date.now(),
       useUsdAsBaseCurrency: true,
-      jackpotCommonChancePercent: assistantPreview.suggested.jackpotCommonChancePercent,
-      jackpotRareChancePercent: assistantPreview.suggested.jackpotRareChancePercent,
       wallets: {
         normal: {
           allocationPercent: assistantPreview.suggested.normalAllocationPercent,
-          rewardProbabilityPercent: 100,
-          rewardPercentages: [5],
-          safetyBufferPercent: 0,
+          activationChancePercent: assistantPreview.suggested.normalActivationChancePercent,
+          minimumWalletReservePercent: 0,
           payoutTiers: [{ payoutPercent: 5, probabilityPercent: 100 }],
         },
         jackpotCommon: {
           allocationPercent: assistantPreview.suggested.jackpotCommonAllocationPercent,
-          rewardProbabilityPercent: 10,
-          rewardPercentages: [5, 10, 20, 40],
-          safetyBufferPercent: 10,
+          activationChancePercent: assistantPreview.suggested.jackpotCommonActivationChancePercent,
+          minimumWalletReservePercent: 10,
           payoutTiers: [{ payoutPercent: 10, probabilityPercent: 100 }],
         },
         jackpotRare: {
           allocationPercent: assistantPreview.suggested.jackpotRareAllocationPercent,
-          rewardProbabilityPercent: 2,
-          rewardPercentages: [10, 20, 40, 60, 100],
-          safetyBufferPercent: 20,
+          activationChancePercent: assistantPreview.suggested.jackpotRareActivationChancePercent,
+          minimumWalletReservePercent: 20,
           payoutTiers: [{ payoutPercent: 100, probabilityPercent: 100 }],
         },
       },
@@ -605,7 +578,7 @@ export default function AdminChestConfigPage() {
               const coinChance = rewards > 0 ? (profile.rewardOdds.find((entry) => entry.type === "coins")?.weight ?? 0) / rewards * 100 : 0;
               const itemChance = rewards > 0 ? (profile.rewardOdds.find((entry) => entry.type === "item")?.weight ?? 0) / rewards * 100 : 0;
               const expectedValueUsd = CHEST_EXPECTED_VALUE_USD[chestId] ?? 1;
-              const averageCostUsd = expectedValueUsd * (1 + (Number(walletInputs.jackpotCommonChancePercent) + Number(walletInputs.jackpotRareChancePercent)) / 100);
+              const averageCostUsd = expectedValueUsd * (1 + (Number(walletInputs.jackpotCommonActivationChancePercent) + Number(walletInputs.jackpotRareActivationChancePercent)) / 100);
               const averageDistributedUsd = expectedValueUsd * (1 + (Number(walletInputs.normalAllocationPercent) / 100));
               const statusTone = expectedValueUsd > 6 ? "warning" : "healthy";
 
@@ -765,8 +738,8 @@ export default function AdminChestConfigPage() {
 
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             {[
-              { key: "jackpotCommon", label: "Jackpot Comum", chance: Number(walletInputs.jackpotCommonChancePercent), color: "text-amber-300" },
-              { key: "jackpotRare", label: "Jackpot Raro", chance: Number(walletInputs.jackpotRareChancePercent), color: "text-fuchsia-300" },
+              { key: "jackpotCommon", label: "Jackpot Comum", chance: Number(walletInputs.jackpotCommonActivationChancePercent), reserve: Number(walletInputs.jackpotCommonMinimumReservePercent), color: "text-amber-300" },
+              { key: "jackpotRare", label: "Jackpot Raro", chance: Number(walletInputs.jackpotRareActivationChancePercent), reserve: Number(walletInputs.jackpotRareMinimumReservePercent), color: "text-fuchsia-300" },
             ].map((tier) => (
               <article key={tier.key} className="rounded-3xl border border-green-900/70 bg-black/30 p-4">
                 <div className="flex items-center justify-between">
@@ -776,23 +749,20 @@ export default function AdminChestConfigPage() {
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-green-600">
                     Chance de ativação
-                    <input type="number" min="0" max="100" step="0.01" value={tier.key === "jackpotCommon" ? walletInputs.jackpotCommonChancePercent : walletInputs.jackpotRareChancePercent} onChange={(event) => setWalletInputs((current) => tier.key === "jackpotCommon" ? { ...current, jackpotCommonChancePercent: event.target.value } : { ...current, jackpotRareChancePercent: event.target.value })} className="rounded-2xl border border-green-900 bg-black/70 px-3 py-2 text-sm font-medium text-green-100" />
+                    <input type="number" min="0" max="100" step="0.01" value={tier.key === "jackpotCommon" ? walletInputs.jackpotCommonActivationChancePercent : walletInputs.jackpotRareActivationChancePercent} onChange={(event) => setWalletInputs((current) => tier.key === "jackpotCommon" ? { ...current, jackpotCommonActivationChancePercent: event.target.value } : { ...current, jackpotRareActivationChancePercent: event.target.value })} className="rounded-2xl border border-green-900 bg-black/70 px-3 py-2 text-sm font-medium text-green-100" />
                   </label>
-                  <div className="rounded-2xl border border-green-900/70 bg-black/20 p-3 text-sm text-green-700">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-green-600">Valor esperado</p>
-                    <p className="mt-2 text-xl font-black text-green-100">{formatUsd(tier.key === "jackpotCommon" ? cashbackPreview.common : cashbackPreview.rare)} USD</p>
-                  </div>
+                  <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-green-600">
+                    Reserva mínima
+                    <input type="number" min="0" max="100" step="0.01" value={tier.key === "jackpotCommon" ? walletInputs.jackpotCommonMinimumReservePercent : walletInputs.jackpotRareMinimumReservePercent} onChange={(event) => setWalletInputs((current) => tier.key === "jackpotCommon" ? { ...current, jackpotCommonMinimumReservePercent: event.target.value } : { ...current, jackpotRareMinimumReservePercent: event.target.value })} className="rounded-2xl border border-green-900 bg-black/70 px-3 py-2 text-sm font-medium text-green-100" />
+                  </label>
                 </div>
-                <div className="mt-3 space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-green-600">Faixas de pagamento</p>
-                  <div className="space-y-2">
-                    {[5, 10, 20, 40].map((value, index) => (
-                      <div key={`${tier.key}-${value}`} className="flex items-center justify-between rounded-2xl border border-green-900/70 bg-black/20 px-3 py-2 text-sm text-green-700">
-                        <span>{value}% da carteira</span>
-                        <span className="font-semibold text-green-100">{index === 0 ? "45%" : index === 1 ? "35%" : index === 2 ? "15%" : "5%"}</span>
-                      </div>
-                    ))}
+                <div className="mt-3 rounded-2xl border border-green-900/70 bg-black/20 p-3 text-sm text-green-700">
+                  <div className="flex items-center justify-between">
+                    <span>Reserva vigente</span>
+                    <span className={`font-black ${tier.color}`}>{tier.reserve.toFixed(2)}%</span>
                   </div>
+                  <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-green-600">Valor esperado</p>
+                  <p className="mt-2 text-xl font-black text-green-100">{formatUsd(tier.key === "jackpotCommon" ? cashbackPreview.common : cashbackPreview.rare)} USD</p>
                 </div>
               </article>
             ))}
@@ -900,7 +870,7 @@ export default function AdminChestConfigPage() {
             </article>
             <article className="rounded-3xl border border-green-900/70 bg-black/30 p-4 text-sm text-green-700">
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-green-600">EV dos jackpots</p>
-              <p className="mt-2 text-2xl font-black text-green-100">{formatUsd(Math.max(0.01, cashbackPreview.common * (Number(walletInputs.jackpotCommonChancePercent) / 100)))} USD</p>
+              <p className="mt-2 text-2xl font-black text-green-100">{formatUsd(Math.max(0.01, cashbackPreview.common * (Number(walletInputs.jackpotCommonActivationChancePercent) / 100)))} USD</p>
             </article>
             <article className="rounded-3xl border border-green-900/70 bg-black/30 p-4 text-sm text-green-700">
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-green-600">Cobertura das carteiras</p>
