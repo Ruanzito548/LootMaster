@@ -12,13 +12,10 @@ export const CHEST_EXPECTED_VALUE_USD: Record<ChestId, number> = {
   mythic: 50,
 };
 
-type CouponTier = "off-5" | "off-10" | "off-15" | "off-20" | "premium";
-
 type LootSpec =
   | { kind: "coins"; quantity: number }
   | { kind: "gift-fragment"; quantity: number }
-  | { kind: "chest-fragment"; quantity: number; chest: ChestId }
-  | { kind: "coupon"; quantity: 1; coupon: CouponTier };
+  | { kind: "chest-fragment"; quantity: number; chest: ChestId };
 
 type LootBundle = {
   weight: number;
@@ -48,14 +45,6 @@ const ITEM_COUNT_RULES: Record<ChestId, { min: number; max: number }> = {
   mythic: { min: 5, max: 8 },
 };
 
-const COUPON_VALUE_USD: Record<CouponTier, number> = {
-  "off-5": 1,
-  "off-10": 1,
-  "off-15": 2,
-  "off-20": 3,
-  premium: 5,
-};
-
 const VALUE_TOLERANCE_USD: Record<ChestId, number> = {
   common: 0,
   uncommon: 0,
@@ -74,20 +63,12 @@ const CHEST_FRAGMENT_META: Record<ChestId, { id: string; name: string; rarity: I
   mythic: { id: "fragment-chest-mythic", name: "Mythic Chest Fragment", rarity: "artifact" },
 };
 
-const COUPON_META: Record<CouponTier, { id: string; name: string; rarity: InventoryItem["rarity"] }> = {
-  "off-5": { id: "coupon-off-5", name: "5% OFF Coupon", rarity: "uncommon" },
-  "off-10": { id: "coupon-off-10", name: "10% OFF Coupon", rarity: "rare" },
-  "off-15": { id: "coupon-off-15", name: "15% OFF Coupon", rarity: "epic" },
-  "off-20": { id: "coupon-off-20", name: "20% OFF Coupon", rarity: "legendary" },
-  premium: { id: "coupon-premium", name: "Premium Discount Coupon", rarity: "artifact" },
-};
-
 const LOOT_BUNDLES: Record<ChestId, LootBundle[]> = {
   common: [
     { weight: 40, drops: [{ kind: "coins", quantity: 1 }] },
     { weight: 30, drops: [{ kind: "gift-fragment", quantity: 1 }] },
     { weight: 20, drops: [{ kind: "chest-fragment", chest: "uncommon", quantity: 1 }] },
-    { weight: 10, drops: [{ kind: "coupon", coupon: "off-5", quantity: 1 }] },
+    { weight: 10, drops: [{ kind: "coins", quantity: 1 }] },
   ],
   uncommon: [
     { weight: 20, drops: [{ kind: "coins", quantity: 2 }] },
@@ -95,36 +76,36 @@ const LOOT_BUNDLES: Record<ChestId, LootBundle[]> = {
     { weight: 24, drops: [{ kind: "coins", quantity: 1 }, { kind: "gift-fragment", quantity: 1 }] },
     { weight: 18, drops: [{ kind: "coins", quantity: 1 }, { kind: "chest-fragment", chest: "rare", quantity: 1 }] },
     { weight: 12, drops: [{ kind: "gift-fragment", quantity: 1 }, { kind: "chest-fragment", chest: "rare", quantity: 1 }] },
-    { weight: 8, drops: [{ kind: "coins", quantity: 1 }, { kind: "coupon", coupon: "off-5", quantity: 1 }] },
+    { weight: 8, drops: [{ kind: "coins", quantity: 1 }, { kind: "coins", quantity: 1 }] },
   ],
   rare: [
     { weight: 22, drops: [{ kind: "coins", quantity: 3 }, { kind: "gift-fragment", quantity: 2 }] },
     { weight: 22, drops: [{ kind: "coins", quantity: 2 }, { kind: "gift-fragment", quantity: 2 }, { kind: "chest-fragment", chest: "rare", quantity: 1 }] },
     { weight: 18, drops: [{ kind: "coins", quantity: 2 }, { kind: "gift-fragment", quantity: 1 }, { kind: "chest-fragment", chest: "epic", quantity: 2 }] },
-    { weight: 16, drops: [{ kind: "coins", quantity: 2 }, { kind: "chest-fragment", chest: "rare", quantity: 2 }, { kind: "coupon", coupon: "off-10", quantity: 1 }] },
-    { weight: 12, drops: [{ kind: "gift-fragment", quantity: 2 }, { kind: "chest-fragment", chest: "epic", quantity: 1 }, { kind: "coupon", coupon: "off-15", quantity: 1 }] },
-    { weight: 10, drops: [{ kind: "coins", quantity: 4 }, { kind: "coupon", coupon: "off-10", quantity: 1 }] },
+    { weight: 16, drops: [{ kind: "coins", quantity: 2 }, { kind: "chest-fragment", chest: "rare", quantity: 2 }, { kind: "coins", quantity: 1 }] },
+    { weight: 12, drops: [{ kind: "gift-fragment", quantity: 2 }, { kind: "chest-fragment", chest: "epic", quantity: 1 }, { kind: "coins", quantity: 2 }] },
+    { weight: 10, drops: [{ kind: "coins", quantity: 4 }, { kind: "coins", quantity: 1 }] },
   ],
   epic: [
     { weight: 24, drops: [{ kind: "coins", quantity: 5 }, { kind: "gift-fragment", quantity: 3 }, { kind: "chest-fragment", chest: "legendary", quantity: 2 }] },
-    { weight: 20, drops: [{ kind: "coins", quantity: 4 }, { kind: "gift-fragment", quantity: 2 }, { kind: "chest-fragment", chest: "legendary", quantity: 2 }, { kind: "coupon", coupon: "off-15", quantity: 1 }] },
-    { weight: 18, drops: [{ kind: "coins", quantity: 3 }, { kind: "gift-fragment", quantity: 2 }, { kind: "chest-fragment", chest: "legendary", quantity: 2 }, { kind: "chest-fragment", chest: "mythic", quantity: 1 }, { kind: "coupon", coupon: "off-10", quantity: 1 }] },
-    { weight: 20, drops: [{ kind: "coins", quantity: 4 }, { kind: "gift-fragment", quantity: 2 }, { kind: "chest-fragment", chest: "legendary", quantity: 1 }, { kind: "chest-fragment", chest: "mythic", quantity: 1 }, { kind: "coupon", coupon: "off-10", quantity: 1 }] },
-    { weight: 18, drops: [{ kind: "coins", quantity: 2 }, { kind: "gift-fragment", quantity: 3 }, { kind: "chest-fragment", chest: "legendary", quantity: 2 }, { kind: "chest-fragment", chest: "mythic", quantity: 1 }, { kind: "coupon", coupon: "off-10", quantity: 1 }] },
+    { weight: 20, drops: [{ kind: "coins", quantity: 4 }, { kind: "gift-fragment", quantity: 2 }, { kind: "chest-fragment", chest: "legendary", quantity: 2 }, { kind: "coins", quantity: 2 }] },
+    { weight: 18, drops: [{ kind: "coins", quantity: 3 }, { kind: "gift-fragment", quantity: 2 }, { kind: "chest-fragment", chest: "legendary", quantity: 2 }, { kind: "chest-fragment", chest: "mythic", quantity: 1 }, { kind: "coins", quantity: 1 }] },
+    { weight: 20, drops: [{ kind: "coins", quantity: 4 }, { kind: "gift-fragment", quantity: 2 }, { kind: "chest-fragment", chest: "legendary", quantity: 1 }, { kind: "chest-fragment", chest: "mythic", quantity: 1 }, { kind: "coins", quantity: 1 }] },
+    { weight: 18, drops: [{ kind: "coins", quantity: 2 }, { kind: "gift-fragment", quantity: 3 }, { kind: "chest-fragment", chest: "legendary", quantity: 2 }, { kind: "chest-fragment", chest: "mythic", quantity: 1 }, { kind: "coins", quantity: 1 }] },
   ],
   legendary: [
-    { weight: 24, drops: [{ kind: "coins", quantity: 10 }, { kind: "gift-fragment", quantity: 5 }, { kind: "chest-fragment", chest: "legendary", quantity: 3 }, { kind: "coupon", coupon: "off-20", quantity: 1 }] },
-    { weight: 22, drops: [{ kind: "coins", quantity: 8 }, { kind: "gift-fragment", quantity: 5 }, { kind: "chest-fragment", chest: "mythic", quantity: 3 }, { kind: "chest-fragment", chest: "legendary", quantity: 2 }, { kind: "coupon", coupon: "off-20", quantity: 1 }] },
-    { weight: 18, drops: [{ kind: "coins", quantity: 7 }, { kind: "gift-fragment", quantity: 5 }, { kind: "chest-fragment", chest: "mythic", quantity: 3 }, { kind: "chest-fragment", chest: "legendary", quantity: 3 }, { kind: "coupon", coupon: "off-15", quantity: 1 }, { kind: "coupon", coupon: "off-10", quantity: 1 }] },
-    { weight: 20, drops: [{ kind: "coins", quantity: 9 }, { kind: "gift-fragment", quantity: 4 }, { kind: "chest-fragment", chest: "mythic", quantity: 2 }, { kind: "chest-fragment", chest: "legendary", quantity: 3 }, { kind: "coupon", coupon: "off-20", quantity: 1 }] },
-    { weight: 16, drops: [{ kind: "coins", quantity: 8 }, { kind: "gift-fragment", quantity: 6 }, { kind: "chest-fragment", chest: "mythic", quantity: 2 }, { kind: "chest-fragment", chest: "epic", quantity: 2 }, { kind: "coupon", coupon: "off-20", quantity: 1 }] },
+    { weight: 24, drops: [{ kind: "coins", quantity: 10 }, { kind: "gift-fragment", quantity: 5 }, { kind: "chest-fragment", chest: "legendary", quantity: 3 }, { kind: "coins", quantity: 3 }] },
+    { weight: 22, drops: [{ kind: "coins", quantity: 8 }, { kind: "gift-fragment", quantity: 5 }, { kind: "chest-fragment", chest: "mythic", quantity: 3 }, { kind: "chest-fragment", chest: "legendary", quantity: 2 }, { kind: "coins", quantity: 3 }] },
+    { weight: 18, drops: [{ kind: "coins", quantity: 7 }, { kind: "gift-fragment", quantity: 5 }, { kind: "chest-fragment", chest: "mythic", quantity: 3 }, { kind: "chest-fragment", chest: "legendary", quantity: 3 }, { kind: "coins", quantity: 2 }, { kind: "coins", quantity: 1 }] },
+    { weight: 20, drops: [{ kind: "coins", quantity: 9 }, { kind: "gift-fragment", quantity: 4 }, { kind: "chest-fragment", chest: "mythic", quantity: 2 }, { kind: "chest-fragment", chest: "legendary", quantity: 3 }, { kind: "coins", quantity: 3 }] },
+    { weight: 16, drops: [{ kind: "coins", quantity: 8 }, { kind: "gift-fragment", quantity: 6 }, { kind: "chest-fragment", chest: "mythic", quantity: 2 }, { kind: "chest-fragment", chest: "epic", quantity: 2 }, { kind: "coins", quantity: 3 }] },
   ],
   mythic: [
-    { weight: 22, drops: [{ kind: "coins", quantity: 20 }, { kind: "gift-fragment", quantity: 10 }, { kind: "chest-fragment", chest: "mythic", quantity: 8 }, { kind: "chest-fragment", chest: "legendary", quantity: 7 }, { kind: "coupon", coupon: "premium", quantity: 1 }] },
-    { weight: 20, drops: [{ kind: "coins", quantity: 18 }, { kind: "gift-fragment", quantity: 10 }, { kind: "chest-fragment", chest: "mythic", quantity: 9 }, { kind: "chest-fragment", chest: "legendary", quantity: 6 }, { kind: "coupon", coupon: "premium", quantity: 1 }, { kind: "coupon", coupon: "off-20", quantity: 1 }] },
-    { weight: 18, drops: [{ kind: "coins", quantity: 16 }, { kind: "gift-fragment", quantity: 11 }, { kind: "chest-fragment", chest: "mythic", quantity: 10 }, { kind: "chest-fragment", chest: "legendary", quantity: 6 }, { kind: "chest-fragment", chest: "epic", quantity: 3 }, { kind: "coupon", coupon: "premium", quantity: 1 }, { kind: "coupon", coupon: "off-15", quantity: 1 }] },
-    { weight: 20, drops: [{ kind: "coins", quantity: 15 }, { kind: "gift-fragment", quantity: 10 }, { kind: "chest-fragment", chest: "mythic", quantity: 10 }, { kind: "chest-fragment", chest: "legendary", quantity: 7 }, { kind: "chest-fragment", chest: "epic", quantity: 2 }, { kind: "chest-fragment", chest: "rare", quantity: 1 }, { kind: "coupon", coupon: "premium", quantity: 1 }, { kind: "coupon", coupon: "off-10", quantity: 1 }] },
-    { weight: 20, drops: [{ kind: "coins", quantity: 22 }, { kind: "gift-fragment", quantity: 9 }, { kind: "chest-fragment", chest: "mythic", quantity: 7 }, { kind: "chest-fragment", chest: "legendary", quantity: 6 }, { kind: "coupon", coupon: "premium", quantity: 1 }, { kind: "coupon", coupon: "off-10", quantity: 1 }] },
+    { weight: 22, drops: [{ kind: "coins", quantity: 20 }, { kind: "gift-fragment", quantity: 10 }, { kind: "chest-fragment", chest: "mythic", quantity: 8 }, { kind: "chest-fragment", chest: "legendary", quantity: 7 }, { kind: "coins", quantity: 5 }] },
+    { weight: 20, drops: [{ kind: "coins", quantity: 18 }, { kind: "gift-fragment", quantity: 10 }, { kind: "chest-fragment", chest: "mythic", quantity: 9 }, { kind: "chest-fragment", chest: "legendary", quantity: 6 }, { kind: "coins", quantity: 5 }, { kind: "coins", quantity: 3 }] },
+    { weight: 18, drops: [{ kind: "coins", quantity: 16 }, { kind: "gift-fragment", quantity: 11 }, { kind: "chest-fragment", chest: "mythic", quantity: 10 }, { kind: "chest-fragment", chest: "legendary", quantity: 6 }, { kind: "chest-fragment", chest: "epic", quantity: 3 }, { kind: "coins", quantity: 5 }, { kind: "coins", quantity: 2 }] },
+    { weight: 20, drops: [{ kind: "coins", quantity: 15 }, { kind: "gift-fragment", quantity: 10 }, { kind: "chest-fragment", chest: "mythic", quantity: 10 }, { kind: "chest-fragment", chest: "legendary", quantity: 7 }, { kind: "chest-fragment", chest: "epic", quantity: 2 }, { kind: "chest-fragment", chest: "rare", quantity: 1 }, { kind: "coins", quantity: 5 }, { kind: "coins", quantity: 1 }] },
+    { weight: 20, drops: [{ kind: "coins", quantity: 22 }, { kind: "gift-fragment", quantity: 9 }, { kind: "chest-fragment", chest: "mythic", quantity: 7 }, { kind: "chest-fragment", chest: "legendary", quantity: 6 }, { kind: "coins", quantity: 5 }, { kind: "coins", quantity: 1 }] },
   ],
 };
 
@@ -132,7 +113,6 @@ const PREVIEW_LABEL_BY_KIND: Record<LootSpec["kind"], string> = {
   coins: "Loot Coins",
   "gift-fragment": "Gift Card Fragments",
   "chest-fragment": "Chest Fragments",
-  coupon: "Discount Coupons",
 };
 
 function getSpecValueUsd(spec: LootSpec): number {
@@ -140,15 +120,7 @@ function getSpecValueUsd(spec: LootSpec): number {
     return spec.quantity;
   }
 
-  if (spec.kind === "gift-fragment") {
-    return spec.quantity;
-  }
-
-  if (spec.kind === "chest-fragment") {
-    return spec.quantity;
-  }
-
-  return COUPON_VALUE_USD[spec.coupon];
+  return spec.quantity;
 }
 
 function bundleValueUsd(bundle: LootBundle): number {
@@ -188,27 +160,14 @@ function toInventoryItem(spec: Exclude<LootSpec, { kind: "coins" }>): InventoryI
     };
   }
 
-  if (spec.kind === "chest-fragment") {
-    const fragmentMeta = CHEST_FRAGMENT_META[spec.chest];
-    return {
-      id: fragmentMeta.id,
-      name: fragmentMeta.name,
-      category: "Chest Fragment",
-      description: "Collect 20 fragments to craft the corresponding chest tier.",
-      quantity: spec.quantity,
-      rarity: fragmentMeta.rarity,
-      iconPath: "/itens/general/ticket.png",
-    };
-  }
-
-  const couponMeta = COUPON_META[spec.coupon];
+  const fragmentMeta = CHEST_FRAGMENT_META[spec.chest];
   return {
-    id: couponMeta.id,
-    name: couponMeta.name,
-    category: "Coupon",
-    description: "Discount coupon obtained from chest opening.",
-    quantity: 1,
-    rarity: couponMeta.rarity,
+    id: fragmentMeta.id,
+    name: fragmentMeta.name,
+    category: "Chest Fragment",
+    description: "Collect 20 fragments to craft the corresponding chest tier.",
+    quantity: spec.quantity,
+    rarity: fragmentMeta.rarity,
     iconPath: "/itens/general/ticket.png",
   };
 }
