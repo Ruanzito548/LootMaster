@@ -17,7 +17,6 @@ type ChestProfileConfig = {
   rewardOdds: RewardOdd[];
   coinRange: { min: number; max: number };
   itemRarityWeights: Array<{ rarity: string; weight: number }>;
-  xpGain: number;
   giftCardFragment: { chancePercent: number; min: number; max: number };
   fullGiftCard: { chancePercent: number; min: number; max: number };
   accountDrop: { enabled: boolean; chancePercent: number };
@@ -578,8 +577,13 @@ export default function AdminChestConfigPage() {
               const coinChance = rewards > 0 ? (profile.rewardOdds.find((entry) => entry.type === "coins")?.weight ?? 0) / rewards * 100 : 0;
               const itemChance = rewards > 0 ? (profile.rewardOdds.find((entry) => entry.type === "item")?.weight ?? 0) / rewards * 100 : 0;
               const expectedValueUsd = CHEST_EXPECTED_VALUE_USD[chestId] ?? 1;
-              const averageCostUsd = expectedValueUsd * (1 + (Number(walletInputs.jackpotCommonActivationChancePercent) + Number(walletInputs.jackpotRareActivationChancePercent)) / 100);
-              const averageDistributedUsd = expectedValueUsd * (1 + (Number(walletInputs.normalAllocationPercent) / 100));
+              // Custo médio: valor esperado + custo marginal dos jackpots (chance * payout médio 5% da carteira)
+              const jackpotCommonChance = Number(walletInputs.jackpotCommonActivationChancePercent) / 100;
+              const jackpotRareChance = Number(walletInputs.jackpotRareActivationChancePercent) / 100;
+              const averageCostUsd = expectedValueUsd + (cashbackPreview.common * jackpotCommonChance * 0.05) + (cashbackPreview.rare * jackpotRareChance * 0.10);
+              // Valor médio distribuído: quanto da carteira normal o sistema tende a pagar por baú (5% do saldo normal por baú)
+              const normalBalanceUsd = Number(walletState?.wallets?.normal?.balanceUsd ?? 0);
+              const averageDistributedUsd = normalBalanceUsd > 0 ? Math.min(expectedValueUsd, normalBalanceUsd * 0.05) : expectedValueUsd * (Number(walletInputs.normalAllocationPercent) / 100) * 0.05;
               const statusTone = expectedValueUsd > 6 ? "warning" : "healthy";
 
               return (
@@ -617,10 +621,6 @@ export default function AdminChestConfigPage() {
                     <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-green-600">
                       Loot Coins max
                       <input type="number" min="0" step="1" value={profile.coinRange.max} onChange={(event) => updateChestProfile(chestId, (current) => ({ ...current, coinRange: { ...current.coinRange, max: Number(event.target.value) } }))} className="rounded-2xl border border-green-900 bg-black/70 px-3 py-2 text-sm font-medium text-green-100" />
-                    </label>
-                    <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-green-600">
-                      XP concedido
-                      <input type="number" min="0" step="1" value={profile.xpGain} onChange={(event) => updateChestProfile(chestId, (current) => ({ ...current, xpGain: Number(event.target.value) }))} className="rounded-2xl border border-green-900 bg-black/70 px-3 py-2 text-sm font-medium text-green-100" />
                     </label>
                     <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-green-600">
                       Chance Fragmento (%)

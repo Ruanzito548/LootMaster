@@ -21,7 +21,6 @@ export type ChestDropProfile = {
     max: number;
   };
   itemRarityWeights: ItemRarityWeight[];
-  xpGain: number;
   giftCardFragment: {
     chancePercent: number;
     min: number;
@@ -146,25 +145,6 @@ function normalizeItemRarityWeights(value: unknown, fallback: ItemRarityWeight[]
   return normalized;
 }
 
-function defaultXpGain(chestId: ChestId): number {
-  if (chestId === "mythic") {
-    return 52;
-  }
-
-  if (chestId === "legendary") {
-    return 34;
-  }
-
-  if (chestId === "epic") {
-    return 22;
-  }
-
-  if (chestId === "rare") {
-    return 14;
-  }
-
-  return 9;
-}
 
 function getDefaultProfile(definition: ChestDefinition): ChestDropProfile {
   const rewardOddsByChest: Record<ChestId, ChestRewardOddsEntry[]> = {
@@ -233,7 +213,6 @@ function getDefaultProfile(definition: ChestDefinition): ChestDropProfile {
     rewardOdds: rewardOddsByChest[definition.id],
     coinRange: coinRangeByChest[definition.id],
     itemRarityWeights: definition.itemRarityWeights,
-    xpGain: defaultXpGain(definition.id),
     giftCardFragment: fragmentByChest[definition.id],
     fullGiftCard: fullGiftCardByChest[definition.id],
     accountDrop: accountByChest[definition.id],
@@ -298,7 +277,6 @@ export function sanitizeChestSystemConfig(source: unknown): ChestSystemConfig {
         max: maxCoins,
       },
       itemRarityWeights: normalizeItemRarityWeights(profile.itemRarityWeights, fallbackProfile.itemRarityWeights),
-      xpGain: asBoundedInt(profile.xpGain, fallbackProfile.xpGain, 0, 2000),
       giftCardFragment: {
         chancePercent: fragmentChance,
         min: fragmentMin,

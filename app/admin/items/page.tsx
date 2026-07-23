@@ -76,9 +76,6 @@ export default async function AdminItemsPage() {
                 <article key={chestId} className="rounded-xl border border-green-900/70 bg-green-950/10 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-black uppercase tracking-[0.12em] text-green-300">{definition.title}</h3>
-                    <span className="rounded border border-green-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-green-600">
-                      XP {profile.xpGain}
-                    </span>
                   </div>
 
                   <div className="mt-3 grid gap-1">

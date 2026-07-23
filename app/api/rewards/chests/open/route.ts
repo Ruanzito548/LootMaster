@@ -35,7 +35,6 @@ type OpenChestResponse = {
   reward: OpenChestReward;
   lootCoins: number;
   inventory: InventoryItem[];
-  xpGain: number;
   rpgXp: number;
   rpgLevel: number;
   inventorySlotLimit: number;
@@ -264,8 +263,6 @@ export async function POST(request: Request): Promise<Response> {
         ...(singleInventoryReward ? { inventoryItem: singleInventoryReward } : {}),
       };
 
-      const xpGain = 0;
-
       const responsePayload: OpenChestResponse = {
         ok: true,
         replayed: false,
@@ -273,7 +270,6 @@ export async function POST(request: Request): Promise<Response> {
         reward,
         lootCoins: nextLootCoins,
         inventory: nextInventory,
-        xpGain,
         rpgXp: mappedProfile.rpgXp ?? 0,
         rpgLevel: mappedProfile.rpgLevel ?? 1,
         inventorySlotLimit: mappedProfile.inventorySlotLimit ?? slotLimit,
@@ -340,7 +336,6 @@ export async function POST(request: Request): Promise<Response> {
           rewardType: reward.type,
           rewardTitle: reward.title,
           chestExpectedUsd: CHEST_EXPECTED_VALUE_USD[chestDefinition.id],
-          xpGain,
         },
       });
 
