@@ -117,6 +117,19 @@ function resolveTierPayoutPercent(walletConfig: ChestWalletConfig, randomValue: 
   return tiers[tiers.length - 1]?.payoutPercent ?? 5;
 }
 
+function resolveJackpotPayoutPercentByChestId(chestId: ChestId): number {
+  const byChest: Record<ChestId, number> = {
+    common: 1,
+    uncommon: 5,
+    rare: 10,
+    epic: 20,
+    legendary: 40,
+    mythic: 75,
+  };
+
+  return byChest[chestId] ?? 1;
+}
+
 export function buildDefaultChestWalletEconomyConfig(): ChestWalletEconomyConfig {
   return {
     schemaVersion: CHEST_WALLET_ECONOMY_SCHEMA_VERSION,
@@ -342,7 +355,12 @@ export function fundChestWalletEconomyFromCashback(state: ChestWalletEconomyStat
 
 export function resolveChestWalletReward(chestId: ChestId, config: ChestWalletEconomyConfig, state: ChestWalletEconomyState, randomValue: number): ChestWalletReward | null {
   const randomPercent = clampPercent(randomValue, 0);
-  const walletEntries = Object.values(config.wallets).filter((walletConfig) => walletConfig.activationChancePercent > 0 && state.wallets[walletConfig.id].balanceUsd > 0);
+  const walletEntries = Object.values(config.wallets).filter(
+    (walletConfig) =>
+      walletConfig.id !== "normal" &&
+      walletConfig.activationChancePercent > 0 &&
+      state.wallets[walletConfig.id].balanceUsd > 0,
+  );
   const totalActivationWeight = walletEntries.reduce((sum, walletConfig) => sum + walletConfig.activationChancePercent, 0);
 
   if (walletEntries.length === 0 || totalActivationWeight <= 0) {
@@ -362,7 +380,9 @@ export function resolveChestWalletReward(chestId: ChestId, config: ChestWalletEc
         return null;
       }
 
-      const percentOfWallet = resolveTierPayoutPercent(walletConfig, randomPercent);
+      const percentOfWallet = walletConfig.id === "normal"
+        ? resolveTierPayoutPercent(walletConfig, randomPercent)
+        : resolveJackpotPayoutPercentByChestId(chestId);
       const payoutUsd = roundUsd(Math.min(walletState.balanceUsd * (percentOfWallet / 100), maxPayoutUsd));
       if (payoutUsd <= 0) {
         return null;
@@ -390,7 +410,9 @@ export function resolveChestWalletReward(chestId: ChestId, config: ChestWalletEc
     return null;
   }
 
-  const percentOfWallet = resolveTierPayoutPercent(fallbackWallet, randomPercent);
+  const percentOfWallet = fallbackWallet.id === "normal"
+    ? resolveTierPayoutPercent(fallbackWallet, randomPercent)
+    : resolveJackpotPayoutPercentByChestId(chestId);
   const payoutUsd = roundUsd(Math.min(walletState.balanceUsd * (percentOfWallet / 100), maxPayoutUsd));
   if (payoutUsd <= 0) {
     return null;

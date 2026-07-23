@@ -229,7 +229,7 @@ export async function POST(request: Request): Promise<Response> {
       rewardEconomy = resolveChestWalletReward(chestDefinition.id, walletConfig, rewardPoolState, Math.random() * 100);
 
       if (rewardEconomy) {
-        rewardParts.push(`${rewardEconomy.amountUsd.toFixed(2)} USD (${rewardEconomy.reason})`);
+        rewardParts.push(`${rewardEconomy.amountUsd.toFixed(2)} LC (${rewardEconomy.reason})`);
         nextLootCoins = Math.round((nextLootCoins + rewardEconomy.amountUsd) * 100) / 100;
         totalCoins += rewardEconomy.amountUsd;
       }

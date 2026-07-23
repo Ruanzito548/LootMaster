@@ -21,17 +21,34 @@ describe("chest wallet economy", () => {
     expect(nextState.wallets.jackpotRare.balanceUsd).toBeCloseTo(0.35, 5);
   });
 
-  it("pays a jackpot from the configured wallet percentage and debits it", () => {
+  it("pays jackpot common using chest rarity percentage", () => {
     const config = buildDefaultChestWalletEconomyConfig();
     const state = buildDefaultChestWalletEconomyState();
-    const fundedState = fundChestWalletEconomyFromCashback(state, 20, config);
+    state.wallets.jackpotCommon.balanceUsd = 10;
+    state.wallets.normal.balanceUsd = 0;
+    state.wallets.jackpotRare.balanceUsd = 0;
 
-    const reward = resolveChestWalletReward("common", config, fundedState, 0);
-    const nextState = reward ? applyChestWalletReward(fundedState, reward) : fundedState;
+    const reward = resolveChestWalletReward("common", config, state, 0);
+    const nextState = reward ? applyChestWalletReward(state, reward) : state;
 
     expect(reward?.type).toBe("jackpot-common");
-    expect(reward?.amountUsd).toBeCloseTo(0.25, 5);
-    expect(nextState.wallets.jackpotCommon.balanceUsd).toBeCloseTo(4.75, 5);
+    expect(reward?.percentOfWallet).toBe(1);
+    expect(reward?.amountUsd).toBeCloseTo(0.1, 5);
+    expect(nextState.wallets.jackpotCommon.balanceUsd).toBeCloseTo(9.9, 5);
+  });
+
+  it("pays jackpot rare using chest rarity percentage and never reaches 100%", () => {
+    const config = buildDefaultChestWalletEconomyConfig();
+    const state = buildDefaultChestWalletEconomyState();
+    state.wallets.jackpotRare.balanceUsd = 20;
+    state.wallets.normal.balanceUsd = 0;
+    state.wallets.jackpotCommon.balanceUsd = 0;
+
+    const reward = resolveChestWalletReward("mythic", config, state, 0);
+
+    expect(reward?.type).toBe("jackpot-rare");
+    expect(reward?.percentOfWallet).toBe(75);
+    expect(reward?.amountUsd).toBeCloseTo(15, 5);
   });
 
   it("sanitizes wallet economy configs and preserves valid values", () => {
@@ -48,14 +65,15 @@ describe("chest wallet economy", () => {
     expect(sanitized.wallets.jackpotRare.payoutTiers[0]?.payoutPercent).toBe(30);
   });
 
-  it("uses payout tiers and reserve rules to avoid invalid payout amounts", () => {
+  it("does not pay extra reward from normal wallet", () => {
     const config = buildDefaultChestWalletEconomyConfig();
     const state = buildDefaultChestWalletEconomyState();
-    const fundedState = fundChestWalletEconomyFromCashback(state, 5, config);
+    state.wallets.normal.balanceUsd = 1;
+    state.wallets.jackpotCommon.balanceUsd = 0;
+    state.wallets.jackpotRare.balanceUsd = 0;
 
-    const reward = resolveChestWalletReward("common", config, fundedState, 50);
+    const reward = resolveChestWalletReward("common", config, state, 50);
 
-    expect(reward?.walletKey).toBe("normal");
-    expect(reward?.amountUsd).toBeLessThanOrEqual(0.05);
+    expect(reward).toBeNull();
   });
 });
