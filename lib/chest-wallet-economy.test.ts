@@ -68,7 +68,7 @@ describe("chest wallet economy", () => {
     state.wallets.jackpotCommon.balanceUsd = 10;
     state.wallets.jackpotRare.balanceUsd = 10;
 
-    const reward = resolveChestWalletReward("rare", config, state, 5.5);
+    const reward = resolveChestWalletReward("rare", config, state, 2.01);
 
     expect(reward?.walletKey).toBe("jackpotRare");
     expect(reward?.percentOfWallet).toBe(10);
