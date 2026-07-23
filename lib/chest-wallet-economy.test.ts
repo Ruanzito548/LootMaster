@@ -51,6 +51,30 @@ describe("chest wallet economy", () => {
     expect(reward?.amountUsd).toBeCloseTo(15, 5);
   });
 
+  it("returns null when jackpot roll misses", () => {
+    const config = buildDefaultChestWalletEconomyConfig();
+    const state = buildDefaultChestWalletEconomyState();
+    state.wallets.jackpotCommon.balanceUsd = 10;
+    state.wallets.jackpotRare.balanceUsd = 10;
+
+    const reward = resolveChestWalletReward("mythic", config, state, 90);
+
+    expect(reward).toBeNull();
+  });
+
+  it("selects jackpot rare when the roll lands in rare activation band", () => {
+    const config = buildDefaultChestWalletEconomyConfig();
+    const state = buildDefaultChestWalletEconomyState();
+    state.wallets.jackpotCommon.balanceUsd = 10;
+    state.wallets.jackpotRare.balanceUsd = 10;
+
+    const reward = resolveChestWalletReward("rare", config, state, 5.5);
+
+    expect(reward?.walletKey).toBe("jackpotRare");
+    expect(reward?.percentOfWallet).toBe(10);
+    expect(reward?.amountUsd).toBeCloseTo(1, 5);
+  });
+
   it("sanitizes wallet economy configs and preserves valid values", () => {
     const sanitized = sanitizeChestWalletEconomyConfig({
       wallets: {

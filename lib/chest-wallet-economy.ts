@@ -362,12 +362,18 @@ export function resolveChestWalletReward(chestId: ChestId, config: ChestWalletEc
       state.wallets[walletConfig.id].balanceUsd > 0,
   );
   const totalActivationWeight = walletEntries.reduce((sum, walletConfig) => sum + walletConfig.activationChancePercent, 0);
+  const totalJackpotChancePercent = clampPercent(totalActivationWeight, 100);
 
-  if (walletEntries.length === 0 || totalActivationWeight <= 0) {
+  if (walletEntries.length === 0 || totalActivationWeight <= 0 || totalJackpotChancePercent <= 0) {
     return null;
   }
 
-  const threshold = (randomPercent / 100) * totalActivationWeight;
+  // Allow real miss rolls so jackpot chance remains low (e.g. 5% + 1% = 6%).
+  if (randomPercent > totalJackpotChancePercent) {
+    return null;
+  }
+
+  const threshold = (randomPercent / totalJackpotChancePercent) * totalActivationWeight;
   let cumulative = 0;
 
   for (const walletConfig of walletEntries) {
