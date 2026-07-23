@@ -15,6 +15,28 @@ type TimestampLike = {
   toDate?: () => Date;
 };
 
+function serializeDateLike(value: unknown): string | null {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const parsed = value as TimestampLike;
+  if (typeof parsed.toDate !== "function") {
+    return null;
+  }
+
+  const date = parsed.toDate();
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString();
+}
+
 function normalizeLimit(value: string | null): number {
   const parsed = Number.parseInt(value ?? "", 10);
   if (!Number.isFinite(parsed)) {
@@ -37,6 +59,11 @@ function normalizeSearch(value: string | null): string {
 }
 
 function toSortableTimestamp(value: unknown): number {
+  if (typeof value === "string" && value.trim()) {
+    const parsed = new Date(value).getTime();
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
   if (!value || typeof value !== "object") {
     return 0;
   }
@@ -59,6 +86,8 @@ function mapClientRow(uid: string, data: Record<string, unknown>): ClientRow {
     uid,
     username: typeof data.username === "string" ? data.username : "--",
     email: typeof data.email === "string" ? data.email : "--",
+    createdAt: serializeDateLike(data.createdAt),
+    lastActivityAt: serializeDateLike(data.lastProgressAt) ?? serializeDateLike(data.updatedAt),
     assignedAgentId:
       typeof data.assignedAgentId === "string" && data.assignedAgentId.trim() ? data.assignedAgentId : null,
     isAgent: data.isAgent === true,
@@ -75,6 +104,8 @@ function mapAgentRow(uid: string, data: Record<string, unknown>): AgentRow {
     uid,
     username: typeof data.username === "string" ? data.username : "--",
     email: typeof data.email === "string" ? data.email : "--",
+    createdAt: serializeDateLike(data.createdAt),
+    lastActivityAt: serializeDateLike(data.lastProgressAt) ?? serializeDateLike(data.updatedAt),
     agentFeeSharePercent:
       typeof data.agentFeeSharePercent === "number" && Number.isFinite(data.agentFeeSharePercent)
         ? data.agentFeeSharePercent

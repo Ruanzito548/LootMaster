@@ -9,6 +9,8 @@ import { auth } from "@/lib/firebase";
 import type { ClientRow } from "../clientes-types";
 
 const PAGE_SIZE = 50;
+const NEW_CLIENT_DAYS = 10;
+const ACTIVE_CLIENT_DAYS = 30;
 
 async function getAuthorizationHeader(user: User | null) {
   const token = await user?.getIdToken();
@@ -51,6 +53,33 @@ async function fetchClientsPage(input: { user: User | null; cursor?: string | nu
     items: Array.isArray(payload.items) ? payload.items : [],
     nextCursor: typeof payload.nextCursor === "string" ? payload.nextCursor : null,
   };
+}
+
+function parseDate(value: string | null | undefined): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value).getTime();
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function getClientStatus(row: ClientRow): { label: "Novo" | "Ativo" | "Inativo"; tone: string } {
+  const createdAt = parseDate(row.createdAt);
+  const lastActivityAt = parseDate(row.lastActivityAt);
+  const now = Date.now();
+  const newThreshold = now - NEW_CLIENT_DAYS * 24 * 60 * 60 * 1000;
+  const activeThreshold = now - ACTIVE_CLIENT_DAYS * 24 * 60 * 60 * 1000;
+
+  if (createdAt && createdAt >= newThreshold) {
+    return { label: "Novo", tone: "text-cyan-300 border-cyan-800 bg-cyan-950/20" };
+  }
+
+  if (createdAt && createdAt < newThreshold && lastActivityAt && lastActivityAt >= activeThreshold) {
+    return { label: "Ativo", tone: "text-emerald-300 border-emerald-800 bg-emerald-950/20" };
+  }
+
+  return { label: "Inativo", tone: "text-rose-300 border-rose-800 bg-rose-950/20" };
 }
 
 export default function ClientesAdminClient() {
@@ -298,6 +327,7 @@ export default function ClientesAdminClient() {
               <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
                 <th className="px-4 py-3">Cliente</th>
                 <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Agente atual</th>
                 <th className="px-4 py-3">Acoes</th>
               </tr>
@@ -307,6 +337,7 @@ export default function ClientesAdminClient() {
                 const assignKey = `assign:${row.uid}`;
                 const unassignKey = `unassign:${row.uid}`;
                 const promoteKey = `promote:${row.uid}`;
+                const status = getClientStatus(row);
 
                 return (
                   <tr key={row.uid} className={`border-b border-green-950 ${index % 2 === 0 ? "" : "bg-green-950/20"}`}>
@@ -320,6 +351,11 @@ export default function ClientesAdminClient() {
                       ) : null}
                     </td>
                     <td className="px-4 py-3 text-xs text-green-500">{row.email}</td>
+                    <td className="px-4 py-3 text-xs">
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 font-semibold uppercase tracking-[0.14em] ${status.tone}`}>
+                        {status.label}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-xs text-green-500">{row.assignedAgentId ?? "Sem agente"}</td>
                     <td className="px-4 py-3">
                       <div className="flex min-w-[420px] flex-wrap items-center gap-2">
