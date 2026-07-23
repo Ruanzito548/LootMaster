@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
+import { FieldValue } from "firebase-admin/firestore";
 
+import { getAdminDb } from "@/lib/firebase-admin";
 import { getAdminAuth } from "@/lib/firebase-admin";
 
 const SESSION_COOKIE_NAME = "__session";
@@ -23,10 +25,22 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const adminAuth = getAdminAuth();
-    await adminAuth.verifyIdToken(idToken, true);
+    const decodedToken = await adminAuth.verifyIdToken(idToken, true);
     const sessionCookie = await adminAuth.createSessionCookie(idToken, {
       expiresIn: SESSION_MAX_AGE_MS,
     });
+
+    const adminDb = getAdminDb();
+    await adminDb
+      .collection("users")
+      .doc(decodedToken.uid)
+      .set(
+        {
+          lastAccessAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
 
     const cookieStore = await cookies();
     cookieStore.set(SESSION_COOKIE_NAME, sessionCookie, {

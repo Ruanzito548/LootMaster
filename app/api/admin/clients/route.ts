@@ -87,7 +87,10 @@ function mapClientRow(uid: string, data: Record<string, unknown>): ClientRow {
     username: typeof data.username === "string" ? data.username : "--",
     email: typeof data.email === "string" ? data.email : "--",
     createdAt: serializeDateLike(data.createdAt),
-    lastActivityAt: serializeDateLike(data.lastProgressAt) ?? serializeDateLike(data.updatedAt),
+    lastActivityAt:
+      serializeDateLike(data.lastAccessAt) ??
+      serializeDateLike(data.lastProgressAt) ??
+      serializeDateLike(data.updatedAt),
     assignedAgentId:
       typeof data.assignedAgentId === "string" && data.assignedAgentId.trim() ? data.assignedAgentId : null,
     isAgent: data.isAgent === true,
@@ -105,7 +108,10 @@ function mapAgentRow(uid: string, data: Record<string, unknown>): AgentRow {
     username: typeof data.username === "string" ? data.username : "--",
     email: typeof data.email === "string" ? data.email : "--",
     createdAt: serializeDateLike(data.createdAt),
-    lastActivityAt: serializeDateLike(data.lastProgressAt) ?? serializeDateLike(data.updatedAt),
+    lastActivityAt:
+      serializeDateLike(data.lastAccessAt) ??
+      serializeDateLike(data.lastProgressAt) ??
+      serializeDateLike(data.updatedAt),
     agentFeeSharePercent:
       typeof data.agentFeeSharePercent === "number" && Number.isFinite(data.agentFeeSharePercent)
         ? data.agentFeeSharePercent
