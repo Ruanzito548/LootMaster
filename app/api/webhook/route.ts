@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import {
   computeFeeBreakdown,
   DEFAULT_AGENT_FEE_SHARE_PERCENT,
+  normalizeAgentCode,
 } from "@/lib/agency";
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
@@ -290,6 +291,7 @@ async function persistPaidOrder(session: Stripe.Checkout.Session, supplierPercen
       currency: (session.currency ?? "brl").toLowerCase(),
       customerEmail: session.customer_email ?? "",
       customerUid: meta.customerUid ?? "",
+      agentReferralCode: meta.agentReferralCode ?? "",
       baseAmountCents: amountTotalCents,
       gameId: meta.gameId ?? "",
       gameTitle: meta.gameTitle ?? "",
@@ -343,7 +345,12 @@ type ResolvedCustomerAgent = {
   agentFeeSharePercent: number;
 };
 
-async function resolveCustomerAgent(session: Stripe.Checkout.Session): Promise<ResolvedCustomerAgent> {
+type CustomerProfile = {
+  customerUid: string | null;
+  customerData: Record<string, unknown> | null;
+};
+
+async function resolveCustomerProfile(session: Stripe.Checkout.Session): Promise<CustomerProfile> {
   const adminDb = getAdminDb();
   const meta = session.metadata ?? {};
   const customerUidFromMeta = typeof meta.customerUid === "string" ? meta.customerUid.trim() : "";
@@ -373,6 +380,82 @@ async function resolveCustomerAgent(session: Stripe.Checkout.Session): Promise<R
       customerData = customerSnapshot.docs[0].data() as Record<string, unknown>;
     }
   }
+
+  return { customerUid, customerData };
+}
+
+async function resolveAgentUidByReferralCode(referralCodeRaw: string, customerUid: string): Promise<string | null> {
+  const referralCode = normalizeAgentCode(referralCodeRaw);
+  if (!referralCode || referralCode === normalizeAgentCode(customerUid)) {
+    return null;
+  }
+
+  const adminDb = getAdminDb();
+
+  const directAgentDoc = await adminDb.collection("users").doc(referralCode).get();
+  if (directAgentDoc.exists) {
+    const directData = directAgentDoc.data() as Record<string, unknown>;
+    if (directData.isAgent === true) {
+      return directAgentDoc.id;
+    }
+  }
+
+  const agentSnapshot = await adminDb
+    .collection("users")
+    .where("agentReferralCode", "==", referralCode)
+    .where("isAgent", "==", true)
+    .limit(1)
+    .get();
+
+  if (!agentSnapshot.empty) {
+    return agentSnapshot.docs[0].id;
+  }
+
+  return null;
+}
+
+async function maybeBindFirstPurchaseAgent(session: Stripe.Checkout.Session): Promise<void> {
+  const adminDb = getAdminDb();
+  const meta = session.metadata ?? {};
+  const referralCode = normalizeAgentCode(meta.agentReferralCode);
+
+  if (!referralCode) {
+    return;
+  }
+
+  const { customerUid, customerData } = await resolveCustomerProfile(session);
+  if (!customerUid || !customerData) {
+    return;
+  }
+
+  const assignedAgentId = typeof customerData.assignedAgentId === "string" ? customerData.assignedAgentId.trim() : "";
+  const currentSpentCents = typeof customerData.totalSpentCents === "number" && Number.isFinite(customerData.totalSpentCents)
+    ? customerData.totalSpentCents
+    : 0;
+
+  if (assignedAgentId || currentSpentCents > 0) {
+    return;
+  }
+
+  const agentUid = await resolveAgentUidByReferralCode(referralCode, customerUid);
+  if (!agentUid) {
+    return;
+  }
+
+  await adminDb.collection("users").doc(customerUid).set(
+    {
+      assignedAgentId: agentUid,
+      assignedAgentAt: FieldValue.serverTimestamp(),
+      assignedByReferralCode: referralCode,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+}
+
+async function resolveCustomerAgent(session: Stripe.Checkout.Session): Promise<ResolvedCustomerAgent> {
+  const adminDb = getAdminDb();
+  const { customerUid, customerData } = await resolveCustomerProfile(session);
 
   if (!customerUid || !customerData) {
     return {
@@ -741,6 +824,12 @@ export async function POST(request: Request): Promise<Response> {
         await persistPaidOrder(session, supplierPercentage);
       } catch (err) {
         console.error("[Stripe Webhook] Could not persist paid order to Firestore:", err);
+      }
+
+      try {
+        await maybeBindFirstPurchaseAgent(session);
+      } catch (err) {
+        console.error("[Stripe Webhook] Could not bind first-purchase agent referral:", err);
       }
 
       try {

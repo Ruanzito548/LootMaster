@@ -66,6 +66,7 @@ export default function AgentesAdminClient() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [searchText, setSearchText] = useState(() => searchParams.get("q") ?? "");
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const deferredSearchText = useDeferredValue(searchText);
 
@@ -240,6 +241,27 @@ export default function AgentesAdminClient() {
     }
   };
 
+  const copyReferralCode = async (agentReferralCode: string) => {
+    if (!agentReferralCode.trim()) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(agentReferralCode.trim());
+    setCopiedCode(agentReferralCode.trim());
+    window.setTimeout(() => setCopiedCode((current) => (current === agentReferralCode.trim() ? null : current)), 1500);
+  };
+
+  const copyReferralLink = async (agentReferralCode: string) => {
+    if (!agentReferralCode.trim()) {
+      return;
+    }
+
+    const referralLink = `${window.location.origin}/?agent=${encodeURIComponent(agentReferralCode.trim())}`;
+    await navigator.clipboard.writeText(referralLink);
+    setCopiedCode(agentReferralCode.trim());
+    window.setTimeout(() => setCopiedCode((current) => (current === agentReferralCode.trim() ? null : current)), 1500);
+  };
+
   if (!isAuthenticated) {
     return (
       <p className="mt-6 rounded-xl border border-amber-900 bg-amber-950/20 px-5 py-4 text-sm font-medium text-amber-300">
@@ -250,6 +272,14 @@ export default function AgentesAdminClient() {
 
   return (
     <section className="mt-6 space-y-4">
+      <div className="rounded-xl border border-emerald-900 bg-emerald-950/20 px-5 py-4 text-sm text-emerald-200">
+        <p className="font-semibold uppercase tracking-[0.14em] text-emerald-400">Referral code</p>
+        <p className="mt-2 leading-6 text-emerald-100">
+          Cada agente já tem um código. No checkout, o cliente pode usar <span className="font-semibold">?agent=CODIGO</span> para vincular a primeira compra automaticamente.
+        </p>
+        {copiedCode ? <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400">Copiado: {copiedCode}</p> : null}
+      </div>
+
       {errorMessage ? (
         <p className="rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">
           {errorMessage}
@@ -315,14 +345,32 @@ export default function AgentesAdminClient() {
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => void saveFeeShare(row.uid)}
-                      disabled={loadingUid === row.uid}
-                      className="inline-flex rounded-md border border-emerald-700 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      {loadingUid === row.uid ? "Salvando..." : "Salvar"}
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void saveFeeShare(row.uid)}
+                        disabled={loadingUid === row.uid}
+                        className="inline-flex rounded-md border border-emerald-700 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {loadingUid === row.uid ? "Salvando..." : "Salvar"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void copyReferralCode(row.agentReferralCode)}
+                        disabled={!row.agentReferralCode}
+                        className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-300 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Copiar codigo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void copyReferralLink(row.agentReferralCode)}
+                        disabled={!row.agentReferralCode}
+                        className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-300 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Copiar link
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

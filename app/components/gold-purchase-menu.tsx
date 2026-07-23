@@ -3,6 +3,7 @@
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { Banknote, CreditCard, Landmark, Mail, ScrollText, Sword, UserRound } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import { defaultGoldConfigEntry, emptyGoldConfig, getGoldConfigFor } from "../data/gold-config";
 import type { GameServer } from "../data/games";
@@ -78,7 +79,12 @@ function formatCurrency(value: number, currency: string, locale: string) {
   }).format(value);
 }
 
+function normalizeReferralCode(value: string | null | undefined) {
+  return (value ?? "").trim().toUpperCase();
+}
+
 export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: GoldPurchaseMenuProps) {
+  const searchParams = useSearchParams();
   const [fullGoldConfig, setFullGoldConfig] = useState(emptyGoldConfig);
   const [selectedServerId, setSelectedServerId] = useState("");
   const [selectedFaction, setSelectedFaction] = useState("");
@@ -94,6 +100,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   const [supportedCountries, setSupportedCountries] = useState<CountryConfig[]>([DEFAULT_COUNTRY_CONFIG]);
   const [ratesByCurrency, setRatesByCurrency] = useState<Record<string, number>>(FALLBACK_RATES);
   const [countryLoading, setCountryLoading] = useState(true);
+  const [agentReferralCode, setAgentReferralCode] = useState("");
 
   const hasServerOptions = servers.length > 0;
   const requiresFaction = hasServerOptions && gameId !== "retail";
@@ -121,6 +128,20 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
       }
     });
   }, []);
+
+  useEffect(() => {
+    const nextCode = normalizeReferralCode(
+      searchParams.get("agent") ??
+        searchParams.get("ref") ??
+        searchParams.get("refId") ??
+        searchParams.get("agentId") ??
+        searchParams.get("agent_id"),
+    );
+
+    if (nextCode) {
+      setAgentReferralCode((current) => (current.trim() ? current : nextCode));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     let ignore = false;
@@ -243,6 +264,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
           faction: selectedFaction,
           deliveryMethod,
           email: email.trim(),
+          agentReferralCode: agentReferralCode.trim(),
           hasServerOptions,
           customerUid,
         }),
@@ -512,6 +534,26 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
                 />
               </div>
             </div>
+
+            <div className="sm:col-span-2">
+              <label htmlFor="agent-referral-code" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
+                Agent referral code (optional)
+              </label>
+              <div className="relative mt-2">
+                <input
+                  id="agent-referral-code"
+                  type="text"
+                  value={agentReferralCode}
+                  disabled={!stepAmountDone}
+                  onChange={(event) => setAgentReferralCode(normalizeReferralCode(event.target.value))}
+                  placeholder="AGENT123"
+                  className="gm-input px-4 py-3 text-sm font-semibold uppercase tracking-[0.12em] disabled:cursor-not-allowed"
+                />
+              </div>
+              <p className="mt-2 text-xs text-[#88a8d1]">
+                Enter the agent code here on the client&apos;s first completed purchase to bind the account automatically.
+              </p>
+            </div>
           </div>
         </article>
       </div>
@@ -557,6 +599,10 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Delivery</span>
               <span className="font-semibold text-[#e7f5ff]">{deliveryMethod || "-"}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+              <span>Agent code</span>
+              <span className="max-w-[10rem] truncate font-semibold text-[#e7f5ff]">{agentReferralCode.trim() || "-"}</span>
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Fee</span>

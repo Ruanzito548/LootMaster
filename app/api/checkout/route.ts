@@ -2,6 +2,7 @@ import Stripe from "stripe";
 
 import { defaultGoldConfigEntry } from "@/app/data/gold-config";
 import { getServersByGameId } from "@/app/data/games";
+import { normalizeAgentCode } from "@/lib/agency";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   SITE_FEE_SETTINGS_DOC_ID,
@@ -30,6 +31,7 @@ type CheckoutBody = {
   faction: string;
   deliveryMethod: string;
   email: string;
+  agentReferralCode?: string;
   hasServerOptions: boolean;
   customerUid?: string;
 };
@@ -144,6 +146,7 @@ export async function POST(request: Request): Promise<Response> {
     faction,
     deliveryMethod,
     email,
+    agentReferralCode,
     hasServerOptions,
     customerUid,
   } = body;
@@ -289,6 +292,7 @@ export async function POST(request: Request): Promise<Response> {
     clientIp,
     hasServerOptions: String(hasServerOptions),
     customerUid: customerUid?.trim() ?? "",
+    agentReferralCode: normalizeAgentCode(agentReferralCode),
     supplierPercentage: String(supplierDefaultPercent),
     // Keep legacy field for compatibility with historical flows.
     commissionPercent: String(100 - supplierDefaultPercent),

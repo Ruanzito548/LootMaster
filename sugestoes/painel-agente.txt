@@ -1,0 +1,97 @@
+Sugestoes de Painel do Agente
+
+Contexto
+- O agente funciona como parceiro comercial (nao como admin operacional).
+- Nem todo cliente tera agente.
+- Clientes organicos permanecem sem agencia vinculada.
+- O vinculo cliente-agente nao deve ser alterado, exceto em casos de encerramento/exclusao de agencia.
+
+1) Visao Geral (topo)
+- Clientes vinculados: total, novos, ativos, inativos.
+- Receita gerada pela carteira do agente no periodo.
+- Comissao: pendente, liberada e paga.
+- Ticket medio dos clientes.
+- Retencao em 30 dias.
+- Meta do mes e progresso.
+
+Objetivo: em poucos segundos o agente entende como esta o negocio dele.
+
+2) Carteira de Clientes
+- Tabela com:
+  - nome, email, UID
+  - status (Novo, Ativo, Inativo)
+  - ultimo acesso
+  - valor gerado no periodo
+  - total historico gerado
+  - data da ultima compra
+- Acoes rapidas:
+  - ver historico do cliente
+  - copiar link/codigo de indicacao
+
+Filtros recomendados:
+- periodo
+- status
+- valor gerado
+- ultima atividade
+
+Objetivo: foco em retencao da base, nao apenas aquisicao.
+
+3) Comissoes e Repasses
+- Timeline por pedido:
+  - orderId
+  - cliente
+  - valor da venda
+  - taxa da plataforma
+  - percentual do agente
+  - valor da comissao
+  - status (pendente, aprovado, pago, estornado)
+- Resumo por periodo:
+  - total gerado
+  - total comissao
+  - total pago
+  - saldo pendente
+
+Objetivo: transparencia financeira para parceiro.
+
+4) Crescimento e Performance
+- Funil:
+  - visitas indicadas
+  - cadastros
+  - compradores
+  - recorrentes
+- Metricas:
+  - conversao por origem
+  - tempo medio ate 1a compra
+  - recompra em 30 dias
+  - churn da base
+- Opcional:
+  - ranking de agentes
+
+Objetivo: incentivar trafego qualificado e retencao.
+
+Navegacao sugerida (painel do agente)
+- Dashboard
+- Clientes
+- Comissoes
+- Repasses
+- Materiais (link/codigo/banner)
+- Configuracoes (perfil/agencia)
+
+Regras de operacao sugeridas
+- Agente nao altera vinculo de cliente.
+- Cliente organico permanece sem agencia.
+- Mudanca de vinculo apenas por excecao administrativa.
+- Toda alteracao deve gerar auditoria.
+
+MVP recomendado
+- Dashboard com KPIs principais.
+- Tabela de clientes vinculados com status e ultimo acesso.
+- Extrato de comissoes por pedido.
+- Resumo financeiro (pendente x pago).
+- Filtro por periodo.
+
+Evolucoes futuras
+- Hierarquia de agencia (agencia > agente > subagente).
+- Override de comissao por camada.
+- Regras de contrato por perfil de parceiro.
+- Bonus por meta e por retencao.
