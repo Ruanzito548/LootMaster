@@ -82,6 +82,15 @@ function getClientStatus(row: ClientRow): { label: "Novo" | "Ativo" | "Inativo";
   return { label: "Inativo", tone: "text-rose-300 border-rose-800 bg-rose-950/20" };
 }
 
+function formatLastAccess(value: string | null | undefined): string {
+  const ts = parseDate(value ?? null);
+  if (!ts) {
+    return "--";
+  }
+
+  return new Date(ts).toLocaleString("pt-BR");
+}
+
 export default function ClientesAdminClient() {
   const pathname = usePathname();
   const router = useRouter();
@@ -328,6 +337,7 @@ export default function ClientesAdminClient() {
                 <th className="px-4 py-3">Cliente</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Ultimo acesso</th>
                 <th className="px-4 py-3">Agente atual</th>
                 <th className="px-4 py-3">Acoes</th>
               </tr>
@@ -356,6 +366,7 @@ export default function ClientesAdminClient() {
                         {status.label}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-xs text-green-500">{formatLastAccess(row.lastActivityAt)}</td>
                     <td className="px-4 py-3 text-xs text-green-500">{row.assignedAgentId ?? "Sem agente"}</td>
                     <td className="px-4 py-3">
                       <div className="flex min-w-[420px] flex-wrap items-center gap-2">
