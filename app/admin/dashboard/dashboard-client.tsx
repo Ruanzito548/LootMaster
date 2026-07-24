@@ -860,7 +860,7 @@ export function DashboardClient({
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Comissões de agentes (pagas) ({formatPercent(configuredPercents.agentCommissionPercent)})</span>
+                  <span className="font-semibold text-slate-300">- Comissões de agentes (pagas)</span>
                   <span className="font-black text-rose-300">{formatDeduction(totalAgentCommissionPaid, displayCurrency)}</span>
                 </div>
 
