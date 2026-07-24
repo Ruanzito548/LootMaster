@@ -243,7 +243,8 @@ function PercentRow({
 }
 
 export function FinancialCalculatorClient() {
-  const [salesPerDayInput, setSalesPerDayInput] = useState(String(DEFAULT_CONFIG.defaultSalesPerDay));
+  const [salesPerDayWithAgentInput, setSalesPerDayWithAgentInput] = useState(String(DEFAULT_CONFIG.defaultSalesPerDay));
+  const [salesPerDayWithoutAgentInput, setSalesPerDayWithoutAgentInput] = useState("0");
   const [averageSaleValueInput, setAverageSaleValueInput] = useState(String(DEFAULT_CONFIG.defaultAverageTicket));
   const [activeDaysInput, setActiveDaysInput] = useState(String(DEFAULT_CONFIG.defaultActiveDays));
 
@@ -282,7 +283,8 @@ export function FinancialCalculatorClient() {
         if (!cancelled) {
           setConfig(payload.config);
           setScenarioInputs(toScenarioInputs(payload.config));
-          setSalesPerDayInput(String(payload.config.defaultSalesPerDay));
+          setSalesPerDayWithAgentInput(String(payload.config.defaultSalesPerDay));
+          setSalesPerDayWithoutAgentInput("0");
           setAverageSaleValueInput(String(payload.config.defaultAverageTicket));
           setActiveDaysInput(String(payload.config.defaultActiveDays));
           setHistory(payload.history ?? HISTORY_FALLBACK);
@@ -355,12 +357,21 @@ export function FinancialCalculatorClient() {
     window.localStorage.setItem(OPERATIONAL_COST_STORAGE_KEY, JSON.stringify(operationalCostItems));
   }, [operationalCostItems]);
 
-  const salesPerDay = useMemo(() => parseDecimalInput(salesPerDayInput), [salesPerDayInput]);
+  const salesPerDayWithAgent = useMemo(() => parseDecimalInput(salesPerDayWithAgentInput), [salesPerDayWithAgentInput]);
+  const salesPerDayWithoutAgent = useMemo(() => parseDecimalInput(salesPerDayWithoutAgentInput), [salesPerDayWithoutAgentInput]);
+  const salesPerDayTotal = useMemo(
+    () => salesPerDayWithAgent + salesPerDayWithoutAgent,
+    [salesPerDayWithAgent, salesPerDayWithoutAgent],
+  );
   const averageSaleValue = useMemo(() => parseDecimalInput(averageSaleValueInput), [averageSaleValueInput]);
   const activeDays = useMemo(() => Math.max(0, Math.round(parseDecimalInput(activeDaysInput))), [activeDaysInput]);
   const monthlyRevenueCents = useMemo(
-    () => Math.round(salesPerDay * averageSaleValue * activeDays * 100),
-    [activeDays, averageSaleValue, salesPerDay],
+    () => Math.round(salesPerDayTotal * averageSaleValue * activeDays * 100),
+    [activeDays, averageSaleValue, salesPerDayTotal],
+  );
+  const monthlyRevenueWithAgentCents = useMemo(
+    () => Math.round(salesPerDayWithAgent * averageSaleValue * activeDays * 100),
+    [activeDays, averageSaleValue, salesPerDayWithAgent],
   );
 
   const scenario = useMemo<OrderFinancials>(() => {
@@ -383,8 +394,8 @@ export function FinancialCalculatorClient() {
   );
 
   const agentCommissionCost = useMemo(
-    () => Math.max(0, Math.round(scenario.grossRevenue * (agentCommissionPercent / 100))),
-    [agentCommissionPercent, scenario.grossRevenue],
+    () => Math.max(0, Math.round(monthlyRevenueWithAgentCents * (agentCommissionPercent / 100))),
+    [agentCommissionPercent, monthlyRevenueWithAgentCents],
   );
 
   const netProfit = useMemo(
@@ -407,7 +418,7 @@ export function FinancialCalculatorClient() {
     [netProfit, scenario.grossRevenue],
   );
 
-  const totalOrders = Math.max(0, Math.round(salesPerDay * activeDays));
+  const totalOrders = Math.max(0, Math.round(salesPerDayTotal * activeDays));
   const daysInPeriod = Math.max(1, activeDays);
   const monthsInPeriod = countMonthsInPeriod(daysInPeriod);
   const weeksInPeriod = countWeeksInPeriod(daysInPeriod);
@@ -455,11 +466,11 @@ export function FinancialCalculatorClient() {
       parseDecimalInput(scenarioInputs.operationalReservePercent) !== config.operationalReservePercent ||
       parseDecimalInput(scenarioInputs.agentCommissionPercent) !== config.agentCommissionPercent ||
       parseDecimalInput(scenarioInputs.otherProjectsInvestmentPercent) !== config.otherProjectsInvestmentPercent ||
-      Math.round(parseDecimalInput(salesPerDayInput)) !== config.defaultSalesPerDay ||
+      Math.round(salesPerDayTotal) !== config.defaultSalesPerDay ||
       Math.round(parseDecimalInput(averageSaleValueInput)) !== config.defaultAverageTicket ||
       Math.round(parseDecimalInput(activeDaysInput)) !== config.defaultActiveDays
     );
-  }, [averageSaleValueInput, activeDaysInput, config, salesPerDayInput, scenarioInputs]);
+  }, [averageSaleValueInput, activeDaysInput, config, salesPerDayTotal, scenarioInputs]);
 
   const summaryText = useMemo(() => {
     return [
@@ -470,6 +481,7 @@ export function FinancialCalculatorClient() {
       `Taxa cartao (${formatPercent(parseDecimalInput(scenarioInputs.cardGatewayFeePercent))}): ${formatUsdFromCents(scenario.cardFee)}`,
       `Cashback (${formatPercent(parseDecimalInput(scenarioInputs.cashbackPercent))}): ${formatUsdFromCents(scenario.cashback)}`,
       `Reserva operacional (${formatPercent(parseDecimalInput(scenarioInputs.operationalReservePercent))}): ${formatUsdFromCents(scenario.operationalReserve)}`,
+      `Receita com agente vinculado: ${formatUsdFromCents(monthlyRevenueWithAgentCents)}`,
       `Comissao do agente (${formatPercent(agentCommissionPercent)}): ${formatUsdFromCents(agentCommissionCost)}`,
       `Lucro liquido: ${formatUsdFromCents(netProfit)}`,
       `Investimento em outros projetos (${formatPercent(otherProjectsInvestmentPercent)}): ${formatUsdFromCents(investmentInOtherProjects)}`,
@@ -486,6 +498,7 @@ export function FinancialCalculatorClient() {
     investmentInOtherProjects,
     marginAfterOperationalCosts,
     marginPercent,
+    monthlyRevenueWithAgentCents,
     netAfterOperationalCosts,
     netProfit,
     otherProjectsInvestmentPercent,
@@ -565,7 +578,8 @@ export function FinancialCalculatorClient() {
 
       setConfig(payload.config);
       setScenarioInputs(toScenarioInputs(payload.config));
-      setSalesPerDayInput(String(payload.config.defaultSalesPerDay));
+      setSalesPerDayWithAgentInput(String(payload.config.defaultSalesPerDay));
+      setSalesPerDayWithoutAgentInput("0");
       setAverageSaleValueInput(String(payload.config.defaultAverageTicket));
       setActiveDaysInput(String(payload.config.defaultActiveDays));
       setHistory(payload.history ?? HISTORY_FALLBACK);
@@ -588,7 +602,7 @@ export function FinancialCalculatorClient() {
       operationalReservePercent: parseDecimalInput(scenarioInputs.operationalReservePercent),
       agentCommissionPercent: parseDecimalInput(scenarioInputs.agentCommissionPercent),
       otherProjectsInvestmentPercent: parseDecimalInput(scenarioInputs.otherProjectsInvestmentPercent),
-      defaultSalesPerDay: Math.round(parseDecimalInput(salesPerDayInput)),
+      defaultSalesPerDay: Math.round(salesPerDayTotal),
       defaultAverageTicket: Math.round(parseDecimalInput(averageSaleValueInput)),
       defaultActiveDays: Math.round(parseDecimalInput(activeDaysInput)),
     };
@@ -604,7 +618,8 @@ export function FinancialCalculatorClient() {
   const handleRestoreDefaults = () => {
     const defaults = buildDefaultFinancialCalculatorConfig();
     setScenarioInputs(toScenarioInputs(defaults));
-    setSalesPerDayInput(String(defaults.defaultSalesPerDay));
+    setSalesPerDayWithAgentInput(String(defaults.defaultSalesPerDay));
+    setSalesPerDayWithoutAgentInput("0");
     setAverageSaleValueInput(String(defaults.defaultAverageTicket));
     setActiveDaysInput(String(defaults.defaultActiveDays));
     setSuccessMessage(null);
@@ -815,21 +830,43 @@ export function FinancialCalculatorClient() {
 
           <article className="rounded-[1.8rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Simulador Mensal</p>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Simulador</p>
               <h2 className="mt-2 text-xl font-black text-white sm:text-2xl">Entradas do cenario</h2>
             </div>
 
             <div className="mt-4 grid gap-3">
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                Vendas por dia
+                Vendas por dia (com agente)
                 <input
                   type="number"
                   inputMode="decimal"
                   min="0"
                   step="0.01"
-                  value={salesPerDayInput}
-                  onChange={(event) => setSalesPerDayInput(event.target.value)}
+                  value={salesPerDayWithAgentInput}
+                  onChange={(event) => setSalesPerDayWithAgentInput(event.target.value)}
                   className="min-h-[48px] rounded-xl border border-white/10 bg-black/30 px-3 text-base font-black text-white outline-none transition focus:border-cyan-400"
+                />
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                Vendas por dia (sem agente)
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={salesPerDayWithoutAgentInput}
+                  onChange={(event) => setSalesPerDayWithoutAgentInput(event.target.value)}
+                  className="min-h-[48px] rounded-xl border border-white/10 bg-black/30 px-3 text-base font-black text-white outline-none transition focus:border-cyan-400"
+                />
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                Vendas por dia (totais)
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={salesPerDayTotal.toFixed(2)}
+                  readOnly
+                  className="min-h-[48px] rounded-xl border border-white/10 bg-white/5 px-3 text-base font-black text-cyan-300 outline-none"
                 />
               </label>
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
@@ -859,7 +896,7 @@ export function FinancialCalculatorClient() {
             </div>
 
             <p className="mt-4 text-sm text-slate-400">
-              {salesPerDay.toFixed(0)} vendas/dia x {averageSaleValue.toFixed(2)} USD x {activeDays} dias
+              {salesPerDayTotal.toFixed(2)} vendas/dia ({salesPerDayWithAgent.toFixed(2)} com agente + {salesPerDayWithoutAgent.toFixed(2)} sem agente) x {averageSaleValue.toFixed(2)} USD x {activeDays} dias
             </p>
             <p className="mt-2 text-lg font-black text-cyan-300">Receita: {formatUsdFromCents(monthlyRevenueCents)}</p>
           </article>
