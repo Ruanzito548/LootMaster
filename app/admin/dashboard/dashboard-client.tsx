@@ -862,36 +862,6 @@ export function DashboardClient({
               </div>
             </article>
 
-            <article className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Repasse x Lucro</p>
-
-              <div className="mt-4 space-y-2 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">Receita</span>
-                  <span className="font-semibold text-cyan-300">{formatMoney(totalRevenue, displayCurrency)}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">Fornecedor</span>
-                  <span className="font-semibold text-rose-300">{formatDeduction(totalPayout, displayCurrency)}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">Gateway</span>
-                  <span className="font-semibold text-rose-300">{formatDeduction(totalGatewayFee, displayCurrency)}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">Reserva Operacional</span>
-                  <span className="font-semibold text-rose-300">{formatDeduction(totalOperationalReserve, displayCurrency)}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">Comissões de agentes (pagas)</span>
-                  <span className="font-semibold text-rose-300">{formatDeduction(totalAgentCommissionPaid, displayCurrency)}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3 pt-1">
-                  <span className="font-black text-white">Lucro Líquido</span>
-                  <span className="text-right font-black text-fuchsia-300">{formatMoney(totalNetProfit, displayCurrency)}</span>
-                </div>
-              </div>
-            </article>
           </article>
         </section>
 
