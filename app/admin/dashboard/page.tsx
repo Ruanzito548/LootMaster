@@ -1,6 +1,11 @@
 import Link from "next/link";
 import Stripe from "stripe";
 import { ADMIN_DASHBOARD_ORDERS_QUERY_LIMIT } from "@/lib/admin-query-limits";
+import {
+  FINANCIAL_CALCULATOR_CONFIG_DOC_ID,
+  buildDefaultFinancialCalculatorConfig,
+  sanitizeFinancialCalculatorConfig,
+} from "@/lib/financial-calculator-config";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   SITE_FEE_SETTINGS_DOC_ID,
@@ -30,6 +35,7 @@ export default async function DashboardPage() {
   let cardGatewayFeePercent = defaultSiteFeeSettings.cardGatewayFeePercent;
   let cashbackPercent = defaultSiteFeeSettings.cashbackPercent;
   let operationalReservePercent = defaultSiteFeeSettings.operationalReservePercent;
+  let agentCommissionPercent = buildDefaultFinancialCalculatorConfig().agentCommissionPercent;
   let completedOrderIds = new Set<string>();
   const paidAgentCommissionByOrderId = new Map<string, number>();
 
@@ -73,14 +79,22 @@ export default async function DashboardPage() {
     }
 
     const siteFeeSnapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
+    const financialCalculatorSnapshot = await adminDb
+      .collection("app-config")
+      .doc(FINANCIAL_CALCULATOR_CONFIG_DOC_ID)
+      .get();
     const siteFeeSettings = siteFeeSnapshot.exists
       ? sanitizeSiteFeeSettings(siteFeeSnapshot.data())
       : defaultSiteFeeSettings;
+    const financialCalculatorSettings = financialCalculatorSnapshot.exists
+      ? sanitizeFinancialCalculatorConfig(financialCalculatorSnapshot.data())
+      : buildDefaultFinancialCalculatorConfig();
 
     supplierDefaultPercent = siteFeeSettings.supplierDefaultPercent;
     cardGatewayFeePercent = siteFeeSettings.cardGatewayFeePercent;
     cashbackPercent = siteFeeSettings.cashbackPercent;
     operationalReservePercent = siteFeeSettings.operationalReservePercent;
+    agentCommissionPercent = financialCalculatorSettings.agentCommissionPercent;
 
     orders = snapshot.docs.map((docRow) => {
       const data = docRow.data() as Record<string, unknown>;
@@ -222,7 +236,17 @@ export default async function DashboardPage() {
         </div>
 
         <section className="mt-8">
-          <DashboardClient orders={orders} loadError={loadError} />
+          <DashboardClient
+            orders={orders}
+            loadError={loadError}
+            configuredPercents={{
+              supplierPercentage: supplierDefaultPercent,
+              cardGatewayFeePercent,
+              cashbackPercent,
+              operationalReservePercent,
+              agentCommissionPercent,
+            }}
+          />
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">

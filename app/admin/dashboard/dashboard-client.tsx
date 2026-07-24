@@ -32,6 +32,13 @@ export type DashboardOrder = {
 type DashboardClientProps = {
   orders: DashboardOrder[];
   loadError: string | null;
+  configuredPercents: {
+    supplierPercentage: number;
+    cardGatewayFeePercent: number;
+    cashbackPercent: number;
+    operationalReservePercent: number;
+    agentCommissionPercent: number;
+  };
 };
 
 type RangeValue = "7" | "30" | "90" | "all" | "custom";
@@ -87,6 +94,10 @@ function formatMoney(amountInCents: number, currency: DashboardCurrency) {
 
 function formatDeduction(amountInCents: number, currency: DashboardCurrency) {
   return `-${formatMoney(Math.abs(amountInCents), currency)}`;
+}
+
+function formatPercent(value: number) {
+  return `${value.toFixed(2)}%`;
 }
 
 function formatDateTime(unixSeconds: number) {
@@ -330,6 +341,7 @@ function convertAmountCents(
 export function DashboardClient({
   orders,
   loadError,
+  configuredPercents,
 }: DashboardClientProps) {
   const [currentNowMs, setCurrentNowMs] = useState(() => getNowMs());
   const initialRangeEndDate = formatDateInputFromMs(currentNowMs);
@@ -828,27 +840,27 @@ export function DashboardClient({
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Repasse Fornecedor</span>
+                  <span className="font-semibold text-slate-300">- Repasse Fornecedor ({formatPercent(configuredPercents.supplierPercentage)})</span>
                   <span className="font-black text-rose-300">{formatDeduction(totalPayout, displayCurrency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- {gatewayLabel}</span>
+                  <span className="font-semibold text-slate-300">- {gatewayLabel} ({formatPercent(configuredPercents.cardGatewayFeePercent)})</span>
                   <span className="font-black text-rose-300">{formatDeduction(totalGatewayFee, displayCurrency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Cashback / Loot Coins</span>
+                  <span className="font-semibold text-slate-300">- Cashback / Loot Coins ({formatPercent(configuredPercents.cashbackPercent)})</span>
                   <span className="font-black text-rose-300">{formatDeduction(totalCashback, displayCurrency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Reserva Operacional</span>
+                  <span className="font-semibold text-slate-300">- Reserva Operacional ({formatPercent(configuredPercents.operationalReservePercent)})</span>
                   <span className="font-black text-rose-300">{formatDeduction(totalOperationalReserve, displayCurrency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Comissões de agentes (pagas)</span>
+                  <span className="font-semibold text-slate-300">- Comissões de agentes (pagas) ({formatPercent(configuredPercents.agentCommissionPercent)})</span>
                   <span className="font-black text-rose-300">{formatDeduction(totalAgentCommissionPaid, displayCurrency)}</span>
                 </div>
 
