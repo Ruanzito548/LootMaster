@@ -53,8 +53,8 @@ const adminSections = [
   },
   {
     id: "08",
-    title: "Taxas",
-    description: "Acompanhe o roteamento de fees entre agentes e LootMaster em cada compra.",
+    title: "Comissões de Agentes",
+    description: "Acompanhe os repasses reais recebidos pelos agentes e pela LootMaster em cada compra.",
     href: "/admin/taxas",
     icon: Wallet2,
   },

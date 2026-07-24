@@ -167,9 +167,9 @@ export function AdminTaxasClient() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin</p>
-            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Taxas</h1>
+            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Comissões de Agentes</h1>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-green-600">
-              Registro paginado de repasses de taxa por compra para agentes e para a LootMaster.
+              Registro paginado dos repasses reais por compra para agentes e para a LootMaster.
             </p>
             <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-green-700">
               Carregamento incremental de {PAGE_SIZE} registros por vez.
@@ -214,9 +214,9 @@ export function AdminTaxasClient() {
 
         <section className="mt-6 overflow-x-auto rounded-xl border border-green-900 bg-black">
           {loading ? (
-            <p className="px-5 py-4 text-sm text-green-600">Carregando taxas...</p>
+            <p className="px-5 py-4 text-sm text-green-600">Carregando comissões de agentes...</p>
           ) : filteredItems.length === 0 ? (
-            <p className="px-5 py-4 text-sm text-green-600">Nenhum registro de taxa encontrado.</p>
+            <p className="px-5 py-4 text-sm text-green-600">Nenhum registro de comissão encontrado.</p>
           ) : (
             <table className="w-full text-left text-sm">
               <thead>

@@ -31,6 +31,7 @@ export default async function DashboardPage() {
   let cashbackPercent = defaultSiteFeeSettings.cashbackPercent;
   let operationalReservePercent = defaultSiteFeeSettings.operationalReservePercent;
   let completedOrderIds = new Set<string>();
+  const paidAgentCommissionByOrderId = new Map<string, number>();
 
   try {
     const adminDb = getAdminDb();
@@ -51,6 +52,25 @@ export default async function DashboardPage() {
       .orderBy("updatedAt", "desc")
       .limit(ADMIN_DASHBOARD_ORDERS_QUERY_LIMIT)
       .get();
+
+    const orderIds = snapshot.docs.map((docRow) => docRow.id);
+    if (orderIds.length > 0) {
+      const feeTransferSnapshots = await Promise.all(
+        orderIds.map((orderId) => adminDb.collection("fee-transfers").doc(orderId).get()),
+      );
+
+      for (const feeSnapshot of feeTransferSnapshots) {
+        if (!feeSnapshot.exists) {
+          continue;
+        }
+
+        const feeData = feeSnapshot.data() as Record<string, unknown>;
+        const credited = feeData.agentPayoutCredited === true || feeData.status === "processed";
+        const payoutCents = typeof feeData.agentPayoutCents === "number" ? feeData.agentPayoutCents : 0;
+
+        paidAgentCommissionByOrderId.set(feeSnapshot.id, credited ? Math.max(0, Math.round(payoutCents)) : 0);
+      }
+    }
 
     const siteFeeSnapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
     const siteFeeSettings = siteFeeSnapshot.exists
@@ -85,6 +105,7 @@ export default async function DashboardPage() {
         id: orderId,
         createdUnix: parseIsoToUnixSeconds(typeof data.stripeCreatedAt === "string" ? data.stripeCreatedAt : null),
         amountTotal: financials.grossRevenue,
+        agentCommissionPaidCents: paidAgentCommissionByOrderId.get(orderId) ?? 0,
         currency: typeof data.currency === "string" && data.currency ? data.currency : "brl",
         statusLabel,
         gameTitle: typeof data.gameTitle === "string" && data.gameTitle ? data.gameTitle : "--",
@@ -162,6 +183,7 @@ export default async function DashboardPage() {
           id: session.id,
           createdUnix: session.created,
           amountTotal: financials.grossRevenue,
+          agentCommissionPaidCents: 0,
           currency: session.currency || "brl",
           statusLabel,
           gameTitle: meta.gameTitle || "--",

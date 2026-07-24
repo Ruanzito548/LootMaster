@@ -7,6 +7,7 @@ export type DashboardOrder = {
   id: string;
   createdUnix: number;
   amountTotal: number;
+  agentCommissionPaidCents: number;
   currency: string;
   statusLabel: string;
   gameTitle: string;
@@ -443,6 +444,7 @@ export function DashboardClient({
     return {
       ...order,
       amountTotal: convertAmountCents(order.amountTotal, orderCurrency, displayCurrency, currencyRates),
+      agentCommissionPaidCents: convertAmountCents(order.agentCommissionPaidCents, orderCurrency, displayCurrency, currencyRates),
       supplierPayout: convertAmountCents(order.supplierPayout, orderCurrency, displayCurrency, currencyRates),
       grossProfit: convertAmountCents(order.grossProfit, orderCurrency, displayCurrency, currencyRates),
       cardFee: convertAmountCents(order.cardFee, orderCurrency, displayCurrency, currencyRates),
@@ -471,6 +473,7 @@ export function DashboardClient({
   const totalGatewayFee = displayOrders.reduce((acc, order) => acc + order.cardFee, 0);
   const totalCashback = displayOrders.reduce((acc, order) => acc + order.cashback, 0);
   const totalOperationalReserve = displayOrders.reduce((acc, order) => acc + order.operationalReserve, 0);
+  const totalAgentCommissionPaid = displayOrders.reduce((acc, order) => acc + order.agentCommissionPaidCents, 0);
   const orderNetProfit = displayOrders.reduce((acc, order) => acc + order.netProfit, 0);
   const totalOrders = displayOrders.length;
   const totalNetProfit = orderNetProfit;
@@ -726,13 +729,13 @@ export function DashboardClient({
                   href="/admin/taxas"
                   className="inline-flex items-center rounded-full border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/20"
                 >
-                  Taxas do site
+                  Comissões de agentes
                 </Link>
                 <Link
                   href="/admin/clientes/agentes"
                   className="inline-flex items-center rounded-full border border-fuchsia-500/40 bg-fuchsia-500/10 px-4 py-2 text-sm font-semibold text-fuchsia-200 transition hover:border-fuchsia-400 hover:bg-fuchsia-500/20"
                 >
-                  Taxas dos agentes
+                  Agentes
                 </Link>
                 <Link
                   href="/admin/clientes/todos"
@@ -784,6 +787,11 @@ export function DashboardClient({
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Pedidos filtrados</p>
                 <p className="mt-2 text-2xl font-black text-cyan-300">{totalOrders}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:col-span-2 xl:col-span-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Comissões de agentes pagas</p>
+                <p className="mt-2 text-2xl font-black text-amber-300">{formatMoney(totalAgentCommissionPaid, displayCurrency)}</p>
+                <p className="mt-1 text-xs text-slate-500">Valor real vindo dos registros de repasse em Comissões de agentes.</p>
               </div>
             </div>
 
@@ -839,6 +847,11 @@ export function DashboardClient({
                   <span className="font-black text-rose-300">{formatDeduction(totalOperationalReserve, displayCurrency)}</span>
                 </div>
 
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">- Comissões de agentes (pagas)</span>
+                  <span className="font-black text-rose-300">{formatDeduction(totalAgentCommissionPaid, displayCurrency)}</span>
+                </div>
+
               </div>
 
               <div className="my-3 border-t border-dashed border-white/15" />
@@ -868,6 +881,10 @@ export function DashboardClient({
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-300">Reserva Operacional</span>
                   <span className="font-semibold text-rose-300">{formatDeduction(totalOperationalReserve, displayCurrency)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-slate-300">Comissões de agentes (pagas)</span>
+                  <span className="font-semibold text-rose-300">{formatDeduction(totalAgentCommissionPaid, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3 pt-1">
                   <span className="font-black text-white">Lucro Líquido</span>

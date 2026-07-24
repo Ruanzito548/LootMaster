@@ -118,7 +118,7 @@ export default async function AdminLayout({
                   href="/admin/taxas"
                   className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-green-400/90 transition hover:bg-green-950/50 hover:text-green-200"
                 >
-                  Taxas
+                  Comissões de agentes
                 </Link>
                 <Link
                   href="/admin/withdrawals/aprovar"
