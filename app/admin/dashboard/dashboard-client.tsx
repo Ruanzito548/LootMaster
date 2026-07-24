@@ -832,6 +832,9 @@ export function DashboardClient({
 
             <article className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Composição do Lucro</p>
+              <p className="mt-2 text-xs text-slate-500">
+                As porcentagens exibidas são as configurações atuais. Os valores em moeda são os valores reais históricos das ordens filtradas.
+              </p>
 
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
@@ -840,22 +843,22 @@ export function DashboardClient({
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Repasse Fornecedor ({formatPercent(configuredPercents.supplierPercentage)})</span>
+                  <span className="font-semibold text-slate-300">- Repasse Fornecedor ({formatPercent(configuredPercents.supplierPercentage)} atual)</span>
                   <span className="font-black text-rose-300">{formatDeduction(totalPayout, displayCurrency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- {gatewayLabel} ({formatPercent(configuredPercents.cardGatewayFeePercent)})</span>
+                  <span className="font-semibold text-slate-300">- {gatewayLabel} ({formatPercent(configuredPercents.cardGatewayFeePercent)} atual)</span>
                   <span className="font-black text-rose-300">{formatDeduction(totalGatewayFee, displayCurrency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Cashback / Loot Coins ({formatPercent(configuredPercents.cashbackPercent)})</span>
+                  <span className="font-semibold text-slate-300">- Cashback / Loot Coins ({formatPercent(configuredPercents.cashbackPercent)} atual)</span>
                   <span className="font-black text-rose-300">{formatDeduction(totalCashback, displayCurrency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Reserva Operacional ({formatPercent(configuredPercents.operationalReservePercent)})</span>
+                  <span className="font-semibold text-slate-300">- Reserva Operacional ({formatPercent(configuredPercents.operationalReservePercent)} atual)</span>
                   <span className="font-black text-rose-300">{formatDeduction(totalOperationalReserve, displayCurrency)}</span>
                 </div>
 
