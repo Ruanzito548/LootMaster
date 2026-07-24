@@ -100,6 +100,14 @@ function formatPercent(value: number) {
   return `${value.toFixed(2)}%`;
 }
 
+function computeEffectivePercent(amountInCents: number, totalInCents: number) {
+  if (totalInCents <= 0) {
+    return 0;
+  }
+
+  return (Math.max(0, amountInCents) / totalInCents) * 100;
+}
+
 function formatDateTime(unixSeconds: number) {
   return new Date(unixSeconds * 1000).toLocaleString("pt-BR");
 }
@@ -492,6 +500,43 @@ export function DashboardClient({
   const gatewayMethods = Array.from(new Set(displayOrders.map((order) => resolveGatewayLabel(order.paymentMethod))));
   const gatewayLabel = gatewayMethods.length === 1 ? gatewayMethods[0] : "Gateway (misto)";
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+  const compositionRows = [
+    {
+      id: "supplier",
+      label: "Repasse fornecedor",
+      currentPercent: configuredPercents.supplierPercentage,
+      effectivePercent: computeEffectivePercent(totalPayout, totalRevenue),
+      valueCents: totalPayout,
+    },
+    {
+      id: "gateway",
+      label: gatewayLabel,
+      currentPercent: configuredPercents.cardGatewayFeePercent,
+      effectivePercent: computeEffectivePercent(totalGatewayFee, totalRevenue),
+      valueCents: totalGatewayFee,
+    },
+    {
+      id: "cashback",
+      label: "Cashback / Loot Coins",
+      currentPercent: configuredPercents.cashbackPercent,
+      effectivePercent: computeEffectivePercent(totalCashback, totalRevenue),
+      valueCents: totalCashback,
+    },
+    {
+      id: "reserve",
+      label: "Reserva operacional",
+      currentPercent: configuredPercents.operationalReservePercent,
+      effectivePercent: computeEffectivePercent(totalOperationalReserve, totalRevenue),
+      valueCents: totalOperationalReserve,
+    },
+    {
+      id: "agent",
+      label: "Comissões de agentes (pagas)",
+      currentPercent: configuredPercents.agentCommissionPercent,
+      effectivePercent: computeEffectivePercent(totalAgentCommissionPaid, totalRevenue),
+      valueCents: totalAgentCommissionPaid,
+    },
+  ];
 
   const statusGrouped = new Map<string, number>();
   for (const order of displayOrders) {
@@ -836,37 +881,43 @@ export function DashboardClient({
                 As porcentagens exibidas são as configurações atuais. Os valores em moeda são os valores reais históricos das ordens filtradas.
               </p>
 
-              <div className="mt-4 space-y-2 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-200">Faturamento Bruto</span>
-                  <span className="font-black text-cyan-200">{formatMoney(totalRevenue, displayCurrency)}</span>
+              <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_1.1fr]">
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-semibold text-slate-200">Faturamento Bruto</span>
+                    <span className="font-black text-cyan-200">{formatMoney(totalRevenue, displayCurrency)}</span>
+                  </div>
+
+                  {compositionRows.map((row) => (
+                    <div key={row.id} className="flex items-center justify-between gap-3">
+                      <span className="font-semibold text-slate-300">- {row.label}</span>
+                      <span className="font-black text-rose-300">{formatDeduction(row.valueCents, displayCurrency)}</span>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Repasse Fornecedor ({formatPercent(configuredPercents.supplierPercentage)} atual)</span>
-                  <span className="font-black text-rose-300">{formatDeduction(totalPayout, displayCurrency)}</span>
+                <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#111722]">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-white/10 text-[11px] uppercase tracking-[0.14em] text-slate-500">
+                        <th className="px-3 py-2">Linha</th>
+                        <th className="px-3 py-2 text-right">% atual</th>
+                        <th className="px-3 py-2 text-right">% média</th>
+                        <th className="px-3 py-2 text-right">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {compositionRows.map((row) => (
+                        <tr key={`table-${row.id}`} className="border-b border-white/5 text-slate-200">
+                          <td className="px-3 py-2">{row.label}</td>
+                          <td className="px-3 py-2 text-right text-cyan-300">{formatPercent(row.currentPercent)}</td>
+                          <td className="px-3 py-2 text-right text-emerald-300">{formatPercent(row.effectivePercent)}</td>
+                          <td className="px-3 py-2 text-right font-semibold text-rose-300">{formatDeduction(row.valueCents, displayCurrency)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- {gatewayLabel} ({formatPercent(configuredPercents.cardGatewayFeePercent)} atual)</span>
-                  <span className="font-black text-rose-300">{formatDeduction(totalGatewayFee, displayCurrency)}</span>
-                </div>
-
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Cashback / Loot Coins ({formatPercent(configuredPercents.cashbackPercent)} atual)</span>
-                  <span className="font-black text-rose-300">{formatDeduction(totalCashback, displayCurrency)}</span>
-                </div>
-
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Reserva Operacional ({formatPercent(configuredPercents.operationalReservePercent)} atual)</span>
-                  <span className="font-black text-rose-300">{formatDeduction(totalOperationalReserve, displayCurrency)}</span>
-                </div>
-
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-300">- Comissões de agentes (pagas)</span>
-                  <span className="font-black text-rose-300">{formatDeduction(totalAgentCommissionPaid, displayCurrency)}</span>
-                </div>
-
               </div>
 
               <div className="my-3 border-t border-dashed border-white/15" />
