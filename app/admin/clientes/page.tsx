@@ -13,12 +13,6 @@ const sections = [
     description: "Visualize todos os agentes ativos e ajuste a porcentagem da taxa de cada agente.",
     href: "/admin/clientes/agentes",
   },
-  {
-    id: "03",
-    title: "Sugestoes do painel de agente",
-    description: "Guia com estrutura sugerida para dashboard, carteira, comissoes e performance do agente.",
-    href: "/admin/clientes/agentes/sugestoes",
-  },
 ];
 
 export default function AdminClientesPage() {

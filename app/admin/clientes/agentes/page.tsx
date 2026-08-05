@@ -21,12 +21,6 @@ export default function AdminAgentesPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/admin/clientes/agentes/sugestoes"
-              className="inline-flex items-center rounded-md border border-green-800 px-4 py-2 text-sm font-medium text-green-400 transition hover:bg-green-950"
-            >
-              Sugestoes do painel
-            </Link>
-            <Link
               href="/admin/clientes"
               className="inline-flex items-center rounded-md border border-green-800 px-4 py-2 text-sm font-medium text-green-400 transition hover:bg-green-950"
             >
