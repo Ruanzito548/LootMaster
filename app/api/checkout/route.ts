@@ -36,11 +36,24 @@ type CheckoutBody = {
   customerUid?: string;
 };
 
-function computeFinalAmount(price: number, paymentMethod: string, cardGatewayFeePercent: number): number {
-  if (paymentMethod === "pix") return Math.round(price * 0.95 * 100);
-  if (paymentMethod === "card") return Math.round(price * (1 + cardGatewayFeePercent / 100) * 100);
-  if (paymentMethod === "paypal") return Math.round(price * 100);
-  return Math.round(price * 100);
+function computeFinalAmount(
+  price: number,
+  paymentMethod: string,
+  deliveryMethod: string,
+  cardGatewayFeePercent: number,
+): number {
+  const safePrice = Math.max(0, price);
+  const normalizedDeliveryMethod = deliveryMethod.trim().toLowerCase();
+  const deliveryAdjustment = normalizedDeliveryMethod === "auction house" ? safePrice * 0.02 : 0;
+  const paymentAdjustment =
+    paymentMethod === "pix"
+      ? safePrice * -0.05
+      : paymentMethod === "card"
+      ? safePrice * (cardGatewayFeePercent / 100)
+      : 0;
+
+  const finalPrice = Math.max(0, safePrice + deliveryAdjustment + paymentAdjustment);
+  return Math.round(finalPrice * 100);
 }
 
 function toPositiveInt(value: unknown, fallback: number): number {
@@ -237,7 +250,7 @@ export async function POST(request: Request): Promise<Response> {
 
   const basePrice = (validatedGoldAmount / 1000) * authoritativeConfig.pricePerThousand;
   const baseAmountCents = Math.round(basePrice * 100);
-  const unitAmountBrl = computeFinalAmount(basePrice, paymentMethod, cardGatewayFeePercent);
+  const unitAmountBrl = computeFinalAmount(basePrice, paymentMethod, deliveryMethod, cardGatewayFeePercent);
 
   const normalizedCurrency = (currency ?? "USD").toLowerCase();
   const selectedCurrency = ["brl", "usd", "eur", "gbp"].includes(normalizedCurrency) ? normalizedCurrency : "usd";
