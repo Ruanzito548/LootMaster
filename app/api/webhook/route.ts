@@ -274,14 +274,20 @@ async function persistPaidOrder(session: Stripe.Checkout.Session, supplierPercen
   const meta = session.metadata ?? {};
   const adminDb = getAdminDb();
   const amountTotalCents = session.amount_total ?? 0;
+  const baseProductCents = Number(meta.baseProductCents ?? meta.baseAmountCents ?? amountTotalCents) || amountTotalCents;
+  const deliverySurchargeCents = Number(meta.deliverySurchargeCents ?? 0) || 0;
+  const paymentSurchargeCents = Number(meta.paymentSurchargeCents ?? 0) || 0;
   const costs = await resolveSessionCostPercents(session);
-  const financials = computeOrderFinancials(
+  const financialBase = computeOrderFinancials(
     amountTotalCents,
     supplierPercentage,
     costs.cardGatewayFeePercent,
     costs.cashbackPercent,
     costs.operationalReservePercent,
   );
+  const supplierPayout = Math.max(0, Math.round(baseProductCents * (financialBase.supplierPercentage / 100)));
+  const grossProfit = Math.max(0, amountTotalCents - supplierPayout);
+  const netProfit = grossProfit - financialBase.cardFee - financialBase.cashback - financialBase.operationalReserve;
 
   await adminDb.collection("order-checkouts").doc(session.id).set(
     {
@@ -292,7 +298,11 @@ async function persistPaidOrder(session: Stripe.Checkout.Session, supplierPercen
       customerEmail: session.customer_email ?? "",
       customerUid: meta.customerUid ?? "",
       agentReferralCode: meta.agentReferralCode ?? "",
-      baseAmountCents: amountTotalCents,
+      baseProductCents,
+      deliverySurchargeCents,
+      paymentSurchargeCents,
+      // Legacy compatibility field
+      baseAmountCents: baseProductCents,
       gameId: meta.gameId ?? "",
       gameTitle: meta.gameTitle ?? "",
       categoryId: meta.categoryId ?? "",
@@ -315,28 +325,28 @@ async function persistPaidOrder(session: Stripe.Checkout.Session, supplierPercen
       hasServerOptions: meta.hasServerOptions === "true",
       supplierId: meta.supplierId ?? "",
       supplierName: meta.supplierName ?? "",
-      supplierPercentage: financials.supplierPercentage,
-      grossRevenue: financials.grossRevenue,
-      supplierPayout: financials.supplierPayout,
-      grossProfit: financials.grossProfit,
-      cardFee: financials.cardFee,
-      cashback: financials.cashback,
-      operationalReserve: financials.operationalReserve,
-      netProfit: financials.netProfit,
+      supplierPercentage: financialBase.supplierPercentage,
+      grossRevenue: amountTotalCents,
+      supplierPayout,
+      grossProfit,
+      cardFee: financialBase.cardFee,
+      cashback: financialBase.cashback,
+      operationalReserve: financialBase.operationalReserve,
+      netProfit,
       cardFeePercent: costs.cardGatewayFeePercent,
       cashbackPercent: costs.cashbackPercent,
       operationalReservePercent: costs.operationalReservePercent,
       // Legacy fields kept for compatibility with old consumers.
-      commissionPercent: Math.max(0, 100 - financials.supplierPercentage),
-      sellerAmountCents: financials.supplierPayout,
-      platformProfitCents: financials.netProfit,
+      commissionPercent: Math.max(0, 100 - financialBase.supplierPercentage),
+      sellerAmountCents: supplierPayout,
+      platformProfitCents: netProfit,
       stripeCreatedAt: typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : null,
       updatedAt: new Date().toISOString(),
     },
     { merge: true },
   );
 
-  await fundChestEconomyFromCashback(session.id, financials.cashback);
+  await fundChestEconomyFromCashback(session.id, financialBase.cashback);
 }
 
 type ResolvedCustomerAgent = {
@@ -512,10 +522,12 @@ async function resolveCustomerAgent(session: Stripe.Checkout.Session): Promise<R
 
 async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<void> {
   const adminDb = getAdminDb();
+  const meta = session.metadata ?? {};
   const totalCents = session.amount_total ?? 0;
+  const baseProductCents = Number(meta.baseProductCents ?? meta.baseAmountCents ?? 0) || 0;
   const supplierPercentage = await resolveSessionSupplierPercent(session);
   const commissionPercent = Math.max(0, 100 - supplierPercentage);
-  const commissionBaseCents = totalCents;
+  const commissionBaseCents = baseProductCents > 0 ? baseProductCents : totalCents;
   const customerAgent = await resolveCustomerAgent(session);
   const feeBreakdown = computeFeeBreakdown(
     commissionBaseCents,
@@ -540,7 +552,8 @@ async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<voi
         orderId: session.id,
         customerUid: customerAgent.customerUid,
         customerEmail: session.customer_email ?? "",
-        amountTotalCents: commissionBaseCents,
+        amountTotalCents: totalCents,
+        commissionBaseCents,
         currency: (session.currency ?? "brl").toLowerCase(),
         commissionPercent,
         platformFeeCents: feeBreakdown.platformFeeCents,

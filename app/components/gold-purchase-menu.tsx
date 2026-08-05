@@ -69,7 +69,6 @@ const DEFAULT_CARD_GATEWAY_FEE_PERCENT = 4;
 
 const deliveryMethods = [
   { value: "Face to face", feeLabel: "0% fee" },
-  { value: "Auction House", feeLabel: "+2% fee" },
   { value: "Mailbox", feeLabel: "0% fee" },
 ];
 
@@ -220,7 +219,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   const completedSteps = [stepServerDone, stepAmountDone, stepDetailsDone, formReady].filter(Boolean).length;
 
   const basePrice = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
-  const deliveryAdjustment = deliveryMethod === "Auction House" ? basePrice * 0.02 : 0;
+  const deliveryAdjustment = 0;
   const paymentAdjustment =
     paymentMethod === "pix"
       ? basePrice * -0.05
@@ -624,7 +623,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Fee</span>
-              <span className="font-semibold text-[#e7f5ff]">{deliveryMethod === "Auction House" ? "+2% fee" : "0% fee"}</span>
+              <span className="font-semibold text-[#e7f5ff]">0% fee</span>
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Character</span>

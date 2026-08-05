@@ -36,12 +36,17 @@ type CheckoutBody = {
   customerUid?: string;
 };
 
-function computeFinalAmount(
+function computePricingBreakdown(
   price: number,
   paymentMethod: string,
   deliveryMethod: string,
   cardGatewayFeePercent: number,
-): number {
+): {
+  baseProductCents: number;
+  deliverySurchargeCents: number;
+  paymentSurchargeCents: number;
+  chargedTotalCents: number;
+} {
   const safePrice = Math.max(0, price);
   const normalizedDeliveryMethod = deliveryMethod.trim().toLowerCase();
   const deliveryAdjustment = normalizedDeliveryMethod === "auction house" ? safePrice * 0.02 : 0;
@@ -53,7 +58,13 @@ function computeFinalAmount(
       : 0;
 
   const finalPrice = Math.max(0, safePrice + deliveryAdjustment + paymentAdjustment);
-  return Math.round(finalPrice * 100);
+
+  return {
+    baseProductCents: Math.round(safePrice * 100),
+    deliverySurchargeCents: Math.round(deliveryAdjustment * 100),
+    paymentSurchargeCents: Math.round(paymentAdjustment * 100),
+    chargedTotalCents: Math.round(finalPrice * 100),
+  };
 }
 
 function toPositiveInt(value: unknown, fallback: number): number {
@@ -193,6 +204,11 @@ export async function POST(request: Request): Promise<Response> {
   const knownServers = getServersByGameId(gameId);
   const requiresServer = knownServers.length > 0;
 
+  const allowedDeliveryMethods = new Set(["Face to face", "Mailbox"]);
+  if (!allowedDeliveryMethods.has(deliveryMethod.trim())) {
+    return Response.json({ error: "Selected delivery method is not available right now." }, { status: 422 });
+  }
+
   if (requiresServer && !serverId?.trim()) {
     return Response.json({ error: "Server is required for this game." }, { status: 422 });
   }
@@ -249,8 +265,8 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const basePrice = (validatedGoldAmount / 1000) * authoritativeConfig.pricePerThousand;
-  const baseAmountCents = Math.round(basePrice * 100);
-  const unitAmountBrl = computeFinalAmount(basePrice, paymentMethod, deliveryMethod, cardGatewayFeePercent);
+  const pricingBreakdown = computePricingBreakdown(basePrice, paymentMethod, deliveryMethod, cardGatewayFeePercent);
+  const unitAmountBrl = pricingBreakdown.chargedTotalCents;
 
   const normalizedCurrency = (currency ?? "USD").toLowerCase();
   const selectedCurrency = ["brl", "usd", "eur", "gbp"].includes(normalizedCurrency) ? normalizedCurrency : "usd";
@@ -288,7 +304,12 @@ export async function POST(request: Request): Promise<Response> {
     categoryTitle,
     goldAmount: String(validatedGoldAmount),
     pricePerThousand: String(authoritativeConfig.pricePerThousand),
-    baseAmountCents: String(baseAmountCents),
+    baseProductCents: String(pricingBreakdown.baseProductCents),
+    deliverySurchargeCents: String(pricingBreakdown.deliverySurchargeCents),
+    paymentSurchargeCents: String(pricingBreakdown.paymentSurchargeCents),
+    chargedTotalCents: String(pricingBreakdown.chargedTotalCents),
+    // Legacy compatibility fields
+    baseAmountCents: String(pricingBreakdown.baseProductCents),
     finalAmountCents: String(unitAmount),
     serverId,
     server,
