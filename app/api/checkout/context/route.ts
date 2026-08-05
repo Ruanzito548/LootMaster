@@ -4,6 +4,12 @@ import {
   resolveCheckoutCountryConfig,
   resolveCountryFromHeaders,
 } from "@/lib/checkout-localization";
+import {
+  SITE_FEE_SETTINGS_DOC_ID,
+  buildDefaultSiteFeeSettings,
+  sanitizeSiteFeeSettings,
+} from "@/lib/site-fee-settings";
+import { getAdminDb } from "@/lib/firebase-admin";
 
 type FxPayload = {
   rates: Record<string, number>;
@@ -50,10 +56,24 @@ export async function GET(request: Request) {
   const countryConfig = resolveCheckoutCountryConfig(detectedCountryCode || DEFAULT_CHECKOUT_COUNTRY_CODE);
   const rates = await resolveBrlBaseRates();
 
+  let cardGatewayFeePercent = buildDefaultSiteFeeSettings().cardGatewayFeePercent;
+
+  try {
+    const adminDb = getAdminDb();
+    const siteFeeSnapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
+    if (siteFeeSnapshot.exists) {
+      const siteFeeSettings = sanitizeSiteFeeSettings(siteFeeSnapshot.data());
+      cardGatewayFeePercent = siteFeeSettings.cardGatewayFeePercent;
+    }
+  } catch {
+    // Keep default card gateway fee when config cannot be loaded.
+  }
+
   return Response.json({
     detectedCountryCode,
     countryConfig,
     rates,
+    cardGatewayFeePercent,
     supportedCountries: Object.values(CHECKOUT_COUNTRY_CONFIG),
   });
 }

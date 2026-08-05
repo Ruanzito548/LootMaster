@@ -65,6 +65,7 @@ const FALLBACK_RATES: Record<string, number> = {
   EUR: 0.16,
   GBP: 0.14,
 };
+const DEFAULT_CARD_GATEWAY_FEE_PERCENT = 4;
 
 const deliveryMethods = [
   { value: "Face to face", feeLabel: "0% fee" },
@@ -99,6 +100,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   const [countryConfig, setCountryConfig] = useState<CountryConfig>(DEFAULT_COUNTRY_CONFIG);
   const [supportedCountries, setSupportedCountries] = useState<CountryConfig[]>([DEFAULT_COUNTRY_CONFIG]);
   const [ratesByCurrency, setRatesByCurrency] = useState<Record<string, number>>(FALLBACK_RATES);
+  const [cardGatewayFeePercent, setCardGatewayFeePercent] = useState(DEFAULT_CARD_GATEWAY_FEE_PERCENT);
   const [countryLoading, setCountryLoading] = useState(true);
   const [agentReferralCode, setAgentReferralCode] = useState("");
 
@@ -154,6 +156,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
           countryConfig?: CountryConfig;
           supportedCountries?: CountryConfig[];
           rates?: Record<string, number>;
+          cardGatewayFeePercent?: number;
         };
 
         if (ignore) return;
@@ -178,9 +181,14 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             GBP: Number.isFinite(data.rates.GBP) ? data.rates.GBP : FALLBACK_RATES.GBP,
           });
         }
+
+        if (typeof data.cardGatewayFeePercent === "number" && Number.isFinite(data.cardGatewayFeePercent)) {
+          setCardGatewayFeePercent(data.cardGatewayFeePercent);
+        }
       } catch {
         if (!ignore) {
           setCountryConfig(DEFAULT_COUNTRY_CONFIG);
+          setCardGatewayFeePercent(DEFAULT_CARD_GATEWAY_FEE_PERCENT);
         }
       } finally {
         if (!ignore) {
@@ -213,7 +221,12 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
 
   const basePrice = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
   const deliveryAdjustment = deliveryMethod === "Auction House" ? basePrice * 0.02 : 0;
-  const paymentAdjustment = paymentMethod === "pix" ? basePrice * -0.05 : paymentMethod === "card" ? basePrice * 0.04 : 0;
+  const paymentAdjustment =
+    paymentMethod === "pix"
+      ? basePrice * -0.05
+      : paymentMethod === "card"
+      ? basePrice * (cardGatewayFeePercent / 100)
+      : 0;
   const finalPrice = Math.max(0, basePrice + deliveryAdjustment + paymentAdjustment);
   const selectedPayment = countryConfig.methods.find((method) => method.id === paymentMethod) ?? countryConfig.methods[0];
   const selectedCurrency = countryConfig.currency;
@@ -294,6 +307,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
       const data = (await response.json()) as {
         countryConfig?: CountryConfig;
         rates?: Record<string, number>;
+        cardGatewayFeePercent?: number;
       };
 
       if (data.countryConfig) {
@@ -306,6 +320,10 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
 
       if (data.rates) {
         setRatesByCurrency((current) => ({ ...current, ...data.rates }));
+      }
+
+      if (typeof data.cardGatewayFeePercent === "number" && Number.isFinite(data.cardGatewayFeePercent)) {
+        setCardGatewayFeePercent(data.cardGatewayFeePercent);
       }
     } catch {
       setCheckoutError("Could not update country settings.");
@@ -624,6 +642,12 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
                   : `${paymentAdjustment > 0 ? "+" : "-"}${formatCurrency(Math.abs(paymentAdjustmentLocalized), selectedCurrency, selectedLocale)}`}
               </span>
             </div>
+            {paymentMethod === "card" ? (
+              <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
+                <span>Card rate</span>
+                <span className="font-semibold text-[#e7f5ff]">+{cardGatewayFeePercent.toFixed(2)}%</span>
+              </div>
+            ) : null}
           </div>
 
           <div className="gm-divider my-4" />
