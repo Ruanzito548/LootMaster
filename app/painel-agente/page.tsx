@@ -135,10 +135,6 @@ export default function PainelAgentePage() {
     };
   }, [profile, status, user]);
 
-  const feeGeneratedLabel = useMemo(
-    () => formatCurrencyBreakdown(panelData?.totals.platformFeeByCurrency ?? {}),
-    [panelData],
-  );
   const agentPayoutLabel = useMemo(
     () => formatCurrencyBreakdown(panelData?.totals.agentPayoutByCurrency ?? {}),
     [panelData],
@@ -193,7 +189,7 @@ export default function PainelAgentePage() {
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Painel do Agente</p>
           <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">Bem-vindo, {profile.username}</h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">
-            Aqui voce acompanha clientes vinculados e as taxas geradas por cada cliente em pedidos comissaoaveis.
+            Aqui voce acompanha clientes vinculados e sua comissao por cada pedido comissionavel.
           </p>
         </header>
 
@@ -203,7 +199,7 @@ export default function PainelAgentePage() {
           </section>
         ) : null}
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Clientes vinculados</p>
             <p className="mt-2 text-2xl font-black text-cyan-300">{panelData?.totals.clientsCount ?? 0}</p>
@@ -211,10 +207,6 @@ export default function PainelAgentePage() {
           <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Transacoes de taxa</p>
             <p className="mt-2 text-2xl font-black text-amber-300">{panelData?.totals.transactionCount ?? 0}</p>
-          </article>
-          <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Total gerado de taxa</p>
-            <p className="mt-2 text-sm font-black text-emerald-300">{feeGeneratedLabel}</p>
           </article>
           <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Sua comissao estimada</p>
@@ -238,7 +230,6 @@ export default function PainelAgentePage() {
                     <th className="px-3 py-2">Cliente</th>
                     <th className="px-3 py-2">Ultimo acesso</th>
                     <th className="px-3 py-2">Ultima transacao</th>
-                    <th className="px-3 py-2">Taxa gerada</th>
                     <th className="px-3 py-2">Comissao agente</th>
                   </tr>
                 </thead>
@@ -251,9 +242,6 @@ export default function PainelAgentePage() {
                       </td>
                       <td className="px-3 py-2 text-xs text-slate-300">{formatDateTime(clientRow.lastAccessAt)}</td>
                       <td className="px-3 py-2 text-xs text-slate-300">{formatDateTime(clientRow.lastPurchaseAt)}</td>
-                      <td className="px-3 py-2 text-xs font-semibold text-emerald-300">
-                        {formatCurrencyBreakdown(clientRow.totalPlatformFeeCentsByCurrency)}
-                      </td>
                       <td className="px-3 py-2 text-xs font-semibold text-cyan-300">
                         {formatCurrencyBreakdown(clientRow.totalAgentPayoutCentsByCurrency)}
                       </td>
@@ -268,7 +256,7 @@ export default function PainelAgentePage() {
         </section>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Transacoes de taxa por cliente</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Historico de comissoes por cliente</p>
 
           {loadingPanel ? (
             <p className="mt-3 text-sm text-slate-400">Carregando transacoes...</p>
@@ -279,8 +267,6 @@ export default function PainelAgentePage() {
                   <tr className="border-b border-white/10 text-[11px] uppercase tracking-[0.14em] text-slate-500">
                     <th className="px-3 py-2">Order</th>
                     <th className="px-3 py-2">Cliente</th>
-                    <th className="px-3 py-2">Venda</th>
-                    <th className="px-3 py-2">Taxa gerada</th>
                     <th className="px-3 py-2">Comissao</th>
                     <th className="px-3 py-2">Status</th>
                     <th className="px-3 py-2">Data</th>
@@ -291,8 +277,6 @@ export default function PainelAgentePage() {
                     <tr key={row.id} className="border-b border-white/5">
                       <td className="px-3 py-2 text-xs font-semibold text-slate-100">{row.orderId}</td>
                       <td className="px-3 py-2 text-xs text-slate-300">{row.customerLabel}</td>
-                      <td className="px-3 py-2 text-xs text-slate-300">{formatMoney(row.amountTotalCents, row.currency)}</td>
-                      <td className="px-3 py-2 text-xs font-semibold text-emerald-300">{formatMoney(row.platformFeeCents, row.currency)}</td>
                       <td className="px-3 py-2 text-xs font-semibold text-cyan-300">{formatMoney(row.agentPayoutCents, row.currency)}</td>
                       <td className="px-3 py-2 text-xs text-amber-300">{row.status.replace(/_/g, " ")}</td>
                       <td className="px-3 py-2 text-xs text-slate-400">{formatDateTime(row.createdAt)}</td>
