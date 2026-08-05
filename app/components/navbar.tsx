@@ -28,6 +28,7 @@ type NavItem = {
   label: string;
   icon: ComponentType<{ className?: string }>;
   requiresAdmin?: boolean;
+  requiresAgent?: boolean;
 };
 
 const navItems: NavItem[] = [
@@ -35,6 +36,7 @@ const navItems: NavItem[] = [
   { href: "/games", label: "Games", icon: Gamepad2 },
   { href: "/rewards", label: "Rewards", icon: Gift },
   { href: "/profile/inventory", label: "Inventory", icon: Package },
+  { href: "/painel-agente", label: "Painel Agente", icon: LayoutDashboard, requiresAgent: true },
   { href: "/admin", label: "Admin", icon: Shield, requiresAdmin: true },
 ];
 
@@ -42,6 +44,7 @@ const profileItems: NavItem[] = [
   { href: "/profile", label: "My Profile", icon: UserRound },
   { href: "/rewards", label: "Rewards", icon: Gift },
   { href: "/profile/inventory", label: "Inventory", icon: Package },
+  { href: "/painel-agente", label: "Painel Agente", icon: LayoutDashboard, requiresAgent: true },
   { href: "/profile/history", label: "History", icon: LayoutDashboard },
   { href: "/profile/wallet-history", label: "Wallet", icon: Wallet },
 ];
@@ -65,7 +68,29 @@ export function Navbar() {
 
   const avatar = profile?.photoURL || "/lootmasterlogo.png";
   const isAdminMember = profile?.isAdmin === true;
-  const visibleNavItems = navItems.filter((item) => !item.requiresAdmin || isAdminMember);
+  const isAgentMember = profile?.isAgent === true;
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.requiresAdmin && !isAdminMember) {
+      return false;
+    }
+
+    if (item.requiresAgent && !isAgentMember) {
+      return false;
+    }
+
+    return true;
+  });
+  const visibleProfileItems = profileItems.filter((item) => {
+    if (item.requiresAdmin && !isAdminMember) {
+      return false;
+    }
+
+    if (item.requiresAgent && !isAgentMember) {
+      return false;
+    }
+
+    return true;
+  });
   const closeProfileMenu = useEffectEvent(() => {
     setIsProfileOpen(false);
   });
@@ -222,7 +247,7 @@ export function Navbar() {
                       role="menu"
                       style={{ top: profileMenuPosition.top, left: profileMenuPosition.left }}
                     >
-                      {profileItems.map((item) => {
+                      {visibleProfileItems.map((item) => {
                         const Icon = item.icon;
 
                         return (

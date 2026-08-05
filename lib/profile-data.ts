@@ -34,6 +34,7 @@ export type ProfileTransaction = {
 export type UserProfile = {
   uid: string;
   isAdmin: boolean;
+  isAgent: boolean;
   username: string;
   email: string;
   photoURL: string;
@@ -346,6 +347,7 @@ function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" |
   return {
     uid: user.uid,
     isAdmin: false,
+    isAgent: false,
     username: user.displayName?.trim() || "Adventurer",
     email: user.email?.trim().toLowerCase() || "",
     photoURL: user.photoURL || defaultPhotoURL,
@@ -399,6 +401,7 @@ export function mapUserProfile(uid: string, source: Record<string, unknown>): Us
   return {
     uid,
     isAdmin: source.isAdmin === true,
+    isAgent: source.isAgent === true,
     username: getString(source.username, fallback.username),
     email: getString(source.email, fallback.email),
     photoURL: getString(source.photoURL, fallback.photoURL),
