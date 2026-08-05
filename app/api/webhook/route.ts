@@ -512,12 +512,10 @@ async function resolveCustomerAgent(session: Stripe.Checkout.Session): Promise<R
 
 async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<void> {
   const adminDb = getAdminDb();
-  const meta = session.metadata ?? {};
   const totalCents = session.amount_total ?? 0;
-  const baseAmountCents = Number(meta.baseAmountCents ?? 0) || 0;
   const supplierPercentage = await resolveSessionSupplierPercent(session);
   const commissionPercent = Math.max(0, 100 - supplierPercentage);
-  const commissionBaseCents = baseAmountCents > 0 ? baseAmountCents : totalCents;
+  const commissionBaseCents = totalCents;
   const customerAgent = await resolveCustomerAgent(session);
   const feeBreakdown = computeFeeBreakdown(
     commissionBaseCents,
