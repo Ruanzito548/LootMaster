@@ -5,14 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Flame, Gift, ShieldCheck, Sparkles, Trophy } from "lucide-react";
 
-import { defaultHotGameIds, games, serviceCategories } from "./data/games";
+import { defaultHotGameIds, games } from "./data/games";
 import { useProfileSession } from "./profile/use-profile-session";
-import {
-  canAccessCategory,
-  canAccessGame,
-  sanitizeGameConfiguration,
-  type GameConfiguration,
-} from "@/lib/game-configuration";
+import { canAccessGame, sanitizeGameConfiguration, type GameConfiguration } from "@/lib/game-configuration";
 
 const heroArtByGame: Record<string, string> = {
   "tbc-anniversary": "/wow/wow-tbc/tbc-logo.jpg",
@@ -79,9 +74,6 @@ export default function Home() {
 
   const safeActiveIndex = featuredGames.length > 0 ? activeIndex % featuredGames.length : 0;
   const activeGame = featuredGames[safeActiveIndex] ?? featuredGames[0] ?? null;
-  const visibleCategories = activeGame
-    ? serviceCategories.filter((category) => gameConfig && canAccessCategory(gameConfig, activeGame.id, category.id, isAdmin))
-    : [];
 
   return (
     <div className="loot-shell gm-shell">
@@ -275,34 +267,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="font-throne text-3xl font-black text-[color:var(--text-main)] sm:text-4xl">Marketplace Categories</h2>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {visibleCategories.map((category, index) => (
-              <motion.article
-                key={category.id}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.35, delay: index * 0.06 }}
-                className="gm-panel gm-panel-hover relative overflow-hidden rounded-[1.35rem] border border-white/8 bg-[#171a20] p-5"
-              >
-                <div className="pointer-events-none absolute inset-0 opacity-60 [background-image:linear-gradient(135deg,rgba(255,255,255,0.03),transparent_26%,transparent_78%,rgba(255,255,255,0.02))]" />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,0.18)_50%,rgba(0,0,0,0.32)_100%)]" />
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="relative text-xl font-black text-[color:var(--text-main)]">{category.title}</h3>
-                  <span className="gm-badge px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em]">Live</span>
-                </div>
-                <p className="relative mt-3 max-w-xs text-sm leading-6 text-[color:var(--text-muted)]">{category.description}</p>
-                <Link href="/games" className="gm-button gm-button-secondary mt-5 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
-                  Explore
-                  <ArrowRight className="h-3 w-3" />
-                </Link>
-              </motion.article>
-            ))}
-          </div>
-        </section>
       </main>
     </div>
   );

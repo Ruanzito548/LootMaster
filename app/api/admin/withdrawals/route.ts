@@ -77,11 +77,7 @@ export async function GET(request: Request): Promise<Response> {
     const status = normalizeStatus(url.searchParams.get("status"));
     const adminDb = getAdminDb();
 
-    let query = adminDb
-      .collection("withdraw-requests")
-      .where("status", "==", status)
-      .orderBy("createdAt", "desc")
-      .limit(limit);
+    let query = adminDb.collection("withdraw-requests").orderBy("createdAt", "desc").limit(500);
 
     if (cursor) {
       const cursorRef = adminDb.collection("withdraw-requests").doc(cursor);
@@ -92,8 +88,15 @@ export async function GET(request: Request): Promise<Response> {
     }
 
     const snapshot = await query.get();
-    const items = snapshot.docs.map((docRow) => mapRow(docRow.id, docRow.data() as Record<string, unknown>));
-    const nextCursor = snapshot.docs.length === limit ? snapshot.docs[snapshot.docs.length - 1]?.id ?? null : null;
+    const matchingDocs = snapshot.docs.filter((docRow) => {
+      const data = docRow.data() as Record<string, unknown>;
+      return (typeof data.status === "string" ? data.status : "pending_review") === status;
+    });
+    const pageDocs = matchingDocs.slice(0, limit);
+    const items = pageDocs.map((docRow) => mapRow(docRow.id, docRow.data() as Record<string, unknown>));
+    const nextCursor = snapshot.docs.length === 500 && pageDocs.length > 0
+      ? pageDocs[pageDocs.length - 1]?.id ?? null
+      : null;
 
     return Response.json({ items, nextCursor });
   } catch (error) {
