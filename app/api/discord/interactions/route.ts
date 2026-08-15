@@ -258,6 +258,17 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
+    const dispatchSnapshot = await getAdminDb().collection("order-dispatches").doc(orderId).get();
+    const dispatchData = dispatchSnapshot.exists ? (dispatchSnapshot.data() as Record<string, unknown>) : null;
+
+    if (dispatchData?.status === "completed" || dispatchData?.channelClosed === true) {
+      return responseMessage("This order is already completed and no longer accepts applications.");
+    }
+  } catch (error) {
+    console.error("[Discord Interactions] Could not verify order status:", error);
+  }
+
+  try {
     await saveDiscordCandidate(orderId, user, payload.member);
   } catch (error) {
     console.error("[Discord Interactions] Could not save candidate:", error);

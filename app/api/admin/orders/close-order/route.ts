@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
-import { deleteSupplierChannel, sendOrderCompletedReply } from "@/lib/discord-bot";
+import { deleteSupplierChannel, markOrderNotificationCompleted } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { forwardOrderCompletionToWalletBackend } from "@/lib/wallet-backend";
 
@@ -152,13 +152,13 @@ export async function POST(request: Request): Promise<Response> {
         typeof orderData?.discordNotificationMessageId === "string" ? orderData.discordNotificationMessageId : "";
 
       if (notificationChannelId && notificationMessageId) {
-        await sendOrderCompletedReply({
+        await markOrderNotificationCompleted({
           channelId: notificationChannelId,
           messageId: notificationMessageId,
         });
       }
     } catch (error) {
-      console.error("[Admin Close Order] Could not reply order completed on Discord:", error);
+      console.error("[Admin Close Order] Could not mark order as completed on Discord:", error);
     }
 
     return Response.json({ ok: true, walletForwarded, walletWarning, agentPayoutCreditedNow });

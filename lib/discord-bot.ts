@@ -416,7 +416,7 @@ export async function sendOrderNotificationViaBot(
   return { channelId: input.channelId, messageId: message.id };
 }
 
-export async function sendOrderCompletedReply(input: OrderNotificationMessageRef): Promise<void> {
+export async function markOrderNotificationCompleted(input: OrderNotificationMessageRef): Promise<void> {
   const channelId = input.channelId.trim();
   const messageId = input.messageId.trim();
 
@@ -425,21 +425,55 @@ export async function sendOrderCompletedReply(input: OrderNotificationMessageRef
   }
 
   try {
-    await discordRequest(`/channels/${channelId}/messages`, {
-      method: "POST",
+    const current = await discordRequest(`/channels/${channelId}/messages/${messageId}`, {
+      method: "GET",
+    });
+
+    const message = (await current.json()) as {
+      embeds?: Array<Record<string, unknown>>;
+    };
+
+    const originalEmbed = message.embeds?.[0] ?? {};
+    const originalFields = Array.isArray(originalEmbed.fields)
+      ? (originalEmbed.fields as Array<{ name?: string; value?: string; inline?: boolean }>)
+      : [];
+
+    const completedEmbed = {
+      ...originalEmbed,
+      title: "~~🚀 NEW ORDER~~",
+      color: 0x57f287,
+      fields: originalFields.map((field) => ({
+        name: field.name ?? "-",
+        value: `~~${(field.value ?? "-").replace(/~~/g, "")}~~`,
+        inline: field.inline ?? false,
+      })),
+      footer: { text: "Order completed ✅" },
+    };
+
+    await discordRequest(`/channels/${channelId}/messages/${messageId}`, {
+      method: "PATCH",
       body: JSON.stringify({
-        content: "Order completed ✅",
         allowed_mentions: { parse: [] },
-        message_reference: {
-          message_id: messageId,
-          channel_id: channelId,
-          fail_if_not_exists: false,
-        },
+        embeds: [completedEmbed],
+        components: [
+          {
+            type: 1,
+            components: [
+              {
+                type: 2,
+                style: 3,
+                label: "Order Completed ✅",
+                custom_id: "order_completed",
+                disabled: true,
+              },
+            ],
+          },
+        ],
       }),
     });
   } catch (error) {
     if (isDiscordApiError(error) && error.status === 404) {
-      // Original order message was deleted: nothing to reply to.
+      // Original order message was deleted: nothing to update.
       return;
     }
 
