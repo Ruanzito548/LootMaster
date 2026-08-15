@@ -885,7 +885,7 @@ export async function POST(request: Request): Promise<Response> {
         meta.categoryId ?? meta.categoryTitle?.toLowerCase() ?? "",
       );
       try {
-        await sendOrderNotificationViaBot({
+        const notification = await sendOrderNotificationViaBot({
           channelId: discordChannelId,
           sessionId: session.id,
           gameTitle: meta.gameTitle ?? "—",
@@ -900,6 +900,19 @@ export async function POST(request: Request): Promise<Response> {
           currency: session.currency ?? "brl",
           email: session.customer_email ?? "—",
         });
+
+        if (notification) {
+          await getAdminDb()
+            .collection("order-checkouts")
+            .doc(session.id)
+            .set(
+              {
+                discordNotificationChannelId: notification.channelId,
+                discordNotificationMessageId: notification.messageId,
+              },
+              { merge: true },
+            );
+        }
       } catch (err) {
         // Log the error but don't return a 500 - Stripe would retry endlessly
         console.error("[Stripe Webhook] Discord bot notification failed:", err);

@@ -343,10 +343,17 @@ export async function createPrivateSupplierThread(
   };
 }
 
-export async function sendOrderNotificationViaBot(input: SendOrderNotificationInput): Promise<void> {
+export type OrderNotificationMessageRef = {
+  channelId: string;
+  messageId: string;
+};
+
+export async function sendOrderNotificationViaBot(
+  input: SendOrderNotificationInput,
+): Promise<OrderNotificationMessageRef | null> {
   if (!input.channelId) {
     console.warn("[Discord Bot] No channel ID configured for this order - notification skipped.");
-    return;
+    return null;
   }
 
   const payoutFromOrderCents =
@@ -370,7 +377,7 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
     { name: "Supplier Payout", value: supplierPayoutLabel, inline: true },
   ];
 
-  await discordRequest(`/channels/${input.channelId}/messages`, {
+  const response = await discordRequest(`/channels/${input.channelId}/messages`, {
     method: "POST",
     body: JSON.stringify({
       content: "@everyone",
@@ -399,6 +406,45 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
       ],
     }),
   });
+
+  const message = (await response.json()) as { id?: string };
+
+  if (!message?.id) {
+    return null;
+  }
+
+  return { channelId: input.channelId, messageId: message.id };
+}
+
+export async function sendOrderCompletedReply(input: OrderNotificationMessageRef): Promise<void> {
+  const channelId = input.channelId.trim();
+  const messageId = input.messageId.trim();
+
+  if (!channelId || !messageId) {
+    return;
+  }
+
+  try {
+    await discordRequest(`/channels/${channelId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({
+        content: "Order completed ✅",
+        allowed_mentions: { parse: [] },
+        message_reference: {
+          message_id: messageId,
+          channel_id: channelId,
+          fail_if_not_exists: false,
+        },
+      }),
+    });
+  } catch (error) {
+    if (isDiscordApiError(error) && error.status === 404) {
+      // Original order message was deleted: nothing to reply to.
+      return;
+    }
+
+    throw error;
+  }
 }
 
 export async function deleteSupplierChannel(channelId: string): Promise<void> {

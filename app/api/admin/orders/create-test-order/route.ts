@@ -143,7 +143,7 @@ export async function POST(request: Request): Promise<Response> {
     await adminDb.collection("order-checkouts").doc(orderId).set(payload, { merge: true });
 
     try {
-      await sendOrderNotificationViaBot({
+      const notification = await sendOrderNotificationViaBot({
         channelId: resolveTestChannelId(game.gameId, game.categoryId),
         sessionId: orderId,
         gameTitle: game.gameTitle,
@@ -158,6 +158,16 @@ export async function POST(request: Request): Promise<Response> {
         currency: payload.currency,
         email: payload.customerEmail,
       });
+
+      if (notification) {
+        await adminDb.collection("order-checkouts").doc(orderId).set(
+          {
+            discordNotificationChannelId: notification.channelId,
+            discordNotificationMessageId: notification.messageId,
+          },
+          { merge: true },
+        );
+      }
     } catch (error) {
       console.error("[Create Test Order] Could not send Discord notification:", error);
     }

@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
-import { deleteSupplierChannel } from "@/lib/discord-bot";
+import { deleteSupplierChannel, sendOrderCompletedReply } from "@/lib/discord-bot";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { forwardOrderCompletionToWalletBackend } from "@/lib/wallet-backend";
 
@@ -142,6 +142,24 @@ export async function POST(request: Request): Promise<Response> {
       },
       { merge: true },
     );
+
+    try {
+      const orderSnapshot = await adminDb.collection("order-checkouts").doc(body.orderId).get();
+      const orderData = orderSnapshot.exists ? (orderSnapshot.data() as Record<string, unknown>) : null;
+      const notificationChannelId =
+        typeof orderData?.discordNotificationChannelId === "string" ? orderData.discordNotificationChannelId : "";
+      const notificationMessageId =
+        typeof orderData?.discordNotificationMessageId === "string" ? orderData.discordNotificationMessageId : "";
+
+      if (notificationChannelId && notificationMessageId) {
+        await sendOrderCompletedReply({
+          channelId: notificationChannelId,
+          messageId: notificationMessageId,
+        });
+      }
+    } catch (error) {
+      console.error("[Admin Close Order] Could not reply order completed on Discord:", error);
+    }
 
     return Response.json({ ok: true, walletForwarded, walletWarning, agentPayoutCreditedNow });
   } catch (error) {

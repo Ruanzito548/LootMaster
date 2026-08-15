@@ -60,7 +60,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const channelId = resolveDiscordChannelId(gameId, categoryId);
 
-    await sendOrderNotificationViaBot({
+    const notification = await sendOrderNotificationViaBot({
       channelId,
       sessionId: orderId,
       gameTitle: typeof orderData.gameTitle === "string" ? orderData.gameTitle : "—",
@@ -87,6 +87,16 @@ export async function POST(request: Request): Promise<Response> {
       currency: typeof orderData.currency === "string" ? orderData.currency : "brl",
       email: typeof orderData.customerEmail === "string" ? orderData.customerEmail : "—",
     });
+
+    if (notification) {
+      await adminDb.collection("order-checkouts").doc(orderId).set(
+        {
+          discordNotificationChannelId: notification.channelId,
+          discordNotificationMessageId: notification.messageId,
+        },
+        { merge: true },
+      );
+    }
 
     return Response.json({ ok: true });
   } catch (error) {
