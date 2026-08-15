@@ -119,8 +119,22 @@ export async function POST(request: Request): Promise<Response> {
       : null;
 
     const amountTotalCents = toFiniteNumber(checkoutData?.amountTotalCents, 0);
+    const baseProductCents =
+      toFiniteNumber(checkoutData?.baseProductCents, 0) ||
+      toFiniteNumber(checkoutData?.baseAmountCents, 0) ||
+      amountTotalCents;
     const commissionPercent = toFiniteNumber(checkoutData?.commissionPercent, 15);
-    const payoutCents = Math.max(0, Math.round(amountTotalCents * (1 - commissionPercent / 100)));
+    const supplierPercentage = toFiniteNumber(
+      checkoutData?.supplierPercentage,
+      Math.max(0, 100 - commissionPercent),
+    );
+    // Use the payout already stored on the order so the credited value matches what was shown to the supplier.
+    const storedPayoutCents =
+      toFiniteNumber(checkoutData?.supplierPayout, 0) || toFiniteNumber(checkoutData?.sellerAmountCents, 0);
+    const payoutCents =
+      storedPayoutCents > 0
+        ? Math.max(0, Math.round(storedPayoutCents))
+        : Math.max(0, Math.round(baseProductCents * (supplierPercentage / 100)));
     const payoutLootCoins = Math.round((payoutCents / 100) * 100) / 100;
 
     const payoutReference = `order-payout:${body.orderId}`;
