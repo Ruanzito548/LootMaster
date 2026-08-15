@@ -829,7 +829,10 @@ export async function POST(request: Request): Promise<Response> {
     if (session.payment_status === "paid") {
       const supplierPercentage = await resolveSessionSupplierPercent(session);
       const amountTotalCents = session.amount_total ?? 0;
-      const supplierPayoutCents = Math.round(amountTotalCents * (supplierPercentage / 100));
+      // Supplier share is calculated over the product value only, excluding payment gateway surcharge.
+      const supplierBaseCents =
+        Number(meta.baseProductCents ?? meta.baseAmountCents ?? amountTotalCents) || amountTotalCents;
+      const supplierPayoutCents = Math.max(0, Math.round(supplierBaseCents * (supplierPercentage / 100)));
 
       try {
         await persistPaidOrder(session, supplierPercentage);

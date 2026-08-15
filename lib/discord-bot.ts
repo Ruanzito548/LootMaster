@@ -23,7 +23,7 @@ type SendOrderNotificationInput = {
   faction: string;
   nickname: string;
   paymentMethod: string;
-  finalAmountCents: string;
+  finalAmountCents?: string;
   supplierPayoutCents?: string;
   currency: string;
   email: string;
@@ -349,19 +349,13 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
     return;
   }
 
-  const totalOrderCents = Number(input.finalAmountCents) || 0;
   const payoutFromOrderCents =
     typeof input.supplierPayoutCents === "string" && input.supplierPayoutCents.trim().length > 0
       ? Number(input.supplierPayoutCents)
       : 0;
   const supplierPayoutCents = Number.isFinite(payoutFromOrderCents) ? Math.max(0, payoutFromOrderCents) : 0;
-  const orderTotalUsdCents = await convertToUsdCents(Math.max(0, totalOrderCents), input.currency);
   const payoutUsdCents = await convertToUsdCents(supplierPayoutCents, input.currency);
 
-  const orderTotalUsdLabel = (orderTotalUsdCents / 100).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
   const supplierPayoutLabel = (payoutUsdCents / 100).toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
@@ -373,7 +367,6 @@ export async function sendOrderNotificationViaBot(input: SendOrderNotificationIn
     { name: "Gold Amount", value: `${Number(input.goldAmount || "0").toLocaleString("en-US")} gold`, inline: true },
     { name: "Server", value: input.server || "-", inline: true },
     { name: "Faction", value: input.faction || "-", inline: true },
-    { name: "Order Total (USD)", value: orderTotalUsdLabel, inline: true },
     { name: "Supplier Payout", value: supplierPayoutLabel, inline: true },
   ];
 

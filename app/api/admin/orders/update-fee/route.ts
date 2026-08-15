@@ -45,6 +45,12 @@ export async function POST(request: Request): Promise<Response> {
 
       const data = snapshot.data() as Record<string, unknown>;
       const amountTotalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
+      const baseProductCents =
+        typeof data.baseProductCents === "number" && data.baseProductCents > 0
+          ? data.baseProductCents
+          : typeof data.baseAmountCents === "number" && data.baseAmountCents > 0
+          ? data.baseAmountCents
+          : amountTotalCents;
       const cardFeePercent = typeof data.cardFeePercent === "number" ? data.cardFeePercent : 0;
       const cashbackPercent = typeof data.cashbackPercent === "number" ? data.cashbackPercent : 0;
       const operationalReservePercent = typeof data.operationalReservePercent === "number" ? data.operationalReservePercent : 0;
@@ -60,6 +66,16 @@ export async function POST(request: Request): Promise<Response> {
         cashbackPercent,
         operationalReservePercent,
       );
+
+      // Supplier share applies to the product value only, never to the payment gateway surcharge.
+      const supplierPayout = Math.max(0, Math.round(baseProductCents * (financials.supplierPercentage / 100)));
+      const grossProfit = Math.max(0, amountTotalCents - supplierPayout);
+      financials = {
+        ...financials,
+        supplierPayout,
+        grossProfit,
+        netProfit: grossProfit - financials.cardFee - financials.cashback - financials.operationalReserve,
+      };
 
       tx.set(
         ref,
