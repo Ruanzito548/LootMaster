@@ -4,40 +4,40 @@ import { type RewardTrackNode } from "../../../lib/level-rewards";
 
 const rarityStyles: Record<string, { dot: string; border: string; glow: string; text: string }> = {
   common: {
-    dot: "bg-[#9ca3af]",
-    border: "border-[#9ca3af]/45",
-    glow: "shadow-[0_0_16px_rgba(156,163,175,0.22)]",
-    text: "text-[#d2d6de]",
+    dot: "bg-[#b8c0c8]",
+    border: "border-[#b8c0c8]/45",
+    glow: "shadow-[0_0_16px_rgba(184,192,200,0.22)]",
+    text: "text-[#e2e6ea]",
   },
   uncommon: {
-    dot: "bg-[#1eff00]",
-    border: "border-[#1eff00]/50",
-    glow: "shadow-[0_0_18px_rgba(30,255,0,0.3)]",
-    text: "text-[#bbffb3]",
+    dot: "bg-[#2fa36b]",
+    border: "border-[#2fa36b]/50",
+    glow: "shadow-[0_0_18px_rgba(47,163,107,0.3)]",
+    text: "text-[#8fe0b8]",
   },
   rare: {
-    dot: "bg-[#3b82f6]",
-    border: "border-[#3b82f6]/50",
-    glow: "shadow-[0_0_18px_rgba(59,130,246,0.28)]",
+    dot: "bg-[#2d6ec7]",
+    border: "border-[#2d6ec7]/50",
+    glow: "shadow-[0_0_18px_rgba(45,110,199,0.28)]",
     text: "text-[#8fc1ff]",
   },
   epic: {
-    dot: "bg-[#8b5cf6]",
-    border: "border-[#8b5cf6]/50",
-    glow: "shadow-[0_0_18px_rgba(139,92,246,0.3)]",
+    dot: "bg-[#7a3fa8]",
+    border: "border-[#7a3fa8]/50",
+    glow: "shadow-[0_0_18px_rgba(122,63,168,0.3)]",
     text: "text-[#d8a8ff]",
   },
   legendary: {
-    dot: "bg-[#f59e0b]",
-    border: "border-[#f59e0b]/50",
-    glow: "shadow-[0_0_18px_rgba(245,158,11,0.3)]",
-    text: "text-[#ffc08f]",
+    dot: "bg-[#d4af5a]",
+    border: "border-[#d4af5a]/50",
+    glow: "shadow-[0_0_18px_rgba(212,175,90,0.3)]",
+    text: "text-[#f2d27a]",
   },
   mythic: {
-    dot: "bg-[#ef4444]",
-    border: "border-[#ef4444]/55",
-    glow: "shadow-[0_0_20px_rgba(239,68,68,0.34)]",
-    text: "text-[#ff9d9d]",
+    dot: "bg-[#a33a3a]",
+    border: "border-[#a33a3a]/55",
+    glow: "shadow-[0_0_20px_rgba(163,58,58,0.34)]",
+    text: "text-[#e6c46a]",
   },
 };
 
@@ -47,12 +47,12 @@ type RewardTrackProps = {
 
 export function RewardTrack({ nodes }: RewardTrackProps) {
   const squareTintByRarity: Record<string, string> = {
-    common: "bg-[#9ca3af]/18",
-    uncommon: "bg-[#1eff00]/16",
-    rare: "bg-[#3b82f6]/16",
-    epic: "bg-[#8b5cf6]/16",
-    legendary: "bg-[#f59e0b]/16",
-    mythic: "bg-[#ef4444]/16",
+    common: "bg-[#b8c0c8]/18",
+    uncommon: "bg-[#2fa36b]/16",
+    rare: "bg-[#2d6ec7]/16",
+    epic: "bg-[#7a3fa8]/16",
+    legendary: "bg-[#d4af5a]/16",
+    mythic: "bg-[#a33a3a]/16",
   };
 
   return (
@@ -74,7 +74,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                 <div
                   className={`z-10 rounded-full border-2 ${styles.border} ${styles.dot} ${styles.glow} ${
                     node.isMilestone ? "h-8 w-8" : "h-6 w-6"
-                  } ${isAvailable ? "ring-4 ring-cyan-300/65" : ""} ${isLocked ? "opacity-45 grayscale" : "opacity-100"}`}
+                  } ${isAvailable ? "ring-4 ring-[#d4af5a]/65" : ""} ${isLocked ? "opacity-45 grayscale" : "opacity-100"}`}
                 />
 
                 <div
@@ -140,7 +140,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                       {isClaimed ? "claimed" : isAvailable ? "available" : "locked"}
                     </span>
                     {node.isPremium || node.isMilestone ? (
-                      <span className="rounded-full bg-[#ef4444]/20 px-2 py-1 text-[0.55rem] font-black uppercase tracking-[0.14em] text-[#ff9f9f]">
+                      <span className="rounded-full bg-[#a33a3a]/20 px-2 py-1 text-[0.55rem] font-black uppercase tracking-[0.14em] text-[#e6c46a]">
                         {node.isPremium ? "premium" : "milestone"}
                       </span>
                     ) : null}

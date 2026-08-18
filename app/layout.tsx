@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Oxanium, Rajdhani } from "next/font/google";
 import { Suspense } from "react";
 import Script from "next/script";
 import "./globals.css";
@@ -7,6 +8,18 @@ import { Navbar } from "./components/navbar";
 import { Footer } from "./components/footer";
 import { GameThemeProvider } from "./components/game-theme-provider";
 import { RouteScrollReset } from "./components/route-scroll-reset";
+
+const fontDisplay = Oxanium({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-display",
+});
+
+const fontUi = Rajdhani({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-ui",
+});
 
 export const metadata: Metadata = {
   title: "Loot Master",
@@ -22,7 +35,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased" data-game-theme="tbc-anniversary">
+    <html
+      lang="en"
+      className={`h-full antialiased ${fontDisplay.variable} ${fontUi.variable}`}
+      data-game-theme="tbc-anniversary"
+    >
       <body className="relative flex min-h-full flex-col overflow-x-hidden theme-transition-surface">
         <GameThemeProvider>
           <AuthSessionSync />

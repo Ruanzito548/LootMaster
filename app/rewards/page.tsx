@@ -117,9 +117,9 @@ export default function RewardsPage() {
                 <p className="text-2xl font-black text-[color:var(--accent)]">{progress.progressPercent.toFixed(1)}%</p>
               </div>
 
-              <div className="relative h-5 overflow-hidden rounded-full border border-cyan-200/20 bg-black/40">
+              <div className="relative h-5 overflow-hidden rounded-full border border-[#d4af5a]/25 bg-black/40">
                 <div className="absolute inset-0 [background-image:linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:18px_100%]" />
-                <div className="h-full rounded-full bg-[linear-gradient(90deg,#58b6ff,#6ee7f7,#a78bfa,#f59e0b)] shadow-[0_0_26px_rgba(88,182,255,0.45)] transition-all duration-700" style={{ width: `${progress.progressPercent}%` }} />
+                <div className="h-full rounded-full bg-[linear-gradient(90deg,#c89b3c,#d4af5a,#e6c46a,#f2d27a)] shadow-[0_0_26px_rgba(212,175,90,0.4)] transition-all duration-700" style={{ width: `${progress.progressPercent}%` }} />
                 <div className="pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]" />
               </div>
             </div>

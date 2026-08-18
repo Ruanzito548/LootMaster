@@ -90,25 +90,25 @@ const RARITY_LABEL: Record<string, string> = {
 };
 
 const RARITY_GLOW: Record<string, string> = {
-  poor: "shadow-[0_0_18px_rgba(157,157,157,0.35)] border-[#9d9d9d]/55",
-  common: "shadow-[0_0_18px_rgba(223,228,239,0.35)] border-[#dfe4ef]/55",
-  uncommon: "shadow-[0_0_18px_rgba(30,255,0,0.35)] border-[#1eff00]/60",
-  rare: "shadow-[0_0_22px_rgba(0,112,221,0.4)] border-[#0070dd]/60",
-  epic: "shadow-[0_0_24px_rgba(163,53,238,0.42)] border-[#a335ee]/60",
-  legendary: "shadow-[0_0_26px_rgba(255,128,0,0.45)] border-[#ff8000]/62",
-  artifact: "shadow-[0_0_28px_rgba(230,204,128,0.45)] border-[#e6cc80]/62",
-  heirloom: "shadow-[0_0_26px_rgba(0,204,255,0.45)] border-[#00ccff]/62",
+  poor: "shadow-[0_0_18px_rgba(120,125,132,0.32)] border-[#787d84]/55",
+  common: "shadow-[0_0_18px_rgba(184,192,200,0.32)] border-[#b8c0c8]/55",
+  uncommon: "shadow-[0_0_18px_rgba(47,163,107,0.35)] border-[#2fa36b]/60",
+  rare: "shadow-[0_0_22px_rgba(45,110,199,0.4)] border-[#2d6ec7]/60",
+  epic: "shadow-[0_0_24px_rgba(122,63,168,0.42)] border-[#7a3fa8]/60",
+  legendary: "shadow-[0_0_26px_rgba(212,175,90,0.45)] border-[#d4af5a]/65",
+  artifact: "shadow-[0_0_28px_rgba(163,58,58,0.45)] border-[#a33a3a]/65",
+  heirloom: "shadow-[0_0_26px_rgba(142,152,163,0.4)] border-[#8e98a3]/60",
 };
 
 const RARITY_TEXT: Record<string, string> = {
-  poor: "text-[#9d9d9d]",
-  common: "text-[#dfe4ef]",
-  uncommon: "text-[#1eff00]",
-  rare: "text-[#4da3ff]",
-  epic: "text-[#c67bff]",
-  legendary: "text-[#ffb347]",
-  artifact: "text-[#ff4d5f]",
-  heirloom: "text-[#6ee7ff]",
+  poor: "text-[#8e98a3]",
+  common: "text-[#e2e6ea]",
+  uncommon: "text-[#45c982]",
+  rare: "text-[#5b9be6]",
+  epic: "text-[#b98af0]",
+  legendary: "text-[#e6c46a]",
+  artifact: "text-[#e07a7a]",
+  heirloom: "text-[#b8c0c8]",
 };
 
 const DROP_HINT_BY_RARITY: Record<string, string> = {
