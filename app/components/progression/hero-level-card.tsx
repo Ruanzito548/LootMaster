@@ -30,7 +30,7 @@ export function HeroLevelCard({ username, email, avatarUrl, coverUrl, progress }
 
         <div className="grid gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="theme-pill-accent rounded-full px-4 py-2 text-sm font-black">
+            <div className="theme-pill-accent font-data rounded-full px-4 py-2 text-sm font-bold">
               Level {progress.level}
             </div>
           </div>
@@ -42,7 +42,7 @@ export function HeroLevelCard({ username, email, avatarUrl, coverUrl, progress }
             />
           </div>
 
-          <div className="flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+          <div className="font-data flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.1em] text-[color:var(--text-muted)]">
             <span>{progress.xpCents.toFixed(2)} / {progress.nextLevelXpCents.toFixed(2)} XP</span>
             <span>{progress.progressPercent.toFixed(1)}%</span>
           </div>

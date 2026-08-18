@@ -89,8 +89,8 @@ export default function RewardsPage() {
               </p>
 
               <div className="flex flex-wrap gap-2">
-                <span className="theme-pill-accent rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-[0.15em]">Level {progress.level}</span>
-                <span className="theme-pill-warn rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-[0.15em]">
+                <span className="theme-pill-accent font-data rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em]">Level {progress.level}</span>
+                <span className="theme-pill-warn font-data rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em]">
                   {progress.xpToNextLevel.toFixed(0)} XP to next level
                 </span>
               </div>
@@ -112,9 +112,9 @@ export default function RewardsPage() {
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Current XP band</p>
-                  <p className="text-2xl font-black text-[color:var(--text-main)]">{progress.xpCents.toFixed(0)} / {progress.nextLevelXpCents.toFixed(0)} XP</p>
+                  <p className="font-data text-2xl font-bold text-[color:var(--text-main)]">{progress.xpCents.toFixed(0)} / {progress.nextLevelXpCents.toFixed(0)} XP</p>
                 </div>
-                <p className="text-2xl font-black text-[color:var(--accent)]">{progress.progressPercent.toFixed(1)}%</p>
+                <p className="font-data text-2xl font-bold text-[color:var(--accent)]">{progress.progressPercent.toFixed(1)}%</p>
               </div>
 
               <div className="relative h-5 overflow-hidden rounded-full border border-[#d4af5a]/25 bg-black/40">

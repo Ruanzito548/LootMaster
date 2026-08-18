@@ -200,7 +200,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <div className="gm-glass hidden items-center gap-2 rounded-xl px-3 py-2 sm:flex">
             <Crown className="h-4 w-4 text-[color:var(--accent)]" />
-            <span className="text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--text-main)]">
+            <span className="font-data text-xs font-bold text-[color:var(--text-main)]">
               {profile ? `${profile.lootCoins.toLocaleString("en-US")} LC` : "0 LC"}
             </span>
           </div>
@@ -235,7 +235,7 @@ export function Navbar() {
                 </div>
                 <div className="hidden text-left sm:block">
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--text-main)]">{profile.username}</p>
-                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Lvl {profile.level}</p>
+                  <p className="font-data text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[color:var(--accent)]">Lvl {profile.level}</p>
                 </div>
               </button>
 
