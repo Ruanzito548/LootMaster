@@ -657,9 +657,9 @@ export default function InventoryPage() {
             </span>
           </div>
 
-          <div className="relative mt-5 overflow-hidden rounded-[1.75rem] border border-[#d4af5a]/35 bg-[#0c1220]/80 p-3 shadow-[0_0_0_1px_rgba(212,175,90,0.12),inset_0_0_20px_rgba(0,0,0,0.28)]">
+          <div className="relative mt-5 mx-auto w-full max-w-[1526px] overflow-hidden rounded-[1.75rem] border border-[#d4af5a]/35 bg-[#0c1220]/80 p-3 shadow-[0_0_0_1px_rgba(212,175,90,0.12),inset_0_0_20px_rgba(0,0,0,0.28)]" style={{ height: "1024px" }}>
             <div
-              className="absolute inset-0"
+              className="absolute inset-[18px]"
               style={{
                 backgroundImage: "url('/inventario/inventariobg.png')",
                 backgroundSize: "100% 100%",
@@ -668,8 +668,8 @@ export default function InventoryPage() {
                 opacity: 0.95,
               }}
             />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,248,228,0.18),rgba(94,68,28,0.08)_45%,rgba(12,18,32,0.18))]" />
-            <div className="relative z-10 grid grid-cols-4 gap-3 sm:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+            <div className="absolute inset-[18px] bg-[radial-gradient(circle_at_center,rgba(255,248,228,0.18),rgba(94,68,28,0.08)_45%,rgba(12,18,32,0.18))]" />
+            <div className="absolute inset-[150px_150px_150px_150px] z-10 grid grid-cols-4 gap-3 sm:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
               {Array.from({ length: slotLimit }).map((_, slotIndex) => {
                 const item = inventory[slotIndex] ?? null;
 
