@@ -657,58 +657,61 @@ export default function InventoryPage() {
             </span>
           </div>
 
-          <div className="mt-5 grid grid-cols-4 gap-3 sm:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
-            {Array.from({ length: slotLimit }).map((_, slotIndex) => {
-              const item = inventory[slotIndex] ?? null;
+          <div className="relative mt-5 overflow-hidden rounded-2xl border border-white/10 bg-black/25 p-3">
+            <div className="absolute inset-0 bg-[url('/inventario/inventariobg.png')] bg-cover bg-center opacity-35" />
+            <div className="relative z-10 grid grid-cols-4 gap-3 sm:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+              {Array.from({ length: slotLimit }).map((_, slotIndex) => {
+                const item = inventory[slotIndex] ?? null;
 
-              if (!item) {
-                return <div key={`slot-empty-${slotIndex}`} className="aspect-square rounded-xl border border-dashed border-white/12 bg-black/35" />;
-              }
+                if (!item) {
+                  return <div key={`slot-empty-${slotIndex}`} className="aspect-square rounded-xl border border-dashed border-white/12 bg-black/35" />;
+                }
 
-              const rarityClass = RARITY_GLOW[item.rarity] ?? "border-white/25";
-              const itemIsChest = isChestItem(item);
-              const itemIsRedeemableGiftCard = isRedeemableGiftCard(item);
-              const chestIdForIcon = itemIsChest ? getChestIdByInventoryItem(item) ?? "common" : null;
-              const itemIconSrc = itemIsChest ? getChestImagePath(chestIdForIcon) : item.iconPath || "/itens/general/ticket.png";
+                const rarityClass = RARITY_GLOW[item.rarity] ?? "border-white/25";
+                const itemIsChest = isChestItem(item);
+                const itemIsRedeemableGiftCard = isRedeemableGiftCard(item);
+                const chestIdForIcon = itemIsChest ? getChestIdByInventoryItem(item) ?? "common" : null;
+                const itemIconSrc = itemIsChest ? getChestImagePath(chestIdForIcon) : item.iconPath || "/itens/general/ticket.png";
 
-              return (
-                <motion.button
-                  key={`${item.id}-${slotIndex}`}
-                  type="button"
-                  className={`group relative aspect-square overflow-hidden rounded-xl border bg-[linear-gradient(180deg,rgba(9,16,29,0.96),rgba(5,10,20,0.94))] p-2 text-left transition-all ${rarityClass} ${itemIsChest || itemIsRedeemableGiftCard ? "cursor-pointer" : "cursor-default"}`}
-                  whileHover={{ y: -3, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onMouseEnter={() => setHoveredItem(item)}
-                  onMouseLeave={() => setHoveredItem((current) => (current?.id === item.id ? null : current))}
-                  onClick={() => {
-                    if (itemIsChest) {
-                      const chestId = getChestIdByInventoryItem(item);
-                      if (!chestId) {
-                        pushToast("error", "This chest is not mapped in chest definitions.");
+                return (
+                  <motion.button
+                    key={`${item.id}-${slotIndex}`}
+                    type="button"
+                    className={`group relative aspect-square overflow-hidden rounded-xl border bg-[linear-gradient(180deg,rgba(9,16,29,0.96),rgba(5,10,20,0.94))] p-2 text-left transition-all ${rarityClass} ${itemIsChest || itemIsRedeemableGiftCard ? "cursor-pointer" : "cursor-default"}`}
+                    whileHover={{ y: -3, scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onMouseEnter={() => setHoveredItem(item)}
+                    onMouseLeave={() => setHoveredItem((current) => (current?.id === item.id ? null : current))}
+                    onClick={() => {
+                      if (itemIsChest) {
+                        const chestId = getChestIdByInventoryItem(item);
+                        if (!chestId) {
+                          pushToast("error", "This chest is not mapped in chest definitions.");
+                          return;
+                        }
+
+                        setChestMenu({ item, chestId });
                         return;
                       }
 
-                      setChestMenu({ item, chestId });
-                      return;
-                    }
-
-                    if (itemIsRedeemableGiftCard) {
-                      setRedeemItem(item);
-                      setRedeemEmail(user.email ?? "");
-                      setRedeemCountry("");
-                      setShowRedeemModal(true);
-                    }
-                  }}
-                >
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_22%,rgba(255,255,255,0.16),transparent_60%)]" />
-                  <Image src={itemIconSrc} alt={item.name} width={88} height={88} className="relative mx-auto h-[70%] w-[70%] object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)]" />
-                  <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between">
-                    <span className="truncate rounded bg-black/55 px-1.5 py-0.5 text-[0.56rem] font-bold uppercase tracking-[0.1em] text-[#d7e7ff]">{item.name}</span>
-                    <span className="rounded bg-black/65 px-1.5 py-0.5 text-[0.56rem] font-black text-white">{item.quantity}</span>
-                  </div>
-                </motion.button>
-              );
-            })}
+                      if (itemIsRedeemableGiftCard) {
+                        setRedeemItem(item);
+                        setRedeemEmail(user.email ?? "");
+                        setRedeemCountry("");
+                        setShowRedeemModal(true);
+                      }
+                    }}
+                  >
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_22%,rgba(255,255,255,0.16),transparent_60%)]" />
+                    <Image src={itemIconSrc} alt={item.name} width={88} height={88} className="relative mx-auto h-[70%] w-[70%] object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)]" />
+                    <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between">
+                      <span className="truncate rounded bg-black/55 px-1.5 py-0.5 text-[0.56rem] font-bold uppercase tracking-[0.1em] text-[#d7e7ff]">{item.name}</span>
+                      <span className="rounded bg-black/65 px-1.5 py-0.5 text-[0.56rem] font-black text-white">{item.quantity}</span>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
           </div>
         </section>
 
