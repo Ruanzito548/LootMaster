@@ -675,7 +675,7 @@ export default function InventoryPage() {
               }}
             />
             <div className="absolute inset-[18px] bg-[radial-gradient(circle_at_center,rgba(255,248,228,0.18),rgba(94,68,28,0.08)_45%,rgba(12,18,32,0.18))]" />
-            <div className="absolute inset-[80px] z-10 grid scale-[0.84] grid-cols-5 gap-3">
+            <div className="absolute inset-[80px] z-10 grid scale-[0.84] grid-cols-5 gap-[22px]">
               {Array.from({ length: slotLimit }).map((_, slotIndex) => {
                 const item = inventory[slotIndex] ?? null;
 
