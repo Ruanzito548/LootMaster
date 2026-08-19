@@ -579,7 +579,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
   {
     id: "craft-uncommon-chest",
     title: "Uncommon Chest",
-    description: "Craft one Uncommon Chest using Uncommon Chest Fragments.",
+    description: "Craft one Uncommon Chest using Uncommon Treasure Map Fragments.",
     outputType: "chest",
     outputItem: {
       id: "chest-uncommon",
@@ -589,13 +589,13 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       quantity: 1,
       iconPath: getChestImagePath("uncommon"),
     },
-    materials: [{ itemId: "fragment-chest-uncommon", quantity: 10, name: "Fragmento de Mapa de Tesouro Incomum" }],
+    materials: [{ itemId: "fragment-chest-uncommon", quantity: 10, name: "Uncommon Treasure Map Fragment" }],
     xpGain: 20,
   },
   {
     id: "craft-rare-chest",
     title: "Rare Chest",
-    description: "Craft one Rare Chest using Rare Chest Fragments.",
+    description: "Craft one Rare Chest using Rare Treasure Map Fragments.",
     outputType: "chest",
     outputItem: {
       id: "chest-rare",
@@ -605,13 +605,13 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       quantity: 1,
       iconPath: getChestImagePath("rare"),
     },
-    materials: [{ itemId: "fragment-chest-rare", quantity: 10, name: "Fragmento de Mapa de Tesouro Raro" }],
+    materials: [{ itemId: "fragment-chest-rare", quantity: 10, name: "Rare Treasure Map Fragment" }],
     xpGain: 26,
   },
   {
     id: "craft-epic-chest",
     title: "Epic Chest",
-    description: "Craft one Epic Chest using Epic Chest Fragments.",
+    description: "Craft one Epic Chest using Epic Treasure Map Fragments.",
     outputType: "chest",
     outputItem: {
       id: "chest-epic",
@@ -621,13 +621,13 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       quantity: 1,
       iconPath: getChestImagePath("epic"),
     },
-    materials: [{ itemId: "fragment-chest-epic", quantity: 10, name: "Fragmento de Mapa de Tesouro Épico" }],
+    materials: [{ itemId: "fragment-chest-epic", quantity: 10, name: "Epic Treasure Map Fragment" }],
     xpGain: 34,
   },
   {
     id: "craft-legendary-chest",
     title: "Legendary Chest",
-    description: "Craft one Legendary Chest using Legendary Chest Fragments.",
+    description: "Craft one Legendary Chest using Legendary Treasure Map Fragments.",
     outputType: "chest",
     outputItem: {
       id: "chest-legendary",
@@ -637,13 +637,13 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       quantity: 1,
       iconPath: getChestImagePath("legendary"),
     },
-    materials: [{ itemId: "fragment-chest-legendary", quantity: 10, name: "Fragmento de Mapa de Tesouro Lendário" }],
+    materials: [{ itemId: "fragment-chest-legendary", quantity: 10, name: "Legendary Treasure Map Fragment" }],
     xpGain: 44,
   },
   {
     id: "craft-mythic-chest",
     title: "Mythic Chest",
-    description: "Craft one Mythic Chest using Mythic Chest Fragments.",
+    description: "Craft one Mythic Chest using Mythic Treasure Map Fragments.",
     outputType: "chest",
     outputItem: {
       id: "chest-mythic",
@@ -653,7 +653,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       quantity: 1,
       iconPath: getChestImagePath("mythic"),
     },
-    materials: [{ itemId: "fragment-chest-mythic", quantity: 10, name: "Fragmento de Mapa de Tesouro Mítico" }],
+    materials: [{ itemId: "fragment-chest-mythic", quantity: 10, name: "Mythic Treasure Map Fragment" }],
     xpGain: 58,
   },
 ];
