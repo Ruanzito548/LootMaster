@@ -59,7 +59,8 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
   return (
     <div className="w-full max-w-full overflow-hidden pb-3">
       <div className="w-full max-w-full overflow-x-auto overflow-y-visible pb-2">
-        <div className="relative inline-flex min-w-max items-start gap-5 px-3 pt-2">
+        <div className="relative inline-flex min-w-max items-start gap-4 px-4 pt-1">
+          <div className="pointer-events-none absolute left-8 right-8 top-[0.9rem] h-px bg-gradient-to-r from-transparent via-[color:var(--accent)]/45 to-transparent" />
           {nodes.map((node) => {
             const styles = rarityStyles[node.reward.rarity] ?? rarityStyles.common;
             const isClaimed = node.state === "claimed";
@@ -70,11 +71,11 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
             return (
               <article
                 key={`track-${node.level}`}
-                className={`group relative flex w-[236px] shrink-0 flex-col items-center gap-3 ${node.isMilestone ? "pt-0" : "pt-1"}`}
+                className={`group relative flex w-[210px] shrink-0 flex-col items-center gap-2 ${node.isMilestone ? "pt-0" : "pt-1"}`}
               >
                 <div
                   className={`z-10 rounded-full border-2 ${styles.border} ${styles.dot} ${styles.glow} ${
-                    node.isMilestone ? "h-8 w-8" : "h-6 w-6"
+                    node.isMilestone ? "h-7 w-7" : "h-6 w-6"
                   } ${isAvailable ? "ring-4 ring-[#d4af5a]/65" : ""} ${isLocked ? "opacity-45 grayscale" : "opacity-100"}`}
                 />
 
@@ -87,7 +88,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                       : isLocked
                       ? "opacity-62"
                       : "opacity-100"
-                  } ${node.isMilestone ? "min-h-[202px]" : "min-h-[188px]"} bg-[linear-gradient(170deg,rgba(12,20,35,0.88),rgba(6,10,22,0.88))] hover:-translate-y-1.5 hover:opacity-100`}
+                  } ${node.isMilestone ? "min-h-[184px]" : "min-h-[172px]"} bg-[linear-gradient(170deg,rgba(12,20,35,0.88),rgba(6,10,22,0.88))] hover:-translate-y-1.5 hover:opacity-100`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">

@@ -78,8 +78,8 @@ export default function RewardsPage() {
   return (
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
-        <section className="relative overflow-hidden rounded-[1.5rem] border-b border-[color:var(--border-color)]/55 px-1 py-3 sm:px-3 sm:py-5">
-          <div className="relative grid gap-8 lg:grid-cols-[1.15fr_1.05fr_0.9fr] lg:items-start">
+        <section className="relative overflow-hidden rounded-[1.5rem] border border-[color:var(--border-color)]/65 bg-[linear-gradient(120deg,rgba(21,39,56,0.72),rgba(10,15,29,0.9)_52%,rgba(30,22,42,0.72))] px-5 py-5 shadow-[0_18px_44px_rgba(0,0,0,0.24)] sm:px-7 sm:py-6">
+          <div className="relative grid gap-6 lg:grid-cols-[1.1fr_1fr_0.95fr] lg:items-start lg:gap-0">
             <div className="space-y-4">
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[color:var(--accent)]">Loyalty Progression</p>
               <h1 className="loot-title text-3xl font-black leading-none sm:text-5xl">Permanent Battle Pass</h1>
@@ -107,7 +107,7 @@ export default function RewardsPage() {
               </div>
             </div>
 
-            <div className="space-y-3 pt-1 lg:px-2">
+            <div className="space-y-3 pt-1 lg:border-l lg:border-white/10 lg:px-6">
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Current XP band</p>
@@ -123,7 +123,7 @@ export default function RewardsPage() {
               </div>
             </div>
 
-            <article className="border-l border-[color:var(--accent)]/45 pl-4">
+            <article className="border-l border-white/10 pl-4 lg:pl-6">
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Next Level Chests</p>
               <p className="mt-1 text-sm font-semibold text-[color:var(--text-muted)]">Level {nextClaimLevel} reward bundle</p>
 
@@ -164,7 +164,7 @@ export default function RewardsPage() {
         </section>
 
         <section>
-          <article className="overflow-hidden rounded-[1.25rem] border border-[color:var(--border-color)]/55 bg-black/15 p-4 sm:p-5">
+          <article className="overflow-hidden rounded-[1.25rem] border border-[color:var(--border-color)]/55 bg-[rgba(8,14,26,0.5)] p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="loot-title text-2xl font-black sm:text-3xl">Battle Pass Track</h2>
               <span className="theme-pill-accent rounded-full px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.14em]">Battle Pass Timeline</span>
@@ -172,16 +172,16 @@ export default function RewardsPage() {
             <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
               States: locked, available, claimed. Hover to inspect reward details.
             </p>
-            <div className="mt-4">
+            <div className="mt-3">
               <RewardTrack nodes={nodes} />
             </div>
           </article>
         </section>
 
-        <div className="flex flex-wrap items-center gap-5 px-1 pt-0 text-xs font-semibold uppercase tracking-[0.14em]">
-          <Link href="/profile" className="text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text-main)]">Profile</Link>
-          <Link href="/profile/inventory" className="text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text-main)]">Inventory</Link>
-          <Link href="/marketplace" className="text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text-main)]">Marketplace</Link>
+        <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[color:var(--border-color)]/45 bg-black/20 p-1 text-xs font-semibold uppercase tracking-[0.14em]">
+          <Link href="/profile" className="rounded-lg px-4 py-2 text-[color:var(--text-muted)] transition-colors hover:bg-white/5 hover:text-[color:var(--text-main)]">Profile</Link>
+          <Link href="/profile/inventory" className="rounded-lg px-4 py-2 text-[color:var(--text-muted)] transition-colors hover:bg-white/5 hover:text-[color:var(--text-main)]">Inventory</Link>
+          <Link href="/marketplace" className="rounded-lg px-4 py-2 text-[color:var(--text-muted)] transition-colors hover:bg-white/5 hover:text-[color:var(--text-main)]">Marketplace</Link>
         </div>
       </main>
     </div>
