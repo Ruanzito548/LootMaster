@@ -587,10 +587,8 @@ export default function InventoryPage() {
       </div>
 
       <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
-        <section className="loot-panel relative overflow-hidden rounded-[2rem] border border-white/15 p-6 sm:p-8">
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.08),transparent_35%,transparent_72%,rgba(255,255,255,0.06))]" />
-
-          <div className="relative flex flex-wrap items-start justify-between gap-4">
+        <section className="relative overflow-hidden px-1 py-3 sm:px-3 sm:py-5">
+          <div className="relative flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-3xl space-y-3">
               <p className="text-[0.64rem] font-black uppercase tracking-[0.2em] text-[#9adfff]">Inventory Core</p>
               <h1 className="font-throne text-4xl font-black leading-[0.95] text-white sm:text-6xl">MMO VAULT HUB</h1>
@@ -599,7 +597,7 @@ export default function InventoryPage() {
               </p>
             </div>
 
-            <div className="grid min-w-[220px] gap-2 rounded-2xl border border-white/14 bg-black/25 p-4">
+            <div className="grid min-w-[220px] gap-1 border-l border-[#d4af5a]/45 pl-4">
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#99b6d7]">Wallet</p>
               <p className="text-3xl font-black text-[#ffcf67]">{profile.lootCoins.toLocaleString("en-US")}</p>
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#99b6d7]">Title</p>
@@ -607,30 +605,30 @@ export default function InventoryPage() {
             </div>
           </div>
 
-          <div className="relative mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <article className="rounded-2xl border border-white/14 bg-black/25 px-4 py-3">
+          <div className="relative mt-8 grid gap-x-6 gap-y-4 border-y border-white/10 py-4 sm:grid-cols-2 xl:grid-cols-5">
+            <article className="px-1">
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Inventory Slots</p>
               <p className="mt-2 text-2xl font-black text-white">{usedSlots}/{slotLimit}</p>
             </article>
-            <article className="rounded-2xl border border-white/14 bg-black/25 px-4 py-3">
+            <article className="px-1">
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">RPG XP</p>
               <p className="mt-2 text-2xl font-black text-white">{rpgXp}</p>
             </article>
-            <article className="rounded-2xl border border-white/14 bg-black/25 px-4 py-3">
+            <article className="px-1">
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">XP Progress</p>
               <p className="mt-2 text-2xl font-black text-white">{xpSegment.inLevel}/{xpSegment.levelCap}</p>
             </article>
-            <article className="rounded-2xl border border-white/14 bg-black/25 px-4 py-3">
+            <article className="px-1">
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Sales</p>
               <p className="mt-2 text-2xl font-black text-white">{profile.marketplaceSales ?? 0}</p>
             </article>
-            <article className="rounded-2xl border border-white/14 bg-black/25 px-4 py-3">
+            <article className="px-1">
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Buys</p>
               <p className="mt-2 text-2xl font-black text-white">{profile.marketplaceBuys ?? 0}</p>
             </article>
           </div>
 
-          <div className="relative mt-4 h-3 overflow-hidden rounded-full border border-white/15 bg-black/40">
+          <div className="relative mt-5 h-2 overflow-hidden rounded-full bg-black/35">
             <motion.div className="h-full bg-gradient-to-r from-[#59cfff] via-[#4f8cff] to-[#c06dff]" animate={{ width: `${fillPercent}%` }} transition={{ duration: 0.45 }} />
           </div>
 
@@ -654,18 +652,18 @@ export default function InventoryPage() {
           </div>
         </section>
 
-        <section className="loot-panel rounded-[2rem] border border-white/14 p-5 sm:p-6">
+        <section className="relative px-1 py-3 sm:px-3 sm:py-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="font-throne text-3xl font-black text-white">Inventory Grid</h2>
               <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#a6c0df]">Click chest or gift card items for contextual actions</p>
             </div>
-            <span className={`rounded-full border px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.15em] ${usedSlots >= slotLimit ? "border-rose-300/45 bg-rose-500/15 text-rose-100" : "border-emerald-300/45 bg-emerald-500/15 text-emerald-100"}`}>
+            <span className={`px-1 py-1 text-[0.62rem] font-black uppercase tracking-[0.15em] ${usedSlots >= slotLimit ? "text-rose-100" : "text-emerald-100"}`}>
               {usedSlots >= slotLimit ? "Inventory Full" : "Space Available"}
             </span>
           </div>
 
-          <div className="relative mt-5 mx-auto w-full max-w-[1526px] overflow-hidden rounded-[1.75rem] border border-[#d4af5a]/35 bg-[#0c1220]/80 p-3 shadow-[0_0_0_1px_rgba(212,175,90,0.12),inset_0_0_20px_rgba(0,0,0,0.28)]" style={{ height: "1024px" }}>
+          <div className="relative mt-5 mx-auto w-full max-w-[1526px] overflow-hidden rounded-[1.25rem] border border-[#d4af5a]/45 bg-[#0c1220]/35 p-3 shadow-[0_20px_55px_rgba(0,0,0,0.28)]" style={{ height: "1024px" }}>
             <div
               className="absolute inset-[18px]"
               style={{
