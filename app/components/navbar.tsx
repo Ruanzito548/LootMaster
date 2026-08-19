@@ -155,8 +155,8 @@ export function Navbar() {
     <header className="theme-transition-surface theme-navbar-shell fixed inset-x-0 top-0 z-50 border-b border-[color:var(--border-color)] bg-[color:var(--navbar-bg)] backdrop-blur-xl">
       <div className="theme-top-highlight pointer-events-none absolute inset-x-0 top-0 h-[2px]" />
 
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3">
+      <div className="flex min-h-14 w-full items-center gap-3 px-3 py-2 sm:px-5 lg:px-6">
+        <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
             onClick={() => setIsMobileOpen(true)}
@@ -166,7 +166,7 @@ export function Navbar() {
             <Menu className="h-5 w-5" />
           </button>
 
-          <Link href="/" className="gm-glass inline-flex items-center gap-2 rounded-xl px-3 py-2">
+          <Link href="/" className="inline-flex items-center gap-2 rounded-xl px-2 py-1.5">
             <Image src="/lootmasterlogo.png" alt="Loot Master" width={34} height={34} className="h-8 w-8 rounded-md" />
             <div className="hidden sm:block">
               <p className="font-throne text-lg font-black leading-none text-[color:var(--text-main)]">Loot Master</p>
@@ -175,7 +175,7 @@ export function Navbar() {
           </Link>
         </div>
 
-        <nav className="hidden items-center gap-2 lg:flex">
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
           {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(pathname, item.href);
@@ -184,7 +184,7 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`gm-button inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-all ${
+                className={`gm-button inline-flex items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-all ${
                   active
                     ? "theme-nav-active"
                     : "border-transparent text-[color:var(--text-muted)] hover:border-[color:var(--border-color)] hover:bg-white/5 hover:text-[color:var(--text-main)]"
@@ -197,8 +197,8 @@ export function Navbar() {
           })}
         </nav>
 
-        <div className="flex items-center gap-2">
-          <div className="gm-glass hidden items-center gap-2 rounded-xl px-3 py-2 sm:flex">
+        <div className="flex shrink-0 items-center gap-1.5">
+          <div className="gm-glass hidden items-center gap-2 rounded-xl px-2.5 py-1.5 sm:flex">
             <Crown className="h-4 w-4 text-[color:var(--accent)]" />
             <span className="font-data text-xs font-bold text-[color:var(--text-main)]">
               {profile ? `${profile.lootCoins.toLocaleString("en-US")} LC` : "0 LC"}
@@ -207,13 +207,13 @@ export function Navbar() {
 
           <Link
             href="/rewards"
-            className="gm-button gm-button-secondary inline-flex items-center justify-center rounded-xl p-2.5"
+            className="gm-button gm-button-secondary inline-flex items-center justify-center rounded-xl p-2"
             aria-label="Rewards"
           >
             <Gift className="h-4 w-4 text-[color:var(--accent)]" />
           </Link>
 
-          <button type="button" className="gm-button gm-button-secondary inline-flex items-center justify-center rounded-xl p-2.5" aria-label="Notifications">
+          <button type="button" className="gm-button gm-button-secondary inline-flex items-center justify-center rounded-xl p-2" aria-label="Notifications">
             <Bell className="h-4 w-4 text-[color:var(--text-main)]" />
           </button>
 
@@ -223,7 +223,7 @@ export function Navbar() {
                 ref={profileButtonRef}
                 type="button"
                 onClick={() => setIsProfileOpen((current) => !current)}
-                className="gm-glass gm-button inline-flex items-center gap-2 rounded-xl px-2.5 py-2"
+                className="gm-glass gm-button inline-flex items-center gap-2 rounded-xl px-2 py-1.5"
                 aria-haspopup="menu"
                 aria-expanded={isProfileOpen}
                 aria-label="Open profile menu"
