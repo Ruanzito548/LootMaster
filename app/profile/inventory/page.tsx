@@ -571,7 +571,15 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="loot-shell relative overflow-hidden pb-6">
+    <div
+      className="loot-shell relative overflow-hidden pb-6"
+      style={{
+        backgroundImage: "url('/inventario/bgtotal.png')",
+        backgroundPosition: "top center",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+      }}
+    >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-20 top-8 h-72 w-72 rounded-full bg-[#4bcfff]/12 blur-3xl" />
         <div className="absolute right-0 top-24 h-80 w-80 rounded-full bg-[#b16bff]/10 blur-3xl" />
@@ -669,7 +677,7 @@ export default function InventoryPage() {
               }}
             />
             <div className="absolute inset-[18px] bg-[radial-gradient(circle_at_center,rgba(255,248,228,0.18),rgba(94,68,28,0.08)_45%,rgba(12,18,32,0.18))]" />
-            <div className="absolute inset-[80px] z-10 grid scale-[0.92] grid-cols-5 gap-3">
+            <div className="absolute inset-[80px] z-10 grid scale-[0.84] grid-cols-5 gap-3">
               {Array.from({ length: slotLimit }).map((_, slotIndex) => {
                 const item = inventory[slotIndex] ?? null;
 
