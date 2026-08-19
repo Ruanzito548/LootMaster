@@ -55,12 +55,12 @@ const VALUE_TOLERANCE_USD: Record<ChestId, number> = {
 };
 
 const CHEST_FRAGMENT_META: Record<ChestId, { id: string; name: string; rarity: InventoryItem["rarity"] }> = {
-  common: { id: "fragment-chest-common", name: "Common Chest Fragment", rarity: "common" },
-  uncommon: { id: "fragment-chest-uncommon", name: "Uncommon Chest Fragment", rarity: "common" },
-  rare: { id: "fragment-chest-rare", name: "Rare Chest Fragment", rarity: "rare" },
-  epic: { id: "fragment-chest-epic", name: "Epic Chest Fragment", rarity: "epic" },
-  legendary: { id: "fragment-chest-legendary", name: "Legendary Chest Fragment", rarity: "legendary" },
-  mythic: { id: "fragment-chest-mythic", name: "Mythic Chest Fragment", rarity: "artifact" },
+  common: { id: "fragment-chest-common", name: "Fragmento de Mapa de Tesouro Comum", rarity: "common" },
+  uncommon: { id: "fragment-chest-uncommon", name: "Fragmento de Mapa de Tesouro Incomum", rarity: "common" },
+  rare: { id: "fragment-chest-rare", name: "Fragmento de Mapa de Tesouro Raro", rarity: "rare" },
+  epic: { id: "fragment-chest-epic", name: "Fragmento de Mapa de Tesouro Épico", rarity: "epic" },
+  legendary: { id: "fragment-chest-legendary", name: "Fragmento de Mapa de Tesouro Lendário", rarity: "legendary" },
+  mythic: { id: "fragment-chest-mythic", name: "Fragmento de Mapa de Tesouro Mítico", rarity: "artifact" },
 };
 
 const LOOT_BUNDLES: Record<ChestId, LootBundle[]> = {
@@ -112,7 +112,7 @@ const LOOT_BUNDLES: Record<ChestId, LootBundle[]> = {
 const PREVIEW_LABEL_BY_KIND: Record<LootSpec["kind"], string> = {
   coins: "Loot Coins",
   "gift-fragment": "Gift Card Fragments",
-  "chest-fragment": "Chest Fragments",
+  "chest-fragment": "Fragmentos de Mapa de Tesouro",
 };
 
 function getSpecValueUsd(spec: LootSpec): number {
@@ -164,11 +164,11 @@ function toInventoryItem(spec: Exclude<LootSpec, { kind: "coins" }>): InventoryI
   return {
     id: fragmentMeta.id,
     name: fragmentMeta.name,
-    category: "Chest Fragment",
-    description: "Collect 20 fragments to craft the corresponding chest tier.",
+    category: "Fragmento de Mapa de Tesouro",
+    description: "Colete 20 fragmentos para forjar o baú correspondente.",
     quantity: spec.quantity,
     rarity: fragmentMeta.rarity,
-    iconPath: "/itens/general/ticket.png",
+    iconPath: "/baus/fragmento.png",
   };
 }
 
