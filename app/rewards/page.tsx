@@ -78,10 +78,8 @@ export default function RewardsPage() {
   return (
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
-        <section className="loot-panel relative overflow-hidden rounded-[2rem] p-5 sm:p-7">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_10%,rgba(88,182,255,0.22),transparent_34%),radial-gradient(circle_at_82%_20%,rgba(255,163,102,0.2),transparent_32%),radial-gradient(circle_at_48%_100%,rgba(189,106,255,0.2),transparent_35%)]" />
-
-          <div className="relative grid gap-6 lg:grid-cols-[1.15fr_1.05fr_0.9fr] lg:items-stretch">
+        <section className="relative overflow-hidden rounded-[1.5rem] border-b border-[color:var(--border-color)]/55 px-1 py-3 sm:px-3 sm:py-5">
+          <div className="relative grid gap-8 lg:grid-cols-[1.15fr_1.05fr_0.9fr] lg:items-start">
             <div className="space-y-4">
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[color:var(--accent)]">Loyalty Progression</p>
               <h1 className="loot-title text-3xl font-black leading-none sm:text-5xl">Permanent Battle Pass</h1>
@@ -96,7 +94,7 @@ export default function RewardsPage() {
                 </span>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-[rgba(8,14,28,0.72)] p-4">
+              <div className="mt-2 border-l border-[color:var(--accent)]/45 pl-4">
                 <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Next Claim Reward</p>
                 <div className="mt-2 flex items-center gap-3">
                   <span className="text-3xl leading-none">{nextReward.icon}</span>
@@ -109,7 +107,7 @@ export default function RewardsPage() {
               </div>
             </div>
 
-            <div className="space-y-3 rounded-2xl border border-white/10 bg-[rgba(8,14,26,0.65)] p-4">
+            <div className="space-y-3 pt-1 lg:px-2">
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Current XP band</p>
@@ -118,20 +116,20 @@ export default function RewardsPage() {
                 <p className="font-data text-2xl font-bold text-[color:var(--accent)]">{progress.progressPercent.toFixed(1)}%</p>
               </div>
 
-              <div className="relative h-5 overflow-hidden rounded-full border border-[#d4af5a]/25 bg-black/40">
+              <div className="relative h-4 overflow-hidden rounded-full bg-black/40">
                 <div className="absolute inset-0 [background-image:linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:18px_100%]" />
                 <div className="h-full rounded-full bg-[linear-gradient(90deg,#c89b3c,#d4af5a,#e6c46a,#f2d27a)] shadow-[0_0_26px_rgba(212,175,90,0.4)] transition-all duration-700" style={{ width: `${progress.progressPercent}%` }} />
                 <div className="pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]" />
               </div>
             </div>
 
-            <article className="rounded-2xl border border-white/10 bg-[rgba(8,14,28,0.72)] p-4">
+            <article className="border-l border-[color:var(--accent)]/45 pl-4">
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Next Level Chests</p>
               <p className="mt-1 text-sm font-semibold text-[color:var(--text-muted)]">Level {nextClaimLevel} reward bundle</p>
 
               <div className="mt-4 grid gap-2">
                 {nextReward.grantedItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                  <div key={item.id} className="flex items-center gap-2 border-b border-white/10 px-1 py-2 last:border-b-0">
                     <Image src={item.iconPath ?? getChestImagePath("common")} alt={item.name} width={22} height={22} className="h-5 w-5 object-contain" />
                     <p className="text-[0.7rem] font-bold uppercase tracking-[0.12em] text-[color:var(--text-main)]">{item.quantity}x {item.name}</p>
                   </div>
@@ -166,7 +164,7 @@ export default function RewardsPage() {
         </section>
 
         <section>
-          <article className="loot-panel overflow-hidden rounded-[1.8rem] p-5 sm:p-6">
+          <article className="overflow-hidden rounded-[1.25rem] border border-[color:var(--border-color)]/55 bg-black/15 p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="loot-title text-2xl font-black sm:text-3xl">Battle Pass Track</h2>
               <span className="theme-pill-accent rounded-full px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.14em]">Battle Pass Timeline</span>
@@ -180,10 +178,10 @@ export default function RewardsPage() {
           </article>
         </section>
 
-        <div className="flex flex-wrap gap-2 pt-1">
-          <Link href="/profile" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]">Profile</Link>
-          <Link href="/profile/inventory" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]">Inventory</Link>
-          <Link href="/marketplace" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]">Marketplace</Link>
+        <div className="flex flex-wrap items-center gap-5 px-1 pt-0 text-xs font-semibold uppercase tracking-[0.14em]">
+          <Link href="/profile" className="text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text-main)]">Profile</Link>
+          <Link href="/profile/inventory" className="text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text-main)]">Inventory</Link>
+          <Link href="/marketplace" className="text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text-main)]">Marketplace</Link>
         </div>
       </main>
     </div>

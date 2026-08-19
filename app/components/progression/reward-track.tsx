@@ -79,7 +79,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                 />
 
                 <div
-                  className={`w-full rounded-2xl border-2 p-4 transition-all duration-300 ${styles.border} ${
+                  className={`w-full rounded-xl border p-4 transition-all duration-300 ${styles.border} ${
                     isAvailable ? "reward-node-current" : ""
                   } ${
                     isClaimed
@@ -87,7 +87,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                       : isLocked
                       ? "opacity-62"
                       : "opacity-100"
-                  } ${node.isMilestone ? "min-h-[202px]" : "min-h-[188px]"} bg-[linear-gradient(170deg,rgba(12,20,35,0.95),rgba(6,10,22,0.95))] hover:-translate-y-1.5 hover:opacity-100`}
+                  } ${node.isMilestone ? "min-h-[202px]" : "min-h-[188px]"} bg-[linear-gradient(170deg,rgba(12,20,35,0.88),rgba(6,10,22,0.88))] hover:-translate-y-1.5 hover:opacity-100`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -99,7 +99,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                           return (
                             <div
                               key={`${node.level}-${chestRarity}`}
-                              className={`relative flex h-8 w-8 items-center justify-center rounded-md border ${chestStyles.border} ${squareTint}`}
+                              className={`relative flex h-8 w-8 items-center justify-center rounded-md ${squareTint}`}
                               title={`${qty}x ${chestRarity} chest`}
                             >
                               <Image src={getChestImagePath(chestRarity)} alt={`${chestRarity} chest`} width={22} height={22} className="h-5 w-5 object-contain" />
@@ -112,7 +112,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                           );
                         })
                       ) : (
-                        <div className={`relative flex h-8 w-8 items-center justify-center rounded-md border ${styles.border} ${squareTintByRarity[node.reward.rarity] ?? squareTintByRarity.common}`}>
+                        <div className={`relative flex h-8 w-8 items-center justify-center rounded-md ${squareTintByRarity[node.reward.rarity] ?? squareTintByRarity.common}`}>
                           <Image src={getChestImagePath(node.reward.rarity ?? "common")} alt="Chest" width={22} height={22} className="h-5 w-5 object-contain" />
                         </div>
                       )}
