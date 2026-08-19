@@ -657,14 +657,15 @@ export default function InventoryPage() {
             </span>
           </div>
 
-          <div className="relative mt-5 overflow-hidden rounded-2xl border border-white/10 bg-black/25 p-3">
-            <div className="absolute inset-0 bg-[url('/inventario/inventariobg.png')] bg-cover bg-center opacity-35" />
+          <div className="relative mt-5 overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#080d16]/70 p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+            <div className="absolute inset-0 bg-[url('/inventario/inventariobg.png')] bg-cover bg-center opacity-80" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(8,13,22,0.2),rgba(8,13,22,0.82)_58%,rgba(8,13,22,0.94))]" />
             <div className="relative z-10 grid grid-cols-4 gap-3 sm:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
               {Array.from({ length: slotLimit }).map((_, slotIndex) => {
                 const item = inventory[slotIndex] ?? null;
 
                 if (!item) {
-                  return <div key={`slot-empty-${slotIndex}`} className="aspect-square rounded-xl border border-dashed border-white/12 bg-black/35" />;
+                  return <div key={`slot-empty-${slotIndex}`} className="aspect-square rounded-xl border border-dashed border-white/18 bg-black/30 shadow-[inset_0_0_18px_rgba(0,0,0,0.35)]" />;
                 }
 
                 const rarityClass = RARITY_GLOW[item.rarity] ?? "border-white/25";
