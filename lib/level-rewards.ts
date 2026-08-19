@@ -1,3 +1,4 @@
+import { getChestImagePath } from "./chests";
 import type { InventoryItem } from "./profile-data";
 
 export const XP_PER_USD = 1;
@@ -224,7 +225,7 @@ function mapChestToInventoryItem(chestId: BattlePassChestId, quantity: number): 
     description: `${CHEST_META[chestId].label} unlocked from Battle Pass progression.`,
     quantity,
     rarity: chestRarityMap[chestId],
-    iconPath: "/itens/general/ticket.png",
+    iconPath: getChestImagePath(chestId),
   };
 }
 

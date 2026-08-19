@@ -179,6 +179,21 @@ export const CHEST_DEFINITIONS: Record<ChestId, ChestDefinition> = {
 
 export const CHEST_IDS: ChestId[] = ["common", "uncommon", "rare", "epic", "legendary", "mythic"];
 
+export const CHEST_IMAGE_PATHS: Record<ChestId, string> = {
+  common: "/baus/comum.png",
+  uncommon: "/baus/incomum.png",
+  rare: "/baus/raro.png",
+  epic: "/baus/epico.png",
+  legendary: "/baus/lendario.png",
+  mythic: "/baus/mitico.png",
+};
+
+export function getChestImagePath(chestId: string | ChestId | null | undefined): string {
+  const normalized = (chestId ?? "").trim().toLowerCase();
+
+  return CHEST_IMAGE_PATHS[normalized as ChestId] ?? CHEST_IMAGE_PATHS.common;
+}
+
 export function getChestDefinition(chestId: string): ChestDefinition | null {
   if (chestId in CHEST_DEFINITIONS) {
     return CHEST_DEFINITIONS[chestId as ChestId];

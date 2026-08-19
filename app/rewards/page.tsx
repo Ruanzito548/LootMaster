@@ -131,7 +131,7 @@ export default function RewardsPage() {
               <div className="mt-4 grid gap-2">
                 {nextReward.grantedItems.map((item) => (
                   <div key={item.id} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                    <Image src="/chest.png" alt="Chest" width={22} height={22} className="h-5 w-5 object-contain" />
+                    <Image src={item.iconPath ?? getChestImagePath("common")} alt={item.name} width={22} height={22} className="h-5 w-5 object-contain" />
                     <p className="text-[0.7rem] font-bold uppercase tracking-[0.12em] text-[color:var(--text-main)]">{item.quantity}x {item.name}</p>
                   </div>
                 ))}

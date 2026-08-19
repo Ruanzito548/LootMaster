@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChestOpeningAnimation } from "@/app/components/chests/ChestOpeningAnimation";
 import { useProfileSession } from "@/app/profile/use-profile-session";
 import { getLootOddsForPreview } from "@/lib/chest-loot";
-import { CHEST_DEFINITIONS, CHEST_IDS, type ChestId } from "@/lib/chests";
+import { CHEST_DEFINITIONS, CHEST_IDS, getChestImagePath, type ChestId } from "@/lib/chests";
 import { type InventoryItem } from "@/lib/profile-data";
 import { CRAFT_RECIPES, MARKETPLACE_MIN_PRICE, calculateMarketplaceFee, calculateMarketplaceReceive, getXpIntoCurrentLevel } from "@/lib/rpg-system";
 
@@ -668,7 +668,8 @@ export default function InventoryPage() {
               const rarityClass = RARITY_GLOW[item.rarity] ?? "border-white/25";
               const itemIsChest = isChestItem(item);
               const itemIsRedeemableGiftCard = isRedeemableGiftCard(item);
-              const itemIconSrc = itemIsChest ? "/chest.png" : item.iconPath || "/itens/general/ticket.png";
+              const chestIdForIcon = itemIsChest ? getChestIdByInventoryItem(item) ?? "common" : null;
+              const itemIconSrc = itemIsChest ? getChestImagePath(chestIdForIcon) : item.iconPath || "/itens/general/ticket.png";
 
               return (
                 <motion.button
@@ -1040,7 +1041,7 @@ export default function InventoryPage() {
                     <div className="grid gap-3 border-t border-white/10 p-4 sm:grid-cols-2 xl:grid-cols-3">
                       {chestRecipes.map((recipe) => {
                         const recipeCraftable = canCraft(recipe);
-                        const recipeIconSrc = recipe.outputItem.iconPath ?? "/chest.png";
+                        const recipeIconSrc = recipe.outputItem.iconPath ?? getChestImagePath("common");
 
                         return (
                           <article key={recipe.id} className="rounded-2xl border border-cyan-200/22 bg-[linear-gradient(160deg,rgba(4,14,28,0.9),rgba(10,23,41,0.78))] p-4">

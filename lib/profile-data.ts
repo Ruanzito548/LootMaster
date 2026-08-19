@@ -81,7 +81,7 @@ const defaultInventory: InventoryItem[] = [
     description: "Basic chest with starter loot.",
     quantity: 3,
     rarity: "common",
-    iconPath: "/itens/general/ticket.png",
+    iconPath: "/baus/comum.png",
   },
   {
     id: "chest-rare",
@@ -90,7 +90,7 @@ const defaultInventory: InventoryItem[] = [
     description: "Improved chest with better odds.",
     quantity: 2,
     rarity: "rare",
-    iconPath: "/itens/general/ticket.png",
+    iconPath: "/baus/raro.png",
   },
   {
     id: "chest-epic",
@@ -99,7 +99,7 @@ const defaultInventory: InventoryItem[] = [
     description: "High-value chest with premium drops.",
     quantity: 1,
     rarity: "epic",
-    iconPath: "/itens/general/ticket.png",
+    iconPath: "/baus/epico.png",
   },
   {
     id: "gift-card-fragment",

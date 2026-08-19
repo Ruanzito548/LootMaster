@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { getChestImagePath } from "@/lib/chests";
 import { type RewardTrackNode } from "../../../lib/level-rewards";
 
 const rarityStyles: Record<string, { dot: string; border: string; glow: string; text: string }> = {
@@ -101,7 +102,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                               className={`relative flex h-8 w-8 items-center justify-center rounded-md border ${chestStyles.border} ${squareTint}`}
                               title={`${qty}x ${chestRarity} chest`}
                             >
-                              <Image src="/chest.png" alt="Chest" width={22} height={22} className="h-5 w-5 object-contain" />
+                              <Image src={getChestImagePath(chestRarity)} alt={`${chestRarity} chest`} width={22} height={22} className="h-5 w-5 object-contain" />
                               {(qty ?? 0) > 1 ? (
                                 <span className="absolute -bottom-1 -right-1 rounded-full border border-black/40 bg-black/80 px-1 text-[0.52rem] font-black text-white">
                                   x{qty}
@@ -112,7 +113,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                         })
                       ) : (
                         <div className={`relative flex h-8 w-8 items-center justify-center rounded-md border ${styles.border} ${squareTintByRarity[node.reward.rarity] ?? squareTintByRarity.common}`}>
-                          <Image src="/chest.png" alt="Chest" width={22} height={22} className="h-5 w-5 object-contain" />
+                          <Image src={getChestImagePath(node.reward.rarity ?? "common")} alt="Chest" width={22} height={22} className="h-5 w-5 object-contain" />
                         </div>
                       )}
                     </div>
