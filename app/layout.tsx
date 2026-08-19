@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "Loot Master",
   description: "World of Warcraft gold marketplace flow",
   icons: {
-    icon: "/lootmasterlogo.png",
+    icon: "/faviicon.png",
   },
 };
 
