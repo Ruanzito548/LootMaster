@@ -686,7 +686,10 @@ export default function InventoryPage() {
               }}
             />
             <div className="absolute inset-[18px] bg-[radial-gradient(circle_at_center,rgba(255,248,228,0.18),rgba(94,68,28,0.08)_45%,rgba(12,18,32,0.18))]" />
-            <div className="absolute inset-[7%] z-10 grid grid-cols-5 grid-rows-4 gap-[clamp(8px,1.5vw,22px)]">
+            <div
+              className="absolute z-10 grid grid-cols-5 grid-rows-4 gap-[clamp(8px,1.5vw,22px)]"
+              style={{ inset: "calc(7% + 12.5px)" }}
+            >
               {Array.from({ length: slotLimit }).map((_, slotIndex) => {
                 const item = inventory[slotIndex] ?? null;
 
