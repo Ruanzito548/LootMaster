@@ -60,7 +60,7 @@ const CHEST_FRAGMENT_META: Record<ChestId, { id: string; name: string; rarity: I
   rare: { id: "fragment-chest-rare", name: "Rare Treasure Map Fragment", rarity: "rare" },
   epic: { id: "fragment-chest-epic", name: "Epic Treasure Map Fragment", rarity: "epic" },
   legendary: { id: "fragment-chest-legendary", name: "Legendary Treasure Map Fragment", rarity: "legendary" },
-  mythic: { id: "fragment-chest-mythic", name: "Mythic Treasure Map Fragment", rarity: "artifact" },
+  mythic: { id: "fragment-chest-mythic", name: "Mythic Treasure Map Fragment", rarity: "mythic" },
 };
 
 const LOOT_BUNDLES: Record<ChestId, LootBundle[]> = {

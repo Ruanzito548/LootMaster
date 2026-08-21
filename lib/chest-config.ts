@@ -56,7 +56,7 @@ const VALID_INVENTORY_RARITIES: InventoryItem["rarity"][] = [
   "rare",
   "epic",
   "legendary",
-  "artifact",
+  "mythic",
   "heirloom",
 ];
 

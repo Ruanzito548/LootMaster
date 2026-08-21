@@ -19,7 +19,7 @@ function clampQuantity(quantity: number): number {
 
 function chestRarityToInventoryRarity(rarity: ChestId): InventoryItem["rarity"] {
   if (rarity === "mythic") {
-    return "artifact";
+    return "mythic";
   }
 
   return rarity;

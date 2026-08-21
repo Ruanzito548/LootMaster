@@ -285,7 +285,7 @@ h3 {
 .inv-radial-rare     { background: radial-gradient(circle at center, rgba(45,110,199,0.72)  0%, transparent 68%); }
 .inv-radial-epic     { background: radial-gradient(circle at center, rgba(122,63,168,0.75)  0%, transparent 68%); }
 .inv-radial-legendary{ background: radial-gradient(circle at center, rgba(212,175,90,0.8)   0%, transparent 68%); }
-.inv-radial-artifact { background: radial-gradient(circle at center, rgba(163,58,58,0.72)    0%, transparent 68%); }
+.inv-radial-mythic   { background: radial-gradient(circle at center, rgba(163,58,58,0.72)    0%, transparent 68%); }
 .inv-radial-heirloom { background: radial-gradient(circle at center, rgba(142,152,163,0.68)  0%, transparent 68%); }
 /* ─────────────────────────────────────────────────────────────────── */
 

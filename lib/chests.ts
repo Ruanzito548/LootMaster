@@ -148,7 +148,7 @@ export const CHEST_DEFINITIONS: Record<ChestId, ChestDefinition> = {
     itemRarityWeights: [
       { rarity: "epic", weight: 47 },
       { rarity: "legendary", weight: 39 },
-      { rarity: "artifact", weight: 14 },
+      { rarity: "mythic", weight: 14 },
     ],
   },
   mythic: {
@@ -171,7 +171,7 @@ export const CHEST_DEFINITIONS: Record<ChestId, ChestDefinition> = {
     coinRange: { min: 620, max: 1600 },
     itemRarityWeights: [
       { rarity: "legendary", weight: 43 },
-      { rarity: "artifact", weight: 31 },
+      { rarity: "mythic", weight: 31 },
       { rarity: "heirloom", weight: 26 },
     ],
   },

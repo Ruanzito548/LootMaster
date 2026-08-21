@@ -54,7 +54,7 @@ const rarityOrder: Record<string, number> = {
   rare: 4,
   epic: 5,
   legendary: 6,
-  artifact: 7,
+  mythic: 7,
   heirloom: 8,
 };
 
@@ -65,7 +65,7 @@ const rarityBadge: Record<string, string> = {
   rare: "border-[#0070dd]/60 text-[#98ceff]",
   epic: "border-[#a335ee]/60 text-[#ddb8ff]",
   legendary: "border-[#ff8000]/62 text-[#ffd6a2]",
-  artifact: "border-[#e6cc80]/62 text-[#ffeeb8]",
+  mythic: "border-[#e6cc80]/62 text-[#ffeeb8]",
   heirloom: "border-[#00ccff]/62 text-[#bbf3ff]",
 };
 
@@ -322,7 +322,7 @@ export default function MarketplacePage() {
               <option value="rare">Rare</option>
               <option value="epic">Epic</option>
               <option value="legendary">Legendary</option>
-              <option value="artifact">Artifact</option>
+              <option value="mythic">Mythic</option>
             </select>
             <select value={sortMode} onChange={(event) => setSortMode(event.target.value)} className="rounded-xl border border-white/14 bg-black/35 px-3 py-2 text-sm text-white outline-none focus:border-[#7dd2ff]">
               <option value="recent">Most recent</option>

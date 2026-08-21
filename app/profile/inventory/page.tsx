@@ -74,7 +74,7 @@ const RARITY_ORDER: Record<string, number> = {
   rare: 4,
   epic: 5,
   legendary: 6,
-  artifact: 7,
+  mythic: 7,
   heirloom: 8,
 };
 
@@ -85,7 +85,7 @@ const RARITY_LABEL: Record<string, string> = {
   rare: "Rare",
   epic: "Epic",
   legendary: "Legendary",
-  artifact: "Artifact",
+  mythic: "Mythic",
   heirloom: "Heirloom",
 };
 
@@ -96,7 +96,7 @@ const RARITY_GLOW: Record<string, string> = {
   rare: "shadow-[0_0_22px_rgba(45,110,199,0.4)] border-[#2d6ec7]/60",
   epic: "shadow-[0_0_24px_rgba(122,63,168,0.42)] border-[#7a3fa8]/60",
   legendary: "shadow-[0_0_26px_rgba(212,175,90,0.45)] border-[#d4af5a]/65",
-  artifact: "shadow-[0_0_28px_rgba(163,58,58,0.45)] border-[#a33a3a]/65",
+  mythic: "shadow-[0_0_28px_rgba(163,58,58,0.45)] border-[#a33a3a]/65",
   heirloom: "shadow-[0_0_26px_rgba(142,152,163,0.4)] border-[#8e98a3]/60",
 };
 
@@ -107,7 +107,7 @@ const RARITY_TEXT: Record<string, string> = {
   rare: "text-[#5b9be6]",
   epic: "text-[#b98af0]",
   legendary: "text-[#e6c46a]",
-  artifact: "text-[#e07a7a]",
+  mythic: "text-[#e07a7a]",
   heirloom: "text-[#b8c0c8]",
 };
 
@@ -118,7 +118,7 @@ const RARITY_BADGE: Record<string, string> = {
   rare: "bg-[#2d6ec7]/22 text-[#8fc4ff] border-[#5b9be6]/55",
   epic: "bg-[#7a3fa8]/24 text-[#d6b2ff] border-[#b98af0]/55",
   legendary: "bg-[#d4af5a]/24 text-[#ffe39a] border-[#e6c46a]/60",
-  artifact: "bg-[#a33a3a]/24 text-[#ffaaaa] border-[#e07a7a]/55",
+  mythic: "bg-[#a33a3a]/24 text-[#ffaaaa] border-[#e07a7a]/55",
   heirloom: "bg-[#8e98a3]/22 text-[#e2e6ea] border-[#b8c0c8]/55",
 };
 
@@ -126,7 +126,7 @@ const DROP_HINT_BY_RARITY: Record<string, string> = {
   common: "Common+, low chance Rare",
   rare: "Rare+ chance, possible Epic",
   epic: "Epic+ chance, possible Legendary",
-  legendary: "Legendary-heavy, Artifact chance",
+  legendary: "Legendary-heavy, Mythic chance",
   mythic: "Mythic table with premium outcomes",
 };
 
@@ -151,7 +151,7 @@ function toMarketValue(item: InventoryItem): number {
     rare: 420,
     epic: 950,
     legendary: 1800,
-    artifact: 2800,
+    mythic: 2800,
     heirloom: 2400,
   };
 

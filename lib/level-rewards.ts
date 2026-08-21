@@ -63,7 +63,7 @@ const rarityToInventoryRarity: Record<RewardRarity, InventoryItem["rarity"]> = {
   rare: "rare",
   epic: "epic",
   legendary: "legendary",
-  mythic: "artifact",
+  mythic: "mythic",
 };
 
 const rarityBadgeLabel: Record<RewardRarity, string> = {
@@ -215,7 +215,7 @@ function mapChestToInventoryItem(chestId: BattlePassChestId, quantity: number): 
     rare: "rare",
     epic: "epic",
     legendary: "legendary",
-    mythic: "artifact",
+    mythic: "mythic",
   };
 
   return {

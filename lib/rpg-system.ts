@@ -67,7 +67,7 @@ export const RUNE_DEFINITIONS: Array<{ id: string; name: string; rarity: Invento
   { id: "rune-rare", name: "Rare Rune", rarity: "rare" },
   { id: "rune-epic", name: "Epic Rune", rarity: "epic" },
   { id: "rune-legendary", name: "Legendary Rune", rarity: "legendary" },
-  { id: "rune-mythic", name: "Mythic Rune", rarity: "artifact" },
+  { id: "rune-mythic", name: "Mythic Rune", rarity: "mythic" },
 ];
 
 export function getXpForLevel(level: number): number {
@@ -262,7 +262,7 @@ export function buildChestInventoryItem(chestId: ChestId): InventoryItem {
     rare: "rare",
     epic: "epic",
     legendary: "legendary",
-    mythic: "artifact",
+    mythic: "mythic",
   };
 
   const titleByChest: Record<ChestId, string> = {
@@ -649,7 +649,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       id: "chest-mythic",
       name: "Mythic Chest",
       category: "Chest",
-      rarity: "artifact",
+      rarity: "mythic",
       quantity: 1,
       iconPath: getChestImagePath("mythic"),
     },

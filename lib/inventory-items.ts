@@ -9,7 +9,7 @@ export const wowRarities = [
   "rare",
   "epic",
   "legendary",
-  "artifact",
+  "mythic",
   "heirloom",
 ] as const;
 

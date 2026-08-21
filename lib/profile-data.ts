@@ -17,7 +17,7 @@ export type InventoryItem = {
     | "rare"
     | "epic"
     | "legendary"
-    | "artifact"
+    | "mythic"
     | "heirloom";
   iconPath?: string;
 };
@@ -161,7 +161,7 @@ const defaultInventory: InventoryItem[] = [
     category: "Material",
     description: "Ultra-rare catalyst for mythic crafting.",
     quantity: 1,
-    rarity: "artifact",
+    rarity: "mythic",
     iconPath: "/itens/general/ticket.png",
   },
   {
@@ -206,7 +206,7 @@ const defaultInventory: InventoryItem[] = [
     category: "Rune",
     description: "Mythic rune that defines apex chest quality.",
     quantity: 1,
-    rarity: "artifact",
+    rarity: "mythic",
     iconPath: "/itens/general/ticket.png",
   },
   {
@@ -297,7 +297,7 @@ function isInventoryItem(value: unknown): value is InventoryItem {
       parsed.rarity === "rare" ||
       parsed.rarity === "epic" ||
       parsed.rarity === "legendary" ||
-      parsed.rarity === "artifact" ||
+      parsed.rarity === "mythic" ||
       parsed.rarity === "heirloom")
   );
 }

@@ -35,7 +35,7 @@ function isInventoryItem(value: unknown): value is InventoryItem {
       parsed.rarity === "rare" ||
       parsed.rarity === "epic" ||
       parsed.rarity === "legendary" ||
-      parsed.rarity === "artifact" ||
+      parsed.rarity === "mythic" ||
       parsed.rarity === "heirloom")
   );
 }
