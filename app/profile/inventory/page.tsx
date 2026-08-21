@@ -674,7 +674,7 @@ export default function InventoryPage() {
             </span>
           </div>
 
-          <div className="relative mt-5 mx-auto w-full max-w-[1526px] overflow-hidden rounded-[1.25rem] border border-[#d4af5a]/45 bg-[var(--lm-void)] p-3 shadow-[0_20px_55px_rgba(0,0,0,0.28)] aspect-[5/4] min-h-[620px]">
+          <div className="relative mt-5 mx-auto w-full max-w-[1526px] overflow-hidden bg-[var(--lm-void)] p-3 aspect-[5/4] min-h-[620px]">
             <div
               className="absolute inset-[18px]"
               style={{
