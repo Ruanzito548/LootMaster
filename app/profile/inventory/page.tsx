@@ -676,7 +676,7 @@ export default function InventoryPage() {
 
           <div className="relative mt-5 mx-auto w-full max-w-[1526px] overflow-hidden bg-[var(--lm-void)] p-3 aspect-[5/4] min-h-[620px]">
             <div
-              className="absolute inset-[18px]"
+              className="absolute inset-0"
               style={{
                 backgroundImage: "url('/inventario/inventariobg.png')",
                 backgroundSize: "100% 100%",
