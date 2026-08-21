@@ -674,7 +674,7 @@ export default function InventoryPage() {
             </span>
           </div>
 
-          <div className="relative mt-5 mx-auto w-full max-w-[1526px] overflow-hidden rounded-[1.25rem] border border-[#d4af5a]/45 bg-[#0c1220]/35 p-3 shadow-[0_20px_55px_rgba(0,0,0,0.28)] aspect-[5/4] min-h-[620px]">
+          <div className="relative mt-5 mx-auto w-full max-w-[1526px] overflow-hidden rounded-[1.25rem] border border-[#d4af5a]/45 bg-[var(--lm-void)] p-3 shadow-[0_20px_55px_rgba(0,0,0,0.28)] aspect-[5/4] min-h-[620px]">
             <div
               className="absolute inset-[18px]"
               style={{
@@ -685,7 +685,6 @@ export default function InventoryPage() {
                 opacity: 0.95,
               }}
             />
-            <div className="absolute inset-[18px] bg-[radial-gradient(circle_at_center,rgba(255,248,228,0.18),rgba(94,68,28,0.08)_45%,rgba(12,18,32,0.18))]" />
             <div
               className="absolute z-10 grid grid-cols-5 grid-rows-4 gap-[clamp(8px,1.5vw,22px)]"
               style={{ inset: "calc(7% + 12.5px)" }}
