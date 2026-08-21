@@ -111,6 +111,17 @@ const RARITY_TEXT: Record<string, string> = {
   heirloom: "text-[#b8c0c8]",
 };
 
+const RARITY_BADGE: Record<string, string> = {
+  poor: "bg-[#787d84]/20 text-[#c2c7cd] border-[#787d84]/45",
+  common: "bg-[#b8c0c8]/20 text-[#f0f3f5] border-[#b8c0c8]/45",
+  uncommon: "bg-[#2fa36b]/20 text-[#8bf0b2] border-[#2fa36b]/50",
+  rare: "bg-[#2d6ec7]/22 text-[#8fc4ff] border-[#5b9be6]/55",
+  epic: "bg-[#7a3fa8]/24 text-[#d6b2ff] border-[#b98af0]/55",
+  legendary: "bg-[#d4af5a]/24 text-[#ffe39a] border-[#e6c46a]/60",
+  artifact: "bg-[#a33a3a]/24 text-[#ffaaaa] border-[#e07a7a]/55",
+  heirloom: "bg-[#8e98a3]/22 text-[#e2e6ea] border-[#b8c0c8]/55",
+};
+
 const DROP_HINT_BY_RARITY: Record<string, string> = {
   common: "Common+, low chance Rare",
   rare: "Rare+ chance, possible Epic",
@@ -663,7 +674,7 @@ export default function InventoryPage() {
             </span>
           </div>
 
-          <div className="relative mt-5 mx-auto w-full max-w-[1526px] overflow-hidden rounded-[1.25rem] border border-[#d4af5a]/45 bg-[#0c1220]/35 p-3 shadow-[0_20px_55px_rgba(0,0,0,0.28)]" style={{ height: "1024px" }}>
+          <div className="relative mt-5 mx-auto w-full max-w-[1526px] overflow-hidden rounded-[1.25rem] border border-[#d4af5a]/45 bg-[#0c1220]/35 p-3 shadow-[0_20px_55px_rgba(0,0,0,0.28)] aspect-[5/4] min-h-[620px]">
             <div
               className="absolute inset-[18px]"
               style={{
@@ -675,7 +686,7 @@ export default function InventoryPage() {
               }}
             />
             <div className="absolute inset-[18px] bg-[radial-gradient(circle_at_center,rgba(255,248,228,0.18),rgba(94,68,28,0.08)_45%,rgba(12,18,32,0.18))]" />
-            <div className="absolute inset-[80px] z-10 grid scale-[0.84] grid-cols-5 gap-[22px]">
+            <div className="absolute inset-[7%] z-10 grid grid-cols-5 grid-rows-4 gap-[clamp(8px,1.5vw,22px)]">
               {Array.from({ length: slotLimit }).map((_, slotIndex) => {
                 const item = inventory[slotIndex] ?? null;
 
@@ -693,7 +704,7 @@ export default function InventoryPage() {
                   <motion.button
                     key={`${item.id}-${slotIndex}`}
                     type="button"
-                    className={`group relative aspect-square overflow-hidden rounded-xl border bg-[linear-gradient(180deg,rgba(9,16,29,0.96),rgba(5,10,20,0.94))] p-2 text-left transition-all ${rarityClass} ${itemIsChest || itemIsRedeemableGiftCard ? "cursor-pointer" : "cursor-default"}`}
+                    className={`group relative min-h-0 overflow-hidden rounded-xl border bg-[linear-gradient(180deg,rgba(9,16,29,0.96),rgba(5,10,20,0.94))] p-2 text-left transition-all ${rarityClass} ${itemIsChest || itemIsRedeemableGiftCard ? "cursor-pointer" : "cursor-default"}`}
                     whileHover={{ y: -3, scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onMouseEnter={() => setHoveredItem(item)}
@@ -719,6 +730,9 @@ export default function InventoryPage() {
                     }}
                   >
                     <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_22%,rgba(255,255,255,0.16),transparent_60%)]" />
+                    <span className={`absolute left-2 top-2 z-10 rounded border px-1.5 py-0.5 text-[0.5rem] font-black uppercase tracking-[0.1em] ${RARITY_BADGE[item.rarity] ?? "border-white/25 bg-black/45 text-white"}`}>
+                      {RARITY_LABEL[item.rarity] ?? item.rarity}
+                    </span>
                     <Image src={itemIconSrc} alt={item.name} width={88} height={88} className="relative mx-auto h-[70%] w-[70%] object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)]" />
                     <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between">
                       <span className="truncate rounded bg-black/55 px-1.5 py-0.5 text-[0.56rem] font-bold uppercase tracking-[0.1em] text-[#d7e7ff]">{item.name}</span>
