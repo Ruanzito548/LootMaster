@@ -605,14 +605,8 @@ export default function InventoryPage() {
             </p>
           </div>
 
-          <div className="vault-chest-visual" aria-hidden="true">
-            <div className="vault-chest-sheen" />
-            <div className="vault-chest-lid" />
-            <div className="vault-chest-body">
-              <span className="vault-chest-badge" />
-              <span className="vault-chest-badge vault-chest-badge-alt" />
-              <span className="vault-chest-badge vault-chest-badge-small" />
-            </div>
+          <div className="vault-hero-art">
+            <Image src="/inventario/invfundo2.png" alt="" fill className="vault-hero-image" priority sizes="(max-width: 768px) 100vw, 35vw" />
           </div>
 
           <div className="vault-wallet-card">
