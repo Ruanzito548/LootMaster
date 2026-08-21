@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpDown, Coins, Crown, Grid2x2, Hammer, ListFilter, Package2, Rows3, Shield, ShoppingBag, Sparkles, Store, Wallet } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -571,14 +570,6 @@ export default function InventoryPage() {
     );
   }
 
-  const stats = [
-    { label: "Slots", value: `${usedSlots}/${slotLimit}`, detail: `${Math.max(0, slotLimit - usedSlots)} free`, icon: Package2 },
-    { label: "XP", value: `${rpgXp}`, detail: `Level ${rpgLevel}`, icon: Sparkles },
-    { label: "XP Progress", value: `${xpSegment.inLevel}/${xpSegment.levelCap}`, detail: `${Math.round(fillPercent)}% filled`, icon: Shield },
-    { label: "Sales", value: `${profile.marketplaceSales ?? 0}`, detail: "This week", icon: Coins },
-    { label: "Buys", value: `${profile.marketplaceBuys ?? 0}`, detail: "Tracked", icon: ShoppingBag },
-  ];
-
   return (
     <div
       className="loot-shell relative overflow-hidden pb-6"
@@ -596,120 +587,100 @@ export default function InventoryPage() {
       </div>
 
       <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
-        <section className="vault-header">
-          <div className="vault-header-copy">
-            <p className="vault-section-label">Inventory Core</p>
-            <h1 className="font-throne text-4xl font-black leading-[0.95] text-white sm:text-6xl">MMO VAULT HUB</h1>
-            <p className="vault-header-subtitle">
-              Chests, crafting and marketplace are now integrated directly into your inventory for a single premium gameplay loop.
-            </p>
+        <section className="relative overflow-hidden px-1 py-3 sm:px-3 sm:py-5">
+          <div className="relative flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-3xl space-y-3">
+              <p className="text-[0.64rem] font-black uppercase tracking-[0.2em] text-[#9adfff]">Inventory Core</p>
+              <h1 className="font-throne text-4xl font-black leading-[0.95] text-white sm:text-6xl">MMO VAULT HUB</h1>
+              <p className="text-sm leading-7 text-[#bfd4ec] sm:text-base">
+                Chests, crafting and marketplace are now integrated directly into your inventory for a single premium gameplay loop.
+              </p>
+            </div>
+
+            <div className="grid min-w-[220px] gap-1 border-l border-[#d4af5a]/45 pl-4">
+              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#99b6d7]">Wallet</p>
+              <p className="text-3xl font-black text-[#ffcf67]">{profile.lootCoins.toLocaleString("en-US")}</p>
+              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#99b6d7]">Title</p>
+              <p className="text-sm font-black uppercase tracking-[0.14em] text-[#d8e9ff]">Level {rpgLevel}</p>
+            </div>
           </div>
 
-          <div className="vault-hero-art">
-            <Image src="/inventario/invfundo2.png" alt="" fill className="vault-hero-image" priority sizes="(max-width: 768px) 100vw, 35vw" />
+          <div className="relative mt-8 grid gap-x-6 gap-y-4 border-y border-white/10 py-4 sm:grid-cols-2 xl:grid-cols-5">
+            <article className="px-1">
+              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Inventory Slots</p>
+              <p className="mt-2 text-2xl font-black text-white">{usedSlots}/{slotLimit}</p>
+            </article>
+            <article className="px-1">
+              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">RPG XP</p>
+              <p className="mt-2 text-2xl font-black text-white">{rpgXp}</p>
+            </article>
+            <article className="px-1">
+              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">XP Progress</p>
+              <p className="mt-2 text-2xl font-black text-white">{xpSegment.inLevel}/{xpSegment.levelCap}</p>
+            </article>
+            <article className="px-1">
+              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Sales</p>
+              <p className="mt-2 text-2xl font-black text-white">{profile.marketplaceSales ?? 0}</p>
+            </article>
+            <article className="px-1">
+              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Buys</p>
+              <p className="mt-2 text-2xl font-black text-white">{profile.marketplaceBuys ?? 0}</p>
+            </article>
           </div>
 
-          <div className="vault-wallet-card">
-            <div className="vault-wallet-row">
-              <span className="vault-card-label">Wallet</span>
-              <span className="vault-wallet-coin"><Coins size={14} /></span>
-            </div>
-            <div className="vault-wallet-value">{profile.lootCoins.toLocaleString("en-US")}</div>
-            <div className="vault-wallet-meta">
-              <span className="vault-card-label">Title</span>
-              <span className="vault-card-label">Level {rpgLevel}</span>
-            </div>
-            <div className="vault-rank-badge"><Crown size={18} /></div>
+          <div className="relative mt-5 h-2 overflow-hidden rounded-full bg-black/35">
+            <motion.div className="h-full bg-gradient-to-r from-[#59cfff] via-[#4f8cff] to-[#c06dff]" animate={{ width: `${fillPercent}%` }} transition={{ duration: 0.45 }} />
+          </div>
+
+          <div className="relative mt-5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setOpenCraftCategory(null);
+                setShowCraftMenu(true);
+              }}
+              className="loot-gold-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]"
+            >
+              Craft
+            </button>
+            <Link href="/marketplace" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]">
+              Marketplace
+            </Link>
+            <Link href="/profile" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]">
+              Back to Profile
+            </Link>
           </div>
         </section>
 
-        <div className="vault-stat-grid">
-          {stats.map(({ label, value, detail, icon: Icon }) => (
-            <article key={label} className="vault-stat-card">
-              <div className="vault-stat-topline">
-                <div className="vault-stat-icon">
-                  <Icon size={15} />
-                </div>
-                <span>{label}</span>
-              </div>
-              <div className="vault-stat-value">{value}</div>
-              <div className="vault-stat-detail">{detail}</div>
-              {label === "XP Progress" ? (
-                <div className="vault-progress-wrap">
-                  <div className="vault-progress-track">
-                    <motion.div className="vault-progress-fill" animate={{ width: `${fillPercent}%` }} transition={{ duration: 0.45 }} />
-                  </div>
-                </div>
-              ) : null}
-            </article>
-          ))}
-        </div>
-
-        <div className="vault-action-row">
-          <button
-            type="button"
-            onClick={() => {
-              setOpenCraftCategory(null);
-              setShowCraftMenu(true);
-            }}
-            className="vault-action vault-action-primary"
-          >
-            <Hammer size={18} />
-            <span>Craft</span>
-          </button>
-          <Link href="/marketplace" className="vault-action vault-action-secondary">
-            <Store size={18} />
-            <span>Marketplace</span>
-          </Link>
-          <Link href="/profile" className="vault-action vault-action-secondary">
-            <ArrowLeft size={18} />
-            <span>Back to Profile</span>
-          </Link>
-        </div>
-
-        <section className="vault-grid-panel">
-          <div className="vault-grid-toolbar">
+        <section className="relative px-1 py-3 sm:px-3 sm:py-5">
+          <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="font-throne text-3xl font-black text-white">Inventory Grid</h2>
-              <p className="vault-grid-subtitle">Click chest or gift card items for contextual actions</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#a6c0df]">Click chest or gift card items for contextual actions</p>
             </div>
-
-            <div className="vault-grid-controls">
-              <div className="vault-filter-inline">
-                <ListFilter size={15} />
-                <button type="button" className="vault-filter-pill active">All Items</button>
-                <button type="button" className="vault-filter-pill">Rarity</button>
-                <button type="button" className="vault-filter-pill">Category</button>
-              </div>
-
-              <div className="vault-sort-inline">
-                <ArrowUpDown size={14} />
-                <span>Newest</span>
-              </div>
-
-              <div className="vault-view-toggle">
-                <button type="button" className="active" aria-label="Grid view"><Grid2x2 size={16} /></button>
-                <button type="button" aria-label="List view"><Rows3 size={16} /></button>
-              </div>
-            </div>
+            <span className={`px-1 py-1 text-[0.62rem] font-black uppercase tracking-[0.15em] ${usedSlots >= slotLimit ? "text-rose-100" : "text-emerald-100"}`}>
+              {usedSlots >= slotLimit ? "Inventory Full" : "Space Available"}
+            </span>
           </div>
 
-          <div className="vault-space-line">
-            <span className="vault-space-label">{usedSlots >= slotLimit ? "Inventory Full" : "Space Available"}</span>
-            <span className="vault-space-value">{usedSlots}/{slotLimit}</span>
-          </div>
-
-          <div className="vault-grid-frame">
-            <div className="vault-grid-inner">
+          <div className="relative mt-5 mx-auto w-full max-w-[1526px] overflow-hidden rounded-[1.25rem] border border-[#d4af5a]/45 bg-[#0c1220]/35 p-3 shadow-[0_20px_55px_rgba(0,0,0,0.28)]" style={{ height: "1024px" }}>
+            <div
+              className="absolute inset-[18px]"
+              style={{
+                backgroundImage: "url('/inventario/inventariobg.png')",
+                backgroundSize: "100% 100%",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+                opacity: 0.95,
+              }}
+            />
+            <div className="absolute inset-[18px] bg-[radial-gradient(circle_at_center,rgba(255,248,228,0.18),rgba(94,68,28,0.08)_45%,rgba(12,18,32,0.18))]" />
+            <div className="absolute inset-[80px] z-10 grid scale-[0.84] grid-cols-5 gap-[22px]">
               {Array.from({ length: slotLimit }).map((_, slotIndex) => {
                 const item = inventory[slotIndex] ?? null;
 
                 if (!item) {
-                  return (
-                    <div key={`slot-empty-${slotIndex}`} className="vault-slot vault-slot-empty">
-                      <span className="vault-slot-empty-mark">✦</span>
-                    </div>
-                  );
+                  return <div key={`slot-empty-${slotIndex}`} className="aspect-square rounded-xl border border-dashed border-[#d4af5a]/35 bg-black/20 shadow-[inset_0_0_18px_rgba(0,0,0,0.22)] backdrop-blur-[1px]" />;
                 }
 
                 const rarityClass = RARITY_GLOW[item.rarity] ?? "border-white/25";
@@ -722,7 +693,7 @@ export default function InventoryPage() {
                   <motion.button
                     key={`${item.id}-${slotIndex}`}
                     type="button"
-                    className={`vault-slot vault-slot-filled ${rarityClass} ${itemIsChest || itemIsRedeemableGiftCard ? "cursor-pointer" : "cursor-default"}`}
+                    className={`group relative aspect-square overflow-hidden rounded-xl border bg-[linear-gradient(180deg,rgba(9,16,29,0.96),rgba(5,10,20,0.94))] p-2 text-left transition-all ${rarityClass} ${itemIsChest || itemIsRedeemableGiftCard ? "cursor-pointer" : "cursor-default"}`}
                     whileHover={{ y: -3, scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onMouseEnter={() => setHoveredItem(item)}
@@ -747,15 +718,11 @@ export default function InventoryPage() {
                       }
                     }}
                   >
-                    <span className="vault-slot-quantity">{item.quantity}</span>
-                    <span className="vault-slot-rarity-label">{RARITY_LABEL[item.rarity] ?? item.rarity}</span>
-                    <Image src={itemIconSrc} alt={item.name} width={90} height={90} className="vault-slot-image" />
-                    <div className="vault-slot-name-wrap">
-                      <span className="vault-slot-name">{item.name}</span>
-                    </div>
-                    <div className="vault-slot-foot">
-                      <span className="vault-slot-tier">{RARITY_LABEL[item.rarity] ?? item.rarity}</span>
-                      <Sparkles size={12} />
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_22%,rgba(255,255,255,0.16),transparent_60%)]" />
+                    <Image src={itemIconSrc} alt={item.name} width={88} height={88} className="relative mx-auto h-[70%] w-[70%] object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)]" />
+                    <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between">
+                      <span className="truncate rounded bg-black/55 px-1.5 py-0.5 text-[0.56rem] font-bold uppercase tracking-[0.1em] text-[#d7e7ff]">{item.name}</span>
+                      <span className="rounded bg-black/65 px-1.5 py-0.5 text-[0.56rem] font-black text-white">{item.quantity}</span>
                     </div>
                   </motion.button>
                 );
