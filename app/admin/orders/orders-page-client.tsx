@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 
 import { useProfileSession } from "@/app/profile/use-profile-session";
+import { AlertTriangle, CalendarClock, CircleDollarSign, Download, RefreshCw, ShoppingCart } from "lucide-react";
 import CreateTestOrderButton from "./create-test-order-button";
 import type { OrderRow } from "./export-button";
 import { OrdersTableWithActions } from "./orders-table";
@@ -65,6 +66,18 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const summary = useMemo(() => {
+    const totalCents = rows.reduce((sum, row) => sum + row.totalCents, 0);
+    const openOrders = rows.filter((row) => row.status !== "Completed").length;
+    const pendingPayments = rows.filter((row) => row.status === "Unpaid").length;
+    return {
+      openOrders,
+      totalCents,
+      averageCents: rows.length > 0 ? Math.round(totalCents / rows.length) : 0,
+      pendingPayments,
+    };
+  }, [rows]);
 
   const reload = useCallback(async () => {
     if (status === "loading") {
@@ -135,14 +148,14 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
 
   return (
     <div className="min-h-screen bg-black text-green-400">
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+      <main className="mx-auto w-full max-w-7xl px-1 py-4 sm:px-2 lg:px-3">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/8 pb-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin / Extrato</p>
-            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[#d4af5a]">Extrato</p>
+            <h1 className="mt-2 text-3xl font-black text-[#f0ede4] sm:text-4xl">
               {mode === "open" ? "Ordens Abertas" : mode === "completed" ? "Ordens Completas" : "Ordens"}
             </h1>
-            <p className="mt-2 text-sm text-green-600">
+            <p className="mt-2 text-sm text-[#8e98a3]">
               {mode === "open"
                 ? "Ordens pendentes ou pagas aguardando conclusao."
                 : mode === "completed"
@@ -150,10 +163,26 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
                   : "Lista geral de ordens com filtros e acoes administrativas."}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {mode !== "completed" ? <CreateTestOrderButton onCreated={reload} /> : null}
           </div>
         </div>
+
+        <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {[
+            [ShoppingCart, "Ordens abertas", `${summary.openOrders}`, "Visíveis na tabela", "text-[#b98af0]"],
+            [CircleDollarSign, "Valor total", `$${(summary.totalCents / 100).toFixed(2)}`, "Todas as ordens visíveis", "text-[#e6c46a]"],
+            [CircleDollarSign, "Ticket médio", `$${(summary.averageCents / 100).toFixed(2)}`, "Por ordem", "text-[#72c8ff]"],
+            [CalendarClock, "Pagamentos pendentes", `${summary.pendingPayments}`, "Aguardando confirmação", "text-[#45c982]"],
+            [AlertTriangle, "Atrasadas", "N/A", "Sem SLA configurado", "text-[#e07a7a]"],
+          ].map(([Icon, label, value, caption, tone]) => (
+            <article key={String(label)} className="rounded-xl border border-white/8 bg-[#101722] p-4 shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
+              <div className="flex items-start justify-between gap-3"><p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#8e98a3]">{String(label)}</p><Icon className={`size-4 ${String(tone)}`} /></div>
+              <p className="mt-2 text-2xl font-black text-[#f0ede4]">{String(value)}</p>
+              <p className="mt-1 text-[0.62rem] text-[#748092]">{String(caption)}</p>
+            </article>
+          ))}
+        </section>
 
         {errorMessage ? (
           <section className="mt-6 overflow-x-auto rounded-xl border border-green-900 bg-black">
@@ -181,7 +210,13 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
           </span>
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-3">
+        <div className="mt-5 grid gap-3 rounded-xl border border-white/8 bg-[#101722] p-3 text-[0.65rem] text-[#8e98a3] sm:grid-cols-3">
+          <div className="flex items-center gap-2"><Download className="size-4 text-[#d4af5a]" /><span><strong className="text-[#e6c46a]">Exportação</strong><br />Use Export visible rows na tabela</span></div>
+          <button type="button" onClick={() => void reload()} className="flex items-center gap-2 text-left hover:text-[#e6c46a]"><RefreshCw className="size-4 text-[#d4af5a]" /><span><strong className="text-[#e6c46a]">Atualização</strong><br />Atualizar dados agora</span></button>
+          <div className="flex items-center gap-2"><CalendarClock className="size-4 text-[#d4af5a]" /><span><strong className="text-[#e6c46a]">Fuso horário</strong><br />America/Sao_Paulo (UTC-3)</span></div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-3">
           <Link
             href="/admin"
             className="inline-flex items-center rounded-md border border-green-800 px-4 py-2 text-sm font-medium text-green-400 transition hover:bg-green-950"

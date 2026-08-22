@@ -272,13 +272,13 @@ export function OrdersTableWithActions({ rows, onReload }: OrdersTableWithAction
   }
 
   return (
-    <section className="mt-6 rounded-xl border border-green-900 bg-black">
+    <section className="mt-5 overflow-hidden rounded-2xl border border-white/8 bg-[#0a0f16] shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
       {errorMessage ? (
         <p className="border-b border-red-900 bg-red-950/20 px-5 py-3 text-sm font-medium text-red-400">{errorMessage}</p>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-green-900 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-green-500">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/8 bg-[#101722] px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-[#8e98a3]">
           <span>{sortedRows.length} visible</span>
           <span>•</span>
           <span>{rows.length} total</span>
@@ -286,13 +286,14 @@ export function OrdersTableWithActions({ rows, onReload }: OrdersTableWithAction
         <button
           type="button"
           onClick={exportVisibleRows}
-          className="rounded-md border border-green-700 bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wide text-green-400 transition hover:bg-green-950"
+          className="rounded-lg border border-[#d4af5a]/35 bg-[#17140d] px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#e6c46a] transition hover:bg-[#2a2110]"
         >
           Export visible rows
         </button>
       </div>
 
-      <table className="w-full table-fixed text-left text-xs">
+      <div className="overflow-x-auto">
+      <table className="min-w-[1180px] w-full table-fixed text-left text-xs">
         <thead>
           <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("created")} className="inline-flex items-center gap-1">Date <span>{sortBy === "created" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
@@ -444,6 +445,7 @@ export function OrdersTableWithActions({ rows, onReload }: OrdersTableWithAction
           })}
         </tbody>
       </table>
+      </div>
     </section>
   );
 }
