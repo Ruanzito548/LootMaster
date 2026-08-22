@@ -3,26 +3,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { History, Package, UserRound, Wallet as WalletIcon } from "lucide-react";
+import { Package, UserRound, Wallet as WalletIcon } from "lucide-react";
 
 import { buildLevelReward, calculateLevelProgress, formatMoneyUsd } from "../../lib/level-rewards";
 import { defaultCoverURL, defaultPhotoURL } from "../../lib/profile-data";
 import HistoryClient from "./history/history-client";
 import InventoryPage from "./inventory/page";
 import { useProfileSession } from "./use-profile-session";
-import ProfileWalletHistoryPage from "./wallet-history/page";
 
-type ProfileTab = "inventory" | "wallet" | "history" | "account";
+type ProfileTab = "inventory" | "wallet" | "account";
 
 const TABS: { id: ProfileTab; label: string; icon: typeof Package }[] = [
   { id: "inventory", label: "Inventory", icon: Package },
   { id: "wallet", label: "Wallet", icon: WalletIcon },
-  { id: "history", label: "History", icon: History },
   { id: "account", label: "Account", icon: UserRound },
 ];
 
 function isProfileTab(value: string): value is ProfileTab {
-  return value === "inventory" || value === "wallet" || value === "history" || value === "account";
+  return value === "inventory" || value === "wallet" || value === "account";
 }
 
 export default function ProfilePage() {
@@ -213,8 +211,7 @@ export default function ProfilePage() {
         ) : null}
 
         {activeTab === "inventory" ? <InventoryPage /> : null}
-        {activeTab === "wallet" ? <ProfileWalletHistoryPage /> : null}
-        {activeTab === "history" ? <HistoryClient /> : null}
+        {activeTab === "wallet" ? <HistoryClient /> : null}
 
         {activeTab === "account" ? (
           <section className="loot-panel rounded-[2rem] p-6 sm:p-8">
@@ -289,7 +286,15 @@ export default function ProfilePage() {
               <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-[color:var(--accent)]">Level up</p>
               <h3 className="mt-3 text-center text-4xl font-black text-[color:var(--text-main)]">Level {profile.lastLevelUpLevel}</h3>
               <div className="theme-surface-soft mt-6 rounded-2xl p-5 text-center">
-                <p className="text-4xl leading-none">{levelUpReward.icon}</p>
+                <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-[#0b1220]/80 ring-1 ring-[color:var(--border-color)]">
+                  <Image
+                    src={levelUpReward.grantedItems[0]?.iconPath ?? "/baus/epico.png"}
+                    alt={levelUpReward.title}
+                    width={96}
+                    height={96}
+                    className="h-full w-full object-contain p-2"
+                  />
+                </div>
                 <p className="mt-3 text-xl font-black text-[color:var(--text-main)]">{levelUpReward.title}</p>
                 <p className="mt-2 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">{levelUpReward.badge} Reward Claimed</p>
               </div>

@@ -30,6 +30,22 @@ const MAX_AUTO_FETCH_LOOPS = 20;
 
 type HistoryTab = "wallet" | "order" | "others";
 
+type WalletFilterState = {
+  type: string;
+  status: string;
+  method: string;
+  startDate: string;
+  endDate: string;
+};
+
+const DEFAULT_WALLET_FILTERS: WalletFilterState = {
+  type: "all",
+  status: "all",
+  method: "all",
+  startDate: "",
+  endDate: "",
+};
+
 type WalletHistoryRow = {
   id: string;
   kind: "credit" | "withdrawal" | "purchase" | "fee";
@@ -118,6 +134,7 @@ export default function HistoryClient() {
   const [dateTo, setDateTo] = useState("");
   const [activeTab, setActiveTab] = useState<HistoryTab>("wallet");
   const [walletItems, setWalletItems] = useState<WalletHistoryRow[]>([]);
+  const [walletFilters, setWalletFilters] = useState<WalletFilterState>(DEFAULT_WALLET_FILTERS);
 
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -302,22 +319,62 @@ export default function HistoryClient() {
     () => walletItems.filter((item) => item.kind !== "purchase"),
     [walletItems],
   );
+
+  const filteredWalletEntries = useMemo(() => {
+    let nextItems = [...walletEntries];
+
+    if (walletFilters.type !== "all") {
+      nextItems = nextItems.filter((item) => {
+        const typeLabel = getWalletTypeLabel(item).toLowerCase();
+        return typeLabel === walletFilters.type.toLowerCase();
+      });
+    }
+
+    if (walletFilters.status !== "all") {
+      nextItems = nextItems.filter((item) => getWalletStatusLabel(item.status).toLowerCase() === walletFilters.status.toLowerCase());
+    }
+
+    if (walletFilters.method !== "all") {
+      nextItems = nextItems.filter((item) => normalizeWalletMethod(item.method) === walletFilters.method);
+    }
+
+    if (walletFilters.startDate) {
+      nextItems = nextItems.filter((item) => {
+        if (!item.createdAt) return false;
+        return new Date(item.createdAt) >= new Date(`${walletFilters.startDate}T00:00:00`);
+      });
+    }
+
+    if (walletFilters.endDate) {
+      nextItems = nextItems.filter((item) => {
+        if (!item.createdAt) return false;
+        return new Date(item.createdAt) <= new Date(`${walletFilters.endDate}T23:59:59`);
+      });
+    }
+
+    return nextItems.sort((left, right) => {
+      const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : 0;
+      const rightTime = right.createdAt ? new Date(right.createdAt).getTime() : 0;
+      return rightTime - leftTime;
+    });
+  }, [walletEntries, walletFilters]);
+
   const orderEntries = useMemo(
     () => walletItems.filter((item) => item.kind === "purchase"),
     [walletItems],
   );
 
   const walletSummary = useMemo(() => {
-    const totalIn = walletEntries.reduce((sum, item) => (item.direction === "in" ? sum + item.amount : sum), 0);
-    const totalOut = walletEntries.reduce((sum, item) => (item.direction === "out" ? sum + item.amount : sum), 0);
+    const totalIn = filteredWalletEntries.reduce((sum, item) => (item.direction === "in" ? sum + item.amount : sum), 0);
+    const totalOut = filteredWalletEntries.reduce((sum, item) => (item.direction === "out" ? sum + item.amount : sum), 0);
 
     return {
       totalIn,
       totalOut,
-      totalTransactions: walletEntries.length,
+      totalTransactions: filteredWalletEntries.length,
       currentBalance: Number(profile?.lootCoins ?? 0),
     };
-  }, [profile?.lootCoins, walletEntries]);
+  }, [filteredWalletEntries, profile?.lootCoins]);
 
   const orderSummary = useMemo(() => {
     const totalSpent = orderEntries.reduce((sum, item) => sum + (item.direction === "out" ? item.amount : 0), 0);
@@ -418,6 +475,17 @@ export default function HistoryClient() {
     if (lower.includes("pending") || lower.includes("review")) return "Pending";
     if (lower.includes("paid") || lower.includes("complete") || lower.includes("approved") || lower.includes("credited")) return "Completed";
     return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  };
+
+  const normalizeWalletMethod = (value: string | null) => {
+    if (!value) return "";
+    const normalized = value.toLowerCase();
+    if (normalized.includes("pix")) return "pix";
+    if (normalized.includes("card") || normalized.includes("stripe")) return "card";
+    if (normalized.includes("paypal") || normalized.includes("pay-pal")) return "paypal";
+    if (normalized.includes("crypto") || normalized.includes("usdt") || normalized.includes("btc") || normalized.includes("eth")) return "crypto";
+    if (normalized.includes("balance") || normalized.includes("internal")) return "internal-balance";
+    return normalized;
   };
 
   const getWalletMethodLabel = (value: string | null) => {
@@ -614,6 +682,95 @@ export default function HistoryClient() {
               </div>
             </div>
 
+            <div className="mt-5 flex flex-col gap-4 xl:flex-row xl:items-end">
+              <div className="grid flex-1 gap-3 md:grid-cols-4">
+                <label className="grid gap-2 text-[0.62rem] font-black uppercase tracking-[0.22em] text-[#9db9d1]">
+                  Type
+                  <select
+                    value={walletFilters.type}
+                    onChange={(event) => setWalletFilters((current) => ({ ...current, type: event.target.value }))}
+                    className="loot-input rounded-xl px-3 py-2.5 text-sm font-semibold text-[#edf5ff]"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="deposit">Deposit</option>
+                    <option value="purchase">Purchase</option>
+                    <option value="fee">Fee</option>
+                    <option value="withdrawal">Withdrawal</option>
+                    <option value="reward">Reward</option>
+                  </select>
+                </label>
+
+                <label className="grid gap-2 text-[0.62rem] font-black uppercase tracking-[0.22em] text-[#9db9d1]">
+                  Status
+                  <select
+                    value={walletFilters.status}
+                    onChange={(event) => setWalletFilters((current) => ({ ...current, status: event.target.value }))}
+                    className="loot-input rounded-xl px-3 py-2.5 text-sm font-semibold text-[#edf5ff]"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="completed">Completed</option>
+                    <option value="failed">Failed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </label>
+
+                <label className="grid gap-2 text-[0.62rem] font-black uppercase tracking-[0.22em] text-[#9db9d1]">
+                  Method
+                  <select
+                    value={walletFilters.method}
+                    onChange={(event) => setWalletFilters((current) => ({ ...current, method: event.target.value }))}
+                    className="loot-input rounded-xl px-3 py-2.5 text-sm font-semibold text-[#edf5ff]"
+                  >
+                    <option value="all">All Methods</option>
+                    <option value="pix">PIX</option>
+                    <option value="card">Card</option>
+                    <option value="paypal">PayPal</option>
+                    <option value="crypto">Crypto</option>
+                    <option value="internal-balance">Internal Balance</option>
+                  </select>
+                </label>
+
+                <div className="grid gap-2 text-[0.62rem] font-black uppercase tracking-[0.22em] text-[#9db9d1]">
+                  Date Range
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      value={walletFilters.startDate}
+                      onChange={(event) => setWalletFilters((current) => ({ ...current, startDate: event.target.value }))}
+                      className="loot-input rounded-xl px-3 py-2.5 text-sm font-semibold text-[#edf5ff]"
+                    />
+                    <input
+                      type="date"
+                      value={walletFilters.endDate}
+                      onChange={(event) => setWalletFilters((current) => ({ ...current, endDate: event.target.value }))}
+                      className="loot-input rounded-xl px-3 py-2.5 text-sm font-semibold text-[#edf5ff]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-start">
+                <button
+                  type="button"
+                  onClick={() => setWalletFilters(DEFAULT_WALLET_FILTERS)}
+                  className="rounded-full border border-[#d4af5a]/30 bg-[#0e1a24]/80 px-4 py-2 text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#f4d67a] transition hover:border-[#d4af5a]/60 hover:bg-[#132330]"
+                >
+                  Clear Filters
+                </button>
+                <Link href="/profile/withdraw" className="loot-secondary-button flex min-h-[64px] items-center justify-center gap-3 rounded-[1.2rem] border border-[#d4af5a]/45 bg-[#120d09]/70 px-4 py-3 text-left text-[#f7d887] shadow-[inset_0_1px_0_rgba(212,175,90,0.12)] hover:border-[#d4af5a]/70">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#d4af5a]/50 bg-[#101a22] text-[#f5d18f]">
+                    <Wallet className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black uppercase tracking-[0.12em]">Withdraw</div>
+                    <div className="mt-1 text-[0.56rem] font-semibold uppercase tracking-[0.18em] text-[#b7c8d8]">Transfer your balance</div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+
             <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-white/10">
               <div className="overflow-x-auto">
                 <table className="min-w-[960px] w-full border-collapse text-left text-sm">
@@ -629,14 +786,14 @@ export default function HistoryClient() {
                     </tr>
                   </thead>
                   <tbody>
-                    {walletEntries.length === 0 ? (
+                    {filteredWalletEntries.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="px-4 py-12 text-center text-[#a8c1dc]">
-                          No wallet entries available.
+                          No wallet entries match your current filters.
                         </td>
                       </tr>
                     ) : (
-                      walletEntries.map((item, index) => {
+                      filteredWalletEntries.map((item, index) => {
                         const label = getWalletTypeLabel(item);
                         const statusLabel = getWalletStatusLabel(item.status);
                         const amount = item.direction === "in" ? item.amount : -item.amount;
