@@ -35,18 +35,6 @@ type SendOrderNotificationInput = {
   email: string;
 };
 
-type UsdRates = {
-  brlPerUsd: number;
-  eurPerUsd: number;
-};
-
-const DEFAULT_USD_RATES: UsdRates = {
-  brlPerUsd: 5.5,
-  eurPerUsd: 0.92,
-};
-
-let usdRatesCache: { value: UsdRates; expiresAt: number } | null = null;
-
 const CANONICAL_GAME_TITLES: Record<string, string> = {
   retail: "World of Warcraft Midnight",
   "classic-era": "World of Warcraft Classic Era",
@@ -77,71 +65,6 @@ export function normalizeDiscordOrderMetadata(input: {
     gameTitle: canonicalGameTitle || rawGameTitle || "—",
     server: resolvedServer || rawServerName || "—",
   };
-}
-
-function normalizeCurrency(value: string): "USD" | "BRL" | "EUR" {
-  const normalized = value.trim().toUpperCase();
-  if (normalized === "BRL" || normalized === "EUR") {
-    return normalized;
-  }
-
-  return "USD";
-}
-
-async function getUsdRates(): Promise<UsdRates> {
-  const now = Date.now();
-  if (usdRatesCache && usdRatesCache.expiresAt > now) {
-    return usdRatesCache.value;
-  }
-
-  try {
-    const response = await fetch("https://open.er-api.com/v6/latest/USD", {
-      next: { revalidate: 300 },
-    });
-
-    if (!response.ok) {
-      return DEFAULT_USD_RATES;
-    }
-
-    const payload = (await response.json()) as { rates?: Record<string, number> };
-    const brlPerUsd = payload?.rates?.BRL;
-    const eurPerUsd = payload?.rates?.EUR;
-
-    if (
-      typeof brlPerUsd !== "number" ||
-      !Number.isFinite(brlPerUsd) ||
-      brlPerUsd <= 0 ||
-      typeof eurPerUsd !== "number" ||
-      !Number.isFinite(eurPerUsd) ||
-      eurPerUsd <= 0
-    ) {
-      return DEFAULT_USD_RATES;
-    }
-
-    const value = { brlPerUsd, eurPerUsd };
-    usdRatesCache = {
-      value,
-      expiresAt: now + 5 * 60 * 1000,
-    };
-
-    return value;
-  } catch {
-    return DEFAULT_USD_RATES;
-  }
-}
-
-async function convertToUsdCents(amountCents: number, currency: string): Promise<number> {
-  const normalizedCurrency = normalizeCurrency(currency);
-  if (normalizedCurrency === "USD") {
-    return amountCents;
-  }
-
-  const rates = await getUsdRates();
-  const amount = amountCents / 100;
-  const usdAmount =
-    normalizedCurrency === "BRL" ? amount / rates.brlPerUsd : amount / rates.eurPerUsd;
-
-  return Math.round(usdAmount * 100);
 }
 
 type SendSupplierPayoutMessageInput = {
@@ -406,7 +329,7 @@ export async function sendOrderNotificationViaBot(
       ? Number(input.supplierPayoutCents)
       : 0;
   const supplierPayoutCents = Number.isFinite(payoutFromOrderCents) ? Math.max(0, payoutFromOrderCents) : 0;
-  const payoutUsdCents = await convertToUsdCents(supplierPayoutCents, input.currency);
+  const payoutUsdCents = supplierPayoutCents;
   const normalized = normalizeDiscordOrderMetadata({
     gameId: input.gameId,
     gameTitle: input.gameTitle,

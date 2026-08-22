@@ -118,18 +118,17 @@ export async function GET(request: Request): Promise<Response> {
           typeof data.supplierPayout === "number" && Number.isFinite(data.supplierPayout)
             ? data.supplierPayout
             : Math.round(totalCents * (supplierPercentage / 100));
-        const grossProfit =
-          typeof data.grossProfit === "number" && Number.isFinite(data.grossProfit)
-            ? data.grossProfit
-            : Math.max(0, totalCents - supplierPayout);
-        const netProfit =
-          typeof data.netProfit === "number" && Number.isFinite(data.netProfit)
-            ? data.netProfit
-            : grossProfit;
         const totalUsdCents = convertCentsToUsdCents(totalCents, currency, usdRates);
-        const supplierPayoutUsdCents = convertCentsToUsdCents(supplierPayout, currency, usdRates);
-        const grossProfitUsdCents = convertCentsToUsdCents(grossProfit, currency, usdRates);
-        const netProfitUsdCents = convertCentsToUsdCents(netProfit, currency, usdRates);
+        const supplierPayoutUsdCents = supplierPayout;
+        const grossProfitUsdCents = Math.max(0, totalUsdCents - supplierPayoutUsdCents);
+        const cardFee = typeof data.cardFee === "number" && Number.isFinite(data.cardFee) ? data.cardFee : 0;
+        const cashback = typeof data.cashback === "number" && Number.isFinite(data.cashback) ? data.cashback : 0;
+        const operationalReserve =
+          typeof data.operationalReserve === "number" && Number.isFinite(data.operationalReserve)
+            ? data.operationalReserve
+            : 0;
+        const totalCostsUsdCents = convertCentsToUsdCents(cardFee + cashback + operationalReserve, currency, usdRates);
+        const netProfitUsdCents = Math.max(0, grossProfitUsdCents - totalCostsUsdCents);
 
         const status =
           (typeof data.orderStatus === "string" && data.orderStatus === "completed") || completedOrderIds.has(orderId)

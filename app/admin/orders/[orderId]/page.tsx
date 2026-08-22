@@ -110,11 +110,15 @@ export default async function AdminOrderApplicantsPage(
         operationalReservePercent: defaults.operationalReservePercent,
       });
       const totalUsdCents = convertCentsToUsdCents(amountTotalCents, sourceCurrency, usdRates);
-      const supplierPayoutUsdCents = convertCentsToUsdCents(financials.supplierPayout, sourceCurrency, usdRates);
+      const supplierPayoutUsdCents = financials.supplierPayout;
       const gatewayUsdCents = convertCentsToUsdCents(financials.cardFee, sourceCurrency, usdRates);
       const cashbackUsdCents = convertCentsToUsdCents(financials.cashback, sourceCurrency, usdRates);
       const operationalReserveUsdCents = convertCentsToUsdCents(financials.operationalReserve, sourceCurrency, usdRates);
-      const netProfitUsdCents = convertCentsToUsdCents(financials.netProfit, sourceCurrency, usdRates);
+      const grossProfitUsdCents = Math.max(0, totalUsdCents - supplierPayoutUsdCents);
+      const netProfitUsdCents = Math.max(
+        0,
+        grossProfitUsdCents - gatewayUsdCents - cashbackUsdCents - operationalReserveUsdCents,
+      );
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
       const paymentMethod = typeof data.paymentMethod === "string" ? data.paymentMethod : "";
       const orderCreatedAtIso =
