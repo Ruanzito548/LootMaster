@@ -232,6 +232,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   const finalPriceLocalized = finalPrice * usdToCurrencyRate;
   const basePriceLocalized = basePrice * usdToCurrencyRate;
   const paymentAdjustmentLocalized = paymentAdjustment * usdToCurrencyRate;
+  const lootCoinAmount = Math.max(0, finalPrice);
 
   const progressPercent = useMemo(() => {
     let score = 0;
@@ -657,6 +658,18 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#d3e9ff]">Total</p>
             <p className="text-2xl font-black text-[#6ee7ff]">{formatCurrency(finalPriceLocalized, selectedCurrency, selectedLocale)}</p>
           </div>
+
+          {paymentMethod === "balance" ? (
+            <div className="mt-3 rounded-xl border border-[#facc15]/25 bg-[#3b2f0b]/35 px-3 py-3">
+              <div className="flex items-center justify-between gap-3 text-[#f8e7a0]">
+                <span className="text-xs uppercase tracking-[0.12em]">Loot Coins to debit</span>
+                <span className="font-black text-[#facc15]">{lootCoinAmount.toFixed(2)} Loot Coins</span>
+              </div>
+              <p className="mt-1 text-xs text-[#d8c986]">
+                1 Loot Coin = US$1.00 · equivalent to {formatCurrency(finalPriceLocalized, selectedCurrency, selectedLocale)}
+              </p>
+            </div>
+          ) : null}
 
           <div className="mt-4 rounded-xl border border-white/10 bg-[#0b162b]/75 px-3 py-3">
             <div className="flex items-center gap-2 text-[#9ec4f4]">
