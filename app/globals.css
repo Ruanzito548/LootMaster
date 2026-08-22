@@ -1385,6 +1385,11 @@ body.theme-transition-surface {
   background-image: none !important;
 }
 
+.theme-transition-surface main.inventory-page-main {
+  background: rgba(5, 8, 12, 0.95) !important;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.28);
+}
+
 .admin-dashboard-theme {
   background-image: radial-gradient(circle at top left, rgba(34, 197, 94, 0.16), transparent 28%), linear-gradient(135deg, #060816 0%, #0b1118 40%, #070b10 100%) !important;
 }

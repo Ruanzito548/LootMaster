@@ -592,7 +592,7 @@ export default function InventoryPage() {
 
   return (
     <div className="loot-shell relative overflow-hidden pb-6">
-      <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 bg-[#05080c]/95 px-4 pb-20 pt-8 shadow-[0_0_40px_rgba(0,0,0,0.28)] sm:px-6 lg:px-8">
+      <main className="inventory-page-main relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
         <section className="relative flex flex-wrap gap-3 px-1 sm:px-3">
           <button
             type="button"
