@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { FieldPath } from "firebase-admin/firestore";
 
 import { getAdminDb } from "@/lib/firebase-admin";
+import { convertCentsToUsdCents, getUsdRates, normalizeCurrency } from "@/lib/currency-conversion";
 import { buildOrderFinancialSnapshot } from "@/lib/order-financials";
 import { buildDefaultSiteFeeSettings } from "@/lib/site-fee-settings";
 import { isDiscordAutoSendEnabled } from "@/lib/discord-settings";
@@ -99,6 +100,8 @@ export default async function AdminOrderApplicantsPage(
     if (orderDoc.exists) {
       const data = orderDoc.data() as Record<string, unknown>;
       const amountTotalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
+      const sourceCurrency = normalizeCurrency(data.currency);
+      const usdRates = await getUsdRates();
       const defaults = buildDefaultSiteFeeSettings();
       const financials = buildOrderFinancialSnapshot(data, {
         supplierDefaultPercent: defaults.supplierDefaultPercent,
@@ -106,6 +109,12 @@ export default async function AdminOrderApplicantsPage(
         cashbackPercent: defaults.cashbackPercent,
         operationalReservePercent: defaults.operationalReservePercent,
       });
+      const totalUsdCents = convertCentsToUsdCents(amountTotalCents, sourceCurrency, usdRates);
+      const supplierPayoutUsdCents = convertCentsToUsdCents(financials.supplierPayout, sourceCurrency, usdRates);
+      const gatewayUsdCents = convertCentsToUsdCents(financials.cardFee, sourceCurrency, usdRates);
+      const cashbackUsdCents = convertCentsToUsdCents(financials.cashback, sourceCurrency, usdRates);
+      const operationalReserveUsdCents = convertCentsToUsdCents(financials.operationalReserve, sourceCurrency, usdRates);
+      const netProfitUsdCents = convertCentsToUsdCents(financials.netProfit, sourceCurrency, usdRates);
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
       const paymentMethod = typeof data.paymentMethod === "string" ? data.paymentMethod : "";
       const orderCreatedAtIso =
@@ -200,19 +209,19 @@ export default async function AdminOrderApplicantsPage(
         goldAmount: typeof data.goldAmount === "number" ? data.goldAmount : 0,
         server: typeof data.server === "string" ? data.server : "-",
         faction: typeof data.faction === "string" ? data.faction : "-",
-        totalLabel: formatMoney(amountTotalCents),
-        payoutLabel: formatMoney(financials.supplierPayout),
-        totalCents: financials.grossRevenue,
-        supplierPayoutCents: financials.supplierPayout,
+        totalLabel: formatMoney(totalUsdCents),
+        payoutLabel: formatMoney(supplierPayoutUsdCents),
+        totalCents: totalUsdCents,
+        supplierPayoutCents: supplierPayoutUsdCents,
         supplierPercentage: financials.supplierPercentage,
         gatewayLabel: resolveGatewayLabel(paymentMethod),
-        gatewayCents: financials.cardFee,
+        gatewayCents: gatewayUsdCents,
         gatewayPercent: typeof data.cardFeePercent === "number" ? data.cardFeePercent : 0,
-        cashbackCents: financials.cashback,
+        cashbackCents: cashbackUsdCents,
         cashbackPercent: typeof data.cashbackPercent === "number" ? data.cashbackPercent : 0,
-        operationalReserveCents: financials.operationalReserve,
+        operationalReserveCents: operationalReserveUsdCents,
         operationalReservePercent: typeof data.operationalReservePercent === "number" ? data.operationalReservePercent : 0,
-        netProfitCents: financials.netProfit,
+        netProfitCents: netProfitUsdCents,
         orderCreatedAtIso,
         dailyOrdersCount,
         weeklyOrdersCount,
@@ -233,6 +242,10 @@ export default async function AdminOrderApplicantsPage(
       try {
         const stripe = new Stripe(secretKey);
         const session = await stripe.checkout.sessions.retrieve(orderId);
+        const sourceCurrency = normalizeCurrency(session.currency);
+        const usdRates = await getUsdRates();
+        const totalUsdCents = convertCentsToUsdCents(session.amount_total ?? 0, sourceCurrency, usdRates);
+        const supplierPayoutUsdCents = Math.round(totalUsdCents * 0.75);
         summary = {
           orderId,
           gameTitle: session.metadata?.gameTitle ?? "--",
@@ -241,10 +254,10 @@ export default async function AdminOrderApplicantsPage(
           goldAmount: Number(session.metadata?.goldAmount ?? 0),
           server: session.metadata?.server ?? "-",
           faction: session.metadata?.faction ?? "-",
-          totalLabel: formatMoney(session.amount_total),
-          payoutLabel: formatMoney(Math.round((session.amount_total ?? 0) * 0.75)),
-          totalCents: session.amount_total ?? 0,
-          supplierPayoutCents: Math.round((session.amount_total ?? 0) * 0.75),
+          totalLabel: formatMoney(totalUsdCents),
+          payoutLabel: formatMoney(supplierPayoutUsdCents),
+          totalCents: totalUsdCents,
+          supplierPayoutCents: supplierPayoutUsdCents,
           supplierPercentage: Number(session.metadata?.supplierPercentage ?? 75) || 75,
           gatewayLabel: resolveGatewayLabel(session.metadata?.paymentMethod ?? ""),
           gatewayCents: 0,
@@ -253,7 +266,7 @@ export default async function AdminOrderApplicantsPage(
           cashbackPercent: 0,
           operationalReserveCents: 0,
           operationalReservePercent: 0,
-          netProfitCents: (session.amount_total ?? 0) - Math.round((session.amount_total ?? 0) * 0.75),
+          netProfitCents: totalUsdCents - supplierPayoutUsdCents,
           orderCreatedAtIso: typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : null,
           dailyOrdersCount: 1,
           weeklyOrdersCount: 1,

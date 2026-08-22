@@ -1,35 +1,10 @@
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { convertCentsToUsdCents, getUsdRates, normalizeCurrency } from "@/lib/currency-conversion";
 
 import type { OrderRow } from "@/app/admin/orders/export-button";
 
-type SupportedCurrency = "USD" | "BRL" | "EUR";
 type OrdersStatusFilter = "all" | "open" | "completed";
-
-function normalizeCurrency(value: unknown): SupportedCurrency {
-  if (typeof value !== "string") return "USD";
-
-  const normalized = value.trim().toUpperCase();
-  if (normalized === "BRL" || normalized === "EUR") {
-    return normalized;
-  }
-
-  return "USD";
-}
-
-function getCurrencyLocale(currency: SupportedCurrency) {
-  if (currency === "BRL") return "pt-BR";
-  if (currency === "EUR") return "de-DE";
-  return "en-US";
-}
-
-function formatMoney(amountInCents: number | null, currency: SupportedCurrency) {
-  if (typeof amountInCents !== "number") return "--";
-  return new Intl.NumberFormat(getCurrencyLocale(currency), {
-    style: "currency",
-    currency,
-  }).format(amountInCents / 100);
-}
 
 function formatIsoDate(iso: string | null | undefined) {
   if (!iso) return "--";
@@ -64,6 +39,7 @@ export async function GET(request: Request): Promise<Response> {
     const limit = normalizeLimit(url.searchParams.get("limit"));
     const statusFilter = normalizeStatus(url.searchParams.get("status"));
     const adminDb = getAdminDb();
+    const usdRates = await getUsdRates();
 
     let query = adminDb.collection("order-checkouts").orderBy("updatedAt", "desc").limit(limit);
 
@@ -150,6 +126,10 @@ export async function GET(request: Request): Promise<Response> {
           typeof data.netProfit === "number" && Number.isFinite(data.netProfit)
             ? data.netProfit
             : grossProfit;
+        const totalUsdCents = convertCentsToUsdCents(totalCents, currency, usdRates);
+        const supplierPayoutUsdCents = convertCentsToUsdCents(supplierPayout, currency, usdRates);
+        const grossProfitUsdCents = convertCentsToUsdCents(grossProfit, currency, usdRates);
+        const netProfitUsdCents = convertCentsToUsdCents(netProfit, currency, usdRates);
 
         const status =
           (typeof data.orderStatus === "string" && data.orderStatus === "completed") || completedOrderIds.has(orderId)
@@ -173,14 +153,14 @@ export async function GET(request: Request): Promise<Response> {
           faction: typeof data.faction === "string" && data.faction ? data.faction : "--",
           deliveryMethod: typeof data.deliveryMethod === "string" && data.deliveryMethod ? data.deliveryMethod : "--",
           paymentMethod: typeof data.paymentMethod === "string" && data.paymentMethod ? data.paymentMethod : "--",
-          total: formatMoney(totalCents, currency),
-          currency: currency.toLowerCase(),
-          totalCents,
+          total: `$${(totalUsdCents / 100).toFixed(2)}`,
+          currency: "usd",
+          totalCents: totalUsdCents,
           supplierName: typeof data.supplierName === "string" && data.supplierName ? data.supplierName : "--",
           supplierPercentage,
-          supplierPayout,
-          grossProfit,
-          netProfit,
+          supplierPayout: supplierPayoutUsdCents,
+          grossProfit: grossProfitUsdCents,
+          netProfit: netProfitUsdCents,
         };
       })
       .filter((row) => {
