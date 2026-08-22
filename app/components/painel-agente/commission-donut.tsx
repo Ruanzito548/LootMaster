@@ -14,15 +14,15 @@ export function CommissionDonut({ totalLabel, earned, pending, available }: Comm
       : { background: "#1b2734" };
 
   return (
-    <div className="flex items-center gap-5">
-      <div className="relative flex h-28 w-28 shrink-0 items-center justify-center rounded-full" style={ringStyle}>
-        <div className="flex h-20 w-20 flex-col items-center justify-center rounded-full bg-[#0a121c]">
+    <div className="flex items-center gap-6">
+      <div className="relative flex h-32 w-32 shrink-0 items-center justify-center rounded-full" style={ringStyle}>
+        <div className="flex h-[5.5rem] w-[5.5rem] flex-col items-center justify-center rounded-full bg-[#0a121c]">
           <span className="text-xl font-black text-white">{totalLabel}</span>
           <span className="text-[0.55rem] font-bold uppercase tracking-[0.14em] text-[#7d97b6]">Total</span>
         </div>
       </div>
 
-      <div className="flex flex-col gap-2.5 text-xs font-semibold">
+      <div className="flex flex-col gap-3 text-xs font-semibold">
         <span className="inline-flex items-center gap-2 text-[#c7daef]">
           <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
           Earned

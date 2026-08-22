@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
+import { TrendingUp } from "lucide-react";
 
 export type CommissionChartPoint = {
   dateMs: number;
@@ -13,9 +14,9 @@ type CommissionLineChartProps = {
   formatValue: (cents: number) => string;
 };
 
-const WIDTH = 560;
-const HEIGHT = 200;
-const PADDING_X = 36;
+const WIDTH = 420;
+const HEIGHT = 260;
+const PADDING_X = 46;
 const PADDING_TOP = 16;
 const PADDING_BOTTOM = 28;
 
@@ -47,8 +48,11 @@ export function CommissionLineChart({ points, formatValue }: CommissionLineChart
 
   if (!chart) {
     return (
-      <div className="flex h-[200px] items-center justify-center text-xs font-semibold text-[#7d97b6]">
-        No commission data for this period yet.
+      <div className="flex h-[220px] flex-col items-center justify-center gap-2 text-center">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-black/25">
+          <TrendingUp className="h-4 w-4 text-[#7d97b6]" />
+        </span>
+        <p className="text-xs font-semibold text-[#7d97b6]">No commission activity for this period</p>
       </div>
     );
   }
@@ -86,7 +90,14 @@ export function CommissionLineChart({ points, formatValue }: CommissionLineChart
 
         {gridLines.map((fraction) => {
           const y = PADDING_TOP + (HEIGHT - PADDING_TOP - PADDING_BOTTOM) * fraction;
-          return <line key={fraction} x1={PADDING_X} x2={WIDTH - PADDING_X} y1={y} y2={y} stroke="rgba(255,255,255,0.06)" strokeWidth={1} />;
+          return (
+            <g key={fraction}>
+              <line x1={PADDING_X} x2={WIDTH - PADDING_X} y1={y} y2={y} stroke="rgba(255,255,255,0.06)" strokeWidth={1} />
+              <text x={PADDING_X - 8} y={y + 3} textAnchor="end" className="fill-[#5f7896]" fontSize={9}>
+                {formatValue(Math.round(chart.maxValue * (1 - fraction)))}
+              </text>
+            </g>
+          );
         })}
 
         <path d={chart.areaPath} fill={`url(#${gradientId})`} stroke="none" />

@@ -320,10 +320,16 @@ export default function PainelAgentePage() {
   const pagedClients = clients.slice((clientsPage - 1) * ROWS_PER_PAGE, clientsPage * ROWS_PER_PAGE);
   const pagedTransactions = transactions.slice((transactionsPage - 1) * ROWS_PER_PAGE, transactionsPage * ROWS_PER_PAGE);
 
+  const pageBackground = {
+    backgroundColor: "#070b10",
+    backgroundImage:
+      "radial-gradient(circle at 15% 0%, rgba(34,211,238,0.07), transparent 45%), radial-gradient(circle at 85% 15%, rgba(242,200,121,0.05), transparent 40%), radial-gradient(circle at 50% 100%, rgba(20,40,60,0.35), transparent 60%)",
+  } as const;
+
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-[#0a0f16] px-4 pb-10 pt-28 text-slate-200 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-7xl">
+      <div style={pageBackground} className="min-h-screen px-4 pb-10 pt-28 text-slate-200 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[1500px]">
           <p className="text-sm text-slate-400">Loading agent panel...</p>
         </div>
       </div>
@@ -332,8 +338,8 @@ export default function PainelAgentePage() {
 
   if (status !== "authenticated" || !profile) {
     return (
-      <div className="min-h-screen bg-[#0a0f16] px-4 pb-10 pt-28 text-slate-200 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-7xl rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5">
+      <div style={pageBackground} className="min-h-screen px-4 pb-10 pt-28 text-slate-200 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[1500px] rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5">
           <p className="text-sm font-semibold text-amber-200">Sign in to access the agent panel.</p>
           <Link
             href="/login"
@@ -348,8 +354,8 @@ export default function PainelAgentePage() {
 
   if (profile.isAgent !== true) {
     return (
-      <div className="min-h-screen bg-[#0a0f16] px-4 pb-10 pt-28 text-slate-200 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-7xl rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5">
+      <div style={pageBackground} className="min-h-screen px-4 pb-10 pt-28 text-slate-200 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[1500px] rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5">
           <p className="text-sm font-semibold text-rose-200">Your user does not have agent permission for this panel.</p>
           <Link
             href="/profile"
@@ -363,8 +369,8 @@ export default function PainelAgentePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f16] px-4 pb-16 pt-28 text-slate-100 sm:px-6 lg:px-8">
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-5">
+    <div style={pageBackground} className="min-h-screen px-4 pb-10 pt-28 text-slate-100 sm:px-6 lg:px-8">
+      <main className="mx-auto flex w-full max-w-[1500px] flex-col gap-5">
         {panelError ? (
           <section className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5">
             <p className="text-sm font-semibold text-rose-200">{panelError}</p>
@@ -377,6 +383,7 @@ export default function PainelAgentePage() {
             <div className="pointer-events-none absolute inset-y-0 right-0 w-2/3 opacity-30 [mask-image:linear-gradient(to_left,black,transparent)]">
               <Image src="/chest.png" alt="" fill sizes="480px" className="object-contain object-right" />
             </div>
+            <div className="pointer-events-none absolute right-10 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full bg-[#f2c879]/10 blur-3xl" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#0b131d] via-[#0b131d]/60 to-transparent" />
 
             <div className="relative">
@@ -506,7 +513,7 @@ export default function PainelAgentePage() {
         </section>
 
         {/* Linked clients + commission over time */}
-        <section className="grid gap-5 xl:grid-cols-[2fr_1fr]">
+        <section className="grid gap-5 xl:grid-cols-[68%_1fr]">
           <div className="rounded-[1.5rem] border border-white/10 bg-[#0b131d] p-5 sm:p-6">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-cyan-300" />
@@ -519,7 +526,15 @@ export default function PainelAgentePage() {
             ) : clients.length > 0 ? (
               <>
                 <div className="mt-4 overflow-x-auto">
-                  <table className="w-full min-w-[640px] text-left text-sm">
+                  <table className="w-full min-w-[640px] table-fixed text-left text-sm">
+                    <colgroup>
+                      <col className="w-[26%]" />
+                      <col className="w-[14%]" />
+                      <col className="w-[15%]" />
+                      <col className="w-[16%]" />
+                      <col className="w-[16%]" />
+                      <col className="w-[13%]" />
+                    </colgroup>
                     <thead>
                       <tr className="border-b border-white/8 text-[0.6rem] font-black uppercase tracking-[0.12em] text-slate-500">
                         <th className="py-2 pr-3">Client</th>
@@ -627,12 +642,13 @@ export default function PainelAgentePage() {
               <CommissionLineChart points={chartPoints} formatValue={(cents) => formatMoney(cents, commissionStats.currency)} />
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
+            <div className="mt-4 flex items-center gap-6">
+              <div>
                 <p className="text-[0.58rem] font-bold uppercase tracking-[0.12em] text-slate-500">Total Earned</p>
                 <p className="mt-1 text-lg font-black text-cyan-300">{formatMoney(commissionStats.earnedCents, commissionStats.currency)}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
+              <span className="h-8 w-px bg-white/10" />
+              <div>
                 <p className="text-[0.58rem] font-bold uppercase tracking-[0.12em] text-slate-500">This Month</p>
                 <p className="mt-1 inline-flex items-center gap-1.5 text-lg font-black text-cyan-300">
                   {formatMoney(thisMonthVsPrevious.thisMonthCents, commissionStats.currency)}
