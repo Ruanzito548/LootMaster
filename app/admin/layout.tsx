@@ -91,6 +91,12 @@ export default async function AdminLayout({
                 >
                   Ajustes Financeiros
                 </Link>
+                <Link
+                  href="/admin/discord-settings"
+                  className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-base font-medium text-green-400/90 transition-all duration-200 ease-out hover:translate-x-1 hover:bg-green-950/50 hover:text-green-200"
+                >
+                  Configurações Discord
+                </Link>
               </div>
             </details>
 

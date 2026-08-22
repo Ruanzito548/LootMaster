@@ -107,9 +107,10 @@ function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
 type Props = {
   summary: OrderSummary;
   initialApplications: OrderApplication[];
+  discordAutoSendEnabled: boolean;
 };
 
-export function AdminOrderApplicantsClient({ summary, initialApplications }: Props) {
+export function AdminOrderApplicantsClient({ summary, initialApplications, discordAutoSendEnabled }: Props) {
   const [applications, setApplications] = useState<OrderApplication[]>(initialApplications);
   const [dispatch, setDispatch] = useState<OrderDispatch | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(auth?.currentUser) && firebaseEnabled);
@@ -446,14 +447,16 @@ export function AdminOrderApplicantsClient({ summary, initialApplications }: Pro
       <article className="rounded-2xl border border-green-900 bg-black p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Order Summary</p>
-          <button
-            type="button"
-            onClick={() => void resendOrderToDiscord()}
-            disabled={!isAuthenticated || dispatch?.status === "completed" || isResending || isCompleting || isClosing}
-            className="inline-flex rounded-md border border-cyan-700 px-3 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-950/30 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {isResending ? "Resending..." : "Resend order to Discord"}
-          </button>
+          {!discordAutoSendEnabled ? (
+            <button
+              type="button"
+              onClick={() => void resendOrderToDiscord()}
+              disabled={!isAuthenticated || dispatch?.status === "completed" || isResending || isCompleting || isClosing}
+              className="inline-flex rounded-md border border-cyan-700 px-3 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-950/30 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isResending ? "Enviando..." : "Enviar ao Discord"}
+            </button>
+          ) : null}
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>

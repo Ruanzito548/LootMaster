@@ -5,6 +5,7 @@ import { FieldPath } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { buildOrderFinancialSnapshot } from "@/lib/order-financials";
 import { buildDefaultSiteFeeSettings } from "@/lib/site-fee-settings";
+import { isDiscordAutoSendEnabled } from "@/lib/discord-settings";
 
 import { AdminOrderApplicantsClient } from "./page-client";
 
@@ -71,6 +72,7 @@ export default async function AdminOrderApplicantsPage(
   };
   let loadError: string | null = null;
   let preloadError: string | null = null;
+  const discordAutoSendEnabled = await isDiscordAutoSendEnabled();
   let initialApplications: {
     applicationId: string;
     orderId: string;
@@ -337,7 +339,11 @@ export default async function AdminOrderApplicantsPage(
           </p>
         ) : null}
 
-        <AdminOrderApplicantsClient summary={summary} initialApplications={initialApplications} />
+        <AdminOrderApplicantsClient
+          summary={summary}
+          initialApplications={initialApplications}
+          discordAutoSendEnabled={discordAutoSendEnabled}
+        />
       </main>
     </div>
   );

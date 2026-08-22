@@ -8,6 +8,7 @@ import {
 } from "@/lib/agency";
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
+import { isDiscordAutoSendEnabled } from "@/lib/discord-settings";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { fundChestWalletEconomyFromCashback, sanitizeChestWalletEconomyConfig } from "@/lib/chest-wallet-economy";
 import { computeOrderFinancials } from "@/lib/order-financials";
@@ -885,6 +886,11 @@ export async function POST(request: Request): Promise<Response> {
         meta.categoryId ?? meta.categoryTitle?.toLowerCase() ?? "",
       );
       try {
+        const autoSendEnabled = await isDiscordAutoSendEnabled();
+
+        if (!autoSendEnabled) {
+          console.info("[Stripe Webhook] Discord auto-send disabled — skipping automatic notification.");
+        } else {
         const notification = await sendOrderNotificationViaBot({
           channelId: discordChannelId,
           sessionId: session.id,
@@ -912,6 +918,7 @@ export async function POST(request: Request): Promise<Response> {
               },
               { merge: true },
             );
+        }
         }
       } catch (err) {
         // Log the error but don't return a 500 - Stripe would retry endlessly
