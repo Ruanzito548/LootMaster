@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, Flame, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
-import { games, serviceCategories } from "../data/games";
-import { canAccessCategory, canAccessGame } from "@/lib/game-configuration";
+import { games } from "../data/games";
+import { canAccessGame } from "@/lib/game-configuration";
 import { getLiveGameConfiguration, isCurrentSessionAdmin } from "@/lib/game-configuration.server";
 
 const heroArtByGame: Record<string, string> = {
@@ -15,9 +15,6 @@ const heroArtByGame: Record<string, string> = {
 export default async function GamesIndexPage() {
   const [config, isAdmin] = await Promise.all([getLiveGameConfiguration(), isCurrentSessionAdmin()]);
   const visibleGames = games.filter((game) => canAccessGame(config, game.id, isAdmin));
-  const visibleCategories = serviceCategories.filter((category) =>
-    visibleGames.some((game) => canAccessCategory(config, game.id, category.id, isAdmin)),
-  );
 
   return (
     <div className="loot-shell gm-shell">
@@ -45,38 +42,6 @@ export default async function GamesIndexPage() {
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <article className="gm-panel rounded-xl px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="rounded-lg bg-white/5 p-2 text-[color:var(--theme-accent)]"><Flame className="h-4 w-4" /></span>
-                  <div>
-                    <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Live orders</p>
-                    <p className="text-sm font-black text-[color:var(--text-main)]">Fast queue updates</p>
-                  </div>
-                </div>
-              </article>
-
-              <article className="gm-panel rounded-xl px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="rounded-lg bg-white/5 p-2 text-[color:var(--theme-accent)]"><ShieldCheck className="h-4 w-4" /></span>
-                  <div>
-                    <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Protected</p>
-                    <p className="text-sm font-black text-[color:var(--text-main)]">Secure checkout stack</p>
-                  </div>
-                </div>
-              </article>
-
-              <article className="gm-panel rounded-xl px-4 py-3 sm:col-span-2">
-                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Available services</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {visibleCategories.map((category) => (
-                    <span key={category.id} className="rounded-full bg-white/8 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.13em] text-[color:var(--text-main)]">
-                      {category.title}
-                    </span>
-                  ))}
-                </div>
-              </article>
-            </div>
           </div>
         </section>
 
