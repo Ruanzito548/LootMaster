@@ -80,7 +80,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                 />
 
                 <div
-                  className={`w-full rounded-xl border p-4 transition-all duration-300 ${styles.border} ${
+                  className={`w-full rounded-xl border p-3.5 transition-all duration-200 ${styles.border} ${
                     isAvailable ? "reward-node-current" : ""
                   } ${
                     isClaimed
@@ -88,7 +88,7 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                       : isLocked
                       ? "opacity-62"
                       : "opacity-100"
-                  } ${node.isMilestone ? "min-h-[184px]" : "min-h-[172px]"} bg-[linear-gradient(170deg,rgba(12,20,35,0.88),rgba(6,10,22,0.88))] hover:-translate-y-1.5 hover:opacity-100`}
+                  } ${node.isMilestone ? "min-h-[156px]" : "min-h-[146px]"} bg-[linear-gradient(170deg,rgba(12,20,35,0.88),rgba(6,10,22,0.88))] hover:-translate-y-1 hover:opacity-100`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -123,13 +123,13 @@ export function RewardTrack({ nodes }: RewardTrackProps) {
                     </span>
                   </div>
 
-                  <p className="mt-3 truncate text-xs font-black uppercase tracking-[0.14em] text-[color:var(--text-main)]">
+                  <p className="mt-2 truncate text-xs font-black uppercase tracking-[0.14em] text-[color:var(--text-main)]">
                     Lvl {node.level}
                   </p>
 
                   <p className="mt-1 line-clamp-2 text-xs font-semibold text-[color:var(--text-muted)]">{node.reward.shortLabel}</p>
 
-                  <div className="mt-3 flex items-center justify-between gap-2">
+                  <div className="mt-2.5 flex items-center justify-between gap-2">
                     <span
                       className={`rounded-full px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.14em] ${
                         isClaimed

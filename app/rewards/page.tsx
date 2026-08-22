@@ -79,6 +79,9 @@ export default function RewardsPage() {
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
         <section className="relative overflow-hidden rounded-[1.5rem] border border-[color:var(--border-color)]/65 bg-[linear-gradient(120deg,rgba(21,39,56,0.72),rgba(10,15,29,0.9)_52%,rgba(30,22,42,0.72))] px-5 py-5 shadow-[0_18px_44px_rgba(0,0,0,0.24)] sm:px-7 sm:py-6">
+          <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[30%] opacity-25 [mask-image:linear-gradient(to_left,black,transparent)] lg:block">
+            <Image src="/chest.png" alt="" fill sizes="320px" className="object-contain object-right" />
+          </div>
           <div className="relative grid gap-6 lg:grid-cols-[1.1fr_1fr_0.95fr] lg:items-start lg:gap-0">
             <div className="space-y-4">
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[color:var(--accent)]">Loyalty Progression</p>
@@ -174,6 +177,44 @@ export default function RewardsPage() {
             </p>
             <div className="mt-3">
               <RewardTrack nodes={nodes} />
+            </div>
+
+            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-black/40">
+              <div
+                className="h-full rounded-full bg-[linear-gradient(90deg,#c89b3c,#e6c46a)] transition-all duration-700"
+                style={{ width: `${Math.min(100, (highestRewardedLevel / LEVEL_CAP) * 100)}%` }}
+              />
+            </div>
+          </article>
+        </section>
+
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/20 p-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color:var(--accent)]/15 text-lg">⭐</span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-[color:var(--accent)]">Earn XP</p>
+              <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">Every purchase you make grants XP to your account.</p>
+            </div>
+          </article>
+          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/20 p-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7a3fa8]/15 text-lg">⬆️</span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-[#d8a8ff]">Level Up</p>
+              <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">Gain levels and unlock better rewards on your journey.</p>
+            </div>
+          </article>
+          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/20 p-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2fa36b]/15 text-lg">🎁</span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8fe0b8]">Claim Rewards</p>
+              <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">Reach the required level and claim your rewards.</p>
+            </div>
+          </article>
+          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/20 p-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2d6ec7]/15 text-lg">♾️</span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8fc1ff]">Permanent Progress</p>
+              <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">Your progress is saved forever. Keep leveling up!</p>
             </div>
           </article>
         </section>
