@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Flame, Gift, ShieldCheck, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, Gift, Sparkles, Trophy } from "lucide-react";
 
 import { defaultHotGameIds, games } from "./data/games";
 import { useProfileSession } from "./profile/use-profile-session";
@@ -113,20 +113,6 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <article className="gm-panel rounded-xl px-4 py-3">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Featured reward</p>
-                  <p className="mt-2 text-sm font-black text-[color:var(--text-main)]">Mythic Drop</p>
-                </article>
-                <article className="gm-panel rounded-xl px-4 py-3">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Season</p>
-                  <p className="mt-2 text-sm font-black text-[color:var(--theme-warm)]">Nightfall</p>
-                </article>
-                <article className="gm-panel rounded-xl px-4 py-3">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Security</p>
-                  <p className="mt-2 text-sm font-black text-[color:var(--text-main)]">Protected</p>
-                </article>
-              </div>
             </div>
 
             <div className="relative h-[20rem] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#111317] sm:h-[24rem]">
@@ -169,44 +155,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-3">
-          <article className="gm-panel rounded-2xl px-5 py-5">
-            <div className="flex items-center gap-3">
-              <span className="rounded-xl bg-white/5 p-2 text-[color:var(--theme-accent)]">
-                <Flame className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Live activity</p>
-                <p className="text-sm font-black text-[color:var(--text-main)]">126 orders today</p>
-              </div>
-            </div>
-          </article>
-
-          <article className="gm-panel rounded-2xl px-5 py-5">
-            <div className="flex items-center gap-3">
-              <span className="rounded-xl bg-white/5 p-2 text-[color:var(--theme-accent)]">
-                <Gift className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Reward road</p>
-                <p className="text-sm font-black text-[color:var(--text-main)]">New seasonal nodes</p>
-              </div>
-            </div>
-          </article>
-
-          <article className="gm-panel rounded-2xl px-5 py-5">
-            <div className="flex items-center gap-3">
-              <span className="rounded-xl bg-white/5 p-2 text-[color:var(--theme-accent)]">
-                <ShieldCheck className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Trusted checkout</p>
-                <p className="text-sm font-black text-[color:var(--text-main)]">Protected payment flow</p>
-              </div>
-            </div>
-          </article>
         </section>
 
         <section className="space-y-4">
