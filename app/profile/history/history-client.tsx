@@ -28,6 +28,28 @@ const FETCH_PAGE_SIZE = 25;
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 const MAX_AUTO_FETCH_LOOPS = 20;
 
+type HistoryTab = "wallet" | "order" | "others";
+
+type WalletHistoryRow = {
+  id: string;
+  kind: "credit" | "withdrawal" | "purchase" | "fee";
+  category: "Fee" | "Withdrawal" | "Sale Receipt" | "Purchase";
+  direction: "in" | "out" | "info";
+  title: string;
+  amount: number;
+  unit: "loot" | "usd";
+  status: string;
+  method: string | null;
+  reference: string | null;
+  createdAt: string | null;
+};
+
+const HISTORY_TABS: { id: HistoryTab; label: string }[] = [
+  { id: "wallet", label: "Wallet History" },
+  { id: "order", label: "Order History" },
+  { id: "others", label: "Others" },
+];
+
 async function getAuthorizationHeader() {
   const token = await auth?.currentUser?.getIdToken();
   return token ? { Authorization: `Bearer ${token}` } : null;
@@ -94,6 +116,8 @@ export default function HistoryClient() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [activeTab, setActiveTab] = useState<HistoryTab>("wallet");
+  const [walletItems, setWalletItems] = useState<WalletHistoryRow[]>([]);
 
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -137,6 +161,44 @@ export default function HistoryClient() {
         if (!cancelled) {
           setLoading(false);
         }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile, status]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || !profile) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const token = await auth?.currentUser?.getIdToken();
+        const response = await fetch("/api/profile/wallet-history", {
+          method: "GET",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          cache: "no-store",
+        });
+
+        const payload = (await response.json()) as { error?: string; items?: WalletHistoryRow[] };
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Could not load wallet history.");
+        }
+
+        if (!cancelled) {
+          setWalletItems(Array.isArray(payload.items) ? payload.items : []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setErrorMessage(error instanceof Error ? error.message : "Could not load wallet history.");
+        }
+      } finally {
+        // no-op
       }
     })();
 
@@ -236,6 +298,35 @@ export default function HistoryClient() {
     [matchesFilters, rowsPerPage],
   );
 
+  const walletEntries = useMemo(
+    () => walletItems.filter((item) => item.kind !== "purchase"),
+    [walletItems],
+  );
+  const orderEntries = useMemo(
+    () => walletItems.filter((item) => item.kind === "purchase"),
+    [walletItems],
+  );
+
+  const walletSummary = useMemo(() => {
+    const totalIn = walletEntries.reduce((sum, item) => (item.direction === "in" ? sum + item.amount : sum), 0);
+    const totalOut = walletEntries.reduce((sum, item) => (item.direction === "out" ? sum + item.amount : sum), 0);
+
+    return {
+      totalIn,
+      totalOut,
+      totalTransactions: walletEntries.length,
+      currentBalance: Number(profile?.lootCoins ?? 0),
+    };
+  }, [profile?.lootCoins, walletEntries]);
+
+  const orderSummary = useMemo(() => {
+    const totalSpent = orderEntries.reduce((sum, item) => sum + (item.direction === "out" ? item.amount : 0), 0);
+    return {
+      totalSpent,
+      totalOrders: orderEntries.length,
+    };
+  }, [orderEntries]);
+
   const summary = useMemo(() => {
     let gainsCount = 0;
     let lossesCount = 0;
@@ -269,6 +360,76 @@ export default function HistoryClient() {
 
   const formatUsd = (value: number) =>
     value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+
+  const formatWalletAmount = (value: number, direction: "in" | "out" | "info") => {
+    const prefix = direction === "in" ? "+" : direction === "out" ? "-" : "";
+    return `${prefix}${Math.abs(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} LC`;
+  };
+
+  const getWalletTypeColor = (type: string) => {
+    switch (type) {
+      case "Deposit":
+        return "border-emerald-500/40 bg-emerald-500/10 text-emerald-300";
+      case "Purchase":
+        return "border-sky-500/40 bg-sky-500/10 text-sky-300";
+      case "Fee":
+        return "border-orange-500/40 bg-orange-500/10 text-orange-300";
+      case "Withdrawal":
+        return "border-yellow-500/40 bg-yellow-500/10 text-yellow-200";
+      case "Reward":
+        return "border-violet-500/40 bg-violet-500/10 text-violet-200";
+      default:
+        return "border-slate-500/40 bg-slate-500/10 text-slate-200";
+    }
+  };
+
+  const getWalletStatusColor = (status: string) => {
+    const lower = status.toLowerCase();
+    if (lower.includes("complete") || lower.includes("paid") || lower.includes("approved") || lower.includes("credited")) {
+      return "border-emerald-500/35 bg-emerald-500/10 text-emerald-300";
+    }
+    if (lower.includes("process")) {
+      return "border-yellow-500/35 bg-yellow-500/10 text-yellow-200";
+    }
+    if (lower.includes("pending") || lower.includes("review")) {
+      return "border-yellow-600/35 bg-yellow-500/10 text-yellow-200";
+    }
+    if (lower.includes("fail") || lower.includes("cancel")) {
+      return "border-rose-500/35 bg-rose-500/10 text-rose-300";
+    }
+    return "border-slate-500/35 bg-slate-500/10 text-slate-200";
+  };
+
+  const getWalletTypeLabel = (item: WalletHistoryRow) => {
+    if (item.kind === "purchase") return "Purchase";
+    if (item.kind === "fee") return "Fee";
+    if (item.kind === "withdrawal") return "Withdrawal";
+    if (item.title.toLowerCase().includes("reward")) return "Reward";
+    return "Deposit";
+  };
+
+  const getWalletStatusLabel = (value: string) => {
+    const normalized = value.replace(/[_-]+/g, " ").trim();
+    if (!normalized) return "Pending";
+    const lower = normalized.toLowerCase();
+    if (lower.includes("cancel")) return "Cancelled";
+    if (lower.includes("fail")) return "Failed";
+    if (lower.includes("process")) return "Processing";
+    if (lower.includes("pending") || lower.includes("review")) return "Pending";
+    if (lower.includes("paid") || lower.includes("complete") || lower.includes("approved") || lower.includes("credited")) return "Completed";
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  };
+
+  const getWalletMethodLabel = (value: string | null) => {
+    if (!value) return "--";
+    const normalized = value.toLowerCase();
+    if (normalized.includes("pix")) return "PIX";
+    if (normalized.includes("card") || normalized.includes("stripe")) return "Card";
+    if (normalized.includes("paypal") || normalized.includes("pay-pal")) return "PayPal";
+    if (normalized.includes("crypto") || normalized.includes("usdt") || normalized.includes("btc") || normalized.includes("eth")) return "Crypto";
+    if (normalized.includes("balance") || normalized.includes("internal")) return "Internal Balance";
+    return value.toUpperCase();
+  };
 
   const exportCsv = () => {
     const header = ["Date", "Action", "Source", "Reference", "Amount", "Unit", "Status"];
@@ -341,7 +502,6 @@ export default function HistoryClient() {
   return (
     <div className="loot-shell">
       <main className="flex w-full flex-1 flex-col gap-6 pb-20 pt-8">
-        {/* Hero */}
         <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#0a1018] p-6 sm:p-8">
           <div
             className="pointer-events-none absolute inset-0 opacity-25"
@@ -352,57 +512,78 @@ export default function HistoryClient() {
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-[#0a1018]" />
 
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <Link href="/profile" className="inline-flex items-center gap-1.5 text-[0.62rem] font-black uppercase tracking-[0.24em] text-[#8fd6ff]">
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Account
-              </Link>
-              <h1 className="mt-3 text-4xl font-black text-white sm:text-5xl">Transaction History</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#a8c1dc]">
-                Track your full account activity. All marketplace, wallet, chest openings, crafting, admin actions and progression events.
-              </p>
+          <div className="relative flex flex-col gap-5">
+            <div className="flex flex-wrap items-center gap-2">
+              {HISTORY_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`rounded-full border px-4 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] transition ${
+                    activeTab === tab.id
+                      ? "border-[#f2c879]/60 bg-[#f2c879]/10 text-[#f8d98f]"
+                      : "border-white/10 bg-black/20 text-[#b9cde1] hover:border-[#f2c879]/30"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="grid min-w-[280px] grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3">
-                <div className="flex items-center gap-1.5 text-[0.56rem] font-bold uppercase tracking-[0.14em] text-[#8ca9c8]">
-                  <Database className="h-3 w-3" />
-                  Total Transactions
+            {activeTab === "others" ? (
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <Link href="/profile" className="inline-flex items-center gap-1.5 text-[0.62rem] font-black uppercase tracking-[0.24em] text-[#8fd6ff]">
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Account
+                  </Link>
+                  <h1 className="mt-3 text-4xl font-black text-white sm:text-5xl">Transaction History</h1>
+                  <p className="mt-3 max-w-2xl text-sm leading-7 text-[#a8c1dc]">
+                    Track your full account activity. All marketplace, wallet, chest openings, crafting, admin actions and progression events.
+                  </p>
                 </div>
-                <p className="mt-2 text-2xl font-black text-white">{summary.total}</p>
-                <p className="text-[0.6rem] font-semibold text-[#8ca9c8]">All time</p>
-              </div>
 
-              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3">
-                <div className="flex items-center gap-1.5 text-[0.56rem] font-bold uppercase tracking-[0.14em] text-emerald-200">
-                  <TrendingUp className="h-3 w-3" />
-                  Total Received
-                </div>
-                <p className="mt-2 text-2xl font-black text-emerald-100">{summary.gainsCount}</p>
-                <p className="text-[0.6rem] font-semibold text-emerald-200">+ {formatUsd(summary.gainsUsd)}</p>
-              </div>
+                <div className="grid min-w-[280px] grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3">
+                    <div className="flex items-center gap-1.5 text-[0.56rem] font-bold uppercase tracking-[0.14em] text-[#8ca9c8]">
+                      <Database className="h-3 w-3" />
+                      Total Transactions
+                    </div>
+                    <p className="mt-2 text-2xl font-black text-white">{summary.total}</p>
+                    <p className="text-[0.6rem] font-semibold text-[#8ca9c8]">All time</p>
+                  </div>
 
-              <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3">
-                <div className="flex items-center gap-1.5 text-[0.56rem] font-bold uppercase tracking-[0.14em] text-rose-200">
-                  <TrendingDown className="h-3 w-3" />
-                  Total Withdrawn
-                </div>
-                <p className="mt-2 text-2xl font-black text-rose-100">{summary.lossesCount}</p>
-                <p className="text-[0.6rem] font-semibold text-rose-200">- {formatUsd(summary.lossesUsd)}</p>
-              </div>
+                  <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3">
+                    <div className="flex items-center gap-1.5 text-[0.56rem] font-bold uppercase tracking-[0.14em] text-emerald-200">
+                      <TrendingUp className="h-3 w-3" />
+                      Total Received
+                    </div>
+                    <p className="mt-2 text-2xl font-black text-emerald-100">{summary.gainsCount}</p>
+                    <p className="text-[0.6rem] font-semibold text-emerald-200">+ {formatUsd(summary.gainsUsd)}</p>
+                  </div>
 
-              <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3">
-                <div className="flex items-center gap-1.5 text-[0.56rem] font-bold uppercase tracking-[0.14em] text-sky-200">
-                  <Scale className="h-3 w-3" />
-                  Net Result
+                  <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3">
+                    <div className="flex items-center gap-1.5 text-[0.56rem] font-bold uppercase tracking-[0.14em] text-rose-200">
+                      <TrendingDown className="h-3 w-3" />
+                      Total Withdrawn
+                    </div>
+                    <p className="mt-2 text-2xl font-black text-rose-100">{summary.lossesCount}</p>
+                    <p className="text-[0.6rem] font-semibold text-rose-200">- {formatUsd(summary.lossesUsd)}</p>
+                  </div>
+
+                  <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3">
+                    <div className="flex items-center gap-1.5 text-[0.56rem] font-bold uppercase tracking-[0.14em] text-sky-200">
+                      <Scale className="h-3 w-3" />
+                      Net Result
+                    </div>
+                    <p className={`mt-2 text-2xl font-black ${summary.netUsd >= 0 ? "text-emerald-100" : "text-rose-100"}`}>
+                      {summary.netUsd >= 0 ? "+" : "-"} {formatUsd(Math.abs(summary.netUsd))}
+                    </p>
+                    <p className="text-[0.6rem] font-semibold text-sky-200">{summary.netUsd >= 0 ? "Profit" : "Loss"}</p>
+                  </div>
                 </div>
-                <p className={`mt-2 text-2xl font-black ${summary.netUsd >= 0 ? "text-emerald-100" : "text-rose-100"}`}>
-                  {summary.netUsd >= 0 ? "+" : "-"} {formatUsd(Math.abs(summary.netUsd))}
-                </p>
-                <p className="text-[0.6rem] font-semibold text-sky-200">{summary.netUsd >= 0 ? "Profit" : "Loss"}</p>
               </div>
-            </div>
+            ) : null}
           </div>
         </section>
 
@@ -412,174 +593,302 @@ export default function HistoryClient() {
           </section>
         ) : null}
 
-        {/* Filter bar */}
-        <section className="rounded-[1.5rem] border border-[#f2c879]/12 bg-[#0b131d] p-4 sm:p-5">
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="relative min-w-[220px] flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86a9cf]" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by reference, name or action..."
-                className="w-full rounded-xl border border-white/12 bg-black/25 py-2.5 pl-10 pr-4 text-sm text-white outline-none focus:border-[#f2c879]"
-              />
-            </label>
-
-            <select
-              value={category}
-              onChange={(event) => setCategory(event.target.value as "all" | ActivityCategory)}
-              className="rounded-xl border border-white/12 bg-black/25 px-3 py-2.5 text-sm text-white outline-none focus:border-[#f2c879]"
-            >
-              <option value="all">All Sources</option>
-              <option value="economy">Economy</option>
-              <option value="marketplace">Marketplace</option>
-              <option value="inventory">Inventory</option>
-              <option value="chests">Chest Opening</option>
-              <option value="crafting">Crafting</option>
-              <option value="admin">Admin</option>
-              <option value="progression">Progression</option>
-            </select>
-
-            <select
-              value={typeFilter}
-              onChange={(event) => setTypeFilter(event.target.value)}
-              className="rounded-xl border border-white/12 bg-black/25 px-3 py-2.5 text-sm text-white outline-none focus:border-[#f2c879]"
-            >
-              <option value="all">All Types</option>
-              {typeOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option.replace(/_/g, " ").toUpperCase()}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as "all" | ActivityStatus)}
-              className="rounded-xl border border-white/12 bg-black/25 px-3 py-2.5 text-sm text-white outline-none focus:border-[#f2c879]"
-            >
-              <option value="all">All Status</option>
-              <option value="completed">Completed</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="failed">Failed</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="system">System</option>
-            </select>
-
-            <div className="flex items-center gap-1.5 rounded-xl border border-white/12 bg-black/25 px-3 py-2">
-              <Calendar className="h-4 w-4 shrink-0 text-[#86a9cf]" />
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(event) => setDateFrom(event.target.value)}
-                className="bg-transparent text-xs text-white outline-none [color-scheme:dark]"
-              />
-              <span className="text-xs text-[#6f89a8]">–</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(event) => setDateTo(event.target.value)}
-                className="bg-transparent text-xs text-white outline-none [color-scheme:dark]"
-              />
+        {activeTab === "wallet" ? (
+          <section className="rounded-[1.5rem] border border-white/10 bg-[#0b131d] p-5">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
+                <p className="text-[0.56rem] font-bold uppercase tracking-[0.18em] text-emerald-200">Total In</p>
+                <p className="mt-2 font-data text-2xl font-black text-emerald-300">{formatWalletAmount(walletSummary.totalIn, "in")}</p>
+              </div>
+              <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3">
+                <p className="text-[0.56rem] font-bold uppercase tracking-[0.18em] text-rose-200">Total Out</p>
+                <p className="mt-2 font-data text-2xl font-black text-rose-300">{formatWalletAmount(walletSummary.totalOut, "out")}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                <p className="text-[0.56rem] font-bold uppercase tracking-[0.18em] text-[#9bbad8]">Transactions</p>
+                <p className="mt-2 font-data text-2xl font-black text-white">{walletSummary.totalTransactions}</p>
+              </div>
+              <div className="rounded-2xl border border-[#f2c879]/20 bg-[#17130d] px-4 py-3">
+                <p className="text-[0.56rem] font-bold uppercase tracking-[0.18em] text-[#f2c879]">Current Balance</p>
+                <p className="mt-2 font-data text-2xl font-black text-[#f2c879]">{formatWalletAmount(walletSummary.currentBalance, "in")}</p>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={exportCsv}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#f2c879]/50 px-4 py-2.5 text-sm font-bold text-[#f2c879] transition hover:bg-[#f2c879]/10"
-            >
-              <Download className="h-4 w-4" />
-              Export
-            </button>
-          </div>
-        </section>
-
-        {/* Table + sidebar */}
-        <section className="grid gap-5 lg:grid-cols-[3fr_1fr]">
-          <div className="min-w-0 rounded-[1.5rem] border border-white/10 bg-[#0b131d] p-4 sm:p-5">
-            <PremiumTransactionTable
-              rows={pagedRows}
-              loading={loadingMore}
-              emptyLabel="No transactions matched the current filters."
-            />
-
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 px-1">
-              <p className="text-xs font-semibold text-[#8ca9c8]">
-                Showing {displayRows.length === 0 ? 0 : (page - 1) * rowsPerPage + 1} to{" "}
-                {Math.min(page * rowsPerPage, displayRows.length)} of {displayRows.length}
-                {nextCursorRef.current ? "+" : ""} transactions
-              </p>
-
-              <div className="inline-flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => void goToPage(page - 1)}
-                  disabled={page <= 1}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-[#c7daef] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-
-                {Array.from({ length: totalPages }, (_, index) => index + 1)
-                  .filter((pageNumber) => pageNumber === 1 || pageNumber === totalPages || Math.abs(pageNumber - page) <= 1)
-                  .reduce<(number | "ellipsis")[]>((acc, pageNumber) => {
-                    const previous = acc[acc.length - 1];
-                    if (typeof previous === "number" && pageNumber - previous > 1) {
-                      acc.push("ellipsis");
-                    }
-                    acc.push(pageNumber);
-                    return acc;
-                  }, [])
-                  .map((entry, index) =>
-                    entry === "ellipsis" ? (
-                      <span key={`ellipsis-${index}`} className="px-1 text-xs text-[#6f89a8]">
-                        ...
-                      </span>
+            <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-white/10">
+              <div className="overflow-x-auto">
+                <table className="min-w-[960px] w-full border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10 bg-[#0b1823] text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#93bfe9]">
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Type</th>
+                      <th className="px-4 py-3">Description</th>
+                      <th className="px-4 py-3">Method</th>
+                      <th className="px-4 py-3">Reference</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {walletEntries.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-12 text-center text-[#a8c1dc]">
+                          No wallet entries available.
+                        </td>
+                      </tr>
                     ) : (
-                      <button
-                        key={entry}
-                        type="button"
-                        onClick={() => void goToPage(entry)}
-                        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-xs font-bold transition ${
-                          entry === page ? "bg-[#f2c879] text-black" : "border border-white/10 text-[#c7daef] hover:bg-white/10"
-                        }`}
-                      >
-                        {entry}
-                      </button>
-                    ),
-                  )}
-
-                <button
-                  type="button"
-                  onClick={() => void goToPage(page + 1)}
-                  disabled={page >= totalPages && !nextCursorRef.current}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-[#c7daef] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+                      walletEntries.map((item, index) => {
+                        const label = getWalletTypeLabel(item);
+                        const statusLabel = getWalletStatusLabel(item.status);
+                        const amount = item.direction === "in" ? item.amount : -item.amount;
+                        return (
+                          <tr key={item.id} className={`border-b border-white/5 ${index % 2 === 0 ? "bg-[#0c1620]" : "bg-[#0b141d]"}`}>
+                            <td className="px-4 py-3 text-[#bfd2e8]">{item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-US") : "--"}</td>
+                            <td className="px-4 py-3"><span className={`inline-flex rounded-full border px-2 py-1 text-[0.6rem] font-bold uppercase tracking-[0.12em] ${getWalletTypeColor(label)}`}>{label}</span></td>
+                            <td className="px-4 py-3 text-[#edf5ff]"><div className="max-w-[360px] truncate" title={item.title}>{item.title}</div></td>
+                            <td className="px-4 py-3 text-[#cfe1f6]">{getWalletMethodLabel(item.method)}</td>
+                            <td className="px-4 py-3 text-[#cfe1f6]">{item.reference ? <span className="max-w-[180px] truncate inline-block" title={item.reference}>{item.reference}</span> : "--"}</td>
+                            <td className="px-4 py-3"><span className={`inline-flex rounded-full border px-2 py-1 text-[0.6rem] font-bold uppercase tracking-[0.12em] ${getWalletStatusColor(statusLabel)}`}>{statusLabel}</span></td>
+                            <td className={`px-4 py-3 text-right font-data font-black ${amount >= 0 ? "text-emerald-300" : "text-rose-300"}`}>{formatWalletAmount(amount, amount >= 0 ? "in" : "out")}</td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
+            </div>
+          </section>
+        ) : null}
 
-              <label className="inline-flex items-center gap-2 text-xs font-semibold text-[#8ca9c8]">
-                Rows per page:
+        {activeTab === "order" ? (
+          <section className="rounded-[1.5rem] border border-white/10 bg-[#0b131d] p-5">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                <p className="text-[0.56rem] font-bold uppercase tracking-[0.18em] text-[#9bbad8]">Orders</p>
+                <p className="mt-2 font-data text-2xl font-black text-white">{orderSummary.totalOrders}</p>
+              </div>
+              <div className="rounded-2xl border border-sky-500/20 bg-sky-500/10 px-4 py-3">
+                <p className="text-[0.56rem] font-bold uppercase tracking-[0.18em] text-sky-200">Total Paid</p>
+                <p className="mt-2 font-data text-2xl font-black text-sky-300">{formatUsd(orderSummary.totalSpent)}</p>
+              </div>
+              <div className="rounded-2xl border border-[#f2c879]/20 bg-[#17130d] px-4 py-3">
+                <p className="text-[0.56rem] font-bold uppercase tracking-[0.18em] text-[#f2c879]">Payment Methods</p>
+                <p className="mt-2 text-lg font-black text-[#f2c879]">Card / Stripe / PayPal</p>
+              </div>
+            </div>
+
+            <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-white/10">
+              <div className="overflow-x-auto">
+                <table className="min-w-[960px] w-full border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10 bg-[#0b1823] text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#93bfe9]">
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Type</th>
+                      <th className="px-4 py-3">Description</th>
+                      <th className="px-4 py-3">Method</th>
+                      <th className="px-4 py-3">Reference</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orderEntries.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-12 text-center text-[#a8c1dc]">
+                          No order payments found.
+                        </td>
+                      </tr>
+                    ) : (
+                      orderEntries.map((item, index) => (
+                        <tr key={item.id} className={`border-b border-white/5 ${index % 2 === 0 ? "bg-[#0c1620]" : "bg-[#0b141d]"}`}>
+                          <td className="px-4 py-3 text-[#bfd2e8]">{item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-US") : "--"}</td>
+                          <td className="px-4 py-3"><span className="inline-flex rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-1 text-[0.6rem] font-bold uppercase tracking-[0.12em] text-sky-300">Purchase</span></td>
+                          <td className="px-4 py-3 text-[#edf5ff]"><div className="max-w-[360px] truncate" title={item.title}>{item.title}</div></td>
+                          <td className="px-4 py-3 text-[#cfe1f6]">{getWalletMethodLabel(item.method)}</td>
+                          <td className="px-4 py-3 text-[#cfe1f6]">{item.reference ? <span className="max-w-[180px] truncate inline-block" title={item.reference}>{item.reference}</span> : "--"}</td>
+                          <td className="px-4 py-3"><span className={`inline-flex rounded-full border px-2 py-1 text-[0.6rem] font-bold uppercase tracking-[0.12em] ${getWalletStatusColor(getWalletStatusLabel(item.status))}`}>{getWalletStatusLabel(item.status)}</span></td>
+                          <td className="px-4 py-3 text-right font-data font-black text-rose-300">-{formatUsd(item.amount)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {activeTab === "others" ? (
+          <>
+            {/* Filter bar */}
+            <section className="rounded-[1.5rem] border border-[#f2c879]/12 bg-[#0b131d] p-4 sm:p-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="relative min-w-[220px] flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86a9cf]" />
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search by reference, name or action..."
+                    className="w-full rounded-xl border border-white/12 bg-black/25 py-2.5 pl-10 pr-4 text-sm text-white outline-none focus:border-[#f2c879]"
+                  />
+                </label>
+
                 <select
-                  value={rowsPerPage}
-                  onChange={(event) => setRowsPerPage(Number(event.target.value))}
-                  className="rounded-lg border border-white/12 bg-black/25 px-2 py-1 text-xs text-white outline-none focus:border-[#f2c879]"
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value as "all" | ActivityCategory)}
+                  className="rounded-xl border border-white/12 bg-black/25 px-3 py-2.5 text-sm text-white outline-none focus:border-[#f2c879]"
                 >
-                  {ROWS_PER_PAGE_OPTIONS.map((option) => (
+                  <option value="all">All Sources</option>
+                  <option value="economy">Economy</option>
+                  <option value="marketplace">Marketplace</option>
+                  <option value="inventory">Inventory</option>
+                  <option value="chests">Chest Opening</option>
+                  <option value="crafting">Crafting</option>
+                  <option value="admin">Admin</option>
+                  <option value="progression">Progression</option>
+                </select>
+
+                <select
+                  value={typeFilter}
+                  onChange={(event) => setTypeFilter(event.target.value)}
+                  className="rounded-xl border border-white/12 bg-black/25 px-3 py-2.5 text-sm text-white outline-none focus:border-[#f2c879]"
+                >
+                  <option value="all">All Types</option>
+                  {typeOptions.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {option.replace(/_/g, " ").toUpperCase()}
                     </option>
                   ))}
                 </select>
-              </label>
-            </div>
-          </div>
 
-          <ActivityOverviewSidebar rows={displayRows} />
-        </section>
+                <select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value as "all" | ActivityStatus)}
+                  className="rounded-xl border border-white/12 bg-black/25 px-3 py-2.5 text-sm text-white outline-none focus:border-[#f2c879]"
+                >
+                  <option value="all">All Status</option>
+                  <option value="completed">Completed</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="failed">Failed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="system">System</option>
+                </select>
+
+                <div className="flex items-center gap-1.5 rounded-xl border border-white/12 bg-black/25 px-3 py-2">
+                  <Calendar className="h-4 w-4 shrink-0 text-[#86a9cf]" />
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(event) => setDateFrom(event.target.value)}
+                    className="bg-transparent text-xs text-white outline-none [color-scheme:dark]"
+                  />
+                  <span className="text-xs text-[#6f89a8]">–</span>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(event) => setDateTo(event.target.value)}
+                    className="bg-transparent text-xs text-white outline-none [color-scheme:dark]"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={exportCsv}
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#f2c879]/50 px-4 py-2.5 text-sm font-bold text-[#f2c879] transition hover:bg-[#f2c879]/10"
+                >
+                  <Download className="h-4 w-4" />
+                  Export
+                </button>
+              </div>
+            </section>
+
+            <section className="grid gap-5 lg:grid-cols-[3fr_1fr]">
+              <div className="min-w-0 rounded-[1.5rem] border border-white/10 bg-[#0b131d] p-4 sm:p-5">
+                <PremiumTransactionTable
+                  rows={pagedRows}
+                  loading={loadingMore}
+                  emptyLabel="No transactions matched the current filters."
+                />
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 px-1">
+                  <p className="text-xs font-semibold text-[#8ca9c8]">
+                    Showing {displayRows.length === 0 ? 0 : (page - 1) * rowsPerPage + 1} to{" "}
+                    {Math.min(page * rowsPerPage, displayRows.length)} of {displayRows.length}
+                    {nextCursorRef.current ? "+" : ""} transactions
+                  </p>
+
+                  <div className="inline-flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => void goToPage(page - 1)}
+                      disabled={page <= 1}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-[#c7daef] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, index) => index + 1)
+                      .filter((pageNumber) => pageNumber === 1 || pageNumber === totalPages || Math.abs(pageNumber - page) <= 1)
+                      .reduce<(number | "ellipsis")[]>((acc, pageNumber) => {
+                        const previous = acc[acc.length - 1];
+                        if (typeof previous === "number" && pageNumber - previous > 1) {
+                          acc.push("ellipsis");
+                        }
+                        acc.push(pageNumber);
+                        return acc;
+                      }, [])
+                      .map((entry, index) =>
+                        entry === "ellipsis" ? (
+                          <span key={`ellipsis-${index}`} className="px-1 text-xs text-[#6f89a8]">
+                            ...
+                          </span>
+                        ) : (
+                          <button
+                            key={entry}
+                            type="button"
+                            onClick={() => void goToPage(entry)}
+                            className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-xs font-bold transition ${
+                              entry === page ? "bg-[#f2c879] text-black" : "border border-white/10 text-[#c7daef] hover:bg-white/10"
+                            }`}
+                          >
+                            {entry}
+                          </button>
+                        ),
+                      )}
+
+                    <button
+                      type="button"
+                      onClick={() => void goToPage(page + 1)}
+                      disabled={page >= totalPages && !nextCursorRef.current}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-[#c7daef] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <label className="inline-flex items-center gap-2 text-xs font-semibold text-[#8ca9c8]">
+                    Rows per page:
+                    <select
+                      value={rowsPerPage}
+                      onChange={(event) => setRowsPerPage(Number(event.target.value))}
+                      className="rounded-lg border border-white/12 bg-black/25 px-2 py-1 text-xs text-white outline-none focus:border-[#f2c879]"
+                    >
+                      {ROWS_PER_PAGE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <ActivityOverviewSidebar rows={displayRows} />
+            </section>
+          </>
+        ) : null}
 
         <div className="flex flex-wrap gap-3">
           <Link href="/profile" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
