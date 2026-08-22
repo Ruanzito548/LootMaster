@@ -28,11 +28,19 @@ type OpenChestReward = {
   inventoryItem?: InventoryItem;
 };
 
+type OpenChestObtainedItem = {
+  type: "coins" | "item";
+  title: string;
+  amount?: number;
+  item?: InventoryItem;
+};
+
 type OpenChestResponse = {
   ok: true;
   replayed: boolean;
   chestId: ChestId;
   reward: OpenChestReward;
+  obtainedItems: OpenChestObtainedItem[];
   lootCoins: number;
   inventory: InventoryItem[];
   rpgXp: number;
@@ -223,6 +231,7 @@ export async function POST(request: Request): Promise<Response> {
       const rewardParts: string[] = [];
       let totalCoins = 0;
       let singleInventoryReward: InventoryItem | undefined;
+      const obtainedItems: OpenChestObtainedItem[] = [];
       let rewardEconomy: ReturnType<typeof resolveChestWalletReward> | null = null;
 
       const rewardPoolState = fundChestWalletEconomyFromCashback(walletState, Math.max(0, rolledLoot.totalValueUsd), walletConfig);
@@ -232,6 +241,7 @@ export async function POST(request: Request): Promise<Response> {
         rewardParts.push(`${rewardEconomy.amountUsd.toFixed(2)} LC (${rewardEconomy.reason})`);
         nextLootCoins = Math.round((nextLootCoins + rewardEconomy.amountUsd) * 100) / 100;
         totalCoins += rewardEconomy.amountUsd;
+        obtainedItems.push({ type: "coins", title: "Loot Coins", amount: rewardEconomy.amountUsd });
       }
 
       for (const drop of rolledLoot.drops) {
@@ -239,6 +249,7 @@ export async function POST(request: Request): Promise<Response> {
           totalCoins += drop.amount;
           nextLootCoins = Math.round((nextLootCoins + drop.amount) * 100) / 100;
           rewardParts.push(`${drop.amount.toLocaleString("en-US")} LC`);
+          obtainedItems.push({ type: "coins", title: "Loot Coins", amount: drop.amount });
           continue;
         }
 
@@ -250,6 +261,7 @@ export async function POST(request: Request): Promise<Response> {
 
         nextInventory = merged.inventory;
         rewardParts.push(`${drop.item.quantity}x ${drop.item.name}`);
+        obtainedItems.push({ type: "item", title: drop.item.name, amount: drop.item.quantity, item: drop.item });
         if (rolledLoot.drops.length === 1) {
           singleInventoryReward = drop.item;
         }
@@ -268,6 +280,7 @@ export async function POST(request: Request): Promise<Response> {
         replayed: false,
         chestId: chestDefinition.id,
         reward,
+        obtainedItems,
         lootCoins: nextLootCoins,
         inventory: nextInventory,
         rpgXp: mappedProfile.rpgXp ?? 0,

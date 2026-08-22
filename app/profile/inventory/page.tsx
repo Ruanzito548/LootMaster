@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Coins } from "lucide-react";
 
 import { ChestOpeningAnimation } from "@/app/components/chests/ChestOpeningAnimation";
 import { useProfileSession } from "@/app/profile/use-profile-session";
@@ -21,7 +22,14 @@ type OpenChestApiResponse = {
     title: string;
     rarity: string;
     amount?: number;
+    inventoryItem?: InventoryItem;
   };
+  obtainedItems?: Array<{
+    type: "coins" | "item";
+    title: string;
+    amount?: number;
+    item?: InventoryItem;
+  }>;
   xpGain: number;
   rpgXp: number;
   rpgLevel: number;
@@ -353,6 +361,12 @@ export default function InventoryPage() {
       });
       pushToast("success", `${pendingResult.reward.title} unlocked.`);
       reload();
+      setIsOpening(false);
+      setAnimationDone(false);
+      setOpeningChestId(null);
+      setRequestDone(false);
+      setRequestError(null);
+      return;
     }
 
     resetOpenFlow();
@@ -849,6 +863,52 @@ export default function InventoryPage() {
             <div className={`rounded-2xl border px-4 py-3 text-sm font-semibold backdrop-blur ${toast.kind === "success" ? "border-emerald-300/35 bg-emerald-500/16 text-emerald-100" : toast.kind === "error" ? "border-rose-300/35 bg-rose-500/16 text-rose-100" : "border-sky-300/35 bg-sky-500/16 text-sky-100"}`}>
               {toast.text}
             </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {pendingResult && !isOpening ? (
+          <motion.div className="fixed inset-0 z-[190] flex items-center justify-center px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <button type="button" className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={resetOpenFlow} aria-label="Close chest rewards" />
+            <motion.section
+              className="relative max-h-[88vh] w-[min(94vw,560px)] overflow-y-auto rounded-3xl border border-[#d4af5a]/45 bg-[linear-gradient(180deg,rgba(19,29,46,0.98),rgba(7,13,24,0.99))] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.65)]"
+              initial={{ y: 18, scale: 0.96 }}
+              animate={{ y: 0, scale: 1 }}
+              exit={{ y: 10, scale: 0.98 }}
+            >
+              <div className="text-center">
+                <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#e6c46a]">Chest opened</p>
+                <h2 className="mt-2 text-3xl font-black text-white">Items obtained</h2>
+                <p className="mt-2 text-sm text-[#b8cce5]">{CHEST_DEFINITIONS[pendingResult.chestId].title} · +{pendingResult.xpGain} XP</p>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {(pendingResult.obtainedItems?.length
+                  ? pendingResult.obtainedItems
+                  : [{ type: pendingResult.reward.type === "coins" ? "coins" : "item" as const, title: pendingResult.reward.title, amount: pendingResult.reward.amount, item: pendingResult.reward.inventoryItem }]
+                ).map((obtained, index) => {
+                  const iconPath = obtained.item?.iconPath;
+                  return (
+                    <article key={`${obtained.title}-${index}`} className={`flex items-center gap-3 rounded-2xl border p-3 ${RARITY_GLOW[pendingResult.reward.rarity] ?? "border-white/20"} bg-black/25`}>
+                      <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/35 p-2">
+                        {iconPath ? <Image src={iconPath} alt={obtained.title} fill className="object-contain p-2" /> : <Coins className="size-8 text-[#facc15]" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-white">{obtained.title}</p>
+                        <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[#e6c46a]">
+                          {obtained.type === "coins" ? `${(obtained.amount ?? 0).toFixed(2)} Loot Coins` : `Quantity: ${obtained.amount ?? 1}`}
+                        </p>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <button type="button" onClick={resetOpenFlow} className="loot-gold-button mt-6 w-full rounded-2xl px-4 py-3 text-xs font-black uppercase tracking-[0.14em]">
+                Continue
+              </button>
+            </motion.section>
           </motion.div>
         ) : null}
       </AnimatePresence>
