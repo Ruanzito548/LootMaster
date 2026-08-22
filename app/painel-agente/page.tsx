@@ -320,14 +320,9 @@ export default function PainelAgentePage() {
   const pagedClients = clients.slice((clientsPage - 1) * ROWS_PER_PAGE, clientsPage * ROWS_PER_PAGE);
   const pagedTransactions = transactions.slice((transactionsPage - 1) * ROWS_PER_PAGE, transactionsPage * ROWS_PER_PAGE);
 
-  const pageBackground = {
-    backgroundImage:
-      "radial-gradient(ellipse at top center, rgba(16,58,70,0.10) 0%, transparent 45%), linear-gradient(180deg, #080d13 0%, #091018 50%, #070b10 100%)",
-  } as const;
-
   if (status === "loading") {
     return (
-      <div style={pageBackground} className="min-h-screen px-4 pb-10 pt-6 text-slate-200 sm:px-6 lg:px-8">
+      <div className="min-h-screen px-4 pb-10 pt-6 text-slate-200 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1500px]">
           <p className="text-sm text-slate-400">Loading agent panel...</p>
         </div>
@@ -337,7 +332,7 @@ export default function PainelAgentePage() {
 
   if (status !== "authenticated" || !profile) {
     return (
-      <div style={pageBackground} className="min-h-screen px-4 pb-10 pt-6 text-slate-200 sm:px-6 lg:px-8">
+      <div className="min-h-screen px-4 pb-10 pt-6 text-slate-200 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1500px] rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5">
           <p className="text-sm font-semibold text-amber-200">Sign in to access the agent panel.</p>
           <Link
@@ -353,7 +348,7 @@ export default function PainelAgentePage() {
 
   if (profile.isAgent !== true) {
     return (
-      <div style={pageBackground} className="min-h-screen px-4 pb-10 pt-6 text-slate-200 sm:px-6 lg:px-8">
+      <div className="min-h-screen px-4 pb-10 pt-6 text-slate-200 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1500px] rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5">
           <p className="text-sm font-semibold text-rose-200">Your user does not have agent permission for this panel.</p>
           <Link
@@ -368,7 +363,7 @@ export default function PainelAgentePage() {
   }
 
   return (
-    <div style={pageBackground} className="min-h-screen px-4 pb-10 pt-6 text-slate-100 sm:px-6 lg:px-8">
+    <div className="min-h-screen px-4 pb-10 pt-6 text-slate-100 sm:px-6 lg:px-8">
       <main className="mx-auto flex w-full max-w-[1500px] flex-col gap-5">
         {panelError ? (
           <section className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5">
