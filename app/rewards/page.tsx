@@ -78,7 +78,7 @@ export default function RewardsPage() {
   return (
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
-        <section className="relative overflow-hidden rounded-[1.5rem] border border-[color:var(--border-color)]/65 bg-[linear-gradient(120deg,rgba(21,39,56,0.72),rgba(10,15,29,0.9)_52%,rgba(30,22,42,0.72))] px-5 py-5 shadow-[0_18px_44px_rgba(0,0,0,0.24)] sm:px-7 sm:py-6">
+        <section className="relative overflow-hidden rounded-[1.5rem] border border-[color:var(--border-color)]/65 bg-[linear-gradient(120deg,rgba(21,39,56,0.94),rgba(10,15,29,0.98)_52%,rgba(30,22,42,0.94))] px-5 py-5 shadow-[0_18px_44px_rgba(0,0,0,0.38)] sm:px-7 sm:py-6">
           <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[30%] opacity-25 [mask-image:linear-gradient(to_left,black,transparent)] lg:block">
             <Image src="/chest.png" alt="" fill sizes="320px" className="object-contain object-right" />
           </div>
@@ -167,7 +167,7 @@ export default function RewardsPage() {
         </section>
 
         <section>
-          <article className="overflow-hidden rounded-[1.25rem] border border-[color:var(--border-color)]/55 bg-[rgba(8,14,26,0.5)] p-4 sm:p-5">
+          <article className="overflow-hidden rounded-[1.25rem] border border-[color:var(--border-color)]/55 bg-[rgba(8,14,26,0.9)] p-4 shadow-[0_16px_36px_rgba(0,0,0,0.28)] sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="loot-title text-2xl font-black sm:text-3xl">Battle Pass Track</h2>
               <span className="theme-pill-accent rounded-full px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.14em]">Battle Pass Timeline</span>
@@ -189,28 +189,28 @@ export default function RewardsPage() {
         </section>
 
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/20 p-4">
+          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/80 p-4">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color:var(--accent)]/15 text-lg">⭐</span>
             <div>
               <p className="text-xs font-black uppercase tracking-[0.12em] text-[color:var(--accent)]">Earn XP</p>
               <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">Every purchase you make grants XP to your account.</p>
             </div>
           </article>
-          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/20 p-4">
+          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/80 p-4">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7a3fa8]/15 text-lg">⬆️</span>
             <div>
               <p className="text-xs font-black uppercase tracking-[0.12em] text-[#d8a8ff]">Level Up</p>
               <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">Gain levels and unlock better rewards on your journey.</p>
             </div>
           </article>
-          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/20 p-4">
+          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/80 p-4">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2fa36b]/15 text-lg">🎁</span>
             <div>
               <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8fe0b8]">Claim Rewards</p>
               <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">Reach the required level and claim your rewards.</p>
             </div>
           </article>
-          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/20 p-4">
+          <article className="flex items-start gap-3 rounded-xl border border-[color:var(--border-color)]/45 bg-black/80 p-4">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2d6ec7]/15 text-lg">♾️</span>
             <div>
               <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8fc1ff]">Permanent Progress</p>
@@ -219,7 +219,7 @@ export default function RewardsPage() {
           </article>
         </section>
 
-        <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[color:var(--border-color)]/45 bg-black/20 p-1 text-xs font-semibold uppercase tracking-[0.14em]">
+        <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[color:var(--border-color)]/45 bg-black/80 p-1 text-xs font-semibold uppercase tracking-[0.14em]">
           <Link href="/profile" className="rounded-lg px-4 py-2 text-[color:var(--text-muted)] transition-colors hover:bg-white/5 hover:text-[color:var(--text-main)]">Profile</Link>
           <Link href="/profile/inventory" className="rounded-lg px-4 py-2 text-[color:var(--text-muted)] transition-colors hover:bg-white/5 hover:text-[color:var(--text-main)]">Inventory</Link>
           <Link href="/marketplace" className="rounded-lg px-4 py-2 text-[color:var(--text-muted)] transition-colors hover:bg-white/5 hover:text-[color:var(--text-main)]">Marketplace</Link>
