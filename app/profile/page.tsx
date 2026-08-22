@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { History, Package, UserRound, Wallet as WalletIcon } from "lucide-react";
@@ -140,8 +141,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="loot-shell">
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-5 pb-20 pt-8 sm:px-6 lg:px-8">
+    <div className="loot-shell relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <Image src="/inventario/bgtotal.png" alt="" fill sizes="100vw" priority className="object-cover object-top" />
+      </div>
+
+      <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-5 pb-20 pt-8 sm:px-6 lg:px-8">
         <section className="loot-panel rounded-[2rem] p-6 sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[auto_1fr_auto] lg:items-center">
             <div className="flex items-center gap-4">

@@ -493,7 +493,7 @@ export default function HistoryClient() {
 
         {/* Table + sidebar */}
         <section className="grid gap-5 lg:grid-cols-[3fr_1fr]">
-          <div className="rounded-[1.5rem] border border-white/10 bg-[#0b131d] p-4 sm:p-5">
+          <div className="min-w-0 rounded-[1.5rem] border border-white/10 bg-[#0b131d] p-4 sm:p-5">
             <PremiumTransactionTable
               rows={pagedRows}
               loading={loadingMore}
