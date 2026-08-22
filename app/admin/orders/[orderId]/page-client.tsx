@@ -61,15 +61,17 @@ const OPERATIONAL_COST_STORAGE_KEY = "dashboard-operational-cost-items-v1";
 const FX_RATE_STORAGE_KEY = "dashboard-usd-to-brl-rate-v1";
 const DEFAULT_USD_TO_BRL_RATE = 5.5;
 
-function formatMoneyBrlFromUsdCents(amountInUsdCents: number, usdToBrlRate: number) {
-  return new Intl.NumberFormat("pt-BR", {
+function formatMoneyUsdFromUsdCents(amountInUsdCents: number) {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "BRL",
-  }).format((amountInUsdCents / 100) * usdToBrlRate);
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amountInUsdCents / 100);
 }
 
-function formatDeductionBrlFromUsdCents(amountInUsdCents: number, usdToBrlRate: number) {
-  return `-${formatMoneyBrlFromUsdCents(Math.abs(amountInUsdCents), usdToBrlRate)}`;
+function formatDeductionUsdFromUsdCents(amountInUsdCents: number) {
+  return `-${formatMoneyUsdFromUsdCents(Math.abs(amountInUsdCents))}`;
 }
 
 function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
@@ -126,8 +128,8 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
 
   const parsedUsdToBrlRate = Number(usdToBrlRateInput.replace(",", "."));
   const usdToBrlRate = Number.isFinite(parsedUsdToBrlRate) && parsedUsdToBrlRate > 0 ? parsedUsdToBrlRate : DEFAULT_USD_TO_BRL_RATE;
-  const formatMoney = (amountInUsdCents: number) => formatMoneyBrlFromUsdCents(amountInUsdCents, usdToBrlRate);
-  const formatDeduction = (amountInUsdCents: number) => formatDeductionBrlFromUsdCents(amountInUsdCents, usdToBrlRate);
+  const formatMoney = (amountInUsdCents: number) => formatMoneyUsdFromUsdCents(amountInUsdCents);
+  const formatDeduction = (amountInUsdCents: number) => formatDeductionUsdFromUsdCents(amountInUsdCents);
 
   useEffect(() => {
     try {
