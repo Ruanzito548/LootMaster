@@ -3,8 +3,9 @@
  * game+category pair.
  *
  * Priority:
- *   1) DISCORD_CHANNEL_* env vars (direct channel IDs)
- *   2) Legacy DISCORD_WEBHOOK_* env vars (resolved to channel_id via the Discord API)
+ *   1) Admin-configured per-game channel override (Configurações Discord page)
+ *   2) DISCORD_CHANNEL_* env vars (direct channel IDs)
+ *   3) Legacy DISCORD_WEBHOOK_* env vars (resolved to channel_id via the Discord API)
  */
 
 function parseDiscordWebhookUrl(webhookUrl: string): { webhookId: string; webhookToken: string } | null {
@@ -22,6 +23,14 @@ const channelIdCache = new Map<string, string>();
 
 export async function resolveDiscordChannelId(gameId: string, categoryId: string): Promise<string | null> {
   const key = `${gameId}::${categoryId}`;
+
+  const { getDiscordChannelOverrides } = await import("@/lib/discord-settings");
+  const overrides = await getDiscordChannelOverrides();
+  const overrideChannelId = overrides[gameId];
+  if (overrideChannelId) {
+    return overrideChannelId;
+  }
+
   const channelMap: Record<string, string | undefined> = {
     "tbc-anniversary::gold": process.env.DISCORD_CHANNEL_WOW_TBC_GOLD,
     "retail::gold": process.env.DISCORD_CHANNEL_WOW_RETAIL_GOLD,

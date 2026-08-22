@@ -8,8 +8,16 @@ import { useProfileSession } from "@/app/profile/use-profile-session";
 
 type DiscordSettings = {
   autoSendEnabled: boolean;
+  channelsByGame: Record<string, string>;
   updatedAtMs: number;
 };
+
+const GAME_LABELS: { gameId: string; label: string }[] = [
+  { gameId: "tbc-anniversary", label: "WoW TBC Anniversary" },
+  { gameId: "retail", label: "WoW Retail" },
+  { gameId: "classic-era", label: "WoW Classic Era" },
+  { gameId: "mist-of-pandaria", label: "WoW Mist of Pandaria" },
+];
 
 async function getAuthorizationHeader(user: User | null) {
   const token = await user?.getIdToken();
@@ -19,8 +27,10 @@ async function getAuthorizationHeader(user: User | null) {
 export function AdminDiscordSettingsClient() {
   const { status: sessionStatus, user } = useProfileSession();
   const [settings, setSettings] = useState<DiscordSettings | null>(null);
+  const [channelInputs, setChannelInputs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingChannels, setSavingChannels] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
@@ -57,6 +67,7 @@ export function AdminDiscordSettingsClient() {
       }
 
       setSettings(payload.settings);
+      setChannelInputs(payload.settings.channelsByGame ?? {});
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Não foi possível carregar as configurações do Discord.");
     } finally {
@@ -105,6 +116,50 @@ export function AdminDiscordSettingsClient() {
       setErrorMessage(error instanceof Error ? error.message : "Não foi possível salvar as configurações do Discord.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveChannels = async () => {
+    if (saving || savingChannels) {
+      return;
+    }
+
+    setSavingChannels(true);
+    setErrorMessage(null);
+    setInfoMessage(null);
+
+    try {
+      const headers = await getAuthorizationHeader(user);
+      if (!headers) {
+        throw new Error("Sua sessão ainda não está pronta. Aguarde alguns segundos e tente novamente.");
+      }
+
+      const channelsByGame = Object.fromEntries(
+        Object.entries(channelInputs).map(([gameId, value]) => [gameId, value.trim()]),
+      );
+
+      const response = await fetch("/api/admin/discord-settings", {
+        method: "PUT",
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ channelsByGame }),
+      });
+
+      const payload = (await response.json()) as { error?: string; settings?: DiscordSettings };
+
+      if (!response.ok || !payload.settings) {
+        throw new Error(payload.error ?? "Não foi possível salvar os canais do Discord.");
+      }
+
+      setSettings(payload.settings);
+      setChannelInputs(payload.settings.channelsByGame ?? {});
+      setInfoMessage("Canais do Discord por jogo atualizados com sucesso.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Não foi possível salvar os canais do Discord.");
+    } finally {
+      setSavingChannels(false);
     }
   };
 
@@ -173,6 +228,48 @@ export function AdminDiscordSettingsClient() {
               </button>
             </div>
           ) : null}
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-green-900 bg-black p-6">
+          <p className="text-sm font-semibold uppercase tracking-wide text-green-500">Canal do Discord por jogo</p>
+          <p className="mt-1 text-sm text-green-600">
+            Informe o ID do canal do Discord de cada jogo (clique com o botão direito no canal → Copiar ID do canal).
+            Tem prioridade sobre as variáveis de ambiente DISCORD_CHANNEL_* / DISCORD_WEBHOOK_*.
+          </p>
+
+          {loading ? (
+            <p className="mt-4 text-sm text-green-600">Carregando configurações...</p>
+          ) : (
+            <div className="mt-4 grid gap-3">
+              {GAME_LABELS.map(({ gameId, label }) => (
+                <div key={gameId} className="grid gap-1 sm:grid-cols-[220px_1fr] sm:items-center sm:gap-3">
+                  <label htmlFor={`discord-channel-${gameId}`} className="text-sm font-medium text-green-400">
+                    {label}
+                  </label>
+                  <input
+                    id={`discord-channel-${gameId}`}
+                    value={channelInputs[gameId] ?? ""}
+                    onChange={(event) =>
+                      setChannelInputs((current) => ({ ...current, [gameId]: event.target.value }))
+                    }
+                    placeholder="ID do canal do Discord"
+                    className="rounded-xl border border-green-900 bg-black/30 px-3 py-2 text-sm text-green-100 outline-none focus:border-green-700"
+                  />
+                </div>
+              ))}
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => void saveChannels()}
+                  disabled={savingChannels}
+                  className="mt-2 inline-flex items-center rounded-md border border-green-700 px-4 py-2 text-sm font-semibold text-green-300 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {savingChannels ? "Salvando..." : "Salvar canais"}
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </main>
     </div>

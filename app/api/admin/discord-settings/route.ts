@@ -10,6 +10,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 
 type PutBody = {
   autoSendEnabled?: unknown;
+  channelsByGame?: unknown;
 };
 
 function statusFromErrorMessage(message: string): number {
@@ -47,14 +48,18 @@ export async function PUT(request: Request): Promise<Response> {
     return Response.json({ error: message }, { status: statusFromErrorMessage(message) });
   }
 
-  if (typeof body.autoSendEnabled !== "boolean") {
-    return Response.json({ error: "Invalid payload autoSendEnabled." }, { status: 422 });
+  if (body.autoSendEnabled === undefined && body.channelsByGame === undefined) {
+    return Response.json({ error: "Invalid payload: nothing to update." }, { status: 422 });
   }
 
   try {
     const adminDb = getAdminDb();
+    const currentSnapshot = await adminDb.collection("app-config").doc(DISCORD_SETTINGS_DOC_ID).get();
+    const current = currentSnapshot.exists ? sanitizeDiscordSettings(currentSnapshot.data()) : buildDefaultDiscordSettings();
+
     const sanitized = sanitizeDiscordSettings({
-      autoSendEnabled: body.autoSendEnabled,
+      autoSendEnabled: body.autoSendEnabled === undefined ? current.autoSendEnabled : body.autoSendEnabled,
+      channelsByGame: body.channelsByGame === undefined ? current.channelsByGame : body.channelsByGame,
       updatedAtMs: Date.now(),
     });
 
