@@ -1,4 +1,5 @@
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
+import { convertCentsToUsdCents, getUsdRates, normalizeCurrency } from "@/lib/currency-conversion";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 type WalletHistoryItem = {
@@ -39,6 +40,7 @@ export async function GET(request: Request): Promise<Response> {
     const decodedToken = await requireAuthenticatedUserRequest(request);
     const adminDb = getAdminDb();
     const userEmail = (decodedToken.email ?? "").trim().toLowerCase();
+    const usdRates = await getUsdRates();
 
     const [payoutSnapshot, withdrawSnapshot, checkoutByUidSnapshot, checkoutByEmailSnapshot] = await Promise.all([
       adminDb
@@ -137,6 +139,8 @@ export async function GET(request: Request): Promise<Response> {
       const gameTitle = typeof data.gameTitle === "string" && data.gameTitle ? data.gameTitle : "Game";
       const categoryTitle = typeof data.categoryTitle === "string" && data.categoryTitle ? data.categoryTitle : "Service";
       const orderId = typeof data.orderId === "string" ? data.orderId : docId;
+      const sourceCurrency = normalizeCurrency(data.currency);
+      const amountUsdCents = convertCentsToUsdCents(amountTotalCents, sourceCurrency, usdRates);
 
       return {
         id: `purchase-${docId}`,
@@ -144,7 +148,7 @@ export async function GET(request: Request): Promise<Response> {
         category: "Purchase",
         direction: "out",
         title: `Purchase: ${gameTitle} / ${categoryTitle}`,
-        amount: amountTotalCents / 100,
+        amount: amountUsdCents / 100,
         goldAmount: Number.isFinite(goldAmount) ? Math.max(0, goldAmount) : 0,
         unit: "usd",
         status: typeof data.paymentStatus === "string" ? data.paymentStatus : "unknown",
