@@ -3,7 +3,9 @@ import Stripe from "stripe";
 import { defaultGoldConfigEntry } from "@/app/data/gold-config";
 import { getServersByGameId } from "@/app/data/games";
 import { normalizeAgentCode } from "@/lib/agency";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
+import { resolveDiscordChannelId } from "@/lib/discord-channel-resolver";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import {
   SITE_FEE_SETTINGS_DOC_ID,
   buildDefaultSiteFeeSettings,
@@ -17,9 +19,9 @@ type CheckoutBody = {
   categoryTitle: string;
   goldAmount: number;
   pricePerThousand: number;
-  paymentMethod: "pix" | "card" | "paypal";
-  paymentGateway?: "stripe" | "paypal";
-  paymentProvider?: "Pix" | "Stripe" | "PayPal";
+  paymentMethod: "pix" | "card" | "paypal" | "balance";
+  paymentGateway?: "stripe" | "paypal" | "internal";
+  paymentProvider?: "Pix" | "Stripe" | "PayPal" | "Loot Coins";
   country?: string;
   countryCode?: string;
   locale?: string;
@@ -51,9 +53,7 @@ function computePricingBreakdown(
   const normalizedDeliveryMethod = deliveryMethod.trim().toLowerCase();
   const deliveryAdjustment = normalizedDeliveryMethod === "auction house" ? safePrice * 0.02 : 0;
   const paymentAdjustment =
-    paymentMethod === "pix"
-      ? safePrice * -0.05
-      : paymentMethod === "card"
+    paymentMethod === "card"
       ? safePrice * (cardGatewayFeePercent / 100)
       : 0;
 
@@ -136,13 +136,6 @@ async function resolveSiteFeeSettings() {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  if (!secretKey) {
-    return Response.json({ error: "Payment gateway not configured." }, { status: 503 });
-  }
-
-  const stripe = new Stripe(secretKey);
-
   let body: CheckoutBody;
 
   try {
@@ -287,6 +280,123 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "Invalid price." }, { status: 422 });
   }
 
+  if (paymentMethod === "balance") {
+    const authorization = request.headers.get("authorization") ?? "";
+    const token = authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
+
+    if (!token) {
+      return Response.json({ error: "Sign in to pay with Loot Coins." }, { status: 401 });
+    }
+
+    try {
+      const decodedToken = await getAdminAuth().verifyIdToken(token);
+      const orderId = `lootcoin_${Date.now()}_${decodedToken.uid.slice(-8)}`;
+      const amountUsdCents = pricingBreakdown.chargedTotalCents;
+      const supplierPercentage = supplierDefaultPercent;
+      const supplierPayout = Math.round(pricingBreakdown.baseProductCents * (supplierPercentage / 100));
+      const grossProfit = Math.max(0, amountUsdCents - supplierPayout);
+      const adminDb = getAdminDb();
+
+      await adminDb.runTransaction(async (transaction) => {
+        const userRef = adminDb.collection("users").doc(decodedToken.uid);
+        const orderRef = adminDb.collection("order-checkouts").doc(orderId);
+        const userSnapshot = await transaction.get(userRef);
+        const userData = userSnapshot.exists ? (userSnapshot.data() as Record<string, unknown>) : {};
+        const currentLootCoins = typeof userData.lootCoins === "number" && Number.isFinite(userData.lootCoins)
+          ? userData.lootCoins
+          : 0;
+
+        if (currentLootCoins < amountUsdCents / 100) {
+          throw new Error("Insufficient Loot Coins balance.");
+        }
+
+        transaction.set(userRef, {
+          lootCoins: Math.round((currentLootCoins - amountUsdCents / 100) * 100) / 100,
+          lootCoinsSpent: (typeof userData.lootCoinsSpent === "number" ? userData.lootCoinsSpent : 0) + amountUsdCents / 100,
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+        transaction.set(orderRef, {
+          orderId,
+          paymentStatus: "paid",
+          orderStatus: "paid",
+          amountTotalCents: amountUsdCents,
+          currency: "usd",
+          customerEmail: email.trim(),
+          customerUid: decodedToken.uid,
+          gameId,
+          gameTitle,
+          categoryTitle,
+          goldAmount: validatedGoldAmount,
+          pricePerThousand: authoritativeConfig.pricePerThousand,
+          baseProductCents: pricingBreakdown.baseProductCents,
+          finalAmountCents: amountUsdCents,
+          serverId,
+          server,
+          faction,
+          deliveryMethod,
+          nickname: nickname.trim(),
+          paymentMethod: "balance",
+          paymentGateway: "internal",
+          paymentProvider: "Loot Coins",
+          supplierPercentage,
+          grossRevenue: amountUsdCents,
+          supplierPayout,
+          grossProfit,
+          netProfit: grossProfit,
+          sellerAmountCents: supplierPayout,
+          platformProfitCents: grossProfit,
+          stripeCreatedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      });
+
+      try {
+        const notification = await sendOrderNotificationViaBot({
+          gameId,
+          channelId: await resolveDiscordChannelId(gameId, "gold"),
+          sessionId: orderId,
+          gameTitle,
+          categoryTitle,
+          goldAmount: String(validatedGoldAmount),
+          serverId,
+          server,
+          faction,
+          nickname: nickname.trim(),
+          paymentMethod: "balance",
+          finalAmountCents: String(amountUsdCents),
+          supplierPayoutCents: String(supplierPayout),
+          currency: "USD",
+          email: email.trim(),
+        });
+
+        if (notification) {
+          await adminDb.collection("order-checkouts").doc(orderId).set(
+            {
+              discordNotificationChannelId: notification.channelId,
+              discordNotificationMessageId: notification.messageId,
+            },
+            { merge: true },
+          );
+        }
+      } catch (error) {
+        console.error("[Loot Coins Checkout] Could not send Discord notification:", error);
+      }
+
+      return Response.json({ url: `/checkout/success?session_id=${orderId}` });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not complete Loot Coins payment.";
+      const status = message.includes("Insufficient") ? 422 : message.includes("Firebase") ? 503 : 500;
+      return Response.json({ error: message }, { status });
+    }
+  }
+
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    return Response.json({ error: "Payment gateway not configured." }, { status: 503 });
+  }
+
+  const stripe = new Stripe(secretKey);
+
   const origin = request.headers.get("origin") ?? "http://localhost:3000";
 
   const paymentMethodTypes = (
@@ -356,7 +466,6 @@ export async function POST(request: Request): Promise<Response> {
                 faction && `Faction: ${faction}`,
                 `Delivery: ${deliveryMethod}`,
                 `Character: ${nickname}`,
-                paymentMethod === "pix" ? "Pix discount applied (5%)" : null,
                 paymentMethod === "card" ? `Card gateway fee applied (${cardGatewayFeePercent.toFixed(2)}%)` : null,
                 paymentMethod === "paypal" ? "PayPal checkout" : null,
               ]

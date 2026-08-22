@@ -2,7 +2,7 @@
 
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { Banknote, CreditCard, Landmark, Mail, ScrollText, Sword, UserRound } from "lucide-react";
+import { Banknote, Coins, CreditCard, Landmark, Mail, ScrollText, Sword, UserRound } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { defaultGoldConfigEntry, emptyGoldConfig, getGoldConfigFor } from "../data/gold-config";
@@ -18,14 +18,14 @@ type GoldPurchaseMenuProps = {
   servers: GameServer[];
 };
 
-type PaymentMethod = "pix" | "card" | "paypal";
+type PaymentMethod = "pix" | "card" | "paypal" | "balance";
 
 type CheckoutPaymentMethod = {
   id: PaymentMethod;
   label: string;
   description: string;
-  gateway: "stripe" | "paypal";
-  provider: "Pix" | "Stripe" | "PayPal";
+  gateway: "stripe" | "paypal" | "internal";
+  provider: "Pix" | "Stripe" | "PayPal" | "Loot Coins";
 };
 
 type CountryConfig = {
@@ -221,9 +221,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   const basePrice = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
   const deliveryAdjustment = 0;
   const paymentAdjustment =
-    paymentMethod === "pix"
-      ? basePrice * -0.05
-      : paymentMethod === "card"
+    paymentMethod === "card"
       ? basePrice * (cardGatewayFeePercent / 100)
       : 0;
   const finalPrice = Math.max(0, basePrice + deliveryAdjustment + paymentAdjustment);
@@ -253,9 +251,13 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
     setCheckoutError(null);
 
     try {
+      const idToken = paymentMethod === "balance" ? await auth?.currentUser?.getIdToken() : null;
       const response = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({
           gameId,
           gameTitle,
@@ -376,7 +378,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             </select>
             <p className="mt-2 text-xs text-[#88a8d1]">
               {countryConfig.countryCode === "BR"
-                ? "Pagamentos em reais (BRL). Escolha Pix ou Cartao."
+                ? "Pagamentos em reais (BRL). Escolha Pix, Cartao ou Loot Coins."
                 : "Payments processed securely by Stripe or PayPal."}
             </p>
           </div>
@@ -482,7 +484,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
                       : "border-white/10 bg-[#0e172c]/70 hover:border-white/18"
                   }`}
                 >
-                  <p className={`text-sm font-black ${method.id === "pix" ? "text-[#86efac]" : method.id === "paypal" ? "text-[#facc15]" : "text-[#93c5fd]"}`}>{method.label}</p>
+                  <p className={`text-sm font-black ${method.id === "pix" ? "text-[#86efac]" : method.id === "balance" ? "text-[#facc15]" : method.id === "paypal" ? "text-[#facc15]" : "text-[#93c5fd]"}`}>{method.label}</p>
                   <p className="mt-2 text-xs leading-6 text-[#a9c4e2]">{method.description}</p>
                 </button>
               ))}
@@ -634,7 +636,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
               <span className="font-semibold text-[#e7f5ff]">{formatCurrency(basePriceLocalized, selectedCurrency, selectedLocale)}</span>
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
-              <span>{paymentMethod === "pix" ? "Pix discount" : paymentMethod === "card" ? "Card fee" : "PayPal fee"}</span>
+              <span>{paymentMethod === "card" ? "Card fee" : "Payment fee"}</span>
               <span className={`font-semibold ${paymentAdjustment <= 0 ? "text-[#86efac]" : "text-[#fdba74]"}`}>
                 {paymentAdjustment === 0
                   ? formatCurrency(0, selectedCurrency, selectedLocale)
@@ -658,10 +660,10 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
 
           <div className="mt-4 rounded-xl border border-white/10 bg-[#0b162b]/75 px-3 py-3">
             <div className="flex items-center gap-2 text-[#9ec4f4]">
-              {paymentMethod === "pix" ? <Landmark className="h-4 w-4" /> : paymentMethod === "card" ? <CreditCard className="h-4 w-4" /> : <Banknote className="h-4 w-4" />}
+              {paymentMethod === "balance" ? <Coins className="h-4 w-4" /> : paymentMethod === "pix" ? <Landmark className="h-4 w-4" /> : paymentMethod === "card" ? <CreditCard className="h-4 w-4" /> : <Banknote className="h-4 w-4" />}
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em]">Payment method</p>
             </div>
-            <p className={`mt-2 text-sm font-black ${paymentMethod === "pix" ? "text-[#86efac]" : paymentMethod === "paypal" ? "text-[#facc15]" : "text-[#93c5fd]"}`}>
+            <p className={`mt-2 text-sm font-black ${paymentMethod === "pix" ? "text-[#86efac]" : paymentMethod === "balance" ? "text-[#facc15]" : paymentMethod === "paypal" ? "text-[#facc15]" : "text-[#93c5fd]"}`}>
               {selectedPayment?.label ?? "Payment"}
             </p>
             <p className="mt-1 text-xs text-[#a9c4e2]">{selectedPayment?.description ?? ""}</p>

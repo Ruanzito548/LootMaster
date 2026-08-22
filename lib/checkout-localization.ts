@@ -1,13 +1,13 @@
 export type CheckoutGateway = "stripe" | "paypal";
 
-export type CheckoutPaymentMethodId = "pix" | "card" | "paypal";
+export type CheckoutPaymentMethodId = "pix" | "card" | "paypal" | "balance";
 
 export type CheckoutPaymentMethod = {
   id: CheckoutPaymentMethodId;
   label: string;
   description: string;
-  gateway: CheckoutGateway;
-  provider: "Pix" | "Stripe" | "PayPal";
+  gateway: CheckoutGateway | "internal";
+  provider: "Pix" | "Stripe" | "PayPal" | "Loot Coins";
 };
 
 export type CheckoutCountryConfig = {
@@ -33,6 +33,13 @@ const BRAZIL_METHODS: CheckoutPaymentMethod[] = [
     gateway: "stripe",
     provider: "Stripe",
   },
+  {
+    id: "balance",
+    label: "Loot Coins",
+    description: "Pay using your Loot Coins balance.",
+    gateway: "internal",
+    provider: "Loot Coins",
+  },
 ];
 
 const INTERNATIONAL_METHODS: CheckoutPaymentMethod[] = [
@@ -49,6 +56,13 @@ const INTERNATIONAL_METHODS: CheckoutPaymentMethod[] = [
     description: "Checkout with your PayPal account.",
     gateway: "paypal",
     provider: "PayPal",
+  },
+  {
+    id: "balance",
+    label: "Loot Coins",
+    description: "Pay using your Loot Coins balance.",
+    gateway: "internal",
+    provider: "Loot Coins",
   },
 ];
 
