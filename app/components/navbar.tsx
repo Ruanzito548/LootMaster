@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/games", label: "Games", icon: Gamepad2 },
   { href: "/rewards", label: "Rewards", icon: Gift },
-  { href: "/profile/inventory", label: "Inventory", icon: Package },
+  { href: "/profile#inventory", label: "Inventory", icon: Package },
   { href: "/painel-agente", label: "Painel Agente", icon: LayoutDashboard, requiresAgent: true },
   { href: "/admin", label: "Admin", icon: Shield, requiresAdmin: true },
 ];
@@ -43,10 +43,10 @@ const navItems: NavItem[] = [
 const profileItems: NavItem[] = [
   { href: "/profile", label: "My Profile", icon: UserRound },
   { href: "/rewards", label: "Rewards", icon: Gift },
-  { href: "/profile/inventory", label: "Inventory", icon: Package },
+  { href: "/profile#inventory", label: "Inventory", icon: Package },
   { href: "/painel-agente", label: "Painel Agente", icon: LayoutDashboard, requiresAgent: true },
-  { href: "/profile/history", label: "History", icon: LayoutDashboard },
-  { href: "/profile/wallet-history", label: "Wallet", icon: Wallet },
+  { href: "/profile#history", label: "History", icon: LayoutDashboard },
+  { href: "/profile#wallet", label: "Wallet", icon: Wallet },
 ];
 
 function isActive(pathname: string, href: string) {
