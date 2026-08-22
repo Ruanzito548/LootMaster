@@ -39,7 +39,7 @@ export async function GET(request: Request): Promise<Response> {
     const adminDb = getAdminDb();
     const userEmail = (decodedToken.email ?? "").trim().toLowerCase();
 
-    const [payoutSnapshot, withdrawSnapshot, agentFeesSnapshot, customerFeesSnapshot, checkoutByUidSnapshot, checkoutByEmailSnapshot] = await Promise.all([
+    const [payoutSnapshot, withdrawSnapshot, checkoutByUidSnapshot, checkoutByEmailSnapshot] = await Promise.all([
       adminDb
         .collection("order-payouts")
         .where("supplierUid", "==", decodedToken.uid)
@@ -48,16 +48,6 @@ export async function GET(request: Request): Promise<Response> {
       adminDb
         .collection("withdraw-requests")
         .where("uid", "==", decodedToken.uid)
-        .limit(300)
-        .get(),
-      adminDb
-        .collection("fee-transfers")
-        .where("agentUid", "==", decodedToken.uid)
-        .limit(300)
-        .get(),
-      adminDb
-        .collection("fee-transfers")
-        .where("customerUid", "==", decodedToken.uid)
         .limit(300)
         .get(),
       adminDb
@@ -117,52 +107,6 @@ export async function GET(request: Request): Promise<Response> {
       };
     });
 
-    const agentFeeItems: WalletHistoryItem[] = agentFeesSnapshot.docs.map((row) => {
-      const data = row.data() as Record<string, unknown>;
-      const orderId = typeof data.orderId === "string" ? data.orderId : row.id;
-      const amount = typeof data.agentPayoutLootCoins === "number" && Number.isFinite(data.agentPayoutLootCoins)
-        ? data.agentPayoutLootCoins
-        : typeof data.agentPayoutCents === "number" && Number.isFinite(data.agentPayoutCents)
-        ? Math.round((data.agentPayoutCents / 100) * 100) / 100
-        : 0;
-
-      return {
-        id: `agent-fee-${row.id}`,
-        kind: "fee",
-        category: "Fee",
-        direction: "in",
-        title: `Agent fee payout for order ${orderId}`,
-        amount,
-        unit: "loot",
-        status: typeof data.status === "string" ? data.status : "pending_completion",
-        method: null,
-        reference: orderId,
-        createdAt: serializeTimestamp(data.createdAt),
-      };
-    });
-
-    const customerFeeItems: WalletHistoryItem[] = customerFeesSnapshot.docs.map((row) => {
-      const data = row.data() as Record<string, unknown>;
-      const orderId = typeof data.orderId === "string" ? data.orderId : row.id;
-      const amount = typeof data.platformFeeCents === "number" && Number.isFinite(data.platformFeeCents)
-        ? data.platformFeeCents / 100
-        : 0;
-
-      return {
-        id: `customer-fee-${row.id}`,
-        kind: "fee",
-        category: "Fee",
-        direction: "out",
-        title: `Platform fee charged on order ${orderId}`,
-        amount,
-        unit: "usd",
-        status: typeof data.status === "string" ? data.status : "processed",
-        method: null,
-        reference: orderId,
-        createdAt: serializeTimestamp(data.createdAt),
-      };
-    });
-
     const checkoutDocs = new Map<string, Record<string, unknown>>();
     for (const docRow of checkoutByUidSnapshot.docs) {
       checkoutDocs.set(docRow.id, docRow.data() as Record<string, unknown>);
@@ -208,8 +152,6 @@ export async function GET(request: Request): Promise<Response> {
     const items = [
       ...payoutItems,
       ...withdrawItems,
-      ...agentFeeItems,
-      ...customerFeeItems,
       ...purchaseItems,
     ].sort((left, right) => {
       const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : 0;

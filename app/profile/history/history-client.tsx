@@ -184,11 +184,16 @@ export default function HistoryClient() {
     [category, dateFrom, dateTo, search, statusFilter, typeFilter],
   );
 
-  const typeOptions = useMemo(() => {
-    return Array.from(new Set(items.map((item) => item.actionType)));
-  }, [items]);
+  const nonMonetaryItems = useMemo(
+    () => items.filter((item) => !item.valueUnit || !["usd", "brl", "loot"].includes(item.valueUnit)),
+    [items],
+  );
 
-  const filteredItems = useMemo(() => items.filter(matchesFilters), [items, matchesFilters]);
+  const typeOptions = useMemo(() => {
+    return Array.from(new Set(nonMonetaryItems.map((item) => item.actionType)));
+  }, [nonMonetaryItems]);
+
+  const filteredItems = useMemo(() => nonMonetaryItems.filter(matchesFilters), [nonMonetaryItems, matchesFilters]);
   const displayRows = useMemo<DisplayRow[]>(() => mergeDisplayRows(filteredItems), [filteredItems]);
 
   useEffect(() => {
