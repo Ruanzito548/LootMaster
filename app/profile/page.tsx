@@ -142,7 +142,7 @@ export default function ProfilePage() {
 
   return (
     <div className="loot-shell relative isolate overflow-hidden">
-      <div className="pointer-events-none absolute inset-0">
+      <div className="pointer-events-none fixed inset-0">
         <Image src="/inventario/bgtotal.png" alt="" fill sizes="100vw" priority className="object-cover object-top" />
       </div>
 
