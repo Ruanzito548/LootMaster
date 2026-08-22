@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
+import Image from "next/image";
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { Banknote, Coins, CreditCard, Landmark, Mail, ScrollText, Sword, UserRound } from "lucide-react";
+import { Banknote, Check, Coins, CreditCard, Headphones, Landmark, Mail, ScrollText, ShieldCheck, Sparkles, Sword, Swords, UserRound, Zap } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { defaultGoldConfigEntry, emptyGoldConfig, getGoldConfigFor } from "../data/gold-config";
@@ -55,6 +57,13 @@ const DEFAULT_COUNTRY_CONFIG: CountryConfig = {
       description: "Checkout with your PayPal account.",
       gateway: "paypal",
       provider: "PayPal",
+    },
+    {
+      id: "balance",
+      label: "Loot Coins",
+      description: "Pay using your Loot Coins balance.",
+      gateway: "internal",
+      provider: "Loot Coins",
     },
   ],
 };
@@ -335,32 +344,46 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   };
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[1fr_22rem]">
+    <div className="space-y-4">
+      <header className="gm-glass relative overflow-hidden rounded-[1.35rem] px-5 py-5 sm:px-6">
+        <div className="absolute inset-y-0 right-0 w-2/5 bg-[radial-gradient(circle_at_center,rgba(212,175,90,0.2),transparent_68%)]" />
+        <Image src="/baus/epico.png" alt="Epic loot chest" width={144} height={144} className="pointer-events-none absolute right-3 top-1/2 h-28 w-28 -translate-y-1/2 object-contain opacity-75 sm:right-10 sm:h-36 sm:w-36" />
+        <div className="relative z-10 max-w-2xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/games/${gameId}`} className="gm-button gm-button-secondary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[0.58rem] uppercase tracking-[0.12em]">
+              ← Back to categories
+            </Link>
+            <span className="gm-badge px-2.5 py-1 text-[0.55rem] font-bold uppercase tracking-[0.14em]">{gameTitle.includes("TBC") ? "Progression" : "Gold"}</span>
+            <span className="gm-badge px-2.5 py-1 text-[0.55rem] font-bold uppercase tracking-[0.14em]">Gold</span>
+          </div>
+          <h1 className="font-throne mt-3 text-3xl font-black leading-none text-[#eaf4ff] sm:text-4xl">Gold Checkout</h1>
+          <p className="mt-2 text-sm text-[#a8c3e0]">Complete your order in a few simple steps.</p>
+        </div>
+      </header>
+
+      <nav aria-label="Checkout progress" className="gm-panel grid grid-cols-3 gap-1 rounded-xl px-2 py-2">
+        {[
+          ["1", "Server & Faction", stepServerDone],
+          ["2", "Gold & Payment", stepAmountDone],
+          ["3", "Delivery Details", stepDetailsDone],
+        ].map(([number, label, complete], index) => (
+          <div key={String(number)} className={`flex items-center gap-2 rounded-lg px-2 py-2 text-[0.55rem] font-bold uppercase tracking-[0.1em] sm:px-4 ${complete ? "text-[#facc15]" : index === 0 ? "text-[#6ee7ff]" : "text-[#6f849d]"}`}>
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-current text-[0.55rem]">{complete ? <Check className="size-3" /> : number}</span>
+            <span className="hidden sm:inline">{label}</span>
+          </div>
+        ))}
+      </nav>
+
+    <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="space-y-5">
-        <article className="gm-panel rounded-[1.35rem] p-5 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#95b8e2]">Order flow</p>
-              <h2 className="mt-2 text-2xl font-black text-[#eaf4ff]">Configure your gold order</h2>
-              <p className="mt-2 text-sm text-[#a8c3e0]">
-                {gameTitle} / {categoryTitle}
-              </p>
-            </div>
-            <span className="gm-badge px-3 py-1 text-[0.58rem] font-bold uppercase tracking-[0.15em]">{progressPercent}% ready</span>
-          </div>
-
-          <div className="mt-4 h-2 rounded-full bg-white/10">
-            <div className="h-full rounded-full bg-[linear-gradient(90deg,#3ba8ff_0%,#6ee7ff_65%,#22c55e_100%)] transition-all" style={{ width: `${progressPercent}%` }} />
-          </div>
-        </article>
-
         <article className="gm-panel rounded-[1.35rem] p-5 sm:p-6">
           <div className="flex items-center gap-2 text-[#9ec4f4]">
             <Sword className="h-4 w-4" />
             <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em]">Step 1: Server and faction</p>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
             <label htmlFor="country-select" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
               Country
             </label>
@@ -382,10 +405,8 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
                 ? "Pagamentos em reais (BRL). Escolha Pix, Cartao ou Loot Coins."
                 : "Payments processed securely by Stripe or PayPal."}
             </p>
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+            </div>
+            <div>
               <label htmlFor="server-select" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
                 Server
               </label>
@@ -414,7 +435,7 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
             {requiresFaction ? (
               <div className="sm:col-span-2">
                 <p className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">Faction</p>
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-2 grid grid-cols-2 gap-2">
                   {(selectedServer?.factions ?? ["Horde", "Alliance"]).map((faction) => (
                     <button
                       key={faction}
@@ -425,13 +446,14 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
                         const nextConfig = getGoldConfigFor(fullGoldConfig, gameId, selectedServerId, faction);
                         setGoldAmount(nextConfig.minGold);
                       }}
-                      className={`gm-button rounded-lg px-3 py-2 text-[0.62rem] font-bold uppercase tracking-[0.14em] ${
+                      className={`gm-button flex min-h-14 items-center justify-between rounded-xl border px-3 py-3 text-left text-[0.62rem] font-bold uppercase tracking-[0.14em] ${
                         selectedFaction === faction
-                          ? "gm-button-primary"
+                          ? faction === "Horde" ? "border-[#ef4444]/70 bg-[#3b1218]/70 text-[#fecaca]" : "border-[#60a5fa]/70 bg-[#102b4d]/70 text-[#bfdbfe]"
                           : "gm-button-secondary disabled:cursor-not-allowed"
                       }`}
                     >
-                      {faction}
+                      <span className="flex items-center gap-2"><Swords className="size-4" />{faction}</span>
+                      {selectedFaction === faction ? <Check className="size-4 text-[#facc15]" /> : null}
                     </button>
                   ))}
                 </div>
@@ -485,8 +507,14 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
                       : "border-white/10 bg-[#0e172c]/70 hover:border-white/18"
                   }`}
                 >
-                  <p className={`text-sm font-black ${method.id === "pix" ? "text-[#86efac]" : method.id === "balance" ? "text-[#facc15]" : method.id === "paypal" ? "text-[#facc15]" : "text-[#93c5fd]"}`}>{method.label}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className={`text-sm font-black ${method.id === "pix" ? "text-[#86efac]" : method.id === "balance" ? "text-[#facc15]" : method.id === "paypal" ? "text-[#facc15]" : "text-[#93c5fd]"}`}>{method.label}</p>
+                    {paymentMethod === method.id ? <Check className="size-4 text-[#facc15]" /> : null}
+                  </div>
                   <p className="mt-2 text-xs leading-6 text-[#a9c4e2]">{method.description}</p>
+                  <span className="mt-2 inline-flex rounded-full border border-white/10 px-2 py-0.5 text-[0.48rem] font-bold uppercase tracking-[0.12em] text-[#c4d4e6]">
+                    {method.id === "pix" ? "Recommended" : method.id === "balance" ? "Fast" : "Secure"}
+                  </span>
                 </button>
               ))}
             </div>
@@ -700,5 +728,22 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
         </article>
       </aside>
     </section>
+    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {[
+        [ShieldCheck, "100% Safe", "Your data and payments are protected."],
+        [Zap, "Instant Delivery", "Fast delivery to your character."],
+        [Sparkles, "Best Prices", "Competitive prices and low fees."],
+        [Headphones, "24/7 Support", "We're here to help you anytime."],
+      ].map(([Icon, title, text]) => (
+        <article key={String(title)} className="gm-panel flex items-center gap-3 rounded-xl px-3 py-3">
+          <Icon className="size-4 shrink-0 text-[#d4af5a]" />
+          <div className="min-w-0">
+            <p className="text-[0.55rem] font-bold uppercase tracking-[0.12em] text-[#e6c46a]">{String(title)}</p>
+            <p className="mt-1 text-[0.65rem] text-[#88a8d1]">{String(text)}</p>
+          </div>
+        </article>
+      ))}
+    </section>
+    </div>
   );
 }

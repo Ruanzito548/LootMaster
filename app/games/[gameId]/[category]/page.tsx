@@ -26,7 +26,7 @@ export default async function ServerSelectionPage(props: PageProps<"/games/[game
   return (
     <div className="loot-shell gm-shell">
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
-        <section className="gm-glass rounded-[1.8rem] p-6 sm:p-8">
+        {category !== "gold" ? <section className="gm-glass rounded-[1.8rem] p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-3">
             <Link href={`/games/${game.id}`} className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase tracking-[0.14em]">
               <ArrowLeft className="h-3.5 w-3.5" />
@@ -59,7 +59,7 @@ export default async function ServerSelectionPage(props: PageProps<"/games/[game
               </article>
             </div>
           </div>
-        </section>
+        </section> : null}
 
         {category === "gold" ? (
           <section>
