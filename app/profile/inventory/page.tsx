@@ -10,7 +10,7 @@ import { useProfileSession } from "@/app/profile/use-profile-session";
 import { getLootOddsForPreview } from "@/lib/chest-loot";
 import { CHEST_DEFINITIONS, CHEST_IDS, getChestImagePath, type ChestId } from "@/lib/chests";
 import { type InventoryItem } from "@/lib/profile-data";
-import { CRAFT_RECIPES, MARKETPLACE_MIN_PRICE, calculateMarketplaceFee, calculateMarketplaceReceive, getXpIntoCurrentLevel } from "@/lib/rpg-system";
+import { CRAFT_RECIPES, MARKETPLACE_MIN_PRICE, calculateMarketplaceFee, calculateMarketplaceReceive } from "@/lib/rpg-system";
 
 type OpenChestApiResponse = {
   ok: true;
@@ -248,11 +248,6 @@ export default function InventoryPage() {
 
   const slotLimit = 20;
   const usedSlots = inventory.length;
-  const fillPercent = Math.min(100, (usedSlots / slotLimit) * 100);
-
-  const rpgXp = profile?.rpgXp ?? 0;
-  const rpgLevel = Math.max(1, profile?.rpgLevel ?? 1);
-  const xpSegment = getXpIntoCurrentLevel(rpgXp);
 
   const selectedMarketItem = chestMenu?.item ?? null;
   const giftCardRecipes = useMemo(
@@ -598,69 +593,17 @@ export default function InventoryPage() {
       </div>
 
       <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
-        <section className="relative overflow-hidden px-1 py-3 sm:px-3 sm:py-5">
-          <div className="relative flex flex-wrap items-end justify-between gap-6">
-            <div className="max-w-3xl space-y-3">
-              <p className="text-[0.64rem] font-black uppercase tracking-[0.2em] text-[#9adfff]">Inventory Core</p>
-              <h1 className="font-throne text-4xl font-black leading-[0.95] text-white sm:text-6xl">MMO VAULT HUB</h1>
-              <p className="text-sm leading-7 text-[#bfd4ec] sm:text-base">
-                Chests, crafting and marketplace are now integrated directly into your inventory for a single premium gameplay loop.
-              </p>
-            </div>
-
-            <div className="grid min-w-[220px] gap-1 border-l border-[#d4af5a]/45 pl-4">
-              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#99b6d7]">Wallet</p>
-              <p className="text-3xl font-black text-[#ffcf67]">{profile.lootCoins.toLocaleString("en-US")}</p>
-              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#99b6d7]">Title</p>
-              <p className="text-sm font-black uppercase tracking-[0.14em] text-[#d8e9ff]">Level {rpgLevel}</p>
-            </div>
-          </div>
-
-          <div className="relative mt-8 grid gap-x-6 gap-y-4 border-y border-white/10 py-4 sm:grid-cols-2 xl:grid-cols-5">
-            <article className="px-1">
-              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Inventory Slots</p>
-              <p className="mt-2 text-2xl font-black text-white">{usedSlots}/{slotLimit}</p>
-            </article>
-            <article className="px-1">
-              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">RPG XP</p>
-              <p className="mt-2 text-2xl font-black text-white">{rpgXp}</p>
-            </article>
-            <article className="px-1">
-              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">XP Progress</p>
-              <p className="mt-2 text-2xl font-black text-white">{xpSegment.inLevel}/{xpSegment.levelCap}</p>
-            </article>
-            <article className="px-1">
-              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Sales</p>
-              <p className="mt-2 text-2xl font-black text-white">{profile.marketplaceSales ?? 0}</p>
-            </article>
-            <article className="px-1">
-              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#9fb8db]">Buys</p>
-              <p className="mt-2 text-2xl font-black text-white">{profile.marketplaceBuys ?? 0}</p>
-            </article>
-          </div>
-
-          <div className="relative mt-5 h-2 overflow-hidden rounded-full bg-black/35">
-            <motion.div className="h-full bg-gradient-to-r from-[#59cfff] via-[#4f8cff] to-[#c06dff]" animate={{ width: `${fillPercent}%` }} transition={{ duration: 0.45 }} />
-          </div>
-
-          <div className="relative mt-5 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setOpenCraftCategory(null);
-                setShowCraftMenu(true);
-              }}
-              className="loot-gold-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]"
-            >
-              Craft
-            </button>
-            <Link href="/marketplace" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]">
-              Marketplace
-            </Link>
-            <Link href="/profile" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]">
-              Back to Profile
-            </Link>
-          </div>
+        <section className="relative flex flex-wrap gap-3 px-1 sm:px-3">
+          <button
+            type="button"
+            onClick={() => {
+              setOpenCraftCategory(null);
+              setShowCraftMenu(true);
+            }}
+            className="loot-gold-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]"
+          >
+            Craft
+          </button>
         </section>
 
         <section className="relative px-1 py-3 sm:px-3 sm:py-5">
