@@ -110,14 +110,14 @@ export function ActivityOverviewSidebar({ rows }: ActivityOverviewSidebarProps) 
           <div className="flex flex-col gap-2 text-xs font-semibold">
             <span className="inline-flex items-center gap-2 text-[#c7daef]">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-              Gains
+              Received
               <span className="ml-auto text-[#7d97b6]">
                 {stats.gains} ({stats.gainsPct.toFixed(1)}%)
               </span>
             </span>
             <span className="inline-flex items-center gap-2 text-[#c7daef]">
               <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-              Losses
+              Withdrawn
               <span className="ml-auto text-[#7d97b6]">
                 {stats.losses} ({stats.lossesPct.toFixed(1)}%)
               </span>

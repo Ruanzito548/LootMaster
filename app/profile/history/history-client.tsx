@@ -372,7 +372,7 @@ export default function HistoryClient() {
               <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3">
                 <div className="flex items-center gap-1.5 text-[0.56rem] font-bold uppercase tracking-[0.14em] text-emerald-200">
                   <TrendingUp className="h-3 w-3" />
-                  Total Gains
+                  Total Received
                 </div>
                 <p className="mt-2 text-2xl font-black text-emerald-100">{summary.gainsCount}</p>
                 <p className="text-[0.6rem] font-semibold text-emerald-200">+ {formatUsd(summary.gainsUsd)}</p>
@@ -381,7 +381,7 @@ export default function HistoryClient() {
               <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3">
                 <div className="flex items-center gap-1.5 text-[0.56rem] font-bold uppercase tracking-[0.14em] text-rose-200">
                   <TrendingDown className="h-3 w-3" />
-                  Total Losses
+                  Total Withdrawn
                 </div>
                 <p className="mt-2 text-2xl font-black text-rose-100">{summary.lossesCount}</p>
                 <p className="text-[0.6rem] font-semibold text-rose-200">- {formatUsd(summary.lossesUsd)}</p>
