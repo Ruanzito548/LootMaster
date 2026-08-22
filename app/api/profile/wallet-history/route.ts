@@ -8,6 +8,7 @@ type WalletHistoryItem = {
   direction: "in" | "out" | "info";
   title: string;
   amount: number;
+  goldAmount: number;
   unit: "loot" | "usd";
   status: string;
   method: string | null;
@@ -78,6 +79,7 @@ export async function GET(request: Request): Promise<Response> {
         direction: "in",
         title: `Loot Coins credited for order ${orderId}`,
         amount,
+        goldAmount: 0,
         unit: "loot",
         status: "credited",
         method: null,
@@ -99,6 +101,7 @@ export async function GET(request: Request): Promise<Response> {
         direction: "out",
         title: `Withdrawal request (${typeof data.payoutMethod === "string" ? data.payoutMethod.toUpperCase() : "PAYOUT"})`,
         amount,
+        goldAmount: 0,
         unit: "loot",
         status: typeof data.status === "string" ? data.status : "pending_review",
         method: typeof data.payoutMethod === "string" ? data.payoutMethod : null,
@@ -125,6 +128,12 @@ export async function GET(request: Request): Promise<Response> {
         typeof data.amountTotalCents === "number" && Number.isFinite(data.amountTotalCents)
           ? data.amountTotalCents
           : 0;
+      const goldAmount =
+        typeof data.goldAmount === "number" && Number.isFinite(data.goldAmount)
+          ? data.goldAmount
+          : typeof data.goldAmount === "string" && data.goldAmount.trim()
+            ? Number(data.goldAmount)
+            : 0;
       const gameTitle = typeof data.gameTitle === "string" && data.gameTitle ? data.gameTitle : "Game";
       const categoryTitle = typeof data.categoryTitle === "string" && data.categoryTitle ? data.categoryTitle : "Service";
       const orderId = typeof data.orderId === "string" ? data.orderId : docId;
@@ -136,6 +145,7 @@ export async function GET(request: Request): Promise<Response> {
         direction: "out",
         title: `Purchase: ${gameTitle} / ${categoryTitle}`,
         amount: amountTotalCents / 100,
+        goldAmount: Number.isFinite(goldAmount) ? Math.max(0, goldAmount) : 0,
         unit: "usd",
         status: typeof data.paymentStatus === "string" ? data.paymentStatus : "unknown",
         method: typeof data.paymentMethod === "string" ? data.paymentMethod : null,

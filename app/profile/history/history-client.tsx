@@ -53,6 +53,7 @@ type WalletHistoryRow = {
   direction: "in" | "out" | "info";
   title: string;
   amount: number;
+  goldAmount: number;
   unit: "loot" | "usd";
   status: string;
   method: string | null;
@@ -62,7 +63,7 @@ type WalletHistoryRow = {
 
 const HISTORY_TABS: { id: HistoryTab; label: string }[] = [
   { id: "wallet", label: "Wallet History" },
-  { id: "order", label: "Order History" },
+  { id: "order", label: "Purchase History" },
   { id: "others", label: "Others" },
 ];
 
@@ -377,7 +378,7 @@ export default function HistoryClient() {
   }, [filteredWalletEntries, profile?.lootCoins]);
 
   const orderSummary = useMemo(() => {
-    const totalSpent = orderEntries.reduce((sum, item) => sum + (item.direction === "out" ? item.amount : 0), 0);
+    const totalSpent = orderEntries.reduce((sum, item) => sum + item.amount, 0);
     return {
       totalSpent,
       totalOrders: orderEntries.length,
@@ -852,7 +853,7 @@ export default function HistoryClient() {
                     {orderEntries.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="px-4 py-12 text-center text-[#a8c1dc]">
-                          No order payments found.
+                          No purchase payments found.
                         </td>
                       </tr>
                     ) : (
@@ -860,11 +861,14 @@ export default function HistoryClient() {
                         <tr key={item.id} className={`border-b border-white/5 ${index % 2 === 0 ? "bg-[#0c1620]" : "bg-[#0b141d]"}`}>
                           <td className="px-4 py-3 text-[#bfd2e8]">{item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-US") : "--"}</td>
                           <td className="px-4 py-3"><span className="inline-flex rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-1 text-[0.6rem] font-bold uppercase tracking-[0.12em] text-sky-300">Purchase</span></td>
-                          <td className="px-4 py-3 text-[#edf5ff]"><div className="max-w-[360px] truncate" title={item.title}>{item.title}</div></td>
+                          <td className="px-4 py-3 text-[#edf5ff]">
+                            <div className="max-w-[360px] truncate" title={item.title}>{item.title}</div>
+                            {item.goldAmount > 0 ? <div className="mt-1 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#f2c879]">{item.goldAmount.toLocaleString("en-US")} Gold purchased</div> : null}
+                          </td>
                           <td className="px-4 py-3 text-[#cfe1f6]">{getWalletMethodLabel(item.method)}</td>
                           <td className="px-4 py-3 text-[#cfe1f6]">{item.reference ? <span className="max-w-[180px] truncate inline-block" title={item.reference}>{item.reference}</span> : "--"}</td>
                           <td className="px-4 py-3"><span className={`inline-flex rounded-full border px-2 py-1 text-[0.6rem] font-bold uppercase tracking-[0.12em] ${getWalletStatusColor(getWalletStatusLabel(item.status))}`}>{getWalletStatusLabel(item.status)}</span></td>
-                          <td className="px-4 py-3 text-right font-data font-black text-rose-300">-{formatUsd(item.amount)}</td>
+                          <td className="px-4 py-3 text-right font-data font-black text-emerald-300">{formatUsd(item.amount)}</td>
                         </tr>
                       ))
                     )}
