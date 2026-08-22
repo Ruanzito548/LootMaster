@@ -133,11 +133,13 @@ export async function POST(request: Request): Promise<Response> {
 
     try {
       const notification = await sendOrderNotificationViaBot({
+        gameId: game.gameId,
         channelId: await resolveDiscordChannelId(game.gameId, game.categoryId),
         sessionId: orderId,
         gameTitle: game.gameTitle,
         categoryTitle: game.categoryTitle,
         goldAmount: String(goldAmount),
+        serverId: payload.serverId,
         server: payload.server,
         faction: payload.faction,
         nickname: payload.nickname,

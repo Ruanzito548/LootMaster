@@ -57,11 +57,13 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const notification = await sendOrderNotificationViaBot({
+      gameId,
       channelId,
       sessionId: orderId,
       gameTitle: typeof orderData.gameTitle === "string" ? orderData.gameTitle : "—",
       categoryTitle: typeof orderData.categoryTitle === "string" ? orderData.categoryTitle : "—",
       goldAmount: String(typeof orderData.goldAmount === "number" ? orderData.goldAmount : 0),
+      serverId: typeof orderData.serverId === "string" ? orderData.serverId : "",
       server: typeof orderData.server === "string" ? orderData.server : "—",
       faction: typeof orderData.faction === "string" ? orderData.faction : "—",
       nickname: typeof orderData.nickname === "string" ? orderData.nickname : "—",

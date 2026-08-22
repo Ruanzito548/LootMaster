@@ -1,11 +1,15 @@
+import { getServersByGameId } from "../app/data/games";
+
 type CreatePrivateSupplierThreadInput = {
   orderId: string;
   supplierName: string;
   supplierDiscordUserId?: string;
   supplierDiscordHandle: string;
+  gameId?: string;
   gameTitle: string;
   categoryTitle: string;
   goldAmount: number;
+  serverId?: string;
   server: string;
   faction: string;
   nickname: string;
@@ -14,11 +18,13 @@ type CreatePrivateSupplierThreadInput = {
 };
 
 type SendOrderNotificationInput = {
+  gameId?: string;
   channelId: string | null | undefined;
   sessionId: string;
   gameTitle: string;
   categoryTitle: string;
   goldAmount: string;
+  serverId?: string;
   server: string;
   faction: string;
   nickname: string;
@@ -40,6 +46,38 @@ const DEFAULT_USD_RATES: UsdRates = {
 };
 
 let usdRatesCache: { value: UsdRates; expiresAt: number } | null = null;
+
+const CANONICAL_GAME_TITLES: Record<string, string> = {
+  retail: "World of Warcraft Midnight",
+  "classic-era": "World of Warcraft Classic Era",
+  "tbc-anniversary": "World of Warcraft TBC Anniversary",
+  "mist-of-pandaria": "World of Warcraft Mist of Pandaria",
+};
+
+export function normalizeDiscordOrderMetadata(input: {
+  gameId?: string;
+  gameTitle?: string;
+  serverId?: string;
+  server?: string;
+}): { gameTitle: string; server: string } {
+  const gameId = input.gameId?.trim() ?? "";
+  const serverId = input.serverId?.trim() ?? "";
+  const rawGameTitle = input.gameTitle?.trim() ?? "";
+  const rawServerName = input.server?.trim() ?? "";
+
+  const canonicalGameTitle = gameId ? CANONICAL_GAME_TITLES[gameId] ?? rawGameTitle : rawGameTitle;
+
+  let resolvedServer = rawServerName;
+  if (!resolvedServer && serverId) {
+    const knownServers = getServersByGameId(gameId);
+    resolvedServer = knownServers.find((server) => server.id === serverId)?.name ?? "";
+  }
+
+  return {
+    gameTitle: canonicalGameTitle || rawGameTitle || "—",
+    server: resolvedServer || rawServerName || "—",
+  };
+}
 
 function normalizeCurrency(value: string): "USD" | "BRL" | "EUR" {
   const normalized = value.trim().toUpperCase();
@@ -162,6 +200,13 @@ async function getBotUserId(): Promise<string> {
 }
 
 async function sendSupplierIntroMessage(channelId: string, input: CreatePrivateSupplierThreadInput) {
+  const normalized = normalizeDiscordOrderMetadata({
+    gameId: input.gameId,
+    gameTitle: input.gameTitle,
+    serverId: input.serverId,
+    server: input.server,
+  });
+
   const mentionPart = input.supplierDiscordUserId?.trim()
     ? `<@${input.supplierDiscordUserId.trim()}>`
     : null;
@@ -177,10 +222,10 @@ async function sendSupplierIntroMessage(channelId: string, input: CreatePrivateS
           title: "Assigned Order",
           color: 0x5865f2,
           fields: [
-            { name: "Game", value: input.gameTitle || "-", inline: true },
+            { name: "Game", value: normalized.gameTitle || "-", inline: true },
             { name: "Category", value: input.categoryTitle || "-", inline: true },
             { name: "Gold", value: `${input.goldAmount.toLocaleString("en-US")} gold`, inline: true },
-            { name: "Server", value: input.server || "-", inline: true },
+            { name: "Server", value: normalized.server || "-", inline: true },
             { name: "Faction", value: input.faction || "-", inline: true },
             { name: "Character", value: input.nickname || "-", inline: true },
             { name: "Supplier Payout", value: input.payoutLabel || "-", inline: true },
@@ -362,6 +407,12 @@ export async function sendOrderNotificationViaBot(
       : 0;
   const supplierPayoutCents = Number.isFinite(payoutFromOrderCents) ? Math.max(0, payoutFromOrderCents) : 0;
   const payoutUsdCents = await convertToUsdCents(supplierPayoutCents, input.currency);
+  const normalized = normalizeDiscordOrderMetadata({
+    gameId: input.gameId,
+    gameTitle: input.gameTitle,
+    serverId: input.serverId,
+    server: input.server,
+  });
 
   const supplierPayoutLabel = (payoutUsdCents / 100).toLocaleString("en-US", {
     style: "currency",
@@ -369,10 +420,10 @@ export async function sendOrderNotificationViaBot(
   });
 
   const fields = [
-    { name: "Game", value: input.gameTitle || "-", inline: true },
+    { name: "Game", value: normalized.gameTitle || "-", inline: true },
     { name: "Category", value: input.categoryTitle || "-", inline: true },
     { name: "Gold Amount", value: `${Number(input.goldAmount || "0").toLocaleString("en-US")} gold`, inline: true },
-    { name: "Server", value: input.server || "-", inline: true },
+    { name: "Server", value: normalized.server || "-", inline: true },
     { name: "Faction", value: input.faction || "-", inline: true },
     { name: "Supplier Payout", value: supplierPayoutLabel, inline: true },
   ];

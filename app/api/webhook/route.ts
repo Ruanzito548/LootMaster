@@ -811,11 +811,13 @@ export async function POST(request: Request): Promise<Response> {
           console.info("[Stripe Webhook] Discord auto-send disabled — skipping automatic notification.");
         } else {
         const notification = await sendOrderNotificationViaBot({
+          gameId: meta.gameId ?? "",
           channelId: discordChannelId,
           sessionId: session.id,
           gameTitle: meta.gameTitle ?? "—",
           categoryTitle: meta.categoryTitle ?? "—",
           goldAmount: meta.goldAmount ?? "0",
+          serverId: meta.serverId ?? "",
           server: meta.server ?? "—",
           faction: meta.faction ?? "—",
           nickname: meta.nickname ?? "—",
