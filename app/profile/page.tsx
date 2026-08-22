@@ -188,7 +188,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <div className="flex flex-wrap gap-1 rounded-xl border border-[color:var(--border-color)]/45 bg-black/20 p-1">
+        <div className="flex flex-wrap gap-1 rounded-xl border border-[color:var(--border-color)]/45 bg-[#020407]/90 p-1 shadow-[0_10px_28px_rgba(0,0,0,0.3)]">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -196,8 +196,8 @@ export default function ProfilePage() {
               onClick={() => selectTab(id)}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-xs font-black uppercase tracking-[0.12em] transition-colors ${
                 activeTab === id
-                  ? "border-b-2 border-[color:var(--accent)] bg-white/5 text-[color:var(--accent)]"
-                  : "text-[color:var(--text-muted)] hover:bg-white/5 hover:text-[color:var(--text-main)]"
+                  ? "border-b-2 border-[color:var(--accent)] bg-[#11151b] text-[color:var(--accent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+                  : "text-[color:var(--text-muted)] hover:bg-[#0b0e13] hover:text-[color:var(--text-main)]"
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
