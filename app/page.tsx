@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Flame, Gift, ShieldCheck, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, Flame, Gift, ShieldCheck } from "lucide-react";
 
 import { defaultHotGameIds, games } from "./data/games";
 import { useProfileSession } from "./profile/use-profile-session";
@@ -80,64 +80,13 @@ export default function Home() {
     <div className="loot-shell gm-shell">
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
         <section className="gm-glass relative overflow-hidden rounded-[2rem] p-6 sm:p-8 lg:p-10">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_10%,rgba(255,255,255,0.03),transparent_34%),radial-gradient(circle_at_18%_100%,rgba(0,0,0,0.18),transparent_36%)]" />
-
-          <div className="relative z-10 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="space-y-5">
-              <span className="gm-badge inline-flex items-center gap-2 px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.18em]">
-                <Sparkles className="h-3.5 w-3.5" />
-                Seasonal launcher
-              </span>
-
-              <h1 className="font-throne text-5xl font-black leading-[0.95] text-[#eaf4ff] sm:text-6xl lg:text-7xl">
-                MMO MARKETPLACE
-                <br />
-                REFORGED
-              </h1>
-
-              <p className="gm-subtitle max-w-xl text-sm leading-7 sm:text-base">
-                Fast orders, clean routing, one hub.
-              </p>
-
-              <div className="flex flex-wrap gap-3">
-                <Link href={activeGame ? `/games/${activeGame.id}` : "/games"} className="gm-button gm-button-primary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
-                  Enter {activeGame?.shortTitle ?? "Launcher"}
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-                <Link href="/rewards" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
-                  <Gift className="h-3.5 w-3.5" />
-                  Rewards
-                </Link>
-                <Link href="/profile" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
-                  <Trophy className="h-3.5 w-3.5" />
-                  Progress
-                </Link>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                <article className="gm-panel rounded-xl px-4 py-3">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Featured reward</p>
-                  <p className="mt-2 text-sm font-black text-[color:var(--text-main)]">Mythic Drop</p>
-                </article>
-                <article className="gm-panel rounded-xl px-4 py-3">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Season</p>
-                  <p className="mt-2 text-sm font-black text-[color:var(--theme-warm)]">Nightfall</p>
-                </article>
-                <article className="gm-panel rounded-xl px-4 py-3">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Security</p>
-                  <p className="mt-2 text-sm font-black text-[color:var(--text-main)]">Protected</p>
-                </article>
-              </div>
-            </div>
-
-            <div className="relative h-[20rem] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#111317] sm:h-[24rem]">
-              <Image src="/home/capapc.png" alt="Loot Master game world" fill priority sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover object-center" />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.5))]" />
-              <div className="absolute bottom-0 left-0 right-0 p-5">
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">Loot Master world</p>
-                <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">Your next adventure starts here</h2>
-              </div>
-            </div>
+          <div className="relative min-h-[25rem] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#111317] sm:min-h-[34rem] lg:min-h-[38rem]">
+            <Image src="/home/capapc.png" alt="Loot Master game world" fill priority sizes="100vw" className="object-cover object-center" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.22))]" />
+            <Link href="/games" className="gm-button gm-button-primary absolute bottom-5 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-2 rounded-xl px-8 py-3 text-xs uppercase tracking-[0.16em] shadow-[0_10px_28px_rgba(0,0,0,0.4)]">
+              Games
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
         </section>
 
