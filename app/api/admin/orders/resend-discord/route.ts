@@ -1,18 +1,7 @@
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
+import { resolveDiscordChannelId } from "@/lib/discord-channel-resolver";
 import { getAdminDb } from "@/lib/firebase-admin";
-
-function resolveDiscordChannelId(gameId: string, categoryId: string): string | null {
-  const key = `${gameId}::${categoryId}`;
-  const channelMap: Record<string, string | undefined> = {
-    "tbc-anniversary::gold": process.env.DISCORD_CHANNEL_WOW_TBC_GOLD,
-    "retail::gold": process.env.DISCORD_CHANNEL_WOW_RETAIL_GOLD,
-    "classic-era::gold": process.env.DISCORD_CHANNEL_WOW_CLASSIC_GOLD,
-    "mist-of-pandaria::gold": process.env.DISCORD_CHANNEL_WOW_PANDARIA_GOLD,
-  };
-
-  return channelMap[key] ?? process.env.DISCORD_CHANNEL_DEFAULT ?? null;
-}
 
 type RequestBody = {
   orderId: string;
@@ -58,7 +47,14 @@ export async function POST(request: Request): Promise<Response> {
     const gameId = typeof orderData.gameId === "string" ? orderData.gameId : "";
     const categoryId = typeof orderData.categoryId === "string" ? orderData.categoryId : "";
 
-    const channelId = resolveDiscordChannelId(gameId, categoryId);
+    const channelId = await resolveDiscordChannelId(gameId, categoryId);
+
+    if (!channelId) {
+      return Response.json(
+        { error: "No Discord channel is configured for this game/category. Check DISCORD_CHANNEL_* or DISCORD_WEBHOOK_* env vars." },
+        { status: 422 },
+      );
+    }
 
     const notification = await sendOrderNotificationViaBot({
       channelId,
@@ -88,15 +84,17 @@ export async function POST(request: Request): Promise<Response> {
       email: typeof orderData.customerEmail === "string" ? orderData.customerEmail : "—",
     });
 
-    if (notification) {
-      await adminDb.collection("order-checkouts").doc(orderId).set(
-        {
-          discordNotificationChannelId: notification.channelId,
-          discordNotificationMessageId: notification.messageId,
-        },
-        { merge: true },
-      );
+    if (!notification) {
+      return Response.json({ error: "Discord did not confirm the message was posted." }, { status: 502 });
     }
+
+    await adminDb.collection("order-checkouts").doc(orderId).set(
+      {
+        discordNotificationChannelId: notification.channelId,
+        discordNotificationMessageId: notification.messageId,
+      },
+      { merge: true },
+    );
 
     return Response.json({ ok: true });
   } catch (error) {

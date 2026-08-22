@@ -1,5 +1,6 @@
 import { getAdminDb } from "@/lib/firebase-admin";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
+import { resolveDiscordChannelId } from "@/lib/discord-channel-resolver";
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 import {
   SITE_FEE_SETTINGS_DOC_ID,
@@ -25,18 +26,6 @@ function pickOne<T>(list: T[]): T {
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function resolveTestChannelId(gameId: string, categoryId: string): string | null {
-  const key = `${gameId}::${categoryId}`;
-  const channelMap: Record<string, string | undefined> = {
-    "tbc-anniversary::gold": process.env.DISCORD_CHANNEL_WOW_TBC_GOLD,
-    "retail::gold": process.env.DISCORD_CHANNEL_WOW_RETAIL_GOLD,
-    "classic-era::gold": process.env.DISCORD_CHANNEL_WOW_CLASSIC_GOLD,
-    "mist-of-pandaria::gold": process.env.DISCORD_CHANNEL_WOW_PANDARIA_GOLD,
-  };
-
-  return channelMap[key] ?? process.env.DISCORD_CHANNEL_DEFAULT ?? null;
 }
 
 type CreateTestOrderBody = {
@@ -144,7 +133,7 @@ export async function POST(request: Request): Promise<Response> {
 
     try {
       const notification = await sendOrderNotificationViaBot({
-        channelId: resolveTestChannelId(game.gameId, game.categoryId),
+        channelId: await resolveDiscordChannelId(game.gameId, game.categoryId),
         sessionId: orderId,
         gameTitle: game.gameTitle,
         categoryTitle: game.categoryTitle,
