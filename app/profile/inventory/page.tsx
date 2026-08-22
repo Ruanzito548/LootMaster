@@ -584,6 +584,7 @@ export default function InventoryPage() {
         backgroundPosition: "top center",
         backgroundRepeat: "no-repeat",
         backgroundSize: "cover",
+        backgroundAttachment: "fixed",
       }}
     >
       <div className="pointer-events-none absolute inset-0">
