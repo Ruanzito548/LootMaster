@@ -880,7 +880,7 @@ export default function InventoryPage() {
               <div className="text-center">
                 <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#e6c46a]">Chest opened</p>
                 <h2 className="mt-2 text-3xl font-black text-white">Items obtained</h2>
-                <p className="mt-2 text-sm text-[#b8cce5]">{CHEST_DEFINITIONS[pendingResult.chestId].title} · +{pendingResult.xpGain} XP</p>
+                <p className="mt-2 text-sm text-[#b8cce5]">{CHEST_DEFINITIONS[pendingResult.chestId].title}</p>
               </div>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
