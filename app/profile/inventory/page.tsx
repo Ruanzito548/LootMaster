@@ -577,16 +577,11 @@ export default function InventoryPage() {
   }
 
   return (
-    <div
-      className="loot-shell relative overflow-hidden pb-6"
-      style={{
-        backgroundImage: "url('/inventario/bgtotal.png')",
-        backgroundPosition: "top center",
-        backgroundRepeat: "no-repeat",
-        backgroundSize: "cover",
-        backgroundAttachment: "fixed",
-      }}
-    >
+    <div className="loot-shell relative overflow-hidden pb-6">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <Image src="/inventario/bgtotal.png" alt="" fill sizes="100vw" priority className="object-cover object-top" />
+      </div>
+
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-20 top-8 h-72 w-72 rounded-full bg-[#4bcfff]/12 blur-3xl" />
         <div className="absolute right-0 top-24 h-80 w-80 rounded-full bg-[#b16bff]/10 blur-3xl" />
