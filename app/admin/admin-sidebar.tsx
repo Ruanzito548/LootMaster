@@ -6,7 +6,6 @@ import { useState } from "react";
 import {
   BarChart3,
   ChevronDown,
-  ClipboardList,
   FileText,
   LayoutDashboard,
   Menu,
@@ -32,11 +31,10 @@ type NavGroup = {
 
 const groups: NavGroup[] = [
   { label: "Dashboard", icon: LayoutDashboard, items: [{ href: "/admin/dashboard", label: "Visão geral" }] },
-  { label: "Pedidos", icon: ClipboardList, badge: "128", items: [{ href: "/admin/orders/abertas", label: "Ordens Abertas" }, { href: "/admin/orders/completas", label: "Ordens Completas" }] },
   { label: "Itens", icon: Package, items: [{ href: "/admin/items", label: "Inventário e itens" }] },
-  { label: "Cadastros", icon: Users, items: [{ href: "/admin/clientes/todos", label: "Usuários" }, { href: "/admin/clientes/agentes", label: "Fornecedores" }] },
+  { label: "Cadastros", icon: Users, items: [{ href: "/admin/clientes/todos", label: "Usuários" }] },
   { label: "Financeiro", icon: BarChart3, badge: "Novo", items: [{ href: "/admin/taxas", label: "Comissões e repasses" }, { href: "/admin/calculadora-financeira", label: "Dashboard financeiro" }] },
-  { label: "Agentes", icon: Users, items: [{ href: "/admin/clientes/agentes", label: "Agentes" }, { href: "/admin/taxas", label: "Comissões" }] },
+  { label: "Agentes", icon: Users, items: [{ href: "/admin/clientes/agentes", label: "Agentes e fornecedores" }] },
   { label: "Relatórios", icon: FileText, items: [{ href: "/admin/history", label: "Histórico operacional" }] },
   { label: "Configurações", icon: Settings, items: [{ href: "/admin/game-configuration", label: "Jogos" }, { href: "/admin/chests", label: "Rewards e Baús" }, { href: "/admin/discord-settings", label: "Pagamentos e Discord" }] },
   { label: "Extrato", icon: Wallet, items: [{ href: "/admin/orders/abertas", label: "Ordens Abertas" }, { href: "/admin/orders/completas", label: "Ordens Completas" }, { href: "/admin/withdrawals/aprovar", label: "Aprovar Saque" }, { href: "/admin/withdrawals/aprovados", label: "Saques Aprovados" }, { href: "/admin/withdrawals/rejeitados", label: "Saques Rejeitados" }, { href: "/admin/giftcard-claims/abertas", label: "Giftcards Abertos" }, { href: "/admin/giftcard-claims/completas", label: "Giftcards Completos" }] },
@@ -45,7 +43,7 @@ const groups: NavGroup[] = [
 export function AdminSidebar({ mobileOpen, onMobileClose }: AdminSidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Pedidos: true, Extrato: true });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Extrato: true });
 
   const sidebarClass = `fixed left-0 top-20 z-40 h-[calc(100vh-5rem)] border-r border-white/8 bg-[#080c12]/98 shadow-[12px_0_40px_rgba(0,0,0,0.2)] backdrop-blur-xl transition-all duration-300 ${collapsed ? "w-[76px]" : "w-[260px]"} ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`;
 
