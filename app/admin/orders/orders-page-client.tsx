@@ -147,7 +147,7 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
   }, [loading, loadingMore, mode, nextCursor, user]);
 
   return (
-    <div className="min-h-screen bg-black text-green-400">
+    <div className="text-green-400">
       <main className="mx-auto w-full max-w-7xl px-1 py-4 sm:px-2 lg:px-3">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/8 pb-5">
           <div>

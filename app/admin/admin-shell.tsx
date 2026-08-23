@@ -18,7 +18,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
         <main className="px-3 py-4 sm:px-5 lg:px-6">
-          <div className="rounded-2xl border border-white/8 bg-[#0b1119]/94 p-3 shadow-[0_0_40px_rgba(0,0,0,0.25)] sm:p-5">{children}</div>
+          <div className="min-w-0">{children}</div>
         </main>
       </div>
     </div>
