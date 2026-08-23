@@ -36,7 +36,6 @@ export default function ProfilePage() {
   const resolvedPhoto = photoDraft ?? profile?.photoURL ?? defaultPhotoURL;
   const resolvedCover = coverDraft ?? profile?.coverURL ?? defaultCoverURL;
   const progress = calculateLevelProgress(profile?.totalSpentCents ?? 0);
-  const rpgLevel = Math.max(1, profile?.rpgLevel ?? 1);
   const levelUpReward = profile?.lastLevelUpLevel ? buildLevelReward(profile.lastLevelUpLevel, `${profile.uid}-level-up`) : null;
 
   const saveAppearance = async () => {
@@ -182,8 +181,10 @@ export default function ProfilePage() {
             <div className="grid gap-1 lg:border-l lg:border-[#d4af5a]/45 lg:px-6">
               <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Wallet Balance</p>
               <p className="text-2xl font-black text-[#ffcf67]">{profile.lootCoins.toLocaleString("en-US")} LC</p>
-              <p className="mt-1 text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Title</p>
-              <p className="text-sm font-black uppercase tracking-[0.12em] text-[color:var(--text-main)]">Level {rpgLevel}</p>
+              <Link href="/profile/withdraw" className="loot-secondary-button mt-2 inline-flex w-fit items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em]">
+                <WalletIcon className="h-3.5 w-3.5" />
+                Withdraw
+              </Link>
             </div>
           </div>
         </section>

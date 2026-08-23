@@ -760,15 +760,6 @@ export default function HistoryClient() {
                 >
                   Clear Filters
                 </button>
-                <Link href="/profile/withdraw" className="loot-secondary-button flex min-h-[64px] items-center justify-center gap-3 rounded-[1.2rem] border border-[#d4af5a]/45 bg-[#120d09]/70 px-4 py-3 text-left text-[#f7d887] shadow-[inset_0_1px_0_rgba(212,175,90,0.12)] hover:border-[#d4af5a]/70">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#d4af5a]/50 bg-[#101a22] text-[#f5d18f]">
-                    <Wallet className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-black uppercase tracking-[0.12em]">Withdraw</div>
-                    <div className="mt-1 text-[0.56rem] font-semibold uppercase tracking-[0.18em] text-[#b7c8d8]">Transfer your balance</div>
-                  </div>
-                </Link>
               </div>
             </div>
 
