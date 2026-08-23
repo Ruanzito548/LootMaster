@@ -73,12 +73,12 @@ function getClientStatus(row: ClientRow): { label: "Novo" | "Ativo" | "Inativo";
   const newThreshold = now - NEW_CLIENT_DAYS * 24 * 60 * 60 * 1000;
   const activeThreshold = now - ACTIVE_CLIENT_DAYS * 24 * 60 * 60 * 1000;
 
-  if (createdAt && createdAt >= newThreshold) {
-    return { label: "Novo", tone: "text-cyan-300 border-cyan-800 bg-cyan-950/20" };
+  if (lastActivityAt && lastActivityAt >= activeThreshold) {
+    return { label: "Ativo", tone: "text-emerald-300 border-emerald-800 bg-emerald-950/20" };
   }
 
-  if (createdAt && createdAt < newThreshold && lastActivityAt && lastActivityAt >= activeThreshold) {
-    return { label: "Ativo", tone: "text-emerald-300 border-emerald-800 bg-emerald-950/20" };
+  if (createdAt && createdAt >= newThreshold) {
+    return { label: "Novo", tone: "text-cyan-300 border-cyan-800 bg-cyan-950/20" };
   }
 
   return { label: "Inativo", tone: "text-rose-300 border-rose-800 bg-rose-950/20" };
