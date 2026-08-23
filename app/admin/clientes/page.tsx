@@ -17,22 +17,24 @@ const sections = [
 
 export default function AdminClientesPage() {
   return (
-    <div className="min-h-screen bg-black text-green-400">
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen text-green-400">
+      <main className="w-full px-1 py-4 sm:px-2 lg:px-3">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin</p>
-            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Clientes</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-green-600">
-              Acesse os modulos de clientes e agentes para controlar vinculacao e repasse de taxas.
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[#d4af5a]">Admin / Clientes</p>
+            <h1 className="mt-2 text-3xl font-black text-[#f0ede4] sm:text-4xl">Clientes</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-7 text-[#8e98a3]">
+              Gerencie e acompanhe todos os clientes cadastrados na plataforma.
             </p>
           </div>
-          <Link
-            href="/admin"
-            className="inline-flex items-center rounded-md border border-green-800 px-4 py-2 text-sm font-medium text-green-400 transition hover:bg-green-950"
-          >
-            Back to admin
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/clientes" className="inline-flex items-center rounded-lg border border-white/10 bg-[#101722] px-4 py-2 text-sm font-bold text-[#a8b3c1] transition hover:bg-[#171d28] hover:text-[#e6c46a]">
+              Voltar para clientes
+            </Link>
+            <Link href="/admin" className="inline-flex items-center rounded-lg border border-[#d4af5a]/35 bg-[#d4af5a] px-4 py-2 text-sm font-bold text-[#17120a] transition hover:bg-[#e6c46a]">
+              Back to admin
+            </Link>
+          </div>
         </div>
 
         <section className="mt-8 grid gap-5 md:grid-cols-2">

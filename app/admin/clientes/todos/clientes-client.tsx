@@ -4,6 +4,8 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Check, CircleHelp, Copy, Search, UserCheck, UserRound, Users } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { auth } from "@/lib/firebase";
 import type { ClientRow } from "../clientes-types";
@@ -105,6 +107,12 @@ export default function ClientesAdminClient() {
   const [searchText, setSearchText] = useState(() => searchParams.get("q") ?? "");
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const deferredSearchText = useDeferredValue(searchText);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [agentFilter, setAgentFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const nextSearch = searchParams.get("q") ?? "";
@@ -221,6 +229,52 @@ export default function ClientesAdminClient() {
 
   const agents = useMemo(() => rows.filter((row) => row.isAgent), [rows]);
 
+  const filteredRows = useMemo(() => {
+    return [...rows]
+      .filter((row) => statusFilter === "all" || getClientStatus(row).label.toLowerCase() === statusFilter)
+      .filter((row) => agentFilter === "all" || (agentFilter === "none" ? !row.assignedAgentId : row.assignedAgentId === agentFilter))
+      .sort((left, right) => {
+        const leftTime = parseDate(left.createdAt) ?? 0;
+        const rightTime = parseDate(right.createdAt) ?? 0;
+        return sortOrder === "newest" ? rightTime - leftTime : leftTime - rightTime;
+      });
+  }, [agentFilter, rows, sortOrder, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+  const visibleRows = filteredRows.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const stats = useMemo(() => {
+    const active = rows.filter((row) => getClientStatus(row).label === "Ativo").length;
+    const now = new Date();
+    const recent = rows.filter((row) => {
+      const createdAt = parseDate(row.createdAt);
+      if (!createdAt) return false;
+      const created = new Date(createdAt);
+      return created.getFullYear() === now.getFullYear() && created.getMonth() === now.getMonth();
+    }).length;
+    const withoutAgent = rows.filter((row) => !row.assignedAgentId).length;
+    return { active, recent, withoutAgent };
+  }, [rows]);
+  const statCards: Array<{ icon: LucideIcon; label: string; value: number; caption: string; tone: string }> = [
+    { icon: Users, label: "Total de clientes", value: rows.length, caption: "Registros carregados", tone: "text-[#e6c46a]" },
+    { icon: UserCheck, label: "Ativos", value: stats.active, caption: `${rows.length ? ((stats.active / rows.length) * 100).toFixed(1) : "0.0"}% do total`, tone: "text-[#45c982]" },
+    { icon: UserRound, label: "Novos este mês", value: stats.recent, caption: "Dentro da janela de novos", tone: "text-[#72c8ff]" },
+    { icon: CircleHelp, label: "Sem agente", value: stats.withoutAgent, caption: `${rows.length ? ((stats.withoutAgent / rows.length) * 100).toFixed(1) : "0.0"}% do total`, tone: "text-[#f2b35f]" },
+  ];
+
+  useEffect(() => {
+    setPage(1);
+  }, [agentFilter, rowsPerPage, sortOrder, statusFilter]);
+
+  const copyEmail = async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopiedEmail(email);
+      window.setTimeout(() => setCopiedEmail((current) => (current === email ? null : current)), 1800);
+    } catch {
+      setErrorMessage("Could not copy email.");
+    }
+  };
+
   const authorizedRequest = async (url: string, payload: Record<string, unknown>) => {
     if (!auth?.currentUser) {
       throw new Error("Sign in with an admin account first.");
@@ -301,28 +355,27 @@ export default function ClientesAdminClient() {
   }
 
   return (
-    <section className="mt-6 space-y-4">
+    <section className="mt-5 space-y-4">
       {errorMessage ? (
         <p className="rounded-xl border border-red-900 bg-red-950/20 px-5 py-4 text-sm font-medium text-red-400">
           {errorMessage}
         </p>
       ) : null}
 
-      <div className="flex flex-col gap-2 rounded-xl border border-green-900 bg-black/40 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <label className="text-xs font-semibold uppercase tracking-[0.14em] text-green-600" htmlFor="clients-search">
-          Buscar por usuario ou email
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {statCards.map(({ icon: Icon, label, value, caption, tone }) => <article key={label} className="rounded-xl border border-white/8 bg-[#101722] p-4"><div className="flex items-start justify-between"><p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#8e98a3]">{label}</p><Icon className={`size-4 ${tone}`} /></div><p className="mt-2 text-2xl font-black text-[#f0ede4]">{value}</p><p className="mt-1 text-[0.62rem] text-[#748092]">{caption}</p></article>)}
+      </section>
+
+      <div className="grid gap-3 rounded-xl border border-white/8 bg-[#101722] p-4 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))_auto]">
+        <label className="relative block text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]" htmlFor="clients-search">
+          Busca
+          <Search className="pointer-events-none absolute bottom-3 left-3 size-4 text-[#748092]" />
+          <input id="clients-search" type="search" value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="Buscar por usuário, email ou UID..." className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] py-2.5 pl-9 pr-3 text-sm text-[#e2e6ea] outline-none transition focus:border-[#d4af5a]/70" />
         </label>
-        <div className="flex w-full items-center gap-3 sm:max-w-md">
-          <input
-            id="clients-search"
-            type="search"
-            value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
-            placeholder="Digite username, email ou UID"
-            className="w-full rounded-md border border-green-800 bg-black px-3 py-2 text-sm text-green-200 outline-none transition placeholder:text-green-800 focus:border-emerald-500"
-          />
-          <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-green-700">{rows.length} carregados</span>
-        </div>
+        <label className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]">Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] px-3 py-2.5 text-sm text-[#e2e6ea]"><option value="all">Todos</option><option value="novo">Novos</option><option value="ativo">Ativos</option><option value="inativo">Inativos</option></select></label>
+        <label className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]">Agente<select value={agentFilter} onChange={(event) => setAgentFilter(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] px-3 py-2.5 text-sm text-[#e2e6ea]"><option value="all">Todos os agentes</option><option value="none">Sem agente</option>{agents.map((agent) => <option key={agent.uid} value={agent.uid}>{agent.username}</option>)}</select></label>
+        <label className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]">Cadastro<select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as "newest" | "oldest")} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] px-3 py-2.5 text-sm text-[#e2e6ea]"><option value="newest">Mais recentes</option><option value="oldest">Mais antigos</option></select></label>
+        <button type="button" onClick={() => { setSearchText(""); setStatusFilter("all"); setAgentFilter("all"); setSortOrder("newest"); }} className="self-end rounded-lg border border-[#d4af5a]/35 px-3 py-2.5 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#e6c46a] hover:bg-[#2a2110]">Limpar filtros</button>
       </div>
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
@@ -343,7 +396,7 @@ export default function ClientesAdminClient() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row, index) => {
+              {visibleRows.map((row, index) => {
                 const assignKey = `assign:${row.uid}`;
                 const unassignKey = `unassign:${row.uid}`;
                 const promoteKey = `promote:${row.uid}`;
@@ -352,22 +405,21 @@ export default function ClientesAdminClient() {
                 return (
                   <tr key={row.uid} className={`border-b border-green-950 ${index % 2 === 0 ? "" : "bg-green-950/20"}`}>
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-green-300">{row.username}</p>
-                      <p className="mt-1 text-xs text-green-600">{row.uid}</p>
+                      <div className="flex items-center gap-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#172538] text-sm font-black text-[#e6c46a]">{row.username.charAt(0).toUpperCase()}</span><div><p className="font-semibold text-[#f0ede4]">{row.username}</p><p className="mt-1 text-xs text-[#748092]">{row.uid}</p></div></div>
                       {row.isAgent ? (
                         <p className="mt-1 text-xs font-semibold text-emerald-400">
                           Agente ({row.agentFeeSharePercent.toFixed(2)}% da taxa da plataforma)
                         </p>
                       ) : null}
                     </td>
-                    <td className="px-4 py-3 text-xs text-green-500">{row.email}</td>
+                    <td className="px-4 py-3 text-xs text-[#a8b3c1]"><div className="flex items-center gap-2">{row.email}<button type="button" onClick={() => void copyEmail(row.email)} className="text-[#748092] hover:text-[#e6c46a]" title="Copiar email">{copiedEmail === row.email ? <Check className="size-3.5 text-[#45c982]" /> : <Copy className="size-3.5" />}</button></div></td>
                     <td className="px-4 py-3 text-xs">
                       <span className={`inline-flex rounded-full border px-2.5 py-1 font-semibold uppercase tracking-[0.14em] ${status.tone}`}>
                         {status.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-green-500">{formatLastAccess(row.lastActivityAt)}</td>
-                    <td className="px-4 py-3 text-xs text-green-500">{row.assignedAgentId ?? "Sem agente"}</td>
+                    <td className="px-4 py-3 text-xs text-[#a8b3c1]">{formatLastAccess(row.lastActivityAt)}</td>
+                    <td className="px-4 py-3 text-xs text-[#e6c46a]">{row.assignedAgentId ?? "Sem agente"}</td>
                     <td className="px-4 py-3">
                       <div className="flex min-w-[420px] flex-wrap items-center gap-2">
                         <select
@@ -415,6 +467,13 @@ export default function ClientesAdminClient() {
           </table>
         )}
       </article>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/8 bg-[#101722] px-4 py-3 text-xs text-[#8e98a3]">
+        <span>Mostrando {filteredRows.length ? (page - 1) * rowsPerPage + 1 : 0}–{Math.min(page * rowsPerPage, filteredRows.length)} de {filteredRows.length} clientes</span>
+        <div className="flex items-center gap-2"><button type="button" disabled={page === 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="rounded-md border border-white/10 px-2 py-1 disabled:opacity-30">‹</button><span className="rounded-md bg-[#d4af5a] px-2.5 py-1 font-bold text-[#17120a]">{page}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))} className="rounded-md border border-white/10 px-2 py-1 disabled:opacity-30">›</button><label className="ml-2">Itens por página <select value={rowsPerPage} onChange={(event) => setRowsPerPage(Number(event.target.value))} className="ml-1 rounded-md border border-white/10 bg-[#0c121b] px-2 py-1 text-[#e2e6ea]"><option value={5}>5</option><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select></label></div>
+      </div>
+
+      <aside className="flex items-center gap-4 rounded-xl border border-[#d4af5a]/25 bg-[linear-gradient(100deg,#101722,#15120d)] px-4 py-3"><span className="text-2xl">🎁</span><div><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#e6c46a]">Dica Loot Master</p><p className="mt-1 text-xs text-[#a8b3c1]">Mantenha seus clientes sempre ativos! Vincule agentes e incentive suas vendas para aumentar os ganhos de todos.</p></div></aside>
 
       <div ref={loadMoreRef} className="flex justify-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-green-900 bg-black/25 px-4 py-2 text-[0.66rem] font-bold uppercase tracking-[0.14em] text-green-600">
