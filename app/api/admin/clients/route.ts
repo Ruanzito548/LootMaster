@@ -86,6 +86,7 @@ function mapClientRow(uid: string, data: Record<string, unknown>): ClientRow {
     uid,
     username: typeof data.username === "string" ? data.username : "--",
     email: typeof data.email === "string" ? data.email : "--",
+    lootCoins: typeof data.lootCoins === "number" && Number.isFinite(data.lootCoins) ? data.lootCoins : 0,
     createdAt: serializeDateLike(data.createdAt),
     lastActivityAt:
       serializeDateLike(data.lastAccessAt) ??
@@ -107,6 +108,7 @@ function mapAgentRow(uid: string, data: Record<string, unknown>): AgentRow {
     uid,
     username: typeof data.username === "string" ? data.username : "--",
     email: typeof data.email === "string" ? data.email : "--",
+    lootCoins: typeof data.lootCoins === "number" && Number.isFinite(data.lootCoins) ? data.lootCoins : 0,
     createdAt: serializeDateLike(data.createdAt),
     lastActivityAt:
       serializeDateLike(data.lastAccessAt) ??
@@ -206,9 +208,10 @@ export async function GET(request: Request): Promise<Response> {
     const cursor = url.searchParams.get("cursor")?.trim() || null;
     const limit = normalizeLimit(url.searchParams.get("limit"));
     const search = normalizeSearch(url.searchParams.get("q"));
+    const assignedAgentId = url.searchParams.get("assignedAgentId")?.trim() || null;
     const adminDb = getAdminDb();
 
-    if (search && (await isUsersIndexComplete(adminDb))) {
+    if (search && !assignedAgentId && (await isUsersIndexComplete(adminDb))) {
       const indexedResult = await loadIndexedUserDocs({
         adminDb,
         mode,
@@ -237,10 +240,14 @@ export async function GET(request: Request): Promise<Response> {
 
     const matchingDocs = snapshot.docs.filter((docRow) => {
       if (!search) {
-        return true;
+        const data = docRow.data() as Record<string, unknown>;
+        return !assignedAgentId || data.assignedAgentId === assignedAgentId;
       }
 
       const data = docRow.data() as Record<string, unknown>;
+      if (assignedAgentId && data.assignedAgentId !== assignedAgentId) {
+        return false;
+      }
       return matchesAdminSearchText(
         [
           docRow.id,

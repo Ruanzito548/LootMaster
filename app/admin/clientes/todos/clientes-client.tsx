@@ -405,7 +405,7 @@ export default function ClientesAdminClient() {
                 return (
                   <tr key={row.uid} className={`border-b border-green-950 ${index % 2 === 0 ? "" : "bg-green-950/20"}`}>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#172538] text-sm font-black text-[#e6c46a]">{row.username.charAt(0).toUpperCase()}</span><div><p className="font-semibold text-[#f0ede4]">{row.username}</p><p className="mt-1 text-xs text-[#748092]">{row.uid}</p></div></div>
+                      <div className="flex items-center gap-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#172538] text-sm font-black text-[#e6c46a]">{row.username.charAt(0).toUpperCase()}</span><div><p className="font-semibold text-[#f0ede4]">{row.username}</p><p className="mt-1 text-xs text-[#748092]">{row.uid}</p><p className="mt-1 text-[0.6rem] font-bold uppercase tracking-[0.1em] text-[#d4af5a]">{row.lootCoins.toFixed(2)} Loot Coins</p></div></div>
                       {row.isAgent ? (
                         <p className="mt-1 text-xs font-semibold text-emerald-400">
                           Agente ({row.agentFeeSharePercent.toFixed(2)}% da taxa da plataforma)
@@ -473,7 +473,6 @@ export default function ClientesAdminClient() {
         <div className="flex items-center gap-2"><button type="button" disabled={page === 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="rounded-md border border-white/10 px-2 py-1 disabled:opacity-30">‹</button><span className="rounded-md bg-[#d4af5a] px-2.5 py-1 font-bold text-[#17120a]">{page}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))} className="rounded-md border border-white/10 px-2 py-1 disabled:opacity-30">›</button><label className="ml-2">Itens por página <select value={rowsPerPage} onChange={(event) => setRowsPerPage(Number(event.target.value))} className="ml-1 rounded-md border border-white/10 bg-[#0c121b] px-2 py-1 text-[#e2e6ea]"><option value={5}>5</option><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select></label></div>
       </div>
 
-      <aside className="flex items-center gap-4 rounded-xl border border-[#d4af5a]/25 bg-[linear-gradient(100deg,#101722,#15120d)] px-4 py-3"><span className="text-2xl">🎁</span><div><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#e6c46a]">Dica Loot Master</p><p className="mt-1 text-xs text-[#a8b3c1]">Mantenha seus clientes sempre ativos! Vincule agentes e incentive suas vendas para aumentar os ganhos de todos.</p></div></aside>
 
       <div ref={loadMoreRef} className="flex justify-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-green-900 bg-black/25 px-4 py-2 text-[0.66rem] font-bold uppercase tracking-[0.14em] text-green-600">

@@ -11,7 +11,6 @@ import {
   Menu,
   Package,
   Settings,
-  CircleHelp,
   Users,
   Wallet,
   X,
@@ -74,7 +73,6 @@ export function AdminSidebar({ mobileOpen, onMobileClose }: AdminSidebarProps) {
             })}
           </nav>
 
-          {!collapsed ? <div className="mt-auto pt-5"><div className="rounded-xl border border-[#d4af5a]/18 bg-[#101722] p-3"><CircleHelp className="size-4 text-[#d4af5a]" /><p className="mt-2 text-[0.66rem] font-bold text-[#f0ede4]">Precisa de ajuda?</p><p className="mt-1 text-[0.6rem] leading-4 text-[#8e98a3]">Nossa equipe está disponível 24/7.</p><button type="button" className="mt-3 w-full rounded-md border border-[#d4af5a]/45 px-2 py-1.5 text-[0.58rem] font-bold uppercase tracking-[0.1em] text-[#e6c46a]">Abrir suporte</button></div></div> : null}
           <button type="button" onClick={() => setCollapsed((value) => !value)} title={collapsed ? "Expandir menu" : "Recolher menu"} className="mt-3 flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#748092] hover:bg-white/5 hover:text-[#e6c46a]">{collapsed ? <Menu className="size-4" /> : <><X className="size-3" /> Recolher menu</>}</button>
         </div>
       </aside>

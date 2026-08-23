@@ -6,7 +6,7 @@ import type { User } from "firebase/auth";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { auth } from "@/lib/firebase";
-import type { AgentRow } from "../clientes-types";
+import type { AgentRow, ClientRow } from "../clientes-types";
 
 const PAGE_SIZE = 50;
 
@@ -67,6 +67,9 @@ export default function AgentesAdminClient() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [searchText, setSearchText] = useState(() => searchParams.get("q") ?? "");
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<AgentRow | null>(null);
+  const [linkedClients, setLinkedClients] = useState<ClientRow[]>([]);
+  const [linkedClientsLoading, setLinkedClientsLoading] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const deferredSearchText = useDeferredValue(searchText);
 
@@ -262,6 +265,29 @@ export default function AgentesAdminClient() {
     window.setTimeout(() => setCopiedCode((current) => (current === agentReferralCode.trim() ? null : current)), 1500);
   };
 
+  const showLinkedClients = async (agent: AgentRow) => {
+    if (!auth?.currentUser) return;
+    setSelectedAgent(agent);
+    setLinkedClientsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(`/api/admin/clients?mode=all&limit=100&assignedAgentId=${encodeURIComponent(agent.uid)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      const payload = (await response.json()) as { error?: string; items?: ClientRow[] };
+      if (!response.ok) throw new Error(payload.error ?? "Could not load linked clients.");
+      setLinkedClients(Array.isArray(payload.items) ? payload.items : []);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not load linked clients.");
+      setLinkedClients([]);
+    } finally {
+      setLinkedClientsLoading(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <p className="mt-6 rounded-xl border border-amber-900 bg-amber-950/20 px-5 py-4 text-sm font-medium text-amber-300">
@@ -323,8 +349,9 @@ export default function AgentesAdminClient() {
               {rows.map((row, index) => (
                 <tr key={row.uid} className={`border-b border-green-950 ${index % 2 === 0 ? "" : "bg-green-950/20"}`}>
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-green-300">{row.username}</p>
+                    <button type="button" onClick={() => void showLinkedClients(row)} className="text-left font-semibold text-green-300 transition hover:text-[#e6c46a] hover:underline">{row.username}</button>
                     <p className="mt-1 text-xs text-green-600">{row.uid}</p>
+                    <p className="mt-1 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#d4af5a]">{row.lootCoins.toFixed(2)} Loot Coins</p>
                   </td>
                   <td className="px-4 py-3 text-xs text-green-500">{row.email}</td>
                   <td className="px-4 py-3 text-xs font-semibold text-emerald-300">{row.agentReferralCode || "--"}</td>
@@ -378,6 +405,20 @@ export default function AgentesAdminClient() {
           </table>
         )}
       </article>
+
+      {selectedAgent ? (
+        <section className="rounded-xl border border-[#d4af5a]/30 bg-[#101722] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#d4af5a]">Jogadores vinculados</p>
+              <h2 className="mt-1 text-xl font-black text-[#f0ede4]">{selectedAgent.username}</h2>
+              <p className="mt-1 text-xs text-[#8e98a3]">Saldo do agente: {selectedAgent.lootCoins.toFixed(2)} Loot Coins</p>
+            </div>
+            <button type="button" onClick={() => setSelectedAgent(null)} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold uppercase text-[#a8b3c1] hover:text-[#e6c46a]">Fechar</button>
+          </div>
+          {linkedClientsLoading ? <p className="mt-4 text-sm text-[#8e98a3]">Carregando jogadores...</p> : linkedClients.length === 0 ? <p className="mt-4 text-sm text-[#8e98a3]">Nenhum jogador vinculado a este agente.</p> : <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{linkedClients.map((client) => <div key={client.uid} className="rounded-lg border border-white/8 bg-[#0c121b] p-3"><p className="font-bold text-[#f0ede4]">{client.username}</p><p className="mt-1 text-xs text-[#748092]">{client.email}</p><p className="mt-2 text-xs font-bold text-[#e6c46a]">{client.lootCoins.toFixed(2)} Loot Coins</p></div>)}</div>}
+        </section>
+      ) : null}
 
       <div ref={loadMoreRef} className="flex justify-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-green-900 bg-black/25 px-4 py-2 text-[0.66rem] font-bold uppercase tracking-[0.14em] text-green-600">
