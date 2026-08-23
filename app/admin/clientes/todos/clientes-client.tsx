@@ -109,7 +109,7 @@ export default function ClientesAdminClient() {
   const deferredSearchText = useDeferredValue(searchText);
   const [statusFilter, setStatusFilter] = useState("all");
   const [agentFilter, setAgentFilter] = useState("all");
-  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "lootCoins">("newest");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
@@ -236,6 +236,10 @@ export default function ClientesAdminClient() {
       .sort((left, right) => {
         const leftTime = parseDate(left.createdAt) ?? 0;
         const rightTime = parseDate(right.createdAt) ?? 0;
+        if (sortOrder === "lootCoins") {
+          return right.lootCoins - left.lootCoins;
+        }
+
         return sortOrder === "newest" ? rightTime - leftTime : leftTime - rightTime;
       });
   }, [agentFilter, rows, sortOrder, statusFilter]);
@@ -374,7 +378,7 @@ export default function ClientesAdminClient() {
         </label>
         <label className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]">Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] px-3 py-2.5 text-sm text-[#e2e6ea]"><option value="all">Todos</option><option value="novo">Novos</option><option value="ativo">Ativos</option><option value="inativo">Inativos</option></select></label>
         <label className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]">Agente<select value={agentFilter} onChange={(event) => setAgentFilter(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] px-3 py-2.5 text-sm text-[#e2e6ea]"><option value="all">Todos os agentes</option><option value="none">Sem agente</option>{agents.map((agent) => <option key={agent.uid} value={agent.uid}>{agent.username}</option>)}</select></label>
-        <label className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]">Cadastro<select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as "newest" | "oldest")} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] px-3 py-2.5 text-sm text-[#e2e6ea]"><option value="newest">Mais recentes</option><option value="oldest">Mais antigos</option></select></label>
+        <label className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]">Ordenar por<select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as "newest" | "oldest" | "lootCoins")} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] px-3 py-2.5 text-sm text-[#e2e6ea]"><option value="newest">Mais recentes</option><option value="oldest">Mais antigos</option><option value="lootCoins">Mais Loot Coins</option></select></label>
         <button type="button" onClick={() => { setSearchText(""); setStatusFilter("all"); setAgentFilter("all"); setSortOrder("newest"); }} className="self-end rounded-lg border border-[#d4af5a]/35 px-3 py-2.5 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#e6c46a] hover:bg-[#2a2110]">Limpar filtros</button>
       </div>
 

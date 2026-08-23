@@ -1,7 +1,7 @@
 "use client";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { useDeferredValue, useEffect, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -70,6 +70,7 @@ export default function AgentesAdminClient() {
   const [selectedAgent, setSelectedAgent] = useState<AgentRow | null>(null);
   const [linkedClients, setLinkedClients] = useState<ClientRow[]>([]);
   const [linkedClientsLoading, setLinkedClientsLoading] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "lootCoins">("newest");
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const deferredSearchText = useDeferredValue(searchText);
 
@@ -288,6 +289,13 @@ export default function AgentesAdminClient() {
     }
   };
 
+  const sortedRows = useMemo(() => [...rows].sort((left, right) => {
+    if (sortOrder === "lootCoins") return right.lootCoins - left.lootCoins;
+    const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : 0;
+    const rightTime = right.createdAt ? new Date(right.createdAt).getTime() : 0;
+    return sortOrder === "newest" ? rightTime - leftTime : leftTime - rightTime;
+  }), [rows, sortOrder]);
+
   if (!isAuthenticated) {
     return (
       <p className="mt-6 rounded-xl border border-amber-900 bg-amber-950/20 px-5 py-4 text-sm font-medium text-amber-300">
@@ -316,7 +324,7 @@ export default function AgentesAdminClient() {
         <label className="text-xs font-semibold uppercase tracking-[0.14em] text-green-600" htmlFor="agents-search">
           Buscar por agente ou email
         </label>
-        <div className="flex w-full items-center gap-3 sm:max-w-md">
+        <div className="flex w-full flex-wrap items-center gap-3 sm:max-w-xl">
           <input
             id="agents-search"
             type="search"
@@ -326,6 +334,11 @@ export default function AgentesAdminClient() {
             className="w-full rounded-md border border-green-800 bg-black px-3 py-2 text-sm text-green-200 outline-none transition placeholder:text-green-800 focus:border-emerald-500"
           />
           <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-green-700">{rows.length} carregados</span>
+          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as "newest" | "oldest" | "lootCoins")} className="rounded-md border border-green-800 bg-black px-3 py-2 text-xs text-green-300">
+            <option value="newest">Mais recentes</option>
+            <option value="oldest">Mais antigos</option>
+            <option value="lootCoins">Mais Loot Coins</option>
+          </select>
         </div>
       </div>
 
@@ -346,7 +359,7 @@ export default function AgentesAdminClient() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row, index) => (
+              {sortedRows.map((row, index) => (
                 <tr key={row.uid} className={`border-b border-green-950 ${index % 2 === 0 ? "" : "bg-green-950/20"}`}>
                   <td className="px-4 py-3">
                     <button type="button" onClick={() => void showLinkedClients(row)} className="text-left font-semibold text-green-300 transition hover:text-[#e6c46a] hover:underline">{row.username}</button>
