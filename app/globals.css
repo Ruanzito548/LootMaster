@@ -1596,3 +1596,11 @@ html[data-game-theme]:not([data-game-theme="default"]) .loot-badge-blue {
   padding-left: clamp(1.5rem, 2vw, 2rem) !important;
   padding-right: clamp(1.5rem, 2vw, 2rem) !important;
 }
+
+/* Admin content fills the workspace left after the fixed sidebar. */
+.admin-dashboard-theme main.mx-auto.w-full.max-w-7xl {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}

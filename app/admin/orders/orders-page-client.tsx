@@ -148,7 +148,7 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
 
   return (
     <div className="text-green-400">
-      <main className="mx-auto w-full max-w-7xl px-1 py-4 sm:px-2 lg:px-3">
+      <main className="w-full px-1 py-4 sm:px-2 lg:px-3">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/8 pb-5">
           <div>
             <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[#d4af5a]">Extrato</p>
