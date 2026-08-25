@@ -32,7 +32,7 @@ const groups: NavGroup[] = [
   { label: "Dashboard", icon: LayoutDashboard, items: [{ href: "/admin/dashboard", label: "Visão geral" }] },
   { label: "Itens", icon: Package, items: [{ href: "/admin/items", label: "Inventário e itens" }] },
   { label: "Cadastros", icon: Users, items: [{ href: "/admin/clientes/todos", label: "Usuários" }] },
-  { label: "Financeiro", icon: BarChart3, badge: "Novo", items: [{ href: "/admin/taxas", label: "Comissões e repasses" }, { href: "/admin/calculadora-financeira", label: "Dashboard financeiro" }] },
+  { label: "Financeiro", icon: BarChart3, items: [{ href: "/admin/taxas", label: "Comissões e repasses" }, { href: "/admin/calculadora-financeira", label: "Dashboard financeiro" }] },
   { label: "Agentes", icon: Users, items: [{ href: "/admin/clientes/agentes", label: "Agentes e fornecedores" }] },
   { label: "Relatórios", icon: FileText, items: [{ href: "/admin/history", label: "Histórico operacional" }] },
   { label: "Configurações", icon: Settings, items: [{ href: "/admin/game-configuration", label: "Jogos" }, { href: "/admin/chests", label: "Rewards e Baús" }, { href: "/admin/discord-settings", label: "Pagamentos e Discord" }] },

@@ -7,6 +7,7 @@ import { useProfileSession } from "@/app/profile/use-profile-session";
 import { CHEST_EXPECTED_VALUE_USD } from "@/lib/chest-loot";
 import { CHEST_IDS, type ChestId } from "@/lib/chests";
 import { buildDefaultChestWalletEconomyConfig } from "@/lib/chest-wallet-economy";
+import { WALLET_LABELS, extractPayoutLogEntries, formatDateTime, formatUsd } from "@/lib/chest-wallet-log-format";
 
 type RewardOdd = {
   type: string;
@@ -91,13 +92,6 @@ function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
-function formatUsd(value: number): string {
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
 function formatPercent(value: number): string {
   return `${value.toFixed(2)}%`;
 }
@@ -156,21 +150,6 @@ function getWalletTone(walletId: "normal" | "jackpotCommon" | "jackpotRare") {
   if (walletId === "normal") return "emerald";
   if (walletId === "jackpotCommon") return "amber";
   return "fuchsia";
-}
-
-const WALLET_LABELS: Record<string, string> = {
-  normal: "Carteira Normal",
-  jackpotCommon: "Jackpot",
-  jackpotRare: "Jackpot Lendário",
-};
-
-function formatDateTime(value?: string, valueMs?: number): string {
-  const date = valueMs ? new Date(valueMs) : value ? new Date(value) : null;
-  if (!date || Number.isNaN(date.getTime())) {
-    return "—";
-  }
-
-  return date.toLocaleString("pt-BR");
 }
 
 export default function AdminChestConfigPage() {
@@ -258,23 +237,7 @@ export default function AdminChestConfigPage() {
     return { totalWalletBalanceUsd: walletBalances, balanceCoveragePercent };
   }, [walletState]);
 
-  const payoutLogEntries = useMemo(() => {
-    const entries = walletState?.ledger ?? [];
-
-    return entries
-      .filter((entry) => Array.isArray((entry as { metadata?: { items?: unknown[] } }).metadata?.items) && ((entry as { metadata?: { items?: unknown[] } }).metadata?.items?.length ?? 0) > 0)
-      .map((entry) => entry as {
-        id: string;
-        walletId: string;
-        amountUsd: number;
-        userId?: string;
-        createdAt: string;
-        createdAtMs?: number;
-        metadata?: { userEmail?: string; chestId?: string; items?: Array<{ type: string; title: string; quantity: number; valueUsd: number }> };
-      })
-      .sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0))
-      .slice(0, 50);
-  }, [walletState]);
+  const payoutLogEntries = useMemo(() => extractPayoutLogEntries(walletState?.ledger, 10), [walletState]);
 
   const healthSnapshot = useMemo(() => {
     const warnings: string[] = [];
@@ -842,7 +805,17 @@ export default function AdminChestConfigPage() {
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-green-600">4.1 Log de Pagamentos</p>
               <h2 className="mt-1 text-xl font-black text-green-100">O que foi enviado para os clientes</h2>
             </div>
-            <div className="rounded-full border border-green-800/70 bg-black/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-green-500">Últimos {payoutLogEntries.length} registros</div>
+            <div className="flex items-center gap-2">
+              <div className="rounded-full border border-green-800/70 bg-black/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-green-500">Últimos {payoutLogEntries.length} registros</div>
+              <Link
+                href="/admin/chests/logs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-emerald-600/70 bg-emerald-950/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300 transition hover:bg-emerald-900/60"
+              >
+                Ver log completo ↗
+              </Link>
+            </div>
           </div>
 
           <div className="mt-4 overflow-x-auto rounded-2xl border border-green-900/70">
