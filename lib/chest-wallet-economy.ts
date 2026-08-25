@@ -55,6 +55,21 @@ export type ChestWalletReward = {
   reason: string;
 };
 
+export type ChestWalletPayoutLogItem = {
+  type: "coins" | "item";
+  title: string;
+  quantity: number;
+  valueUsd: number;
+};
+
+export type ChestWalletRewardContext = {
+  userId?: string;
+  userEmail?: string;
+  chestId?: string;
+  requestId?: string;
+  items?: ChestWalletPayoutLogItem[];
+};
+
 export const CHEST_WALLET_ECONOMY_SCHEMA_VERSION = 1;
 
 function clampPercent(value: number, fallback: number): number {
@@ -433,7 +448,11 @@ export function resolveChestWalletReward(chestId: ChestId, config: ChestWalletEc
   };
 }
 
-export function applyChestWalletReward(state: ChestWalletEconomyState, reward: ChestWalletReward): ChestWalletEconomyState {
+export function applyChestWalletReward(
+  state: ChestWalletEconomyState,
+  reward: ChestWalletReward,
+  context?: ChestWalletRewardContext,
+): ChestWalletEconomyState {
   const nextState = { ...state, wallets: { ...state.wallets }, ledger: [...state.ledger] };
   const wallet = nextState.wallets[reward.walletKey];
 
@@ -444,6 +463,11 @@ export function applyChestWalletReward(state: ChestWalletEconomyState, reward: C
   wallet.rewardCount = wallet.rewardCount + 1;
   wallet.lastMovementAtMs = Date.now();
 
+  const customerLabel = context?.userEmail ?? context?.userId ?? "customer";
+  const itemsSummary = context?.items?.length
+    ? ` (${context.items.map((item) => `${item.quantity}x ${item.title} = $${item.valueUsd.toFixed(2)}`).join(", ")})`
+    : "";
+
   nextState.ledger.push({
     id: `reward-${reward.walletKey}-${Date.now()}-${nextState.ledger.length}`,
     walletId: reward.walletKey,
@@ -451,12 +475,20 @@ export function applyChestWalletReward(state: ChestWalletEconomyState, reward: C
     amountUsd: roundUsd(reward.amountUsd),
     balanceBeforeUsd: roundUsd(previousBalance),
     balanceAfterUsd: roundUsd(nextBalance),
-    description: reward.type === "normal" ? "Chest reward payout" : `Jackpot payout for ${reward.walletKey}`,
+    userId: context?.userId,
+    description: `${reward.type === "normal" ? "Chest reward payout" : `Jackpot payout for ${reward.walletKey}`} to ${customerLabel}${itemsSummary}`,
     createdAt: new Date().toISOString(),
     source: reward.type === "normal" ? "chest" : "jackpot",
-    referenceId: reward.type,
+    referenceId: context?.requestId ?? reward.type,
     createdAtMs: Date.now(),
-    metadata: { percentOfWallet: reward.percentOfWallet, reason: reward.reason },
+    metadata: {
+      percentOfWallet: reward.percentOfWallet,
+      reason: reward.reason,
+      chestId: context?.chestId,
+      requestId: context?.requestId,
+      userEmail: context?.userEmail,
+      items: context?.items,
+    },
   });
 
   nextState.updatedAtMs = Date.now();

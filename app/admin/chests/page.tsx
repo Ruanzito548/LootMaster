@@ -158,6 +158,21 @@ function getWalletTone(walletId: "normal" | "jackpotCommon" | "jackpotRare") {
   return "fuchsia";
 }
 
+const WALLET_LABELS: Record<string, string> = {
+  normal: "Carteira Normal",
+  jackpotCommon: "Jackpot Comum",
+  jackpotRare: "Jackpot Raro",
+};
+
+function formatDateTime(value?: string, valueMs?: number): string {
+  const date = valueMs ? new Date(valueMs) : value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleString("pt-BR");
+}
+
 export default function AdminChestConfigPage() {
   const { user, status } = useProfileSession();
 
@@ -241,6 +256,24 @@ export default function AdminChestConfigPage() {
     const balanceCoveragePercent = totalReceived > 0 ? (walletBalances / totalReceived) * 100 : 0;
 
     return { totalWalletBalanceUsd: walletBalances, balanceCoveragePercent };
+  }, [walletState]);
+
+  const payoutLogEntries = useMemo(() => {
+    const entries = walletState?.ledger ?? [];
+
+    return entries
+      .filter((entry) => Array.isArray((entry as { metadata?: { items?: unknown[] } }).metadata?.items) && ((entry as { metadata?: { items?: unknown[] } }).metadata?.items?.length ?? 0) > 0)
+      .map((entry) => entry as {
+        id: string;
+        walletId: string;
+        amountUsd: number;
+        userId?: string;
+        createdAt: string;
+        createdAtMs?: number;
+        metadata?: { userEmail?: string; chestId?: string; items?: Array<{ type: string; title: string; quantity: number; valueUsd: number }> };
+      })
+      .sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0))
+      .slice(0, 50);
   }, [walletState]);
 
   const healthSnapshot = useMemo(() => {
@@ -800,6 +833,53 @@ export default function AdminChestConfigPage() {
                 </article>
               );
             })}
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-green-900/70 bg-green-950/20 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-green-600">4.1 Log de Pagamentos</p>
+              <h2 className="mt-1 text-xl font-black text-green-100">O que foi enviado para os clientes</h2>
+            </div>
+            <div className="rounded-full border border-green-800/70 bg-black/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-green-500">Últimos {payoutLogEntries.length} registros</div>
+          </div>
+
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-green-900/70">
+            <table className="w-full min-w-[720px] text-left text-sm text-green-700">
+              <thead className="bg-black/40 text-[11px] font-bold uppercase tracking-[0.16em] text-green-600">
+                <tr>
+                  <th className="px-3 py-2">Data/Hora</th>
+                  <th className="px-3 py-2">Carteira</th>
+                  <th className="px-3 py-2">Cliente</th>
+                  <th className="px-3 py-2">Itens</th>
+                  <th className="px-3 py-2 text-right">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payoutLogEntries.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-3 py-4 text-center text-green-700">Nenhum pagamento registrado ainda.</td>
+                  </tr>
+                ) : (
+                  payoutLogEntries.map((entry) => (
+                    <tr key={entry.id} className="border-t border-green-900/50">
+                      <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(entry.createdAt, entry.createdAtMs)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{WALLET_LABELS[entry.walletId] ?? entry.walletId}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{entry.metadata?.userEmail ?? entry.userId ?? "—"}</td>
+                      <td className="px-3 py-2">
+                        {(entry.metadata?.items ?? []).map((item, index) => (
+                          <span key={`${entry.id}-${index}`} className="mr-2 inline-block">
+                            {item.quantity}x {item.title} ({formatUsd(item.valueUsd)} USD)
+                          </span>
+                        ))}
+                      </td>
+                      <td className="px-3 py-2 text-right font-semibold text-green-100 whitespace-nowrap">{formatUsd(entry.amountUsd)} USD</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </section>
 

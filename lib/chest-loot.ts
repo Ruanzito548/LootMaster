@@ -63,6 +63,27 @@ const CHEST_FRAGMENT_META: Record<ChestId, { id: string; name: string; rarity: I
   mythic: { id: "fragment-chest-mythic", name: "Mythic Treasure Map Fragment", rarity: "mythic" },
 };
 
+const GIFT_CARD_FRAGMENT_UNIT_VALUE_USD = 1;
+
+const CHEST_FRAGMENT_ID_TO_CHEST_ID: Record<string, ChestId> = Object.fromEntries(
+  (Object.keys(CHEST_FRAGMENT_META) as ChestId[]).map((chestId) => [CHEST_FRAGMENT_META[chestId].id, chestId]),
+);
+
+// Wallet-deduction value of a rolled item drop: gift card fragments are worth $1 each,
+// treasure map fragments are worth 1/10 of the rarity chest they belong to.
+export function getRewardItemValueUsd(item: Pick<InventoryItem, "id" | "quantity">): number {
+  if (item.id === "gift-card-fragment") {
+    return item.quantity * GIFT_CARD_FRAGMENT_UNIT_VALUE_USD;
+  }
+
+  const fragmentChestId = CHEST_FRAGMENT_ID_TO_CHEST_ID[item.id];
+  if (fragmentChestId) {
+    return item.quantity * (CHEST_EXPECTED_VALUE_USD[fragmentChestId] / 10);
+  }
+
+  return 0;
+}
+
 const LOOT_BUNDLES: Record<ChestId, LootBundle[]> = {
   common: [
     { weight: 40, drops: [{ kind: "coins", quantity: 1 }] },

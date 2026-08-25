@@ -3,12 +3,13 @@ import { FieldValue } from "firebase-admin/firestore";
 import { requireAuthenticatedUserRequest } from "@/lib/admin-api-auth";
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { getChestDefinition, type ChestId } from "@/lib/chests";
-import { CHEST_EXPECTED_VALUE_USD, rollChestLoot } from "@/lib/chest-loot";
+import { CHEST_EXPECTED_VALUE_USD, getRewardItemValueUsd, rollChestLoot } from "@/lib/chest-loot";
 import {
   applyChestWalletReward,
   buildDefaultChestWalletEconomyConfig,
   resolveChestWalletReward,
   sanitizeChestWalletEconomyConfig,
+  type ChestWalletPayoutLogItem,
 } from "@/lib/chest-wallet-economy";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { mapUserProfile, type InventoryItem } from "@/lib/profile-data";
@@ -230,8 +231,10 @@ export async function POST(request: Request): Promise<Response> {
       const rewardParts: string[] = [];
       let totalCoins = 0;
       let lootTableCoins = 0;
+      let lootTableItemValueUsd = 0;
       let singleInventoryReward: InventoryItem | undefined;
       const obtainedItems: OpenChestObtainedItem[] = [];
+      const lootPayoutItems: ChestWalletPayoutLogItem[] = [];
       let rewardEconomy: ReturnType<typeof resolveChestWalletReward> | null = null;
 
       const rewardPoolState = walletState;
@@ -251,6 +254,7 @@ export async function POST(request: Request): Promise<Response> {
           nextLootCoins = Math.round((nextLootCoins + drop.amount) * 100) / 100;
           rewardParts.push(`${drop.amount.toLocaleString("en-US")} LC`);
           obtainedItems.push({ type: "coins", title: "Loot Coins", amount: drop.amount });
+          lootPayoutItems.push({ type: "coins", title: "Loot Coins", quantity: drop.amount, valueUsd: drop.amount });
           continue;
         }
 
@@ -263,6 +267,9 @@ export async function POST(request: Request): Promise<Response> {
         nextInventory = merged.inventory;
         rewardParts.push(`${drop.item.quantity}x ${drop.item.name}`);
         obtainedItems.push({ type: "item", title: drop.item.name, amount: drop.item.quantity, item: drop.item });
+        const itemValueUsd = getRewardItemValueUsd(drop.item);
+        lootTableItemValueUsd += itemValueUsd;
+        lootPayoutItems.push({ type: "item", title: drop.item.name, quantity: drop.item.quantity, valueUsd: itemValueUsd });
         if (rolledLoot.drops.length === 1) {
           singleInventoryReward = drop.item;
         }
@@ -289,16 +296,33 @@ export async function POST(request: Request): Promise<Response> {
         inventorySlotLimit: mappedProfile.inventorySlotLimit ?? slotLimit,
       };
 
-      const stateAfterJackpot = rewardEconomy ? applyChestWalletReward(rewardPoolState, rewardEconomy) : rewardPoolState;
-      // Item values are not tracked, only the loot-table coins are debited from the normal wallet.
-      const nextEconomyState = lootTableCoins > 0
-        ? applyChestWalletReward(stateAfterJackpot, {
-            walletKey: "normal",
-            type: "normal",
-            amountUsd: lootTableCoins,
-            percentOfWallet: 0,
-            reason: "chest-loot-coins",
+      const payoutContext = {
+        userId: decodedToken.uid,
+        userEmail: decodedToken.email ?? undefined,
+        chestId: chestDefinition.id,
+        requestId,
+      };
+
+      const stateAfterJackpot = rewardEconomy
+        ? applyChestWalletReward(rewardPoolState, rewardEconomy, {
+            ...payoutContext,
+            items: [{ type: "coins", title: "Loot Coins (jackpot)", quantity: 1, valueUsd: rewardEconomy.amountUsd }],
           })
+        : rewardPoolState;
+
+      const lootPayoutValueUsd = Math.round((lootTableCoins + lootTableItemValueUsd) * 100) / 100;
+      const nextEconomyState = lootPayoutValueUsd > 0
+        ? applyChestWalletReward(
+            stateAfterJackpot,
+            {
+              walletKey: "normal",
+              type: "normal",
+              amountUsd: lootPayoutValueUsd,
+              percentOfWallet: 0,
+              reason: "chest-loot-payout",
+            },
+            { ...payoutContext, items: lootPayoutItems },
+          )
         : stateAfterJackpot;
 
       tx.set(
