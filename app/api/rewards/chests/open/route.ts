@@ -7,7 +7,6 @@ import { CHEST_EXPECTED_VALUE_USD, rollChestLoot } from "@/lib/chest-loot";
 import {
   applyChestWalletReward,
   buildDefaultChestWalletEconomyConfig,
-  fundChestWalletEconomyFromCashback,
   resolveChestWalletReward,
   sanitizeChestWalletEconomyConfig,
 } from "@/lib/chest-wallet-economy";
@@ -230,11 +229,12 @@ export async function POST(request: Request): Promise<Response> {
       let nextLootCoins = mappedProfile.lootCoins;
       const rewardParts: string[] = [];
       let totalCoins = 0;
+      let lootTableCoins = 0;
       let singleInventoryReward: InventoryItem | undefined;
       const obtainedItems: OpenChestObtainedItem[] = [];
       let rewardEconomy: ReturnType<typeof resolveChestWalletReward> | null = null;
 
-      const rewardPoolState = fundChestWalletEconomyFromCashback(walletState, Math.max(0, rolledLoot.totalValueUsd), walletConfig);
+      const rewardPoolState = walletState;
       rewardEconomy = resolveChestWalletReward(chestDefinition.id, walletConfig, rewardPoolState, Math.random() * 100);
 
       if (rewardEconomy) {
@@ -247,6 +247,7 @@ export async function POST(request: Request): Promise<Response> {
       for (const drop of rolledLoot.drops) {
         if (drop.kind === "coins") {
           totalCoins += drop.amount;
+          lootTableCoins += drop.amount;
           nextLootCoins = Math.round((nextLootCoins + drop.amount) * 100) / 100;
           rewardParts.push(`${drop.amount.toLocaleString("en-US")} LC`);
           obtainedItems.push({ type: "coins", title: "Loot Coins", amount: drop.amount });
@@ -288,7 +289,17 @@ export async function POST(request: Request): Promise<Response> {
         inventorySlotLimit: mappedProfile.inventorySlotLimit ?? slotLimit,
       };
 
-      const nextEconomyState = rewardEconomy ? applyChestWalletReward(rewardPoolState, rewardEconomy) : rewardPoolState;
+      const stateAfterJackpot = rewardEconomy ? applyChestWalletReward(rewardPoolState, rewardEconomy) : rewardPoolState;
+      // Item values are not tracked, only the loot-table coins are debited from the normal wallet.
+      const nextEconomyState = lootTableCoins > 0
+        ? applyChestWalletReward(stateAfterJackpot, {
+            walletKey: "normal",
+            type: "normal",
+            amountUsd: lootTableCoins,
+            percentOfWallet: 0,
+            reason: "chest-loot-coins",
+          })
+        : stateAfterJackpot;
 
       tx.set(
         userRef,
