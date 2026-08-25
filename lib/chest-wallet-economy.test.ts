@@ -4,7 +4,7 @@ import {
   buildDefaultChestWalletEconomyConfig,
   buildDefaultChestWalletEconomyState,
   fundChestWalletEconomyFromCashback,
-  resolveChestWalletReward,
+  resolveChestWalletRewards,
   applyChestWalletReward,
   sanitizeChestWalletEconomyConfig,
 } from "./chest-wallet-economy";
@@ -28,7 +28,8 @@ describe("chest wallet economy", () => {
     state.wallets.normal.balanceUsd = 0;
     state.wallets.jackpotRare.balanceUsd = 0;
 
-    const reward = resolveChestWalletReward("common", config, state, 0);
+    const rewards = resolveChestWalletRewards("common", config, state, { jackpotCommon: 0 });
+    const reward = rewards[0];
     const nextState = reward ? applyChestWalletReward(state, reward) : state;
 
     expect(reward?.type).toBe("jackpot-common");
@@ -44,35 +45,49 @@ describe("chest wallet economy", () => {
     state.wallets.normal.balanceUsd = 0;
     state.wallets.jackpotCommon.balanceUsd = 0;
 
-    const reward = resolveChestWalletReward("mythic", config, state, 0);
+    const rewards = resolveChestWalletRewards("mythic", config, state, { jackpotRare: 0 });
+    const reward = rewards[0];
 
     expect(reward?.type).toBe("jackpot-rare");
     expect(reward?.percentOfWallet).toBe(75);
     expect(reward?.amountUsd).toBeCloseTo(15, 5);
   });
 
-  it("returns null when jackpot roll misses", () => {
+  it("returns no rewards when both jackpot rolls miss", () => {
     const config = buildDefaultChestWalletEconomyConfig();
     const state = buildDefaultChestWalletEconomyState();
     state.wallets.jackpotCommon.balanceUsd = 10;
     state.wallets.jackpotRare.balanceUsd = 10;
 
-    const reward = resolveChestWalletReward("mythic", config, state, 90);
+    const rewards = resolveChestWalletRewards("mythic", config, state, { jackpotCommon: 90, jackpotRare: 90 });
 
-    expect(reward).toBeNull();
+    expect(rewards).toHaveLength(0);
   });
 
-  it("selects jackpot rare when the roll lands in rare activation band", () => {
+  it("pays jackpot rare when its own roll hits, regardless of the common roll", () => {
     const config = buildDefaultChestWalletEconomyConfig();
     const state = buildDefaultChestWalletEconomyState();
     state.wallets.jackpotCommon.balanceUsd = 10;
     state.wallets.jackpotRare.balanceUsd = 10;
 
-    const reward = resolveChestWalletReward("rare", config, state, 2.01);
+    const rewards = resolveChestWalletRewards("rare", config, state, { jackpotCommon: 90, jackpotRare: 0.01 });
 
-    expect(reward?.walletKey).toBe("jackpotRare");
-    expect(reward?.percentOfWallet).toBe(10);
-    expect(reward?.amountUsd).toBeCloseTo(1, 5);
+    expect(rewards).toHaveLength(1);
+    expect(rewards[0]?.walletKey).toBe("jackpotRare");
+    expect(rewards[0]?.percentOfWallet).toBe(10);
+    expect(rewards[0]?.amountUsd).toBeCloseTo(1, 5);
+  });
+
+  it("pays both common and rare jackpots when both rolls hit on the same chest", () => {
+    const config = buildDefaultChestWalletEconomyConfig();
+    const state = buildDefaultChestWalletEconomyState();
+    state.wallets.jackpotCommon.balanceUsd = 10;
+    state.wallets.jackpotRare.balanceUsd = 10;
+
+    const rewards = resolveChestWalletRewards("rare", config, state, { jackpotCommon: 0, jackpotRare: 0 });
+
+    expect(rewards).toHaveLength(2);
+    expect(rewards.map((reward) => reward.walletKey).sort()).toEqual(["jackpotCommon", "jackpotRare"]);
   });
 
   it("sanitizes wallet economy configs and preserves valid values", () => {
@@ -96,8 +111,8 @@ describe("chest wallet economy", () => {
     state.wallets.jackpotCommon.balanceUsd = 0;
     state.wallets.jackpotRare.balanceUsd = 0;
 
-    const reward = resolveChestWalletReward("common", config, state, 50);
+    const rewards = resolveChestWalletRewards("common", config, state, { jackpotCommon: 50, jackpotRare: 50 });
 
-    expect(reward).toBeNull();
+    expect(rewards).toHaveLength(0);
   });
 });

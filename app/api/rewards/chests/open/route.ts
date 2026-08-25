@@ -7,7 +7,7 @@ import { CHEST_EXPECTED_VALUE_USD, getRewardItemValueUsd, rollChestLoot } from "
 import {
   applyChestWalletReward,
   buildDefaultChestWalletEconomyConfig,
-  resolveChestWalletReward,
+  resolveChestWalletRewards,
   sanitizeChestWalletEconomyConfig,
   type ChestWalletPayoutLogItem,
 } from "@/lib/chest-wallet-economy";
@@ -237,12 +237,12 @@ export async function POST(request: Request): Promise<Response> {
       let singleInventoryReward: InventoryItem | undefined;
       const obtainedItems: OpenChestObtainedItem[] = [];
       const lootPayoutItems: ChestWalletPayoutLogItem[] = [];
-      let rewardEconomy: ReturnType<typeof resolveChestWalletReward> | null = null;
 
       const rewardPoolState = walletState;
-      rewardEconomy = resolveChestWalletReward(chestDefinition.id, walletConfig, rewardPoolState, Math.random() * 100);
+      // Independent rolls per wallet so common and rare jackpots can both hit on the same chest.
+      const rewardEconomies = resolveChestWalletRewards(chestDefinition.id, walletConfig, rewardPoolState);
 
-      if (rewardEconomy) {
+      for (const rewardEconomy of rewardEconomies) {
         rewardParts.push(`${rewardEconomy.amountUsd.toFixed(2)} LC (${rewardEconomy.reason})`);
         nextLootCoins = Math.round((nextLootCoins + rewardEconomy.amountUsd) * 100) / 100;
         totalCoins += rewardEconomy.amountUsd;
@@ -251,7 +251,7 @@ export async function POST(request: Request): Promise<Response> {
           title: "Loot Coins",
           amount: rewardEconomy.amountUsd,
           isJackpot: true,
-          ...(rewardEconomy.type !== "normal" ? { jackpotType: rewardEconomy.type } : {}),
+          jackpotType: rewardEconomy.type as "jackpot-common" | "jackpot-rare",
         });
       }
 
@@ -311,12 +311,14 @@ export async function POST(request: Request): Promise<Response> {
         requestId,
       };
 
-      const stateAfterJackpot = rewardEconomy
-        ? applyChestWalletReward(rewardPoolState, rewardEconomy, {
+      const stateAfterJackpot = rewardEconomies.reduce(
+        (state, rewardEconomy) =>
+          applyChestWalletReward(state, rewardEconomy, {
             ...payoutContext,
-            items: [{ type: "coins", title: "Loot Coins (jackpot)", quantity: rewardEconomy.amountUsd, valueUsd: rewardEconomy.amountUsd }],
-          })
-        : rewardPoolState;
+            items: [{ type: "coins", title: `Loot Coins (${rewardEconomy.reason})`, quantity: rewardEconomy.amountUsd, valueUsd: rewardEconomy.amountUsd }],
+          }),
+        rewardPoolState,
+      );
 
       const lootPayoutValueUsd = Math.round((lootTableCoins + lootTableItemValueUsd) * 100) / 100;
       const nextEconomyState = lootPayoutValueUsd > 0
@@ -367,7 +369,7 @@ export async function POST(request: Request): Promise<Response> {
         reward,
         requestId,
         createdAt: FieldValue.serverTimestamp(),
-        economyReward: rewardEconomy,
+        economyRewards: rewardEconomies,
       });
 
       writeActivityLog(tx, adminDb, {

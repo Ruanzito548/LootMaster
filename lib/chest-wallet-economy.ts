@@ -368,84 +368,51 @@ export function fundChestWalletEconomyFromCashback(state: ChestWalletEconomyStat
   return nextState;
 }
 
-export function resolveChestWalletReward(chestId: ChestId, config: ChestWalletEconomyConfig, state: ChestWalletEconomyState, randomValue: number): ChestWalletReward | null {
-  const randomPercent = clampPercent(randomValue, 0);
-  const walletEntries = Object.values(config.wallets).filter(
-    (walletConfig) =>
-      walletConfig.id !== "normal" &&
-      walletConfig.activationChancePercent > 0 &&
-      state.wallets[walletConfig.id].balanceUsd > 0,
-  );
-  const totalActivationWeight = walletEntries.reduce((sum, walletConfig) => sum + walletConfig.activationChancePercent, 0);
-  const totalJackpotChancePercent = clampPercent(totalActivationWeight, 100);
+export function resolveChestWalletRewards(
+  chestId: ChestId,
+  config: ChestWalletEconomyConfig,
+  state: ChestWalletEconomyState,
+  randomRolls: Partial<Record<"jackpotCommon" | "jackpotRare", number>> = {},
+): ChestWalletReward[] {
+  const jackpotWalletIds: Array<"jackpotCommon" | "jackpotRare"> = ["jackpotCommon", "jackpotRare"];
+  const rewards: ChestWalletReward[] = [];
 
-  if (walletEntries.length === 0 || totalActivationWeight <= 0 || totalJackpotChancePercent <= 0) {
-    return null;
-  }
+  for (const walletId of jackpotWalletIds) {
+    const walletConfig = config.wallets[walletId];
+    const walletBalanceState = state.wallets[walletId];
 
-  // Allow real miss rolls so jackpot chance remains low (e.g. 5% + 1% = 6%).
-  if (randomPercent > totalJackpotChancePercent) {
-    return null;
-  }
-
-  const threshold = (randomPercent / totalJackpotChancePercent) * totalActivationWeight;
-  let cumulative = 0;
-
-  for (const walletConfig of walletEntries) {
-    cumulative += walletConfig.activationChancePercent;
-    if (threshold <= cumulative) {
-      const walletState = state.wallets[walletConfig.id];
-      const reserveAmount = roundUsd(walletState.balanceUsd * (walletConfig.minimumWalletReservePercent / 100));
-      const maxPayoutUsd = roundUsd(Math.max(0, walletState.balanceUsd - reserveAmount));
-      if (maxPayoutUsd <= 0) {
-        return null;
-      }
-
-      const percentOfWallet = walletConfig.id === "normal"
-        ? resolveTierPayoutPercent(walletConfig, randomPercent)
-        : resolveJackpotPayoutPercentByChestId(chestId);
-      const payoutUsd = roundUsd(Math.min(walletState.balanceUsd * (percentOfWallet / 100), maxPayoutUsd));
-      if (payoutUsd <= 0) {
-        return null;
-      }
-
-      return {
-        walletKey: walletConfig.id,
-        type: walletConfig.id === "normal" ? "normal" : walletConfig.id === "jackpotCommon" ? "jackpot-common" : "jackpot-rare",
-        amountUsd: payoutUsd,
-        percentOfWallet,
-        reason: walletConfig.id === "normal" ? "normal-reward" : walletConfig.id === "jackpotCommon" ? "jackpot-common" : "jackpot-rare",
-      };
+    if (!walletConfig || walletConfig.activationChancePercent <= 0 || walletBalanceState.balanceUsd <= 0) {
+      continue;
     }
+
+    // Each wallet rolls independently so a common and a rare jackpot can both hit on the same chest.
+    const randomPercent = clampPercent(randomRolls[walletId] ?? Math.random() * 100, 0);
+    if (randomPercent > walletConfig.activationChancePercent) {
+      continue;
+    }
+
+    const reserveAmount = roundUsd(walletBalanceState.balanceUsd * (walletConfig.minimumWalletReservePercent / 100));
+    const maxPayoutUsd = roundUsd(Math.max(0, walletBalanceState.balanceUsd - reserveAmount));
+    if (maxPayoutUsd <= 0) {
+      continue;
+    }
+
+    const percentOfWallet = resolveJackpotPayoutPercentByChestId(chestId);
+    const payoutUsd = roundUsd(Math.min(walletBalanceState.balanceUsd * (percentOfWallet / 100), maxPayoutUsd));
+    if (payoutUsd <= 0) {
+      continue;
+    }
+
+    rewards.push({
+      walletKey: walletId,
+      type: walletId === "jackpotCommon" ? "jackpot-common" : "jackpot-rare",
+      amountUsd: payoutUsd,
+      percentOfWallet,
+      reason: walletId === "jackpotCommon" ? "jackpot-common" : "jackpot-rare",
+    });
   }
 
-  const fallbackWallet = walletEntries[walletEntries.length - 1];
-  if (!fallbackWallet) {
-    return null;
-  }
-
-  const walletState = state.wallets[fallbackWallet.id];
-  const reserveAmount = roundUsd(walletState.balanceUsd * (fallbackWallet.minimumWalletReservePercent / 100));
-  const maxPayoutUsd = roundUsd(Math.max(0, walletState.balanceUsd - reserveAmount));
-  if (maxPayoutUsd <= 0) {
-    return null;
-  }
-
-  const percentOfWallet = fallbackWallet.id === "normal"
-    ? resolveTierPayoutPercent(fallbackWallet, randomPercent)
-    : resolveJackpotPayoutPercentByChestId(chestId);
-  const payoutUsd = roundUsd(Math.min(walletState.balanceUsd * (percentOfWallet / 100), maxPayoutUsd));
-  if (payoutUsd <= 0) {
-    return null;
-  }
-
-  return {
-    walletKey: fallbackWallet.id,
-    type: fallbackWallet.id === "normal" ? "normal" : fallbackWallet.id === "jackpotCommon" ? "jackpot-common" : "jackpot-rare",
-    amountUsd: payoutUsd,
-    percentOfWallet,
-    reason: fallbackWallet.id === "normal" ? "normal-reward" : fallbackWallet.id === "jackpotCommon" ? "jackpot-common" : "jackpot-rare",
-  };
+  return rewards;
 }
 
 export function applyChestWalletReward(
