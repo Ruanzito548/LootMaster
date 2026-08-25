@@ -161,7 +161,7 @@ export function buildDefaultChestWalletEconomyConfig(): ChestWalletEconomyConfig
       },
       jackpotCommon: {
         id: "jackpotCommon",
-        label: "Carteira Jackpot Comum",
+        label: "Carteira Jackpot",
         allocationPercent: 25,
         activationChancePercent: 2,
         minimumWalletReservePercent: 10,
@@ -174,7 +174,7 @@ export function buildDefaultChestWalletEconomyConfig(): ChestWalletEconomyConfig
       },
       jackpotRare: {
         id: "jackpotRare",
-        label: "Carteira Jackpot Raro",
+        label: "Carteira Jackpot Lendário",
         allocationPercent: 5,
         activationChancePercent: 0.05,
         minimumWalletReservePercent: 20,

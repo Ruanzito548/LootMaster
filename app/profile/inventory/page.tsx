@@ -925,7 +925,7 @@ export default function InventoryPage() {
                     >
                       {jackpotTheme ? (
                         <span className={`absolute right-2 top-2 rounded-full border bg-black/50 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.14em] ${jackpotTheme.badgeBorder} ${jackpotTheme.text}`}>
-                          {obtained.jackpotType === "jackpot-rare" ? "Jackpot Raro!" : "Jackpot Comum!"}
+                          {obtained.jackpotType === "jackpot-rare" ? "Jackpot Lendário!" : "Jackpot!"}
                         </span>
                       ) : null}
                       <div className={`relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border p-2 ${jackpotTheme ? `${jackpotTheme.iconBorder} bg-black/45` : "border-white/10 bg-black/35"}`}>

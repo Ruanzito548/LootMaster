@@ -160,8 +160,8 @@ function getWalletTone(walletId: "normal" | "jackpotCommon" | "jackpotRare") {
 
 const WALLET_LABELS: Record<string, string> = {
   normal: "Carteira Normal",
-  jackpotCommon: "Jackpot Comum",
-  jackpotRare: "Jackpot Raro",
+  jackpotCommon: "Jackpot",
+  jackpotRare: "Jackpot Lendário",
 };
 
 function formatDateTime(value?: string, valueMs?: number): string {
@@ -707,8 +707,8 @@ export default function AdminChestConfigPage() {
               <div className="grid gap-3 md:grid-cols-3">
                 {[
                   { key: "normalAllocationPercent", label: "Carteira Normal", color: "text-emerald-300" },
-                  { key: "jackpotCommonAllocationPercent", label: "Jackpot Comum", color: "text-amber-300" },
-                  { key: "jackpotRareAllocationPercent", label: "Jackpot Raro", color: "text-fuchsia-300" },
+                  { key: "jackpotCommonAllocationPercent", label: "Jackpot", color: "text-amber-300" },
+                  { key: "jackpotRareAllocationPercent", label: "Jackpot Lendário", color: "text-fuchsia-300" },
                 ].map((field) => (
                   <label key={field.key} className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-green-600">
                     {field.label}
@@ -764,15 +764,15 @@ export default function AdminChestConfigPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-green-600">3. Configuração dos Jackpots</p>
-              <h2 className="mt-1 text-xl font-black text-green-100">Jackpot Comum e Jackpot Raro</h2>
+              <h2 className="mt-1 text-xl font-black text-green-100">Jackpot e Jackpot Lendário</h2>
             </div>
             <div className="rounded-full border border-green-800/70 bg-black/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-green-500">Faixas e probabilidades</div>
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             {[
-              { key: "jackpotCommon", label: "Jackpot Comum", chance: Number(walletInputs.jackpotCommonActivationChancePercent), reserve: Number(walletInputs.jackpotCommonMinimumReservePercent), color: "text-amber-300" },
-              { key: "jackpotRare", label: "Jackpot Raro", chance: Number(walletInputs.jackpotRareActivationChancePercent), reserve: Number(walletInputs.jackpotRareMinimumReservePercent), color: "text-fuchsia-300" },
+              { key: "jackpotCommon", label: "Jackpot", chance: Number(walletInputs.jackpotCommonActivationChancePercent), reserve: Number(walletInputs.jackpotCommonMinimumReservePercent), color: "text-amber-300" },
+              { key: "jackpotRare", label: "Jackpot Lendário", chance: Number(walletInputs.jackpotRareActivationChancePercent), reserve: Number(walletInputs.jackpotRareMinimumReservePercent), color: "text-fuchsia-300" },
             ].map((tier) => (
               <article key={tier.key} className="rounded-3xl border border-green-900/70 bg-black/30 p-4">
                 <div className="flex items-center justify-between">
@@ -814,8 +814,8 @@ export default function AdminChestConfigPage() {
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
             {[
               { key: "normal", label: "Carteira Normal", color: "from-emerald-500 to-green-400", balance: walletState?.wallets?.normal?.balanceUsd ?? 0, received: walletState?.wallets?.normal?.totalReceivedUsd ?? 0, distributed: walletState?.wallets?.normal?.totalDistributedUsd ?? 0, rewardCount: walletState?.wallets?.normal?.rewardCount ?? 0 },
-              { key: "jackpotCommon", label: "Jackpot Comum", color: "from-amber-500 to-yellow-400", balance: walletState?.wallets?.jackpotCommon?.balanceUsd ?? 0, received: walletState?.wallets?.jackpotCommon?.totalReceivedUsd ?? 0, distributed: walletState?.wallets?.jackpotCommon?.totalDistributedUsd ?? 0, rewardCount: walletState?.wallets?.jackpotCommon?.rewardCount ?? 0 },
-              { key: "jackpotRare", label: "Jackpot Raro", color: "from-fuchsia-500 to-violet-400", balance: walletState?.wallets?.jackpotRare?.balanceUsd ?? 0, received: walletState?.wallets?.jackpotRare?.totalReceivedUsd ?? 0, distributed: walletState?.wallets?.jackpotRare?.totalDistributedUsd ?? 0, rewardCount: walletState?.wallets?.jackpotRare?.rewardCount ?? 0 },
+              { key: "jackpotCommon", label: "Jackpot", color: "from-amber-500 to-yellow-400", balance: walletState?.wallets?.jackpotCommon?.balanceUsd ?? 0, received: walletState?.wallets?.jackpotCommon?.totalReceivedUsd ?? 0, distributed: walletState?.wallets?.jackpotCommon?.totalDistributedUsd ?? 0, rewardCount: walletState?.wallets?.jackpotCommon?.rewardCount ?? 0 },
+              { key: "jackpotRare", label: "Jackpot Lendário", color: "from-fuchsia-500 to-violet-400", balance: walletState?.wallets?.jackpotRare?.balanceUsd ?? 0, received: walletState?.wallets?.jackpotRare?.totalReceivedUsd ?? 0, distributed: walletState?.wallets?.jackpotRare?.totalDistributedUsd ?? 0, rewardCount: walletState?.wallets?.jackpotRare?.rewardCount ?? 0 },
             ].map((wallet) => {
               const progress = Math.min(100, Math.round((wallet.balance / Math.max(1, wallet.received || wallet.balance || 1)) * 100));
               return (
@@ -910,11 +910,11 @@ export default function AdminChestConfigPage() {
                   <p className="mt-2 text-xl font-black text-emerald-300">{formatUsd(cashbackPreview.normal)} USD</p>
                 </div>
                 <div className="rounded-2xl border border-green-900/70 bg-black/20 p-3">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-green-600">Jackpot Comum</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-green-600">Jackpot</p>
                   <p className="mt-2 text-xl font-black text-amber-300">{formatUsd(cashbackPreview.common)} USD</p>
                 </div>
                 <div className="rounded-2xl border border-green-900/70 bg-black/20 p-3">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-green-600">Jackpot Raro</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-green-600">Jackpot Lendário</p>
                   <p className="mt-2 text-xl font-black text-fuchsia-300">{formatUsd(cashbackPreview.rare)} USD</p>
                 </div>
               </div>
@@ -1014,16 +1014,16 @@ export default function AdminChestConfigPage() {
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-600">Configuração atual</p>
                 <div className="mt-3 space-y-2 text-sm text-green-700">
                   <div className="flex items-center justify-between"><span>Normal</span><span className="font-semibold text-green-100">{assistantPreview.current.normalAllocationPercent}%</span></div>
-                  <div className="flex items-center justify-between"><span>Jackpot comum</span><span className="font-semibold text-green-100">{assistantPreview.current.jackpotCommonAllocationPercent}%</span></div>
-                  <div className="flex items-center justify-between"><span>Jackpot raro</span><span className="font-semibold text-green-100">{assistantPreview.current.jackpotRareAllocationPercent}%</span></div>
+                  <div className="flex items-center justify-between"><span>Jackpot</span><span className="font-semibold text-green-100">{assistantPreview.current.jackpotCommonAllocationPercent}%</span></div>
+                  <div className="flex items-center justify-between"><span>Jackpot Lendário</span><span className="font-semibold text-green-100">{assistantPreview.current.jackpotRareAllocationPercent}%</span></div>
                 </div>
               </div>
               <div className="rounded-3xl border border-green-900/70 bg-black/30 p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-600">Configuração sugerida</p>
                 <div className="mt-3 space-y-2 text-sm text-green-700">
                   <div className="flex items-center justify-between"><span>Normal</span><span className="font-semibold text-green-100">{assistantPreview.suggested.normalAllocationPercent}%</span></div>
-                  <div className="flex items-center justify-between"><span>Jackpot comum</span><span className="font-semibold text-green-100">{assistantPreview.suggested.jackpotCommonAllocationPercent}%</span></div>
-                  <div className="flex items-center justify-between"><span>Jackpot raro</span><span className="font-semibold text-green-100">{assistantPreview.suggested.jackpotRareAllocationPercent}%</span></div>
+                  <div className="flex items-center justify-between"><span>Jackpot</span><span className="font-semibold text-green-100">{assistantPreview.suggested.jackpotCommonAllocationPercent}%</span></div>
+                  <div className="flex items-center justify-between"><span>Jackpot Lendário</span><span className="font-semibold text-green-100">{assistantPreview.suggested.jackpotRareAllocationPercent}%</span></div>
                 </div>
               </div>
             </div>
