@@ -33,6 +33,7 @@ type OpenChestObtainedItem = {
   title: string;
   amount?: number;
   item?: InventoryItem;
+  isJackpot?: boolean;
 };
 
 type OpenChestResponse = {
@@ -244,7 +245,7 @@ export async function POST(request: Request): Promise<Response> {
         rewardParts.push(`${rewardEconomy.amountUsd.toFixed(2)} LC (${rewardEconomy.reason})`);
         nextLootCoins = Math.round((nextLootCoins + rewardEconomy.amountUsd) * 100) / 100;
         totalCoins += rewardEconomy.amountUsd;
-        obtainedItems.push({ type: "coins", title: "Loot Coins", amount: rewardEconomy.amountUsd });
+        obtainedItems.push({ type: "coins", title: "Loot Coins", amount: rewardEconomy.amountUsd, isJackpot: true });
       }
 
       for (const drop of rolledLoot.drops) {
@@ -306,7 +307,7 @@ export async function POST(request: Request): Promise<Response> {
       const stateAfterJackpot = rewardEconomy
         ? applyChestWalletReward(rewardPoolState, rewardEconomy, {
             ...payoutContext,
-            items: [{ type: "coins", title: "Loot Coins (jackpot)", quantity: 1, valueUsd: rewardEconomy.amountUsd }],
+            items: [{ type: "coins", title: "Loot Coins (jackpot)", quantity: rewardEconomy.amountUsd, valueUsd: rewardEconomy.amountUsd }],
           })
         : rewardPoolState;
 

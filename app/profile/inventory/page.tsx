@@ -29,6 +29,7 @@ type OpenChestApiResponse = {
     title: string;
     amount?: number;
     item?: InventoryItem;
+    isJackpot?: boolean;
   }>;
   xpGain: number;
   rpgXp: number;
@@ -889,10 +890,21 @@ export default function InventoryPage() {
                   : [{ type: pendingResult.reward.type === "coins" ? "coins" : "item" as const, title: pendingResult.reward.title, amount: pendingResult.reward.amount, item: pendingResult.reward.inventoryItem }]
                 ).map((obtained, index) => {
                   const iconPath = obtained.item?.iconPath;
+                  const isJackpot = "isJackpot" in obtained && obtained.isJackpot;
                   return (
-                    <article key={`${obtained.title}-${index}`} className={`flex items-center gap-3 rounded-2xl border p-3 ${RARITY_GLOW[pendingResult.reward.rarity] ?? "border-white/20"} bg-black/25`}>
-                      <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/35 p-2">
-                        {iconPath ? <Image src={iconPath} alt={obtained.title} fill className="object-contain p-2" /> : <Coins className="size-8 text-[#facc15]" />}
+                    <motion.article
+                      key={`${obtained.title}-${index}`}
+                      className={`relative flex items-center gap-3 overflow-hidden rounded-2xl border p-3 ${isJackpot ? "border-[#ffd76a] bg-[linear-gradient(135deg,rgba(255,215,106,0.18),rgba(0,0,0,0.3))] shadow-[0_0_28px_rgba(255,215,106,0.55)]" : `${RARITY_GLOW[pendingResult.reward.rarity] ?? "border-white/20"} bg-black/25`}`}
+                      animate={isJackpot ? { boxShadow: ["0 0 18px rgba(255,215,106,0.4)", "0 0 34px rgba(255,215,106,0.85)", "0 0 18px rgba(255,215,106,0.4)"] } : undefined}
+                      transition={isJackpot ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" } : undefined}
+                    >
+                      {isJackpot ? (
+                        <span className="absolute right-2 top-2 rounded-full border border-[#ffd76a]/70 bg-black/50 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.14em] text-[#ffd76a]">
+                          Jackpot!
+                        </span>
+                      ) : null}
+                      <div className={`relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border p-2 ${isJackpot ? "border-[#ffd76a]/60 bg-black/45" : "border-white/10 bg-black/35"}`}>
+                        {iconPath ? <Image src={iconPath} alt={obtained.title} fill className="object-contain p-2" /> : <Coins className={`size-8 ${isJackpot ? "text-[#ffd76a]" : "text-[#facc15]"}`} />}
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-black text-white">{obtained.title}</p>
@@ -900,7 +912,7 @@ export default function InventoryPage() {
                           {obtained.type === "coins" ? `${(obtained.amount ?? 0).toFixed(2)} Loot Coins` : `Quantity: ${obtained.amount ?? 1}`}
                         </p>
                       </div>
-                    </article>
+                    </motion.article>
                   );
                 })}
               </div>
