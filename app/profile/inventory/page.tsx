@@ -30,6 +30,7 @@ type OpenChestApiResponse = {
     amount?: number;
     item?: InventoryItem;
     isJackpot?: boolean;
+    jackpotType?: "jackpot-common" | "jackpot-rare";
   }>;
   xpGain: number;
   rpgXp: number;
@@ -107,6 +108,29 @@ const RARITY_GLOW: Record<string, string> = {
   legendary: "shadow-[0_0_26px_rgba(212,175,90,0.45)] border-[#d4af5a]/65",
   mythic: "shadow-[0_0_28px_rgba(163,58,58,0.45)] border-[#a33a3a]/65",
   heirloom: "shadow-[0_0_26px_rgba(142,152,163,0.4)] border-[#8e98a3]/60",
+};
+
+const JACKPOT_THEME: Record<"jackpot-common" | "jackpot-rare", { border: string; badgeBorder: string; iconBorder: string; bg: string; text: string; icon: string; glowRest: string; glowPeak: string }> = {
+  "jackpot-common": {
+    border: "border-[#4fa8ff]",
+    badgeBorder: "border-[#4fa8ff]/70",
+    iconBorder: "border-[#4fa8ff]/60",
+    bg: "bg-[linear-gradient(135deg,rgba(79,168,255,0.2),rgba(0,0,0,0.3))]",
+    text: "text-[#4fa8ff]",
+    icon: "text-[#4fa8ff]",
+    glowRest: "0 0 18px rgba(79,168,255,0.4)",
+    glowPeak: "0 0 34px rgba(79,168,255,0.9)",
+  },
+  "jackpot-rare": {
+    border: "border-[#ff4d4d]",
+    badgeBorder: "border-[#ff4d4d]/70",
+    iconBorder: "border-[#ff4d4d]/60",
+    bg: "bg-[linear-gradient(135deg,rgba(255,77,77,0.22),rgba(0,0,0,0.3))]",
+    text: "text-[#ff4d4d]",
+    icon: "text-[#ff4d4d]",
+    glowRest: "0 0 18px rgba(255,77,77,0.4)",
+    glowPeak: "0 0 34px rgba(255,77,77,0.9)",
+  },
 };
 
 const RARITY_TEXT: Record<string, string> = {
@@ -891,20 +915,21 @@ export default function InventoryPage() {
                 ).map((obtained, index) => {
                   const iconPath = obtained.item?.iconPath;
                   const isJackpot = "isJackpot" in obtained && obtained.isJackpot;
+                  const jackpotTheme = isJackpot && "jackpotType" in obtained && obtained.jackpotType ? JACKPOT_THEME[obtained.jackpotType] : null;
                   return (
                     <motion.article
                       key={`${obtained.title}-${index}`}
-                      className={`relative flex items-center gap-3 overflow-hidden rounded-2xl border p-3 ${isJackpot ? "border-[#ffd76a] bg-[linear-gradient(135deg,rgba(255,215,106,0.18),rgba(0,0,0,0.3))] shadow-[0_0_28px_rgba(255,215,106,0.55)]" : `${RARITY_GLOW[pendingResult.reward.rarity] ?? "border-white/20"} bg-black/25`}`}
-                      animate={isJackpot ? { boxShadow: ["0 0 18px rgba(255,215,106,0.4)", "0 0 34px rgba(255,215,106,0.85)", "0 0 18px rgba(255,215,106,0.4)"] } : undefined}
-                      transition={isJackpot ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" } : undefined}
+                      className={`relative flex items-center gap-3 overflow-hidden rounded-2xl border p-3 ${jackpotTheme ? `${jackpotTheme.border} ${jackpotTheme.bg}` : `${RARITY_GLOW[pendingResult.reward.rarity] ?? "border-white/20"} bg-black/25`}`}
+                      animate={jackpotTheme ? { boxShadow: [jackpotTheme.glowRest, jackpotTheme.glowPeak, jackpotTheme.glowRest] } : undefined}
+                      transition={jackpotTheme ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" } : undefined}
                     >
-                      {isJackpot ? (
-                        <span className="absolute right-2 top-2 rounded-full border border-[#ffd76a]/70 bg-black/50 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.14em] text-[#ffd76a]">
-                          Jackpot!
+                      {jackpotTheme ? (
+                        <span className={`absolute right-2 top-2 rounded-full border bg-black/50 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.14em] ${jackpotTheme.badgeBorder} ${jackpotTheme.text}`}>
+                          {obtained.jackpotType === "jackpot-rare" ? "Jackpot Raro!" : "Jackpot Comum!"}
                         </span>
                       ) : null}
-                      <div className={`relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border p-2 ${isJackpot ? "border-[#ffd76a]/60 bg-black/45" : "border-white/10 bg-black/35"}`}>
-                        {iconPath ? <Image src={iconPath} alt={obtained.title} fill className="object-contain p-2" /> : <Coins className={`size-8 ${isJackpot ? "text-[#ffd76a]" : "text-[#facc15]"}`} />}
+                      <div className={`relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border p-2 ${jackpotTheme ? `${jackpotTheme.iconBorder} bg-black/45` : "border-white/10 bg-black/35"}`}>
+                        {iconPath ? <Image src={iconPath} alt={obtained.title} fill className="object-contain p-2" /> : <Coins className={`size-8 ${jackpotTheme ? jackpotTheme.icon : "text-[#facc15]"}`} />}
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-black text-white">{obtained.title}</p>

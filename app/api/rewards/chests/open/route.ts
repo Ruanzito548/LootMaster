@@ -34,6 +34,7 @@ type OpenChestObtainedItem = {
   amount?: number;
   item?: InventoryItem;
   isJackpot?: boolean;
+  jackpotType?: "jackpot-common" | "jackpot-rare";
 };
 
 type OpenChestResponse = {
@@ -245,7 +246,13 @@ export async function POST(request: Request): Promise<Response> {
         rewardParts.push(`${rewardEconomy.amountUsd.toFixed(2)} LC (${rewardEconomy.reason})`);
         nextLootCoins = Math.round((nextLootCoins + rewardEconomy.amountUsd) * 100) / 100;
         totalCoins += rewardEconomy.amountUsd;
-        obtainedItems.push({ type: "coins", title: "Loot Coins", amount: rewardEconomy.amountUsd, isJackpot: true });
+        obtainedItems.push({
+          type: "coins",
+          title: "Loot Coins",
+          amount: rewardEconomy.amountUsd,
+          isJackpot: true,
+          ...(rewardEconomy.type !== "normal" ? { jackpotType: rewardEconomy.type } : {}),
+        });
       }
 
       for (const drop of rolledLoot.drops) {
