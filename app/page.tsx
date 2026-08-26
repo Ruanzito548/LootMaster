@@ -168,8 +168,6 @@ export default function Home() {
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             {visibleGames.map((game) => {
-              const isDisabledForPublic = gameConfig ? !gameConfig.byGame[game.id]?.enabled : false;
-
               return (
               <motion.article
                 key={game.id}
@@ -190,19 +188,7 @@ export default function Home() {
 
                 <div className="absolute inset-x-0 bottom-0 p-4">
                   <div className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(10,11,14,0.54),rgba(10,11,14,0.82))] px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-[2px]">
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="text-sm font-black text-[color:var(--text-main)]">{game.shortTitle}</h3>
-                      {isDisabledForPublic ? (
-                        <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em] text-amber-100">
-                          Disabled (Admin Only)
-                        </span>
-                      ) : (
-                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[0.55rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-main)]">
-                          Popular
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-2 text-[0.7rem] leading-5 text-[color:var(--text-muted)]">{game.description}</p>
+                    <h3 className="text-sm font-black text-[color:var(--text-main)]">{game.shortTitle}</h3>
                     <Link href={`/games/${game.id}`} className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
                       Enter
                       <ArrowRight className="h-3 w-3" />
