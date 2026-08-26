@@ -157,47 +157,77 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-throne text-3xl font-black text-[color:var(--text-main)] sm:text-4xl">Featured Games</h2>
-            <Link href="/games" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase tracking-[0.13em]">
-              View all
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+        <section className="relative overflow-hidden rounded-[2rem] border border-[#d4af6a]/50 bg-[radial-gradient(circle_at_top,rgba(39,54,76,0.9),rgba(4,8,15,0.96)_42%,rgba(2,4,8,1)_100%)] p-4 shadow-[0_30px_80px_rgba(0,0,0,0.55)] sm:p-6 lg:p-8">
+          <div className="pointer-events-none absolute inset-0 opacity-90">
+            <div className="absolute -left-10 top-4 h-44 w-44 rounded-full bg-[#d4af6a]/10 blur-3xl" />
+            <div className="absolute right-10 top-0 h-52 w-52 rounded-full bg-[#3b4a8a]/20 blur-3xl" />
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,transparent,rgba(2,4,8,0.75))]" />
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {visibleGames.map((game) => {
-              return (
-              <motion.article
-                key={game.id}
-                whileHover={{ y: -6 }}
-                className="group relative overflow-hidden rounded-[1.35rem] border border-white/8 bg-[#171a20]"
-              >
-                <div
-                  className="h-56 transition-transform duration-500 group-hover:scale-110"
-                  style={{
-                    backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.32)), url('${heroArtByGame[game.id] ?? heroArtByGame.retail}')`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
-                />
-
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_28%,rgba(0,0,0,0.18)_76%,rgba(0,0,0,0.46)_100%)]" />
-                <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:linear-gradient(135deg,rgba(255,255,255,0.03),transparent_24%,transparent_76%,rgba(255,255,255,0.02))]" />
-
-                <div className="absolute inset-x-0 bottom-0 p-4">
-                  <div className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(10,11,14,0.54),rgba(10,11,14,0.82))] px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-[2px]">
-                    <h3 className="text-sm font-black text-[color:var(--text-main)]">{game.shortTitle}</h3>
-                    <Link href={`/games/${game.id}`} className="gm-button gm-button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em]">
-                      Enter
-                      <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  </div>
+          <div className="relative z-10 space-y-5">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-3">
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.36em] text-[#d9b76a]">Explore worlds. Conquer legends.</p>
+                <div className="flex items-center gap-4">
+                  <h2 className="font-throne text-4xl font-black uppercase tracking-[0.04em] text-[#f5d17a] sm:text-5xl lg:text-[4.2rem]">Featured Games</h2>
                 </div>
-              </motion.article>
-              );
-            })}
+                <div className="h-px w-full max-w-[28rem] bg-[linear-gradient(90deg,rgba(212,175,106,0.9),rgba(212,175,106,0.14))]" />
+                <p className="max-w-xl text-sm text-[#9eb4d4] sm:text-base">Explore legendary worlds and begin your next adventure.</p>
+              </div>
+
+              <Link href="/games" className="gm-button gm-button-secondary inline-flex items-center gap-2 self-start rounded-xl border border-[#d4af6a]/70 bg-[#0a1018]/70 px-4 py-3 text-[0.58rem] font-bold uppercase tracking-[0.18em] text-[#f5d17a] shadow-[0_0_20px_rgba(212,175,106,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#f5d17a]/80 hover:text-[#f8e1a2]">
+                View all
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              {visibleGames.map((game) => (
+                <motion.article
+                  key={game.id}
+                  whileHover={{ y: -8 }}
+                  transition={{ duration: 0.28, ease: "easeOut" }}
+                  className="group relative h-[23rem] overflow-hidden rounded-[1.5rem] border border-[#d4af6a]/80 bg-[#0a0f18] shadow-[0_20px_45px_rgba(0,0,0,0.48)] transition-all duration-300 hover:border-[#f5d17a] hover:shadow-[0_24px_52px_rgba(212,175,106,0.18)]"
+                >
+                  <div
+                    className="absolute inset-0 scale-100 transition-transform duration-500 group-hover:scale-110"
+                    style={{
+                      backgroundImage: `linear-gradient(180deg,rgba(7,9,13,0.08),rgba(7,11,18,0.28)), url('${heroArtByGame[game.id] ?? heroArtByGame.retail}')`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  />
+
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,8,15,0.08),rgba(5,8,15,0.28)_38%,rgba(3,5,10,0.78)_100%)] transition-opacity duration-300 group-hover:opacity-100" />
+                  <div className="absolute inset-0 opacity-90 [background:linear-gradient(135deg,rgba(255,255,255,0.06),transparent_22%,transparent_80%,rgba(255,255,255,0.02))]" />
+                  <div className="absolute inset-x-4 top-3 h-px bg-[linear-gradient(90deg,transparent,rgba(212,175,106,0.75),transparent)]" />
+
+                  <div className="absolute inset-x-0 bottom-0 p-4">
+                    <div className="rounded-[1.1rem] border border-[#d4af6a]/25 bg-[linear-gradient(180deg,rgba(8,12,18,0.18),rgba(8,12,18,0.62))] px-4 pb-4 pt-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-[2px]">
+                      <div className="mb-3 flex items-center justify-center">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d4af6a]/75 bg-[#0d1219]/80 text-[#f5d17a] shadow-[0_0_18px_rgba(212,175,106,0.25)]">
+                          <Sparkles className="h-3.5 w-3.5" />
+                        </span>
+                      </div>
+
+                      <h3 className="text-center text-xl font-black uppercase tracking-[0.06em] text-[#f8d889] sm:text-[1.35rem]">
+                        {game.shortTitle.toUpperCase()}
+                      </h3>
+
+                      <p className="mt-3 text-center text-[0.72rem] leading-5 text-[#dfeafc]">{game.description}</p>
+
+                      <Link
+                        href={`/games/${game.id}`}
+                        className="gm-button gm-button-primary mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-3 text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#230f04] shadow-[0_12px_24px_rgba(212,175,106,0.18)] transition-all duration-300 hover:shadow-[0_16px_30px_rgba(212,175,106,0.28),0_0_18px_rgba(212,175,106,0.24)]"
+                      >
+                        Enter
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.article>
+              ))}
+            </div>
           </div>
         </section>
 

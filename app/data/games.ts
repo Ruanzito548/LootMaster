@@ -36,32 +36,28 @@ export const games: Game[] = [
     title: "World of Warcraft Midnight",
     shortTitle: "Midnight",
     tag: "Live",
-    description:
-      "Main version for players who want fast purchases, recurring delivery, and higher gold volume.",
+    description: "Enter the darkness and discover what lies beyond.",
   },
   {
     id: "classic-era",
     title: "World of Warcraft Classic Era",
     shortTitle: "Classic Era",
     tag: "Classic",
-    description:
-      "Dedicated flow for legacy game servers, with an old-school identity and stable delivery.",
+    description: "Relive the adventure that started it all.",
   },
   {
     id: "tbc-anniversary",
     title: "World of Warcraft TBC Anniversary",
     shortTitle: "TBC Anniversary",
     tag: "Progression",
-    description:
-      "Separate layer for Burning Crusade players with later server selection.",
+    description: "The Dark Portal awaits. Prepare for the journey.",
   },
   {
     id: "mist-of-pandaria",
     title: "World of Warcraft Mist of Pandaria",
     shortTitle: "Mist of Pandaria",
     tag: "Pandaria",
-    description:
-      "Entry prepared for the Pandaria phase, keeping navigation consistent for the rest of the funnel.",
+    description: "Discover the secrets of Pandaria and find your balance.",
   },
 ];
 
