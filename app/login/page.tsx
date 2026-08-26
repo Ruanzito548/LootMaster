@@ -253,7 +253,7 @@ function LoginContent() {
               ) : null}
 
               <div className="mt-6 text-center text-[0.72rem] leading-6 text-[#c9d1dd] opacity-85">
-                By continuing, you agree to our <Link href="/terms" className="text-[#f3c963] transition-colors hover:text-[#f9d98d]">Terms of Service</Link> and <Link href="/privacy" className="text-[#f3c963] transition-colors hover:text-[#f9d98d]">Privacy Policy</Link>.
+                By continuing, you agree to our <Link href="/terms" className="text-[#f3c963] transition-colors hover:text-[#f9d98d]">Terms of Service</Link> and <Link href="/terms" className="text-[#f3c963] transition-colors hover:text-[#f9d98d]">Privacy Policy</Link>.
               </div>
             </div>
           </aside>
