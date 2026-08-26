@@ -168,13 +168,10 @@ function LoginContent() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#05070a] text-white">
-      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/home/bghero.png')", backgroundSize: "cover", backgroundPosition: "center" }} />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(5,7,10,0.2),rgba(5,7,10,0.8)_50%,rgba(5,7,10,0.96))]" />
-
+    <div className="loot-shell relative overflow-hidden text-white">
       <div className="relative z-10 mx-auto flex min-h-screen max-w-[1600px] items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div className="grid w-full items-center gap-7 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="relative flex min-h-[620px] items-center justify-center overflow-hidden rounded-[2rem] border border-[#d4af6a]/70 bg-[#05070a]/30 px-4 py-10 shadow-[0_30px_100px_rgba(0,0,0,0.65)] sm:px-6 lg:min-h-[760px] lg:px-8">
+        <div className="grid w-full items-center justify-items-center gap-7">
+          <section className="hidden">
             <div className="pointer-events-none absolute inset-0 opacity-70" aria-hidden="true">
               <div className="absolute left-0 top-0 h-full w-full bg-[radial-gradient(circle_at_50%_35%,rgba(212,175,106,0.16),transparent_24%)]" />
               <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,0.18)_30%,rgba(0,0,0,0.68))]" />
