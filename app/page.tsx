@@ -205,8 +205,8 @@ export default function Home() {
                   <div className="absolute inset-x-0 bottom-0 p-4">
                     <div className="rounded-[1.1rem] border border-[#d4af6a]/25 bg-[linear-gradient(180deg,rgba(8,12,18,0.18),rgba(8,12,18,0.62))] px-4 pb-4 pt-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-[2px]">
                       <div className="mb-3 flex items-center justify-center">
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d4af6a]/75 bg-[#0d1219]/80 text-[#f5d17a] shadow-[0_0_18px_rgba(212,175,106,0.25)]">
-                          <Sparkles className="h-3.5 w-3.5" />
+                        <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#d4af6a]/75 bg-[#0d1219]/80 shadow-[0_0_18px_rgba(212,175,106,0.25)]">
+                          <img src="/faviicon.png" alt="Loot Master" className="h-full w-full object-cover" />
                         </span>
                       </div>
 
