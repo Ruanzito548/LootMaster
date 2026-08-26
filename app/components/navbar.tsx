@@ -155,7 +155,7 @@ export function Navbar() {
     <header className="theme-transition-surface theme-navbar-shell fixed inset-x-0 top-0 z-50 border-b border-[color:var(--border-color)] bg-[color:var(--navbar-bg)] backdrop-blur-xl">
       <div className="theme-top-highlight pointer-events-none absolute inset-x-0 top-0 h-[2px]" />
 
-      <div className="flex min-h-14 w-full items-center gap-3 px-3 py-2 sm:px-5 lg:px-6">
+      <div className="flex min-h-[4.6rem] w-full items-center gap-3 px-3 py-2 sm:px-5 lg:px-6">
         <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
@@ -166,12 +166,14 @@ export function Navbar() {
             <Menu className="h-5 w-5" />
           </button>
 
-          <Link href="/" className="inline-flex items-center gap-2 rounded-xl px-2 py-1.5">
-            <Image src="/lootmasterlogo.png" alt="Loot Master" width={34} height={34} className="h-8 w-8 rounded-md" />
-            <div className="hidden sm:block">
-              <p className="font-throne text-lg font-black leading-none text-[color:var(--text-main)]">Loot Master</p>
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">Gaming Market</p>
-            </div>
+          <Link href="/" className="inline-flex items-center rounded-xl px-2 py-1.5">
+            <Image
+              src="/home/logoescrita.png"
+              alt="Loot Master"
+              width={290}
+              height={86}
+              className="h-10 w-auto object-contain sm:h-12"
+            />
           </Link>
         </div>
 

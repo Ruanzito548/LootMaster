@@ -78,27 +78,23 @@ export default function Home() {
   return (
     <div className="loot-shell gm-shell">
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
-        <section className="gm-glass relative overflow-hidden rounded-[2rem] p-6 sm:p-8 lg:p-10">
+        <section
+          className="relative overflow-hidden rounded-[2rem] border border-[#d4af6a]/70 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] sm:p-8 lg:p-10"
+          style={{
+            backgroundImage: "url('/home/bghero.png')",
+            backgroundPosition: "center",
+            backgroundSize: "115%",
+          }}
+        >
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_10%,rgba(255,255,255,0.03),transparent_34%),radial-gradient(circle_at_18%_100%,rgba(0,0,0,0.18),transparent_36%)]" />
 
           <div className="relative z-10 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="space-y-5">
-              <span className="gm-badge inline-flex items-center gap-2 px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.18em]">
-                <Sparkles className="h-3.5 w-3.5" />
-                Seasonal launcher
-              </span>
+            <div className="flex min-h-[26rem] flex-col justify-between gap-4">
+              <div className="flex flex-1 items-center">
+                <img src="/home/logoescrita.png" alt="Loot Master" className="h-56 w-auto object-contain sm:h-80 lg:h-[12rem]" />
+              </div>
 
-              <h1 className="font-throne text-5xl font-black leading-[0.95] text-[#eaf4ff] sm:text-6xl lg:text-7xl">
-                MMO MARKETPLACE
-                <br />
-                REFORGED
-              </h1>
-
-              <p className="gm-subtitle max-w-xl text-sm leading-7 sm:text-base">
-                Fast orders, clean routing, one hub.
-              </p>
-
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 pt-2">
                 <Link href={activeGame ? `/games/${activeGame.id}` : "/games"} className="gm-button gm-button-primary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
                   Enter {activeGame?.shortTitle ?? "Launcher"}
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -112,7 +108,6 @@ export default function Home() {
                   Progress
                 </Link>
               </div>
-
             </div>
 
             <div className="relative h-[20rem] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#111317] sm:h-[24rem]">
@@ -157,7 +152,14 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative overflow-hidden rounded-[2rem] border border-[#d4af6a]/50 bg-[radial-gradient(circle_at_top,rgba(39,54,76,0.9),rgba(4,8,15,0.96)_42%,rgba(2,4,8,1)_100%)] p-4 shadow-[0_30px_80px_rgba(0,0,0,0.55)] sm:p-6 lg:p-8">
+        <section
+          className="relative overflow-hidden rounded-[2rem] border border-[#d4af6a]/70 p-4 shadow-[0_30px_80px_rgba(0,0,0,0.55)] sm:p-6 lg:p-8"
+          style={{
+            backgroundImage: "url('/home/bghero.png')",
+            backgroundPosition: "center",
+            backgroundSize: "115%",
+          }}
+        >
           <div className="pointer-events-none absolute inset-0 opacity-90">
             <div className="absolute -left-10 top-4 h-44 w-44 rounded-full bg-[#d4af6a]/10 blur-3xl" />
             <div className="absolute right-10 top-0 h-52 w-52 rounded-full bg-[#3b4a8a]/20 blur-3xl" />
@@ -165,17 +167,17 @@ export default function Home() {
           </div>
 
           <div className="relative z-10 space-y-5">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="space-y-3">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:pl-2">
+              <div className="space-y-3 lg:flex-1 lg:text-center">
                 <p className="text-[0.62rem] font-bold uppercase tracking-[0.36em] text-[#d9b76a]">Explore worlds. Conquer legends.</p>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center gap-4 lg:justify-center">
                   <h2 className="font-throne text-4xl font-black uppercase tracking-[0.04em] text-[#f5d17a] sm:text-5xl lg:text-[4.2rem]">Featured Games</h2>
                 </div>
-                <div className="h-px w-full max-w-[28rem] bg-[linear-gradient(90deg,rgba(212,175,106,0.9),rgba(212,175,106,0.14))]" />
-                <p className="max-w-xl text-sm text-[#9eb4d4] sm:text-base">Explore legendary worlds and begin your next adventure.</p>
+                <div className="mx-auto h-px w-full max-w-[28rem] bg-[linear-gradient(90deg,rgba(212,175,106,0.9),rgba(212,175,106,0.14))]" />
+                <p className="mx-auto max-w-xl text-sm text-[#9eb4d4] sm:text-base">Explore legendary worlds and begin your next adventure.</p>
               </div>
 
-              <Link href="/games" className="gm-button gm-button-secondary inline-flex items-center gap-2 self-start rounded-xl border border-[#d4af6a]/70 bg-[#0a1018]/70 px-4 py-3 text-[0.58rem] font-bold uppercase tracking-[0.18em] text-[#f5d17a] shadow-[0_0_20px_rgba(212,175,106,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#f5d17a]/80 hover:text-[#f8e1a2]">
+              <Link href="/games" className="gm-button gm-button-secondary inline-flex items-center gap-2 self-start rounded-xl border border-[#d4af6a]/70 bg-[#0a1018]/70 px-4 py-3 text-[0.58rem] font-bold uppercase tracking-[0.18em] text-[#f5d17a] shadow-[0_0_20px_rgba(212,175,106,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#f5d17a]/80 hover:text-[#f8e1a2] lg:self-center">
                 View all
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
@@ -183,49 +185,56 @@ export default function Home() {
 
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {visibleGames.map((game) => (
-                <motion.article
-                  key={game.id}
-                  whileHover={{ y: -8 }}
-                  transition={{ duration: 0.28, ease: "easeOut" }}
-                  className="group relative h-[23rem] overflow-hidden rounded-[1.5rem] border border-[#d4af6a]/80 bg-[#0a0f18] shadow-[0_20px_45px_rgba(0,0,0,0.48)] transition-all duration-300 hover:border-[#f5d17a] hover:shadow-[0_24px_52px_rgba(212,175,106,0.18)]"
-                >
-                  <div
-                    className="absolute inset-0 scale-100 transition-transform duration-500 group-hover:scale-110"
-                    style={{
-                      backgroundImage: `linear-gradient(180deg,rgba(7,9,13,0.08),rgba(7,11,18,0.28)), url('${heroArtByGame[game.id] ?? heroArtByGame.retail}')`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }}
-                  />
+                <Link key={game.id} href={`/games/${game.id}`} className="block" aria-label={`Open ${game.shortTitle}`}>
+                  <motion.article
+                    whileHover={{ y: -8 }}
+                    transition={{ duration: 0.28, ease: "easeOut" }}
+                    className="group relative h-[28.5rem] overflow-hidden rounded-[1.5rem] border border-[#d4af6a]/80 bg-[#0a0f18] shadow-[0_20px_45px_rgba(0,0,0,0.48)] transition-all duration-300 hover:border-[#f5d17a] hover:shadow-[0_24px_52px_rgba(212,175,106,0.18)]"
+                  >
+                    <div
+                      className="absolute inset-0 scale-100 transition-transform duration-500 group-hover:scale-110"
+                      style={{
+                        backgroundImage: `url('${heroArtByGame[game.id] ?? heroArtByGame.retail}')`,
+                        backgroundSize: "cover",
+                        backgroundPosition:
+                          game.id === "classic-era"
+                            ? "left 775px center"
+                            : game.id === "mist-of-pandaria"
+                              ? "left 400px center"
+                              : game.id === "tbc-anniversary"
+                                ? "left 570px center"
+                                : "center",
+                      }}
+                    />
 
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,8,15,0.08),rgba(5,8,15,0.28)_38%,rgba(3,5,10,0.78)_100%)] transition-opacity duration-300 group-hover:opacity-100" />
-                  <div className="absolute inset-0 opacity-90 [background:linear-gradient(135deg,rgba(255,255,255,0.06),transparent_22%,transparent_80%,rgba(255,255,255,0.02))]" />
-                  <div className="absolute inset-x-4 top-3 h-px bg-[linear-gradient(90deg,transparent,rgba(212,175,106,0.75),transparent)]" />
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.18)_38%,rgba(0,0,0,0.24)_100%)] transition-opacity duration-300 group-hover:opacity-100" />
+                    <div className="absolute inset-0 opacity-70 [background:linear-gradient(135deg,rgba(255,255,255,0.05),transparent_22%,transparent_80%,rgba(255,255,255,0.01))]" />
+                    <div className="absolute inset-x-0 bottom-0 h-[54%] bg-[linear-gradient(180deg,rgba(4,5,9,0.04),rgba(4,5,9,0.52)_25%,rgba(2,3,6,0.82)_100%)]" />
 
-                  <div className="absolute inset-x-0 bottom-0 p-4">
-                    <div className="rounded-[1.1rem] border border-[#d4af6a]/25 bg-[linear-gradient(180deg,rgba(8,12,18,0.18),rgba(8,12,18,0.62))] px-4 pb-4 pt-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-[2px]">
-                      <div className="mb-3 flex items-center justify-center">
-                        <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#d4af6a]/75 bg-[#0d1219]/80 shadow-[0_0_18px_rgba(212,175,106,0.25)]">
-                          <img src="/faviicon.png" alt="Loot Master" className="h-full w-full object-cover" />
+                    <div className="absolute inset-x-0 bottom-0 p-4">
+                      <div className="px-2 pb-2 pt-2">
+                        <div className="mb-3 flex items-center justify-center">
+                          <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#d4af6a]/75 bg-[#0d1219]/80 shadow-[0_0_18px_rgba(212,175,106,0.25)]">
+                            <img src="/faviicon.png" alt="Loot Master" className="h-full w-full object-cover" />
+                          </span>
+                        </div>
+
+                        <h3 className="text-center text-xl font-black uppercase tracking-[0.06em] text-[#f8d889] drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)] sm:text-[1.35rem]">
+                          {game.shortTitle.toUpperCase()}
+                        </h3>
+
+                        <p className="mt-3 text-center text-[0.72rem] leading-5 text-[#f0f4ff] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{game.description}</p>
+
+                        <span className="group/btn mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[0.8rem] border border-[#f1d787]/80 bg-[linear-gradient(180deg,#f6d98f_0%,#d7a74a_26%,#b6782d_58%,#f5d889_100%)] px-4 py-3 text-[0.65rem] font-black uppercase tracking-[0.22em] text-[#1e1205] shadow-[inset_0_1px_0_rgba(255,245,211,0.85),inset_0_-2px_0_rgba(120,75,14,0.45),0_10px_24px_rgba(183,120,45,0.34),0_0_18px_rgba(212,175,106,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,245,211,0.9),inset_0_-2px_0_rgba(120,75,14,0.45),0_12px_26px_rgba(183,120,45,0.42),0_0_22px_rgba(212,175,106,0.22)]">
+                          <span className="inline-flex items-center gap-2">
+                            Enter
+                            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/btn:translate-x-0.5" />
+                          </span>
                         </span>
                       </div>
-
-                      <h3 className="text-center text-xl font-black uppercase tracking-[0.06em] text-[#f8d889] sm:text-[1.35rem]">
-                        {game.shortTitle.toUpperCase()}
-                      </h3>
-
-                      <p className="mt-3 text-center text-[0.72rem] leading-5 text-[#dfeafc]">{game.description}</p>
-
-                      <Link
-                        href={`/games/${game.id}`}
-                        className="gm-button gm-button-primary mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-3 text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#230f04] shadow-[0_12px_24px_rgba(212,175,106,0.18)] transition-all duration-300 hover:shadow-[0_16px_30px_rgba(212,175,106,0.28),0_0_18px_rgba(212,175,106,0.24)]"
-                      >
-                        Enter
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
                     </div>
-                  </div>
-                </motion.article>
+                  </motion.article>
+                </Link>
               ))}
             </div>
           </div>
