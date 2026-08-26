@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Package, UserRound, Wallet as WalletIcon } from "lucide-react";
 
@@ -24,6 +25,7 @@ function isProfileTab(value: string): value is ProfileTab {
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { status, profile, error, saveProfile, signOutUser } = useProfileSession();
   const [activeTab, setActiveTab] = useState<ProfileTab>("inventory");
   const [photoDraft, setPhotoDraft] = useState<string | null>(null);
@@ -37,6 +39,12 @@ export default function ProfilePage() {
   const resolvedCover = coverDraft ?? profile?.coverURL ?? defaultCoverURL;
   const progress = calculateLevelProgress(profile?.totalSpentCents ?? 0);
   const levelUpReward = profile?.lastLevelUpLevel ? buildLevelReward(profile.lastLevelUpLevel, `${profile.uid}-level-up`) : null;
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [router, status]);
 
   const saveAppearance = async () => {
     setSaving(true);
