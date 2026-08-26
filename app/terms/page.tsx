@@ -1,6 +1,13 @@
 import Link from "next/link";
 
-const sections = [
+type TermsSection = {
+  title: string;
+  paragraphs: readonly string[];
+  bullets?: readonly string[];
+  footer?: string;
+};
+
+const sections: readonly TermsSection[] = [
   {
     title: "1. About Loot Master",
     paragraphs: [
