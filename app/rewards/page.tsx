@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { getChestImagePath } from "@/lib/chests";
 import { RewardTrack } from "../components/progression/reward-track";
@@ -16,9 +17,48 @@ import {
 import { useProfileSession } from "../profile/use-profile-session";
 
 export default function RewardsPage() {
-  const { profile, user, reload } = useProfileSession();
+  const router = useRouter();
+  const { profile, user, reload, status } = useProfileSession();
   const [claimBusy, setClaimBusy] = useState(false);
   const [claimFeedback, setClaimFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [router, status]);
+
+  if (status === "loading") {
+    return (
+      <div className="loot-shell">
+        <main className="mx-auto flex w-full max-w-5xl flex-1 items-center justify-center px-4 py-20 text-center">
+          <div className="space-y-3">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-[color:var(--accent)]">Loading</p>
+            <h1 className="loot-title text-3xl font-black sm:text-4xl">Checking your session...</h1>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="loot-shell">
+        <main className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center px-4 py-20 text-center">
+          <div className="loot-panel max-w-lg rounded-[1.5rem] p-8">
+            <p className="text-xs font-black uppercase tracking-[0.28em] text-[color:var(--accent)]">Access required</p>
+            <h1 className="loot-title mt-4 text-3xl font-black sm:text-4xl">Please sign in</h1>
+            <p className="mt-3 text-sm leading-7 text-[color:var(--text-muted)]">
+              You need to be logged in to access the rewards and battle pass page.
+            </p>
+            <Link href="/login" className="loot-gold-button mt-6 inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.16em]">
+              Go to login
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const progress = calculateLevelProgress(profile?.totalSpentCents ?? 0);
   const highestRewardedLevel = Math.max(1, Math.floor(profile?.highestRewardedLevel ?? 1));
