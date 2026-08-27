@@ -10,7 +10,11 @@ function formatIsoDate(iso: string | null | undefined) {
   if (!iso) return "--";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "--";
-  return date.toLocaleString("en-US");
+  return date.toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    dateStyle: "short",
+    timeStyle: "medium",
+  });
 }
 
 function normalizeLimit(value: string | null): number {
@@ -137,9 +141,12 @@ export async function GET(request: Request): Promise<Response> {
               ? "Paid"
               : "Unpaid";
 
+        const createdAtIso = typeof data.stripeCreatedAt === "string" && data.stripeCreatedAt ? data.stripeCreatedAt : null;
+
         return {
           id: orderId,
-          created: formatIsoDate(typeof data.stripeCreatedAt === "string" ? data.stripeCreatedAt : null),
+          created: formatIsoDate(createdAtIso),
+          createdAtIso,
           status,
           agentName: assignedAgent?.name ?? (assignedAgentId ? `UID: ${assignedAgentId}` : "--"),
           agentEmail: assignedAgent?.email ?? "--",

@@ -3,6 +3,7 @@
 export type OrderRow = {
   id: string;
   created: string;
+  createdAtIso: string | null;
   status: string;
   agentName: string;
   agentEmail: string;

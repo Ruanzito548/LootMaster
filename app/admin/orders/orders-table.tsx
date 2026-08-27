@@ -17,10 +17,10 @@ function formatMoney(cents: number, currencyCode: string): string {
   }).format(cents / 100);
 }
 
-function OrderSlaTimer({ created, deliveryMethod }: Pick<OrderRow, "created" | "deliveryMethod">) {
+function OrderSlaTimer({ createdAtIso, deliveryMethod }: Pick<OrderRow, "createdAtIso" | "deliveryMethod">) {
   const [now, setNow] = useState(() => Date.now());
   const deliveryLimitMs = deliveryMethod === "Face to face" ? 30 * 60 * 1000 : 2 * 60 * 60 * 1000;
-  const createdAt = new Date(created).getTime();
+  const createdAt = createdAtIso ? new Date(createdAtIso).getTime() : Number.NaN;
   const remainingMs = Number.isFinite(createdAt) ? createdAt + deliveryLimitMs - now : 0;
   const isOverdue = remainingMs <= 0;
   const absoluteMs = Math.abs(remainingMs);
@@ -448,7 +448,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
                 <td className="px-2 py-2 text-xs font-medium uppercase text-green-400">{row.paymentMethod}</td>
                 {showSlaTimer ? (
                   <td className="px-2 py-2">
-                    <OrderSlaTimer created={row.created} deliveryMethod={row.deliveryMethod} />
+                    <OrderSlaTimer createdAtIso={row.createdAtIso} deliveryMethod={row.deliveryMethod} />
                   </td>
                 ) : null}
                 <td className="px-2 py-2">
