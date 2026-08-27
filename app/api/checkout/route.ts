@@ -7,6 +7,12 @@ import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { resolveDiscordChannelId } from "@/lib/discord-channel-resolver";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import {
+  GAME_CONFIGURATION_COLLECTION,
+  GAME_CONFIGURATION_DOC_ID,
+  canAccessCategory,
+  sanitizeGameConfiguration,
+} from "@/lib/game-configuration";
+import {
   SITE_FEE_SETTINGS_DOC_ID,
   buildDefaultSiteFeeSettings,
   sanitizeSiteFeeSettings,
@@ -18,8 +24,6 @@ type CheckoutBody = {
   categoryId?: unknown;
   goldAmount: number;
   paymentMethod?: unknown;
-  paymentGateway?: "stripe" | "paypal" | "internal";
-  paymentProvider?: "Pix" | "Stripe" | "PayPal" | "Loot Coins";
   country?: string;
   countryCode?: string;
   locale?: string;
@@ -121,6 +125,23 @@ async function resolvePricingConfig(gameId: string, serverId: string, faction: s
   return defaultGoldConfigEntry;
 }
 
+async function isCheckoutCategoryEnabled(gameId: string, categoryId: string): Promise<boolean> {
+  try {
+    const snapshot = await getAdminDb()
+      .collection(GAME_CONFIGURATION_COLLECTION)
+      .doc(GAME_CONFIGURATION_DOC_ID)
+      .get();
+
+    if (!snapshot.exists) {
+      return true;
+    }
+
+    return canAccessCategory(sanitizeGameConfiguration(snapshot.data()), gameId, categoryId, false);
+  } catch {
+    return false;
+  }
+}
+
 async function resolveSiteFeeSettings() {
   const adminDb = getAdminDb();
   const snapshot = await adminDb.collection("app-config").doc(SITE_FEE_SETTINGS_DOC_ID).get();
@@ -164,8 +185,6 @@ export async function POST(request: Request): Promise<Response> {
     categoryId: rawCategoryId,
     goldAmount,
     paymentMethod: rawPaymentMethod,
-    paymentGateway,
-    paymentProvider,
     country,
     countryCode,
     locale,
@@ -213,6 +232,10 @@ export async function POST(request: Request): Promise<Response> {
 
   if (!game || !category || category.id !== "gold") {
     return Response.json({ error: "Invalid game or service category." }, { status: 422 });
+  }
+
+  if (!(await isCheckoutCategoryEnabled(gameId, categoryId))) {
+    return Response.json({ error: "This service is currently unavailable." }, { status: 403 });
   }
 
   if (!(paymentMethod === "pix" || paymentMethod === "card" || paymentMethod === "paypal" || paymentMethod === "balance")) {
@@ -428,15 +451,31 @@ export async function POST(request: Request): Promise<Response> {
 
   const stripe = new Stripe(secretKey);
 
+  const configuredAppUrl = process.env.APP_URL?.trim();
+  if (!configuredAppUrl && process.env.NODE_ENV === "production") {
+    return Response.json({ error: "Application URL is not configured." }, { status: 503 });
+  }
+
+  let appUrl = configuredAppUrl ?? "http://localhost:3000";
+  try {
+    const parsedAppUrl = new URL(appUrl);
+    if (process.env.NODE_ENV === "production" && parsedAppUrl.protocol !== "https:") {
+      return Response.json({ error: "Application URL must use HTTPS." }, { status: 503 });
+    }
+    appUrl = parsedAppUrl.origin;
+  } catch {
+    return Response.json({ error: "Application URL is invalid." }, { status: 503 });
+  }
+
   const configuredOrigins = new Set(
-    [process.env.APP_URL, "http://localhost:3000"]
+    [appUrl, process.env.NODE_ENV === "development" ? "http://localhost:3000" : null]
       .map((value) => value?.trim())
       .filter((value): value is string => Boolean(value)),
   );
   const requestOrigin = request.headers.get("origin")?.trim();
   const origin = requestOrigin && configuredOrigins.has(requestOrigin)
     ? requestOrigin
-    : process.env.APP_URL?.trim() ?? "http://localhost:3000";
+    : appUrl;
 
   const paymentMethodTypes = (
     paymentMethod === "pix" ? ["pix"] : paymentMethod === "paypal" ? ["paypal"] : ["card"]
@@ -466,8 +505,8 @@ export async function POST(request: Request): Promise<Response> {
     deliveryMethod,
     nickname,
     paymentMethod,
-    paymentGateway: paymentGateway ?? (paymentMethod === "paypal" ? "paypal" : "stripe"),
-    paymentProvider: paymentProvider ?? (paymentMethod === "pix" ? "Pix" : paymentMethod === "paypal" ? "PayPal" : "Stripe"),
+    paymentGateway: paymentMethod === "paypal" ? "paypal" : "stripe",
+    paymentProvider: paymentMethod === "pix" ? "Pix" : paymentMethod === "paypal" ? "PayPal" : "Stripe",
     country: country ?? "",
     countryCode: countryCode ?? "",
     locale: locale ?? "",

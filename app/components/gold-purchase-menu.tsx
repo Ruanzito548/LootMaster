@@ -274,8 +274,6 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
           countryCode: countryConfig.countryCode,
           locale: countryConfig.locale,
           currency: selectedCurrency,
-          paymentGateway: selectedPayment?.gateway ?? "stripe",
-          paymentProvider: selectedPayment?.provider ?? "Stripe",
           nickname: nickname.trim(),
           serverId: selectedServerId,
           faction: selectedFaction,
