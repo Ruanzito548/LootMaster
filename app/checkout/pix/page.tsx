@@ -8,7 +8,7 @@ import { Suspense, useEffect, useState } from "react";
 function PixPaymentContent() {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("payment_id") ?? "";
-  const [payment, setPayment] = useState<{ status: string; qrCode: string; qrCodeBase64: string } | null>(null);
+  const [payment, setPayment] = useState<{ status: string; externalReference: string; qrCode: string; qrCodeBase64: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ function PixPaymentContent() {
     const load = async () => {
       try {
         const response = await fetch(`/api/checkout/pix?payment_id=${encodeURIComponent(paymentId)}`, { cache: "no-store" });
-        const data = (await response.json()) as typeof payment & { error?: string };
+        const data = (await response.json()) as NonNullable<typeof payment> & { error?: string };
         if (!response.ok || !data.qrCode || !data.qrCodeBase64) throw new Error(data.error ?? "Could not load PIX payment.");
         if (!cancelled) setPayment(data);
       } catch (loadError) {
@@ -27,6 +27,30 @@ function PixPaymentContent() {
     void load();
     return () => { cancelled = true; };
   }, [paymentId]);
+
+  useEffect(() => {
+    if (!paymentId || !payment || payment.status === "approved") return;
+
+    const checkPayment = async () => {
+      try {
+        const response = await fetch(`/api/checkout/pix?payment_id=${encodeURIComponent(paymentId)}`, { cache: "no-store" });
+        const data = (await response.json()) as { status?: string; externalReference?: string; error?: string };
+        if (!response.ok) return;
+
+        if (data.status === "approved" && data.externalReference) {
+          window.location.replace(`/checkout/success?session_id=${encodeURIComponent(data.externalReference)}`);
+          return;
+        }
+
+        setPayment((current) => current ? { ...current, status: data.status ?? current.status } : current);
+      } catch {
+        // The webhook remains authoritative; a temporary polling error is harmless.
+      }
+    };
+
+    const interval = window.setInterval(() => void checkPayment(), 5000);
+    return () => window.clearInterval(interval);
+  }, [payment, paymentId]);
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-6 py-20 text-center">
