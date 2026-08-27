@@ -465,11 +465,13 @@ export async function POST(request: Request): Promise<Response> {
   const stripe = new Stripe(secretKey);
 
   const configuredAppUrl = process.env.APP_URL?.trim();
-  if (!configuredAppUrl && process.env.NODE_ENV === "production") {
+  const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() || process.env.VERCEL_URL?.trim();
+  const resolvedAppUrl = configuredAppUrl || (vercelUrl ? `https://${vercelUrl.replace(/^https?:\/\//, "")}` : "");
+  if (!resolvedAppUrl && process.env.NODE_ENV === "production") {
     return Response.json({ error: "Application URL is not configured." }, { status: 503 });
   }
 
-  let appUrl = configuredAppUrl ?? "http://localhost:3000";
+  let appUrl = resolvedAppUrl || "http://localhost:3000";
   try {
     const parsedAppUrl = new URL(appUrl);
     if (process.env.NODE_ENV === "production" && parsedAppUrl.protocol !== "https:") {

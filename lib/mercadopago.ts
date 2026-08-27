@@ -41,10 +41,13 @@ async function mercadoPagoRequest<T>(path: string, init: RequestInit): Promise<T
 
   const payload = (await response.json().catch(() => null)) as T | { message?: string; error?: string } | null;
   if (!response.ok) {
-    const message = payload && typeof payload === "object" && ("message" in payload || "error" in payload)
+    const rawMessage = payload && typeof payload === "object" && ("message" in payload || "error" in payload)
       ? String((payload as { message?: string; error?: string }).message ?? (payload as { error?: string }).error)
       : "Mercado Pago request failed.";
-    throw new Error(message);
+    if (rawMessage.toLowerCase().includes("without key enabled") || rawMessage.toLowerCase().includes("qr render")) {
+      throw new Error("Mercado Pago PIX is not enabled for this account. Register and enable a PIX key in the receiving Mercado Pago account.");
+    }
+    throw new Error(rawMessage);
   }
 
   return payload as T;
@@ -75,7 +78,7 @@ export async function createMercadoPagoPixPayment(input: {
 
   const transactionData = payment.point_of_interaction?.transaction_data;
   if (!payment.id || !transactionData?.qr_code || !transactionData.qr_code_base64) {
-    throw new Error("Mercado Pago did not return PIX QR data.");
+    throw new Error("Mercado Pago did not return PIX QR data. Confirm that a PIX key is enabled for the receiving account.");
   }
 
   return {
