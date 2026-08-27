@@ -43,6 +43,7 @@ import { calculateLevelProgress, calculateTotalXp } from "../../../lib/level-rew
  *
  * Events handled:
  *   checkout.session.completed  (payment_status === "paid")
+ *   checkout.session.async_payment_succeeded (payment_status === "paid")
  */
 
 function clampPercent(value: number): number {
@@ -741,7 +742,7 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: message }, { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
+  if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
     const session = event.data.object as Stripe.Checkout.Session;
     const meta = session.metadata ?? {};
 

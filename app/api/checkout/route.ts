@@ -333,6 +333,10 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const selectedCurrency = normalizedCurrency;
+  if (paymentMethod === "pix" && selectedCurrency !== "brl") {
+    return Response.json({ error: "PIX payments must use BRL currency." }, { status: 422 });
+  }
+
   const serverRates = await resolveServerRates();
   const usdToCurrencyRate = getUsdToCurrencyRate(selectedCurrency.toUpperCase(), serverRates);
 
