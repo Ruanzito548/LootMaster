@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { Package, UserRound, Wallet as WalletIcon } from "lucide-react";
 
 import { buildLevelReward, calculateLevelProgress, formatMoneyUsd } from "../../lib/level-rewards";
-import { defaultCoverURL, defaultPhotoURL } from "../../lib/profile-data";
+import { defaultPhotoURL } from "../../lib/profile-data";
 import HistoryClient from "./history/history-client";
 import InventoryPage from "./inventory-client";
 import { useProfileSession } from "./use-profile-session";
@@ -26,17 +26,12 @@ function isProfileTab(value: string): value is ProfileTab {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { status, profile, error, saveProfile, signOutUser } = useProfileSession();
+  const { status, profile, error, signOutUser } = useProfileSession();
   const [activeTab, setActiveTab] = useState<ProfileTab>("inventory");
-  const [photoDraft, setPhotoDraft] = useState<string | null>(null);
-  const [coverDraft, setCoverDraft] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [showXpPopup, setShowXpPopup] = useState(false);
   const [showLevelModal, setShowLevelModal] = useState(false);
 
-  const resolvedPhoto = photoDraft ?? profile?.photoURL ?? defaultPhotoURL;
-  const resolvedCover = coverDraft ?? profile?.coverURL ?? defaultCoverURL;
+  const resolvedPhoto = profile?.photoURL ?? defaultPhotoURL;
   const progress = calculateLevelProgress(profile?.totalSpentCents ?? 0);
   const levelUpReward = profile?.lastLevelUpLevel ? buildLevelReward(profile.lastLevelUpLevel, `${profile.uid}-level-up`) : null;
 
@@ -45,19 +40,6 @@ export default function ProfilePage() {
       router.replace("/login");
     }
   }, [router, status]);
-
-  const saveAppearance = async () => {
-    setSaving(true);
-    setFeedback(null);
-
-    const ok = await saveProfile({
-      photoURL: resolvedPhoto || defaultPhotoURL,
-      coverURL: resolvedCover || defaultCoverURL,
-    });
-
-    setFeedback(ok ? "Saved" : "Could not save right now.");
-    setSaving(false);
-  };
 
   useEffect(() => {
     const applyHash = () => {
@@ -243,39 +225,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-3 lg:grid-cols-2">
-              <label className="grid gap-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
-                Avatar URL
-                <input
-                  value={resolvedPhoto}
-                  onChange={(event) => setPhotoDraft(event.target.value)}
-                  placeholder="https://..."
-                  className="loot-input rounded-xl px-4 py-3 text-sm font-semibold"
-                />
-              </label>
-
-              <label className="grid gap-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
-                Cover URL
-                <input
-                  value={resolvedCover}
-                  onChange={(event) => setCoverDraft(event.target.value)}
-                  placeholder="https://..."
-                  className="loot-input rounded-xl px-4 py-3 text-sm font-semibold"
-                />
-              </label>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => void saveAppearance()}
-                disabled={saving}
-                className="loot-gold-button rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] disabled:cursor-not-allowed"
-              >
-                {saving ? "Saving..." : "Save"}
-              </button>
-              {feedback ? <p className="text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">{feedback}</p> : null}
-            </div>
           </section>
         ) : null}
 
