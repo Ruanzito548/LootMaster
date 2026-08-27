@@ -102,6 +102,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
   const [deliveryMethod, setDeliveryMethod] = useState(deliveryMethods[0].value);
   const [email, setEmail] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [countryConfig, setCountryConfig] = useState<CountryConfig>(DEFAULT_COUNTRY_CONFIG);
@@ -223,7 +224,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
 
   const stepDetailsDone =
     stepAmountDone && nickname.trim() !== "" && deliveryMethod.trim() !== "" && email.trim() !== "";
-  const formReady = stepDetailsDone && paymentMethod.trim() !== "";
+  const formReady = stepDetailsDone && paymentMethod.trim() !== "" && termsAccepted;
   const completedSteps = [stepServerDone, stepAmountDone, stepDetailsDone, formReady].filter(Boolean).length;
 
   const basePrice = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
@@ -282,6 +283,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
           deliveryMethod,
           email: email.trim(),
           agentReferralCode: agentReferralCode.trim(),
+          termsAccepted,
         }),
       });
 
@@ -349,6 +351,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
           </div>
           <h1 className="font-throne mt-3 text-3xl font-black leading-none text-[#eaf4ff] sm:text-4xl">Gold Checkout</h1>
           <p className="mt-2 text-sm text-[#a8c3e0]">Complete your order in a few simple steps.</p>
+          <p className="mt-3 text-sm font-semibold text-[#f6d27c]">Sign up and earn rewards every time you shop on our site.</p>
         </div>
       </header>
 
@@ -557,6 +560,9 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
                   </option>
                 ))}
               </select>
+              <p className="mt-2 text-xs leading-5 text-[#88a8d1]">
+                Estimated delivery: {deliveryMethod === "Mailbox" ? "up to 2 hours by mail." : "up to 30 minutes face to face."}
+              </p>
             </div>
 
             <div className="sm:col-span-2">
@@ -708,6 +714,18 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
               {checkoutError}
             </p>
           ) : null}
+
+          <label className="mt-4 flex items-start gap-3 rounded-xl border border-white/10 bg-[#0b162b]/70 px-3 py-3 text-xs leading-5 text-[#b9d2ec]">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(event) => setTermsAccepted(event.target.checked)}
+              className="mt-1 size-4 shrink-0 accent-[#d4af5a]"
+            />
+            <span>
+              I accept the <Link href="/terms" target="_blank" className="font-bold text-[#f6d27c] underline">Terms and Privacy</Link>.
+            </span>
+          </label>
 
           <button
             type="button"

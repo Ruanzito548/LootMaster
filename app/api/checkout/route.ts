@@ -35,6 +35,7 @@ type CheckoutBody = {
   deliveryMethod?: unknown;
   email?: unknown;
   agentReferralCode?: unknown;
+  termsAccepted?: unknown;
 };
 
 type ExchangeRatePayload = {
@@ -195,6 +196,7 @@ export async function POST(request: Request): Promise<Response> {
     deliveryMethod: rawDeliveryMethod,
     email: rawEmail,
     agentReferralCode: rawAgentReferralCode,
+    termsAccepted: rawTermsAccepted,
   } = body;
 
   const gameId = typeof rawGameId === "string" ? rawGameId.trim() : "";
@@ -206,6 +208,7 @@ export async function POST(request: Request): Promise<Response> {
   const nickname = typeof rawNickname === "string" ? rawNickname.trim() : "";
   const email = typeof rawEmail === "string" ? rawEmail.trim() : "";
   const agentReferralCode = typeof rawAgentReferralCode === "string" ? rawAgentReferralCode.trim() : "";
+  const termsAccepted = rawTermsAccepted === true;
   const game = getGameById(gameId);
   const category = getServiceCategoryById(categoryId);
   const knownServers = getServersByGameId(gameId);
@@ -229,6 +232,10 @@ export async function POST(request: Request): Promise<Response> {
       { error: `Missing required fields: ${missingFields.join(", ")}.` },
       { status: 422 },
     );
+  }
+
+  if (!termsAccepted) {
+    return Response.json({ error: "You must accept the Terms and Privacy before checkout." }, { status: 422 });
   }
 
   if (!game || !category || category.id !== "gold") {
@@ -537,6 +544,8 @@ export async function POST(request: Request): Promise<Response> {
     cardGatewayFeePercent: String(cardGatewayFeePercent),
     cashbackPercent: String(cashbackPercent),
     operationalReservePercent: String(operationalReservePercent),
+    termsAccepted: "true",
+    termsAcceptedAt: new Date().toISOString(),
   };
 
   if (paymentMethod === "pix") {

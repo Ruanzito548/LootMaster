@@ -201,7 +201,7 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
             </p>
           </section>
         ) : (
-          <OrdersTableWithActions rows={rows} onReload={reload} />
+          <OrdersTableWithActions rows={rows} onReload={reload} showSlaTimer={mode === "open"} />
         )}
 
         <div ref={loadMoreRef} className="mt-4 flex justify-center">

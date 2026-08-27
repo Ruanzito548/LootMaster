@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { OrderRow } from "./export-button";
 
@@ -17,16 +17,45 @@ function formatMoney(cents: number, currencyCode: string): string {
   }).format(cents / 100);
 }
 
-export default function OrdersTable({ rows }: { rows: OrderRow[] }) {
-  return <OrdersTableWithActions rows={rows} />;
+function OrderSlaTimer({ created, deliveryMethod }: Pick<OrderRow, "created" | "deliveryMethod">) {
+  const [now, setNow] = useState(() => Date.now());
+  const deliveryLimitMs = deliveryMethod === "Face to face" ? 30 * 60 * 1000 : 2 * 60 * 60 * 1000;
+  const createdAt = new Date(created).getTime();
+  const remainingMs = Number.isFinite(createdAt) ? createdAt + deliveryLimitMs - now : 0;
+  const isOverdue = remainingMs <= 0;
+  const absoluteMs = Math.abs(remainingMs);
+  const totalSeconds = Math.floor(absoluteMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  if (!Number.isFinite(createdAt)) {
+    return <span className="text-xs text-slate-500">Unknown</span>;
+  }
+
+  return (
+    <span className={`font-data text-[0.65rem] font-bold ${isOverdue ? "text-red-300" : "text-amber-300"}`}>
+      {isOverdue ? "Overdue by" : "Due in"} {hours > 0 ? `${hours}h ` : ""}{String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+    </span>
+  );
+}
+
+export default function OrdersTable({ rows, showSlaTimer = false }: { rows: OrderRow[]; showSlaTimer?: boolean }) {
+  return <OrdersTableWithActions rows={rows} showSlaTimer={showSlaTimer} />;
 }
 
 type OrdersTableWithActionsProps = {
   rows: OrderRow[];
   onReload?: () => void | Promise<void>;
+  showSlaTimer?: boolean;
 };
 
-export function OrdersTableWithActions({ rows, onReload }: OrdersTableWithActionsProps) {
+export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }: OrdersTableWithActionsProps) {
   const router = useRouter();
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editingSupplierPercent, setEditingSupplierPercent] = useState<number>(0);
@@ -309,6 +338,7 @@ export function OrdersTableWithActions({ rows, onReload }: OrdersTableWithAction
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("profit")} className="inline-flex items-center gap-1">Profit <span>{sortBy === "profit" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("supplier")} className="inline-flex items-center gap-1">Supplier % <span>{sortBy === "supplier" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("payment")} className="inline-flex items-center gap-1">Payment <span>{sortBy === "payment" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            {showSlaTimer ? <th className="px-2 py-2">SLA</th> : null}
             <th className="px-2 py-2">Applicants</th>
           </tr>
           <tr className="border-b border-green-950 bg-green-950/10 text-[11px] text-green-400">
@@ -343,6 +373,7 @@ export function OrdersTableWithActions({ rows, onReload }: OrdersTableWithAction
                 {paymentOptions.map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
             </th>
+            {showSlaTimer ? <th className="px-2 py-2" /> : null}
             <th className="px-2 py-2" />
           </tr>
         </thead>
@@ -432,6 +463,11 @@ export function OrdersTableWithActions({ rows, onReload }: OrdersTableWithAction
                   )}
                 </td>
                 <td className="px-2 py-2 text-xs font-medium uppercase text-green-400">{row.paymentMethod}</td>
+                {showSlaTimer ? (
+                  <td className="px-2 py-2">
+                    <OrderSlaTimer created={row.created} deliveryMethod={row.deliveryMethod} />
+                  </td>
+                ) : null}
                 <td className="px-2 py-2">
                   <Link
                     href={`/admin/orders/${row.id}`}
