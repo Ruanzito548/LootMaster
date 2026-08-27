@@ -183,7 +183,7 @@ export default function TermsPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.3em] text-[color:var(--accent)]">Loot Master</p>
-              <h1 className="loot-title mt-4 text-4xl font-black sm:text-6xl">Terms of Service</h1>
+              <h1 className="loot-title mt-4 text-4xl font-black sm:text-6xl">Terms and Privacy</h1>
               <p className="mt-4 text-sm text-[color:var(--text-muted)]">Last Updated: August 26, 2026</p>
             </div>
             <Link href="/" className="loot-secondary-button rounded-full px-4 py-2 text-sm font-semibold">Back to home</Link>

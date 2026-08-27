@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Shield, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Shield, Sparkles } from "lucide-react";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FirebaseError } from "firebase/app";
@@ -25,7 +25,6 @@ const DISCORD_ERROR_LABELS: Record<string, string> = {
 const benefits = [
   { icon: Shield, title: "100% SECURE", text: "Your data is safe with us", accent: "text-[#d9b76a]" },
   { icon: Sparkles, title: "INSTANT ACCESS", text: "Get in the game in seconds", accent: "text-[#8fc1ff]" },
-  { icon: Users, title: "COMMUNITY", text: "Join thousands of players", accent: "text-[#d7a8ff]" },
 ] as const;
 
 function LoginContent() {
@@ -182,7 +181,7 @@ function LoginContent() {
               </div>
 
               <p className="mt-5 max-w-[32rem] text-center text-sm leading-7 text-[#d4dce6] opacity-90 sm:text-base">
-                Access exclusive games, epic loot and a community of adventurers.
+                Access exclusive games, epic loot and progression services.
               </p>
 
               <div className="mt-9 flex w-full max-w-[35rem] items-end justify-center gap-3 sm:gap-6">
@@ -266,7 +265,7 @@ function LoginContent() {
               ) : null}
 
               <div className="mt-6 text-center text-[0.72rem] leading-6 text-[#c9d1dd] opacity-85">
-                By continuing, you agree to our <Link href="/terms" className="text-[#f3c963] transition-colors hover:text-[#f9d98d]">Terms of Service</Link> and <Link href="/terms" className="text-[#f3c963] transition-colors hover:text-[#f9d98d]">Privacy Policy</Link>.
+                By continuing, you agree to our <Link href="/terms" className="text-[#f3c963] transition-colors hover:text-[#f9d98d]">Terms and Privacy</Link>.
               </div>
             </div>
           </aside>

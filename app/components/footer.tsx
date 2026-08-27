@@ -24,9 +24,7 @@ export function Footer() {
               <Image src="/lootmasterlogo.png" alt="Loot Master Logo" width={56} height={56} className="h-14 w-auto" />
               <span className="font-throne text-2xl">Loot Master</span>
             </Link>
-            <p className="text-sm leading-7 text-[color:var(--text-muted)]">
-              Premium gaming services for gold, accounts and progression with immersive theme-based navigation.
-            </p>
+            <p className="text-sm text-[color:var(--text-muted)]">CNPJ: 66.036.202/0001-00</p>
           </div>
 
           <div className="flex flex-col gap-3">
@@ -43,21 +41,9 @@ export function Footer() {
             <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[color:var(--accent)]">Support</h3>
             <nav className="flex flex-col gap-2 text-sm text-[color:var(--text-muted)]">
               <a href="mailto:support@lootmaster.com" className="theme-footer-link">Contact</a>
-              <a href="#faq" className="theme-footer-link">FAQ</a>
-              <a href="#terms" className="theme-footer-link">Terms</a>
+              <Link href="/terms" className="theme-footer-link">Terms and Privacy</Link>
+              <a href="https://discord.gg/43yEF8ZAyZ" target="_blank" rel="noopener noreferrer" className="theme-footer-link">Become a Seller</a>
             </nav>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.26em] text-[color:var(--accent)]">Community</h3>
-            <div className="flex gap-3">
-              <a href="#discord" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-[11px] px-3 py-2 text-sm font-semibold">
-                Discord
-              </a>
-              <a href="#twitter" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-[11px] px-3 py-2 text-sm font-semibold">
-                Twitter
-              </a>
-            </div>
           </div>
         </div>
 
@@ -66,7 +52,6 @@ export function Footer() {
         <div className="flex flex-col items-center justify-between gap-4 text-xs text-[color:var(--text-muted)] md:flex-row md:gap-0">
           <p>&copy; {currentYear} Loot Master. All rights reserved.</p>
           <div className="flex gap-6">
-            <a href="#privacy" className="theme-footer-link">Privacy</a>
             <a href="#cookies" className="theme-footer-link">Cookies</a>
           </div>
         </div>
