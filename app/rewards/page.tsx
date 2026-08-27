@@ -261,7 +261,7 @@ export default function RewardsPage() {
 
         <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[color:var(--border-color)]/45 bg-black/80 p-1 text-xs font-semibold uppercase tracking-[0.14em]">
           <Link href="/profile" className="rounded-lg px-4 py-2 text-[color:var(--text-muted)] transition-colors hover:bg-white/5 hover:text-[color:var(--text-main)]">Profile</Link>
-          <Link href="/profile/inventory" className="rounded-lg px-4 py-2 text-[color:var(--text-muted)] transition-colors hover:bg-white/5 hover:text-[color:var(--text-main)]">Inventory</Link>
+          <Link href="/profile#inventory" className="rounded-lg px-4 py-2 text-[color:var(--text-muted)] transition-colors hover:bg-white/5 hover:text-[color:var(--text-main)]">Inventory</Link>
         </div>
       </main>
     </div>

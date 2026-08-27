@@ -99,7 +99,7 @@ export default function ProfileCoverPage() {
           <Link href="/profile" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
             Back to profile
           </Link>
-          <Link href="/profile/inventory" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
+          <Link href="/profile#inventory" className="loot-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition-colors">
             View inventory
           </Link>
         </div>

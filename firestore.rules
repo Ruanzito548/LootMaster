@@ -105,7 +105,9 @@ service cloud.firestore {
     }
 
     match /withdraw-requests/{requestId} {
-      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      // Withdrawal requests must be created by the trusted server route after
+      // validating the user's balance and payout data.
+      allow create: if false;
       allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
       allow update, delete: if isAdmin();
     }

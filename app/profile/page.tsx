@@ -9,7 +9,7 @@ import { Package, UserRound, Wallet as WalletIcon } from "lucide-react";
 import { buildLevelReward, calculateLevelProgress, formatMoneyUsd } from "../../lib/level-rewards";
 import { defaultCoverURL, defaultPhotoURL } from "../../lib/profile-data";
 import HistoryClient from "./history/history-client";
-import InventoryPage from "./inventory/page";
+import InventoryPage from "./inventory-client";
 import { useProfileSession } from "./use-profile-session";
 
 type ProfileTab = "inventory" | "wallet" | "account";
