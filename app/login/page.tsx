@@ -8,6 +8,8 @@ import { FirebaseError } from "firebase/app";
 import {
   type User,
   onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
   signInWithCustomToken,
 } from "firebase/auth";
 
@@ -35,6 +37,8 @@ function LoginContent() {
   const [pendingProvider, setPendingProvider] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const referralProcessedRef = useRef(false);
   const linkToken = (params.get("token") ?? "").trim();
 
@@ -148,6 +152,39 @@ function LoginContent() {
     window.location.href = authUrl.toString();
   };
 
+  const loginWithEmail = async () => {
+    if (!auth || loading || loggedIn) return;
+    if (!email.trim() || !password) {
+      setErrorMessage("Enter your email and password.");
+      return;
+    }
+
+    setLoading(true);
+    setPendingProvider(false);
+    setErrorMessage(null);
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      router.replace("/");
+    } catch (error) {
+      setErrorMessage(error instanceof FirebaseError ? getFriendlyAuthError(error.code, "Could not sign in.") : "Could not sign in.");
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async () => {
+    if (!auth || !email.trim()) {
+      setErrorMessage("Enter your email to reset your password.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setErrorMessage("Password reset email sent.");
+    } catch (error) {
+      setErrorMessage(error instanceof FirebaseError ? getFriendlyAuthError(error.code, "Could not send password reset email.") : "Could not send password reset email.");
+    }
+  };
+
   return (
     <div className="loot-shell relative overflow-hidden text-white">
       <div className="relative z-10 mx-auto flex min-h-screen max-w-[1600px] items-center justify-center p-4 sm:p-6 lg:p-8">
@@ -228,6 +265,14 @@ function LoginContent() {
               </div>
 
               <div className="mt-8 space-y-4">
+                <div className="space-y-3">
+                  <input type="email" maxLength={50} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" autoComplete="email" className="w-full rounded-xl border border-white/15 bg-[#0b1119] px-4 py-3 text-sm text-white outline-none focus:border-[#d9b76a]" />
+                  <input type="password" maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" autoComplete="current-password" className="w-full rounded-xl border border-white/15 bg-[#0b1119] px-4 py-3 text-sm text-white outline-none focus:border-[#d9b76a]" />
+                  <button type="button" onClick={() => void loginWithEmail()} disabled={loading || loggedIn || !firebaseEnabled} className="w-full rounded-xl border border-[#d9b76a]/60 bg-[#d9b76a] px-4 py-3 text-sm font-black uppercase tracking-[0.08em] text-[#10151c] disabled:cursor-not-allowed disabled:opacity-60">
+                    {loading && !pendingProvider ? "SIGNING IN..." : "CONTINUE WITH EMAIL"}
+                  </button>
+                  <button type="button" onClick={() => void resetPassword()} disabled={loading || !firebaseEnabled} className="w-full text-xs font-bold uppercase tracking-[0.12em] text-[#d9b76a] hover:text-white disabled:opacity-60">Forgot password?</button>
+                </div>
                 <button
                   type="button"
                   onClick={loginWithDiscord}

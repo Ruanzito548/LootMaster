@@ -1,8 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { FirebaseError } from "firebase/app";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+
+import { getFriendlyAuthError } from "../../lib/auth-errors";
+import { auth, firebaseEnabled } from "../../lib/firebase";
+import { ensureUserProfileDoc } from "../../lib/profile-data";
 
 function normalizeRef(value: string | null | undefined) {
   return (value ?? "").trim().toUpperCase();
@@ -26,6 +32,10 @@ function CadastroContent() {
   const params = useSearchParams();
   const referralFromLink = useMemo(() => getReferralFromQuery(params), [params]);
   const linkToken = useMemo(() => (params.get("token") ?? "").trim(), [params]);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleDiscordSignup = () => {
     // Store referral in sessionStorage so the callback can pick it up
@@ -37,6 +47,30 @@ function CadastroContent() {
       authUrl.searchParams.set("linkToken", linkToken);
     }
     window.location.href = authUrl.toString();
+  };
+
+  const handleEmailSignup = async () => {
+    if (!auth || busy) return;
+    if (!email.trim() || password.length < 6) {
+      setErrorMessage("Use a valid email and a password with at least 6 characters.");
+      return;
+    }
+
+    setBusy(true);
+    setErrorMessage(null);
+    try {
+      const credentials = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      await ensureUserProfileDoc(credentials.user, {
+        username: credentials.user.email?.split("@")[0]?.slice(0, 15) || "Adventurer",
+        email: credentials.user.email?.trim().toLowerCase() || "",
+      });
+      if (referralFromLink) sessionStorage.setItem("signup_referral", referralFromLink);
+      window.location.href = "/";
+    } catch (error) {
+      setErrorMessage(error instanceof FirebaseError ? getFriendlyAuthError(error.code, "Could not create account.") : "Could not create account.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -80,6 +114,17 @@ function CadastroContent() {
               </svg>
               Create account with Discord
             </button>
+            <div className="border-t border-white/10 pt-5">
+              <p className="loot-muted mb-3 text-sm">Or create a temporary test account with email and password.</p>
+              <div className="grid gap-3">
+                <input type="email" maxLength={50} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" autoComplete="email" className="w-full rounded-xl border border-white/15 bg-[#0b1119] px-4 py-3 text-sm text-white outline-none focus:border-[#d9b76a]" />
+                <input type="password" maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password (minimum 6 characters)" autoComplete="new-password" className="w-full rounded-xl border border-white/15 bg-[#0b1119] px-4 py-3 text-sm text-white outline-none focus:border-[#d9b76a]" />
+                <button type="button" onClick={() => void handleEmailSignup()} disabled={busy || !firebaseEnabled} className="loot-secondary-button flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-60">
+                  {busy ? "Creating account..." : "Create account with email"}
+                </button>
+              </div>
+              {errorMessage ? <p className="mt-3 text-sm font-semibold text-rose-400">{errorMessage}</p> : null}
+            </div>
           </div>
         </section>
 
