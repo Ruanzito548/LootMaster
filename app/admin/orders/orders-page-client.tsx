@@ -26,7 +26,7 @@ async function fetchOrdersPage(input: {
 }) {
   const headers = await getAuthorizationHeader(input.user);
   if (!headers) {
-    throw new Error("Your session is not ready. Please wait a few seconds and try again.");
+    throw new Error("Sua sessão ainda não está pronta. Aguarde alguns segundos e tente novamente.");
   }
 
   const url = new URL("/api/admin/orders", window.location.origin);
@@ -49,7 +49,7 @@ async function fetchOrdersPage(input: {
   };
 
   if (!response.ok) {
-    throw new Error(payload.error ?? "Could not load orders.");
+    throw new Error(payload.error ?? "Não foi possível carregar as ordens.");
   }
 
   return {
@@ -88,7 +88,7 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
       setRows([]);
       setNextCursor(null);
       setLoading(false);
-      setErrorMessage("Sign in required to access orders.");
+      setErrorMessage("É necessário entrar para acessar as ordens.");
       return;
     }
 
@@ -100,7 +100,7 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
       setRows(page.items);
       setNextCursor(page.nextCursor);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not load orders.");
+      setErrorMessage(error instanceof Error ? error.message : "Não foi possível carregar as ordens.");
     } finally {
       setLoading(false);
     }
@@ -133,7 +133,7 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
             });
             setNextCursor(page.nextCursor);
           } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : "Could not load more orders.");
+            setErrorMessage(error instanceof Error ? error.message : "Não foi possível carregar mais ordens.");
           } finally {
             setLoadingMore(false);
           }
@@ -206,12 +206,12 @@ export default function OrdersPageClient({ mode }: { mode: OrdersStatusMode }) {
 
         <div ref={loadMoreRef} className="mt-4 flex justify-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-green-900 bg-black/25 px-4 py-2 text-[0.66rem] font-bold uppercase tracking-[0.14em] text-green-600">
-            {loadingMore ? "Carregando mais..." : nextCursor ? "Role para carregar mais" : "Sem mais ordens"}
+            {loadingMore ? "Carregando mais..." : nextCursor ? "Role para carregar mais" : "Não há mais ordens"}
           </span>
         </div>
 
         <div className="mt-5 grid gap-3 rounded-xl border border-white/8 bg-[#101722] p-3 text-[0.65rem] text-[#8e98a3] sm:grid-cols-3">
-          <div className="flex items-center gap-2"><Download className="size-4 text-[#d4af5a]" /><span><strong className="text-[#e6c46a]">Exportação</strong><br />Use Export visible rows na tabela</span></div>
+          <div className="flex items-center gap-2"><Download className="size-4 text-[#d4af5a]" /><span><strong className="text-[#e6c46a]">Exportação</strong><br />Use “Exportar linhas visíveis” na tabela</span></div>
           <button type="button" onClick={() => void reload()} className="flex items-center gap-2 text-left hover:text-[#e6c46a]"><RefreshCw className="size-4 text-[#d4af5a]" /><span><strong className="text-[#e6c46a]">Atualização</strong><br />Atualizar dados agora</span></button>
           <div className="flex items-center gap-2"><CalendarClock className="size-4 text-[#d4af5a]" /><span><strong className="text-[#e6c46a]">Fuso horário</strong><br />America/Sao_Paulo (UTC-3)</span></div>
         </div>

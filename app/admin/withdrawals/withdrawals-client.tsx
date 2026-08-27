@@ -37,7 +37,7 @@ async function fetchWithdrawalsPage(input: {
 }) {
   const headers = await getAuthorizationHeader(input.user);
   if (!headers) {
-    throw new Error("Your session is not ready. Please wait a few seconds and try again.");
+    throw new Error("Sua sessão ainda não está pronta. Aguarde alguns segundos e tente novamente.");
   }
 
   const url = new URL("/api/admin/withdrawals", window.location.origin);
@@ -60,7 +60,7 @@ async function fetchWithdrawalsPage(input: {
   };
 
   if (!response.ok) {
-    throw new Error(payload.error ?? "Could not load withdrawal requests.");
+    throw new Error(payload.error ?? "Não foi possível carregar as solicitações de saque.");
   }
 
   return {
@@ -257,7 +257,7 @@ export default function WithdrawalsClient({ mode }: Props) {
     <section className="space-y-5">
       {!isAuthenticated ? (
         <p className="rounded-xl border border-amber-900 bg-amber-950/20 px-5 py-4 text-sm font-medium text-amber-300">
-          Sign in with an admin account to review withdrawal requests.
+          Entre com uma conta de administrador para revisar as solicitações de saque.
         </p>
       ) : null}
 
@@ -273,28 +273,28 @@ export default function WithdrawalsClient({ mode }: Props) {
             disabled={rows.length === 0}
             className="inline-flex rounded-md border border-green-700 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-green-200 transition hover:bg-green-950/40 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Download planilha (CSV)
+            Baixar planilha (CSV)
           </button>
         </div>
       ) : null}
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
         {loading ? (
-          <p className="px-5 py-4 text-sm text-green-600">Loading withdrawal requests...</p>
+          <p className="px-5 py-4 text-sm text-green-600">Carregando solicitações de saque...</p>
         ) : rows.length === 0 ? (
           <p className="px-5 py-4 text-sm text-green-600">{sectionEmptyText}</p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
-                <th className="px-4 py-3">Request</th>
-                <th className="px-4 py-3">User</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Method</th>
-                <th className="px-4 py-3">Destination</th>
+                <th className="px-4 py-3">Solicitação</th>
+                <th className="px-4 py-3">Usuário</th>
+                <th className="px-4 py-3">Valor</th>
+                <th className="px-4 py-3">Método</th>
+                <th className="px-4 py-3">Destino</th>
                 <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3">Actions</th>
+                <th className="px-4 py-3">Criado em</th>
+                <th className="px-4 py-3">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -306,7 +306,7 @@ export default function WithdrawalsClient({ mode }: Props) {
                   <tr key={row.requestId} className={`border-b border-green-950 ${index % 2 === 0 ? "" : "bg-green-950/20"}`}>
                     <td className="px-4 py-3 text-xs text-green-500">{row.requestId}</td>
                     <td className="px-4 py-3 text-xs text-green-400">
-                      <p>{row.email || "No email"}</p>
+                      <p>{row.email || "Sem e-mail"}</p>
                       <p className="text-green-700">{row.uid}</p>
                     </td>
                     <td className="px-4 py-3 font-semibold text-green-300">{row.amount.toFixed(2)} Loot</td>
@@ -315,7 +315,7 @@ export default function WithdrawalsClient({ mode }: Props) {
                     <td className="px-4 py-3 text-xs font-semibold uppercase text-green-400">{row.status.replace("_", " ")}</td>
                     <td className="px-4 py-3 text-xs text-green-500">
                       <p>{row.createdAtLabel}</p>
-                      {row.reviewedAtLabel !== "--" ? <p className="text-green-700">Reviewed: {row.reviewedAtLabel}</p> : null}
+                      {row.reviewedAtLabel !== "--" ? <p className="text-green-700">Revisado: {row.reviewedAtLabel}</p> : null}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">

@@ -35,12 +35,12 @@ function OrderSlaTimer({ created, deliveryMethod }: Pick<OrderRow, "created" | "
   }, []);
 
   if (!Number.isFinite(createdAt)) {
-    return <span className="text-xs text-slate-500">Unknown</span>;
+    return <span className="text-xs text-slate-500">Desconhecido</span>;
   }
 
   return (
     <span className={`font-data text-[0.65rem] font-bold ${isOverdue ? "text-red-300" : "text-amber-300"}`}>
-      {isOverdue ? "Overdue by" : "Due in"} {hours > 0 ? `${hours}h ` : ""}{String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+      {isOverdue ? "Atrasada há" : "Vence em"} {hours > 0 ? `${hours}h ` : ""}{String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
     </span>
   );
 }
@@ -79,12 +79,12 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [filters, setFilters] = useState({
     date: "",
-    status: "All",
+    status: "Todos",
     agent: "",
     nickname: "",
     email: "",
     game: "",
-    payment: "All",
+    payment: "Todos",
   });
 
   const rowsById = useMemo(() => {
@@ -94,12 +94,12 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
   }, [rows]);
 
   const statusOptions = useMemo(
-    () => ["All", ...Array.from(new Set(rows.map((row) => row.status).filter(Boolean))).sort()],
+    () => ["Todos", ...Array.from(new Set(rows.map((row) => row.status).filter(Boolean))).sort()],
     [rows],
   );
 
   const paymentOptions = useMemo(
-    () => ["All", ...Array.from(new Set(rows.map((row) => row.paymentMethod).filter(Boolean))).sort()],
+    () => ["Todos", ...Array.from(new Set(rows.map((row) => row.paymentMethod).filter(Boolean))).sort()],
     [rows],
   );
 
@@ -108,7 +108,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
       const matchesDate = filters.date
         ? row.created.toLowerCase().includes(filters.date.trim().toLowerCase())
         : true;
-      const matchesStatus = filters.status === "All" ? true : row.status === filters.status;
+      const matchesStatus = filters.status === "Todos" ? true : row.status === filters.status;
       const matchesNickname = filters.nickname
         ? row.nickname.toLowerCase().includes(filters.nickname.trim().toLowerCase())
         : true;
@@ -121,7 +121,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
       const matchesGame = filters.game
         ? `${row.gameTitle} ${row.categoryTitle}`.toLowerCase().includes(filters.game.trim().toLowerCase())
         : true;
-      const matchesPayment = filters.payment === "All" ? true : row.paymentMethod === filters.payment;
+      const matchesPayment = filters.payment === "Todos" ? true : row.paymentMethod === filters.payment;
 
       return (
         matchesDate &&
@@ -200,24 +200,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
   function exportVisibleRows() {
     const headers = [
       "ID",
-      "Date",
-      "Status",
-      "Agent",
-      "Nickname",
-      "Email",
-      "Game",
-      "Category",
-      "Gold",
-      "Server",
-      "Faction",
-      "Value",
-      "Payout",
-      "Gross Profit",
-      "Net Profit",
-      "Supplier",
-      "Supplier %",
-      "Delivery",
-      "Payment",
+          "Data", "Status", "Agente", "Nickname", "Email", "Jogo", "Categoria", "Gold", "Servidor", "Facção", "Valor", "Repasse", "Lucro Bruto", "Lucro Líquido", "Fornecedor", "Fornecedor %", "Entrega", "Pagamento",
     ];
 
     const csvRows = sortedRows.map((row) =>
@@ -262,7 +245,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
 
     const percent = Number(editingSupplierPercent);
     if (Number.isNaN(percent) || percent < 0 || percent > 100) {
-      setErrorMessage("Supplier percentage must be between 0 and 100.");
+      setErrorMessage("A porcentagem do fornecedor deve estar entre 0 e 100.");
       return;
     }
 
@@ -283,7 +266,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
       const data = (await response.json()) as { ok?: boolean; error?: string };
 
       if (!response.ok || !data.ok) {
-        setErrorMessage(data.error ?? "Could not update supplier.");
+        setErrorMessage(data.error ?? "Não foi possível atualizar o fornecedor.");
         return;
       }
 
@@ -294,7 +277,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
         router.refresh();
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not update supplier.");
+      setErrorMessage(error instanceof Error ? error.message : "Não foi possível atualizar o fornecedor.");
     } finally {
       setSavingOrderId(null);
     }
@@ -308,16 +291,16 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/8 bg-[#101722] px-4 py-3">
         <div className="flex flex-wrap items-center gap-2 text-xs text-[#8e98a3]">
-          <span>{sortedRows.length} visible</span>
+          <span>{sortedRows.length} visíveis</span>
           <span>•</span>
-          <span>{rows.length} total</span>
+          <span>{rows.length} no total</span>
         </div>
         <button
           type="button"
           onClick={exportVisibleRows}
           className="rounded-lg border border-[#d4af5a]/35 bg-[#17140d] px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#e6c46a] transition hover:bg-[#2a2110]"
         >
-          Export visible rows
+          Exportar linhas visíveis
         </button>
       </div>
 
@@ -325,25 +308,25 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
       <table className="min-w-[1180px] w-full table-fixed text-left text-xs">
         <thead>
           <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("created")} className="inline-flex items-center gap-1">Date <span>{sortBy === "created" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("created")} className="inline-flex items-center gap-1">Data <span>{sortBy === "created" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("status")} className="inline-flex items-center gap-1">Status <span>{sortBy === "status" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("agent")} className="inline-flex items-center gap-1">Agent <span>{sortBy === "agent" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("agent")} className="inline-flex items-center gap-1">Agente <span>{sortBy === "agent" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("nickname")} className="inline-flex items-center gap-1">Nickname <span>{sortBy === "nickname" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("email")} className="inline-flex items-center gap-1">Email <span>{sortBy === "email" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("game")} className="inline-flex items-center gap-1">Game <span>{sortBy === "game" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("email")} className="inline-flex items-center gap-1">E-mail <span>{sortBy === "email" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("game")} className="inline-flex items-center gap-1">Jogo <span>{sortBy === "game" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("gold")} className="inline-flex items-center gap-1">Gold <span>{sortBy === "gold" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("server")} className="inline-flex items-center gap-1">Server <span>{sortBy === "server" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("value")} className="inline-flex items-center gap-1">Value <span>{sortBy === "value" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("payout")} className="inline-flex items-center gap-1">Payout <span>{sortBy === "payout" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("profit")} className="inline-flex items-center gap-1">Profit <span>{sortBy === "profit" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("supplier")} className="inline-flex items-center gap-1">Supplier % <span>{sortBy === "supplier" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("payment")} className="inline-flex items-center gap-1">Payment <span>{sortBy === "payment" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            {showSlaTimer ? <th className="px-2 py-2">SLA</th> : null}
-            <th className="px-2 py-2">Applicants</th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("server")} className="inline-flex items-center gap-1">Servidor <span>{sortBy === "server" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("value")} className="inline-flex items-center gap-1">Valor <span>{sortBy === "value" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("payout")} className="inline-flex items-center gap-1">Repasse <span>{sortBy === "payout" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("profit")} className="inline-flex items-center gap-1">Lucro <span>{sortBy === "profit" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("supplier")} className="inline-flex items-center gap-1">Fornecedor % <span>{sortBy === "supplier" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("payment")} className="inline-flex items-center gap-1">Pagamento <span>{sortBy === "payment" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            {showSlaTimer ? <th className="px-2 py-2">Prazo</th> : null}
+            <th className="px-2 py-2">Candidatos</th>
           </tr>
           <tr className="border-b border-green-950 bg-green-950/10 text-[11px] text-green-400">
             <th className="px-2 py-2">
-              <input value={filters.date} onChange={(event) => updateFilter("date", event.target.value)} placeholder="Filter" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
+              <input value={filters.date} onChange={(event) => updateFilter("date", event.target.value)} placeholder="Filtrar" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
             </th>
             <th className="px-2 py-2">
               <select value={filters.status} onChange={(event) => updateFilter("status", event.target.value)} className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300">
@@ -351,16 +334,16 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
               </select>
             </th>
             <th className="px-2 py-2">
-              <input value={filters.agent} onChange={(event) => updateFilter("agent", event.target.value)} placeholder="Filter" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
+              <input value={filters.agent} onChange={(event) => updateFilter("agent", event.target.value)} placeholder="Filtrar" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
             </th>
             <th className="px-2 py-2">
-              <input value={filters.nickname} onChange={(event) => updateFilter("nickname", event.target.value)} placeholder="Filter" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
+              <input value={filters.nickname} onChange={(event) => updateFilter("nickname", event.target.value)} placeholder="Filtrar" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
             </th>
             <th className="px-2 py-2">
-              <input value={filters.email} onChange={(event) => updateFilter("email", event.target.value)} placeholder="Filter" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
+              <input value={filters.email} onChange={(event) => updateFilter("email", event.target.value)} placeholder="Filtrar" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
             </th>
             <th className="px-2 py-2">
-              <input value={filters.game} onChange={(event) => updateFilter("game", event.target.value)} placeholder="Filter" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
+              <input value={filters.game} onChange={(event) => updateFilter("game", event.target.value)} placeholder="Filtrar" className="w-full rounded border border-green-900 bg-black px-2 py-1 text-[11px] text-green-300" />
             </th>
             <th className="px-2 py-2" />
             <th className="px-2 py-2" />
@@ -400,7 +383,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
                         : "text-yellow-400"
                     }`}
                   >
-                    {row.status}
+                    {row.status === "Paid" ? "Pago" : row.status === "Completed" ? "Completo" : row.status === "Unpaid" ? "Não pago" : row.status}
                   </span>
                 </td>
                 <td className="break-words px-2 py-2 text-[11px] text-cyan-300">
@@ -442,7 +425,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
                         disabled={isSaving}
                         className="rounded border border-amber-700 bg-amber-950/30 px-2 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-950/50 disabled:opacity-50"
                       >
-                        {isSaving ? "Saving..." : "Save"}
+                        {isSaving ? "Salvando..." : "Salvar"}
                       </button>
                     </div>
                   ) : (
@@ -457,7 +440,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
                         }}
                         className="rounded border border-green-800 px-2 py-1 text-xs font-semibold text-green-300 hover:bg-green-950"
                       >
-                        Edit
+                        Editar
                       </button>
                     </div>
                   )}
@@ -473,7 +456,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
                     href={`/admin/orders/${row.id}`}
                     className="inline-flex rounded-md border border-green-800 px-2 py-1 text-[11px] font-semibold text-green-300 transition hover:bg-green-950"
                   >
-                    View applicants
+                    Ver candidatos
                   </Link>
                 </td>
               </tr>

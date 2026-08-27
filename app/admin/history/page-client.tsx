@@ -235,7 +235,7 @@ export function AdminHistoryClient() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search user, reference, item, action"
+                placeholder="Buscar usuário, referência, item ou ação"
                 className="w-full rounded-xl border border-green-900 bg-black/30 py-3 pl-10 pr-4 text-sm text-green-100 outline-none focus:border-green-700"
               />
             </label>
@@ -243,12 +243,12 @@ export function AdminHistoryClient() {
             <input
               value={userUid}
               onChange={(event) => setUserUid(event.target.value)}
-              placeholder="Filter by user UID or 5-digit ID"
+              placeholder="Filtrar por UID ou ID de 5 dígitos"
               className="rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-sm text-green-100 outline-none focus:border-green-700"
             />
 
             <select value={category} onChange={(event) => setCategory(event.target.value as "all" | ActivityCategory)} className="rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-sm text-green-100 outline-none focus:border-green-700">
-              <option value="all">All categories</option>
+              <option value="all">Todas as categorias</option>
               <option value="economy">Economy</option>
               <option value="marketplace">Marketplace</option>
               <option value="inventory">Inventory</option>
@@ -259,7 +259,7 @@ export function AdminHistoryClient() {
             </select>
 
             <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-sm text-green-100 outline-none focus:border-green-700">
-              <option value="all">All actions</option>
+              <option value="all">Todas as ações</option>
               {actionTypeOptions.filter((option) => option !== "all").map((option) => (
                 <option key={option} value={option}>
                   {option.replace(/_/g, " ").toUpperCase()}
@@ -268,16 +268,16 @@ export function AdminHistoryClient() {
             </select>
 
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "all" | ActivityStatus)} className="rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-sm text-green-100 outline-none focus:border-green-700">
-              <option value="all">All status</option>
-              <option value="completed">Completed</option>
-              <option value="consumed">Consumed</option>
-              <option value="admin_action">Admin Action</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="failed">Failed</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="system">System</option>
+              <option value="all">Todos os status</option>
+              <option value="completed">Concluído</option>
+              <option value="consumed">Consumido</option>
+              <option value="admin_action">Ação administrativa</option>
+              <option value="pending">Pendente</option>
+              <option value="approved">Aprovado</option>
+              <option value="rejected">Rejeitado</option>
+              <option value="failed">Falhou</option>
+              <option value="cancelled">Cancelado</option>
+              <option value="system">Sistema</option>
             </select>
 
             <button

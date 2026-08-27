@@ -28,7 +28,7 @@ export default function CreateTestOrderButton({ onCreated }: CreateTestOrderButt
       const data = (await response.json()) as { ok?: boolean; error?: string };
 
       if (!response.ok || !data.ok) {
-        setError(data.error ?? "Could not create test order.");
+        setError(data.error ?? "Não foi possível criar a ordem de teste.");
         return;
       }
 
@@ -38,7 +38,7 @@ export default function CreateTestOrderButton({ onCreated }: CreateTestOrderButt
         router.refresh();
       }
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Could not create test order.");
+      setError(requestError instanceof Error ? requestError.message : "Não foi possível criar a ordem de teste.");
     } finally {
       setLoadingCurrency(null);
     }
@@ -53,7 +53,7 @@ export default function CreateTestOrderButton({ onCreated }: CreateTestOrderButt
           disabled={loadingCurrency !== null}
           className="rounded-md border border-blue-700 bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wide text-blue-400 transition hover:bg-blue-950/30 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loadingCurrency === "usd" ? "Creating USD..." : "Create test USD"}
+          {loadingCurrency === "usd" ? "Criando USD..." : "Criar teste USD"}
         </button>
         <button
           type="button"
@@ -61,7 +61,7 @@ export default function CreateTestOrderButton({ onCreated }: CreateTestOrderButt
           disabled={loadingCurrency !== null}
           className="rounded-md border border-emerald-700 bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-400 transition hover:bg-emerald-950/30 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loadingCurrency === "eur" ? "Creating EUR..." : "Create test EUR"}
+          {loadingCurrency === "eur" ? "Criando EUR..." : "Criar teste EUR"}
         </button>
       </div>
       {error ? <p className="text-xs font-medium text-red-400">{error}</p> : null}
