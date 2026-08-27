@@ -51,9 +51,6 @@ export function Footer() {
 
         <div className="flex flex-col items-center justify-between gap-4 text-xs text-[color:var(--text-muted)] md:flex-row md:gap-0">
           <p>&copy; {currentYear} Loot Master. All rights reserved.</p>
-          <div className="flex gap-6">
-            <a href="#cookies" className="theme-footer-link">Cookies</a>
-          </div>
         </div>
       </div>
     </footer>
