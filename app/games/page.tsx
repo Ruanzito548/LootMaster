@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { games } from "../data/games";
 import { canAccessGame } from "@/lib/game-configuration";
@@ -56,7 +56,7 @@ export default async function GamesIndexPage() {
             const isDisabledForPublic = !config.byGame[game.id]?.enabled;
 
             return (
-              <Link key={game.id} href={`/games/${game.id}`} className="group block" aria-label={`Open ${game.shortTitle}`}>
+              <Link key={game.id} href={`/games/${game.id}/gold`} className="group block" aria-label={`Buy gold for ${game.shortTitle}`}>
                 <article className="group relative h-[28.5rem] overflow-hidden rounded-[1.5rem] border border-[#d4af6a]/80 bg-[#0a0f18] shadow-[0_20px_45px_rgba(0,0,0,0.48)] transition-all duration-300 hover:-translate-y-1 hover:border-[#f5d17a] hover:shadow-[0_24px_52px_rgba(212,175,106,0.18)]">
                   <div
                     className="absolute inset-0 scale-100 transition-transform duration-500 group-hover:scale-110"
@@ -107,7 +107,7 @@ export default async function GamesIndexPage() {
 
                       <span className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[0.8rem] border border-[#f1d787]/80 bg-[linear-gradient(180deg,#f6d98f_0%,#d7a74a_26%,#b6782d_58%,#f5d889_100%)] px-4 py-3 text-[0.65rem] font-black uppercase tracking-[0.22em] text-[#1e1205] shadow-[inset_0_1px_0_rgba(255,245,211,0.85),inset_0_-2px_0_rgba(120,75,14,0.45),0_10px_24px_rgba(183,120,45,0.34),0_0_18px_rgba(212,175,106,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,245,211,0.9),inset_0_-2px_0_rgba(120,75,14,0.45),0_12px_26px_rgba(183,120,45,0.42),0_0_22px_rgba(212,175,106,0.22)]">
                         <span className="inline-flex items-center gap-2">
-                          Enter hub
+                          Buy Gold
                           <ArrowRight className="h-3.5 w-3.5" />
                         </span>
                       </span>

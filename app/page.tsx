@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Gift, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, Gift, Trophy } from "lucide-react";
 
 import { defaultHotGameIds, games } from "./data/games";
 import { useProfileSession } from "./profile/use-profile-session";
@@ -95,8 +95,8 @@ export default function Home() {
               </div>
 
               <div className="flex flex-wrap gap-3 pt-2">
-                <Link href={activeGame ? `/games/${activeGame.id}` : "/games"} className="gm-button gm-button-primary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
-                  Enter {activeGame?.shortTitle ?? "Launcher"}
+                <Link href={activeGame ? `/games/${activeGame.id}/gold` : "/games"} className="gm-button gm-button-primary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
+                  Buy Gold {activeGame?.shortTitle ?? ""}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 <Link href="/rewards" className="gm-button gm-button-secondary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs uppercase tracking-[0.14em]">
@@ -185,7 +185,7 @@ export default function Home() {
 
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {visibleGames.map((game) => (
-                <Link key={game.id} href={`/games/${game.id}`} className="block" aria-label={`Open ${game.shortTitle}`}>
+                <Link key={game.id} href={`/games/${game.id}/gold`} className="block" aria-label={`Buy gold for ${game.shortTitle}`}>
                   <motion.article
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.28, ease: "easeOut" }}
@@ -227,7 +227,7 @@ export default function Home() {
 
                         <span className="group/btn mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[0.8rem] border border-[#f1d787]/80 bg-[linear-gradient(180deg,#f6d98f_0%,#d7a74a_26%,#b6782d_58%,#f5d889_100%)] px-4 py-3 text-[0.65rem] font-black uppercase tracking-[0.22em] text-[#1e1205] shadow-[inset_0_1px_0_rgba(255,245,211,0.85),inset_0_-2px_0_rgba(120,75,14,0.45),0_10px_24px_rgba(183,120,45,0.34),0_0_18px_rgba(212,175,106,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,245,211,0.9),inset_0_-2px_0_rgba(120,75,14,0.45),0_12px_26px_rgba(183,120,45,0.42),0_0_22px_rgba(212,175,106,0.22)]">
                           <span className="inline-flex items-center gap-2">
-                            Enter
+                            Buy Gold
                             <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/btn:translate-x-0.5" />
                           </span>
                         </span>
