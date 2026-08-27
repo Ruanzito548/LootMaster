@@ -33,7 +33,7 @@ type CheckoutBody = {
   faction?: unknown;
   deliveryMethod?: unknown;
   email?: unknown;
-  agentReferralCode?: string;
+  agentReferralCode?: unknown;
 };
 
 type ExchangeRatePayload = {
@@ -193,7 +193,7 @@ export async function POST(request: Request): Promise<Response> {
     faction: rawFaction,
     deliveryMethod: rawDeliveryMethod,
     email: rawEmail,
-    agentReferralCode,
+    agentReferralCode: rawAgentReferralCode,
   } = body;
 
   const gameId = typeof rawGameId === "string" ? rawGameId.trim() : "";
@@ -204,6 +204,7 @@ export async function POST(request: Request): Promise<Response> {
   const deliveryMethod = typeof rawDeliveryMethod === "string" ? rawDeliveryMethod.trim() : "";
   const nickname = typeof rawNickname === "string" ? rawNickname.trim() : "";
   const email = typeof rawEmail === "string" ? rawEmail.trim() : "";
+  const agentReferralCode = typeof rawAgentReferralCode === "string" ? rawAgentReferralCode.trim() : "";
   const game = getGameById(gameId);
   const category = getServiceCategoryById(categoryId);
   const knownServers = getServersByGameId(gameId);
@@ -244,10 +245,11 @@ export async function POST(request: Request): Promise<Response> {
   const textFields: Array<[string, unknown, number]> = [
     ["gameId", gameId, 80],
     ["categoryId", categoryId, 40],
-    ["nickname", nickname, 120],
-    ["email", email, 254],
+    ["nickname", nickname, 15],
+    ["email", email, 50],
     ["serverId", serverId, 80],
     ["faction", faction, 80],
+    ["agentReferralCode", agentReferralCode, 20],
   ];
   if (textFields.some(([, value, maxLength]) => typeof value !== "string" || value.trim().length > maxLength)) {
     return Response.json({ error: "One or more fields are invalid." }, { status: 422 });

@@ -530,6 +530,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
                 <input
                   id="nickname"
                   type="text"
+                  maxLength={15}
                   value={nickname}
                   disabled={!stepAmountDone}
                   onChange={(event) => setNickname(event.target.value)}
@@ -567,6 +568,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
                 <input
                   id="email"
                   type="email"
+                  maxLength={50}
                   value={email}
                   disabled={!stepAmountDone}
                   onChange={(event) => setEmail(event.target.value)}
@@ -584,6 +586,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
                 <input
                   id="agent-referral-code"
                   type="text"
+                  maxLength={20}
                   value={agentReferralCode}
                   disabled={!stepAmountDone}
                   onChange={(event) => setAgentReferralCode(normalizeReferralCode(event.target.value))}
