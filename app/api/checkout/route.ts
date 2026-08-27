@@ -18,6 +18,7 @@ import {
   sanitizeSiteFeeSettings,
 } from "@/lib/site-fee-settings";
 import { getUsdToCurrencyRate } from "@/lib/checkout-pricing";
+import { createMercadoPagoPixPayment } from "@/lib/mercadopago";
 
 type CheckoutBody = {
   gameId?: unknown;
@@ -534,6 +535,46 @@ export async function POST(request: Request): Promise<Response> {
     cashbackPercent: String(cashbackPercent),
     operationalReservePercent: String(operationalReservePercent),
   };
+
+  if (paymentMethod === "pix") {
+    const paymentId = `pix_${crypto.randomUUID().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+    const notificationUrl = `${appUrl}/api/webhook/mercadopago`;
+
+    try {
+      const pixPayment = await createMercadoPagoPixPayment({
+        amountCents: unitAmount,
+        email,
+        externalReference: paymentId,
+        metadata,
+        notificationUrl,
+      });
+
+      await getAdminDb().collection("order-checkouts").doc(paymentId).set({
+        orderId: paymentId,
+        paymentStatus: pixPayment.status,
+        orderStatus: "pending_payment",
+        amountTotalCents: unitAmount,
+        customerEmail: email,
+        ...metadata,
+        currency: "brl",
+        mercadoPagoPaymentId: pixPayment.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      return Response.json({
+        pix: {
+          paymentId: pixPayment.id,
+          orderId: paymentId,
+          qrCode: pixPayment.qrCode,
+          qrCodeBase64: pixPayment.qrCodeBase64,
+        },
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Mercado Pago PIX creation failed.";
+      return Response.json({ error: message }, { status: 503 });
+    }
+  }
 
   try {
     const session = await stripe.checkout.sessions.create({

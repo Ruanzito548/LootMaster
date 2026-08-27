@@ -68,7 +68,7 @@ async function resolveCurrentFinancialSettings() {
   }
 }
 
-async function resolveSessionSupplierPercent(session: Stripe.Checkout.Session): Promise<number> {
+export async function resolveSessionSupplierPercent(session: Stripe.Checkout.Session): Promise<number> {
   const meta = session.metadata ?? {};
   const parsedSupplier = Number(meta.supplierPercentage);
 
@@ -191,7 +191,7 @@ async function fundChestEconomyFromCashback(orderId: string, cashbackCents: numb
   });
 }
 
-async function persistPaidOrder(session: Stripe.Checkout.Session, supplierPercentage: number): Promise<void> {
+export async function persistPaidOrder(session: Stripe.Checkout.Session, supplierPercentage: number): Promise<void> {
   const meta = session.metadata ?? {};
   const adminDb = getAdminDb();
   const amountTotalCents = session.amount_total ?? 0;
@@ -345,7 +345,7 @@ async function resolveAgentUidByReferralCode(referralCodeRaw: string, customerUi
   return null;
 }
 
-async function maybeBindFirstPurchaseAgent(session: Stripe.Checkout.Session): Promise<void> {
+export async function maybeBindFirstPurchaseAgent(session: Stripe.Checkout.Session): Promise<void> {
   const adminDb = getAdminDb();
   const meta = session.metadata ?? {};
   const referralCode = normalizeAgentCode(meta.agentReferralCode);
@@ -441,7 +441,7 @@ async function resolveCustomerAgent(session: Stripe.Checkout.Session): Promise<R
   };
 }
 
-async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<void> {
+export async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<void> {
   const adminDb = getAdminDb();
   const meta = session.metadata ?? {};
   const totalCents = session.amount_total ?? 0;
@@ -529,7 +529,7 @@ async function processFeeTransfer(session: Stripe.Checkout.Session): Promise<voi
   });
 }
 
-async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Promise<void> {
+export async function applyPurchaseLevelRewards(session: Stripe.Checkout.Session): Promise<void> {
   const adminDb = getAdminDb();
   const meta = session.metadata ?? {};
   const customerEmail = (session.customer_email ?? "").trim().toLowerCase();

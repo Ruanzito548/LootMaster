@@ -285,14 +285,14 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
         }),
       });
 
-      const data = (await response.json()) as { url?: string; error?: string };
+      const data = (await response.json()) as { url?: string; pix?: { paymentId: string }; error?: string };
 
-      if (!response.ok || !data.url) {
+      if (!response.ok || (!data.url && !data.pix?.paymentId)) {
         setCheckoutError(data.error ?? "Could not start checkout. Try again.");
         return;
       }
 
-      window.location.href = data.url;
+      window.location.href = data.url ?? `/checkout/pix?payment_id=${encodeURIComponent(data.pix?.paymentId ?? "")}`;
     } catch {
       setCheckoutError("Network error. Check your connection and try again.");
     } finally {
