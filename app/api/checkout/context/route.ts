@@ -2,6 +2,7 @@ import {
   CHECKOUT_COUNTRY_CONFIG,
   DEFAULT_CHECKOUT_COUNTRY_CODE,
   resolveCheckoutCountryConfig,
+  resolveCheckoutCurrency,
   resolveCountryFromHeaders,
 } from "@/lib/checkout-localization";
 import {
@@ -48,12 +49,17 @@ async function resolveBrlBaseRates() {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  const requestedCurrency = url.searchParams.get("currency");
   const overrideCountryCode = url.searchParams.get("countryCode");
-  const detectedCountryCode = overrideCountryCode?.trim()
-    ? overrideCountryCode.trim().toUpperCase()
-    : resolveCountryFromHeaders(request.headers);
+  const detectedCountryCode = requestedCurrency?.trim()
+    ? resolveCheckoutCurrency(requestedCurrency).countryCode
+    : overrideCountryCode?.trim()
+      ? overrideCountryCode.trim().toUpperCase()
+      : resolveCountryFromHeaders(request.headers);
 
-  const countryConfig = resolveCheckoutCountryConfig(detectedCountryCode || DEFAULT_CHECKOUT_COUNTRY_CODE);
+  const countryConfig = requestedCurrency?.trim()
+    ? resolveCheckoutCurrency(requestedCurrency)
+    : resolveCheckoutCountryConfig(detectedCountryCode || DEFAULT_CHECKOUT_COUNTRY_CODE);
   const rates = await resolveBrlBaseRates();
 
   let cardGatewayFeePercent = buildDefaultSiteFeeSettings().cardGatewayFeePercent;

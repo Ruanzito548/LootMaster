@@ -14,7 +14,7 @@ export type CheckoutCountryConfig = {
   countryCode: string;
   countryName: string;
   locale: string;
-  currency: "BRL" | "USD" | "EUR" | "GBP";
+  currency: "BRL" | "USD" | "EUR";
   methods: CheckoutPaymentMethod[];
 };
 
@@ -85,7 +85,7 @@ export const CHECKOUT_COUNTRY_CONFIG: Record<string, CheckoutCountryConfig> = {
     countryCode: "GB",
     countryName: "United Kingdom",
     locale: "en-GB",
-    currency: "GBP",
+    currency: "EUR",
     methods: INTERNATIONAL_METHODS,
   },
   DE: {
@@ -120,6 +120,26 @@ export const CHECKOUT_COUNTRY_CONFIG: Record<string, CheckoutCountryConfig> = {
 
 export const DEFAULT_CHECKOUT_COUNTRY_CODE = "US";
 
+const EUROPEAN_COUNTRY_CODES = new Set([
+  "AD", "AL", "AT", "BA", "BE", "BG", "BY", "CH", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR",
+  "GB", "GR", "HR", "HU", "IE", "IS", "IT", "LI", "LT", "LU", "LV", "MC", "MD", "ME", "MK", "MT",
+  "NL", "NO", "PL", "PT", "RO", "RS", "SE", "SI", "SK", "SM", "UA", "VA",
+]);
+
+export const CHECKOUT_CURRENCY_COUNTRY_CODES = {
+  BRL: "BR",
+  EUR: "DE",
+  USD: "US",
+} as const;
+
+export type CheckoutCurrency = keyof typeof CHECKOUT_CURRENCY_COUNTRY_CODES;
+
+export function resolveCheckoutCurrency(currency: string | null | undefined): CheckoutCountryConfig {
+  const normalized = currency?.trim().toUpperCase() as CheckoutCurrency;
+  const countryCode = CHECKOUT_CURRENCY_COUNTRY_CODES[normalized] ?? CHECKOUT_CURRENCY_COUNTRY_CODES.USD;
+  return resolveCheckoutCountryConfig(countryCode);
+}
+
 export function normalizeCountryCode(input: string | null | undefined): string {
   if (!input) return DEFAULT_CHECKOUT_COUNTRY_CODE;
   return input.trim().toUpperCase();
@@ -127,7 +147,21 @@ export function normalizeCountryCode(input: string | null | undefined): string {
 
 export function resolveCheckoutCountryConfig(countryCode: string | null | undefined): CheckoutCountryConfig {
   const normalized = normalizeCountryCode(countryCode);
-  return CHECKOUT_COUNTRY_CONFIG[normalized] ?? {
+  if (CHECKOUT_COUNTRY_CONFIG[normalized]) {
+    return CHECKOUT_COUNTRY_CONFIG[normalized];
+  }
+
+  if (EUROPEAN_COUNTRY_CODES.has(normalized)) {
+    return {
+      countryCode: normalized,
+      countryName: normalized,
+      locale: `en-${normalized}`,
+      currency: "EUR",
+      methods: INTERNATIONAL_METHODS,
+    };
+  }
+
+  return {
     countryCode: normalized,
     countryName: normalized,
     locale: "en-US",

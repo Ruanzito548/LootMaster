@@ -12,6 +12,7 @@ import type { GameServer } from "../data/games";
 import { subscribeToGoldConfig } from "../../lib/gold-config";
 import { auth } from "../../lib/firebase";
 import { getUsdToCurrencyRate } from "../../lib/checkout-pricing";
+import type { CheckoutCurrency } from "../../lib/checkout-localization";
 
 type GoldPurchaseMenuProps = {
   gameId: string;
@@ -34,7 +35,7 @@ type CountryConfig = {
   countryCode: string;
   countryName: string;
   locale: string;
-  currency: "BRL" | "USD" | "EUR" | "GBP";
+  currency: CheckoutCurrency;
   methods: CheckoutPaymentMethod[];
 };
 
@@ -72,7 +73,6 @@ const FALLBACK_RATES: Record<string, number> = {
   BRL: 1,
   USD: 0.18,
   EUR: 0.16,
-  GBP: 0.14,
 };
 const DEFAULT_CARD_GATEWAY_FEE_PERCENT = 4;
 
@@ -105,7 +105,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [countryConfig, setCountryConfig] = useState<CountryConfig>(DEFAULT_COUNTRY_CONFIG);
-  const [supportedCountries, setSupportedCountries] = useState<CountryConfig[]>([DEFAULT_COUNTRY_CONFIG]);
+  const [supportedCurrencies, setSupportedCurrencies] = useState<CountryConfig[]>([DEFAULT_COUNTRY_CONFIG]);
   const [ratesByCurrency, setRatesByCurrency] = useState<Record<string, number>>(FALLBACK_RATES);
   const [cardGatewayFeePercent, setCardGatewayFeePercent] = useState(DEFAULT_CARD_GATEWAY_FEE_PERCENT);
   const [countryLoading, setCountryLoading] = useState(true);
@@ -175,7 +175,10 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
         }
 
         if (Array.isArray(data.supportedCountries) && data.supportedCountries.length > 0) {
-          setSupportedCountries(data.supportedCountries);
+          const currencies = data.supportedCountries.filter(
+            (country) => country.currency === "BRL" || country.currency === "EUR" || country.currency === "USD",
+          );
+          setSupportedCurrencies(Array.from(new Map(currencies.map((country) => [country.currency, country])).values()));
         }
 
         if (data.rates) {
@@ -183,7 +186,6 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
             BRL: Number.isFinite(data.rates.BRL) ? data.rates.BRL : 1,
             USD: Number.isFinite(data.rates.USD) ? data.rates.USD : FALLBACK_RATES.USD,
             EUR: Number.isFinite(data.rates.EUR) ? data.rates.EUR : FALLBACK_RATES.EUR,
-            GBP: Number.isFinite(data.rates.GBP) ? data.rates.GBP : FALLBACK_RATES.GBP,
           });
         }
 
@@ -298,12 +300,12 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
     }
   };
 
-  const onCountryChange = async (nextCountryCode: string) => {
+  const onCurrencyChange = async (nextCurrency: CheckoutCurrency) => {
     setCountryLoading(true);
     setCheckoutError(null);
 
     try {
-      const response = await fetch(`/api/checkout/context?countryCode=${nextCountryCode}`);
+      const response = await fetch(`/api/checkout/context?currency=${nextCurrency}`);
       const data = (await response.json()) as {
         countryConfig?: CountryConfig;
         rates?: Record<string, number>;
@@ -373,26 +375,28 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
-            <label htmlFor="country-select" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
-              Country
+            <label htmlFor="currency-select" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
+              Currency
             </label>
             <select
-              id="country-select"
-              value={countryConfig.countryCode}
+              id="currency-select"
+              value={countryConfig.currency}
               disabled={countryLoading}
-              onChange={(event) => void onCountryChange(event.target.value)}
+              onChange={(event) => void onCurrencyChange(event.target.value as CheckoutCurrency)}
               className="gm-select mt-2 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed"
             >
-              {supportedCountries.map((country) => (
-                <option key={country.countryCode} value={country.countryCode}>
-                  {country.countryName}
+              {supportedCurrencies.map((currency) => (
+                <option key={currency.currency} value={currency.currency}>
+                  {currency.currency}
                 </option>
               ))}
             </select>
             <p className="mt-2 text-xs text-[#88a8d1]">
-              {countryConfig.countryCode === "BR"
-                ? "Pagamentos em reais (BRL). Escolha Pix, Cartao ou Loot Coins."
-                : "Payments processed securely by Stripe or PayPal."}
+              {countryConfig.currency === "BRL"
+                ? "Pagamentos em reais. Escolha Pix, Cartao ou Loot Coins."
+                : countryConfig.currency === "EUR"
+                  ? "Payments in euros, processed securely by Stripe or PayPal."
+                  : "Payments in US dollars, processed securely by Stripe or PayPal."}
             </p>
             </div>
             <div>
@@ -612,8 +616,9 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
 
           <div className="mt-4 space-y-3 text-sm">
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
-              <span>Country</span>
-              <span className="font-semibold text-[#e7f5ff]">{countryConfig.countryName}</span>
+              <span>Currency</span>
+              <span>Currency</span>
+              <span className="font-semibold text-[#e7f5ff]">{selectedCurrency}</span>
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Currency</span>

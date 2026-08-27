@@ -27,7 +27,7 @@ type CheckoutBody = {
   country?: string;
   countryCode?: string;
   locale?: string;
-  currency?: "BRL" | "USD" | "EUR" | "GBP";
+  currency?: "BRL" | "USD" | "EUR";
   nickname?: unknown;
   serverId?: unknown;
   faction?: unknown;
