@@ -27,28 +27,7 @@ export type CraftRecipe = {
   xpGain: number;
 };
 
-export type MarketplaceListingStatus = "active" | "sold" | "cancelled";
-
-export type MarketplaceListing = {
-  id: string;
-  sellerUid: string;
-  sellerName: string;
-  item: InventoryItem;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  fee: number;
-  sellerReceives: number;
-  rarity: InventoryItem["rarity"];
-  status: MarketplaceListingStatus;
-  createdAtMs: number;
-  soldAtMs?: number;
-  buyerUid?: string;
-};
-
 export const INVENTORY_BASE_SLOTS = 20;
-export const MARKETPLACE_FEE_RATE = 0.05;
-export const MARKETPLACE_MIN_PRICE = 25;
 
 const XP_BASE = 120;
 const XP_STEP = 38;
@@ -662,10 +641,3 @@ export function getCraftRecipe(recipeId: string): CraftRecipe | null {
   return CRAFT_RECIPES.find((recipe) => recipe.id === recipeId) ?? null;
 }
 
-export function calculateMarketplaceFee(price: number): number {
-  return Math.max(0, Math.round(Math.max(0, price) * MARKETPLACE_FEE_RATE));
-}
-
-export function calculateMarketplaceReceive(price: number): number {
-  return Math.max(0, Math.round(Math.max(0, price) - calculateMarketplaceFee(price)));
-}

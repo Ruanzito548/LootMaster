@@ -148,7 +148,7 @@ export default async function GamePage(props: PageProps<"/games/[gameId]">) {
                   <div className="rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(10,11,14,0.54),rgba(10,11,14,0.84))] px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-[2px]">
                     <div className="flex items-center justify-between gap-2">
                       <div>
-                        <p className="text-[0.56rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-muted)]">Marketplace category</p>
+                        <p className="text-[0.56rem] font-bold uppercase tracking-[0.15em] text-[color:var(--text-muted)]">Service category</p>
                         <h2 className="mt-1 text-xl font-black text-[color:var(--text-main)]">{category.title}</h2>
                       </div>
                       {categoryDisabledForPublic ? (

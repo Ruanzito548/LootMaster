@@ -11,7 +11,7 @@ import { RouteScrollReset } from "./components/route-scroll-reset";
 
 export const metadata: Metadata = {
   title: "Loot Master",
-  description: "World of Warcraft gold marketplace flow",
+  description: "World of Warcraft gold and gaming services",
   icons: {
     icon: "/faviicon.png",
   },

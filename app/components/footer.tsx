@@ -25,7 +25,7 @@ export function Footer() {
               <span className="font-throne text-2xl">Loot Master</span>
             </Link>
             <p className="text-sm leading-7 text-[color:var(--text-muted)]">
-              Your premium game marketplace for gold, accounts and progression services with immersive theme-based navigation.
+              Premium gaming services for gold, accounts and progression with immersive theme-based navigation.
             </p>
           </div>
 

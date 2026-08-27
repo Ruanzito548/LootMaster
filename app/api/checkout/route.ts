@@ -52,8 +52,7 @@ function computePricingBreakdown(
   chargedTotalCents: number;
 } {
   const safePrice = Math.max(0, price);
-  const normalizedDeliveryMethod = deliveryMethod.trim().toLowerCase();
-  const deliveryAdjustment = normalizedDeliveryMethod === "auction house" ? safePrice * 0.02 : 0;
+  const deliveryAdjustment = 0;
   const paymentAdjustment =
     paymentMethod === "card"
       ? safePrice * (cardGatewayFeePercent / 100)

@@ -11,7 +11,7 @@ import { useProfileSession } from "@/app/profile/use-profile-session";
 import { getLootOddsForPreview } from "@/lib/chest-loot";
 import { CHEST_DEFINITIONS, CHEST_IDS, getChestImagePath, type ChestId } from "@/lib/chests";
 import { type InventoryItem } from "@/lib/profile-data";
-import { CRAFT_RECIPES, MARKETPLACE_MIN_PRICE, calculateMarketplaceFee, calculateMarketplaceReceive } from "@/lib/rpg-system";
+import { CRAFT_RECIPES } from "@/lib/rpg-system";
 
 type OpenChestApiResponse = {
   ok: true;
@@ -176,21 +176,6 @@ function getChestIdByInventoryItem(item: InventoryItem): ChestId | null {
   return null;
 }
 
-function toMarketValue(item: InventoryItem): number {
-  const base: Record<string, number> = {
-    poor: 30,
-    common: 85,
-    uncommon: 160,
-    rare: 420,
-    epic: 950,
-    legendary: 1800,
-    mythic: 2800,
-    heirloom: 2400,
-  };
-
-  return (base[item.rarity] ?? 60) * Math.max(1, item.quantity);
-}
-
 function isChestItem(item: InventoryItem): boolean {
   return item.category.toLowerCase() === "chest" || item.id.startsWith("chest-");
 }
@@ -234,15 +219,11 @@ export default function InventoryPage() {
   const [hoveredItem, setHoveredItem] = useState<InventoryItem | null>(null);
   const [chestMenu, setChestMenu] = useState<ChestMenuState | null>(null);
 
-  const [showMarketModal, setShowMarketModal] = useState(false);
   const [showRewardsModal, setShowRewardsModal] = useState(false);
   const [showCraftMenu, setShowCraftMenu] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [openCraftCategory, setOpenCraftCategory] = useState<RecipeCategory | null>("gift-cards");
 
-  const [listingPrice, setListingPrice] = useState(1000);
-  const [listingQuantity, setListingQuantity] = useState(1);
-  const [marketBusy, setMarketBusy] = useState(false);
   const [redeemBusy, setRedeemBusy] = useState(false);
   const [redeemItem, setRedeemItem] = useState<InventoryItem | null>(null);
   const [redeemEmail, setRedeemEmail] = useState("");
@@ -282,7 +263,6 @@ export default function InventoryPage() {
   const slotLimit = 20;
   const usedSlots = inventory.length;
 
-  const selectedMarketItem = chestMenu?.item ?? null;
   const giftCardRecipes = useMemo(
     () => craftRecipes.filter((recipe) => recipe.id.startsWith("craft-gift-card-")).sort((a, b) => a.title.localeCompare(b.title)),
     [craftRecipes],
@@ -446,57 +426,6 @@ export default function InventoryPage() {
       setRequestError("Network error while opening chest.");
     } finally {
       setRequestDone(true);
-    }
-  };
-
-  const createListing = async () => {
-    if (!selectedMarketItem || !user || marketBusy) {
-      return;
-    }
-
-    if (listingPrice < MARKETPLACE_MIN_PRICE) {
-      pushToast("error", `Minimum price is ${MARKETPLACE_MIN_PRICE}.`);
-      return;
-    }
-
-    if (listingQuantity < 1 || listingQuantity > selectedMarketItem.quantity) {
-      pushToast("error", "Invalid quantity.");
-      return;
-    }
-
-    setMarketBusy(true);
-
-    try {
-      const token = await user.getIdToken();
-
-      const response = await fetch("/api/marketplace/listings", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          itemId: selectedMarketItem.id,
-          quantity: listingQuantity,
-          unitPrice: listingPrice,
-        }),
-      });
-
-      const payload = (await response.json()) as { error?: string };
-
-      if (!response.ok) {
-        pushToast("error", payload.error ?? "Could not create listing.");
-        return;
-      }
-
-      pushToast("success", `${selectedMarketItem.name} listed on marketplace.`);
-      setShowMarketModal(false);
-      setChestMenu(null);
-      reload();
-    } catch {
-      pushToast("error", "Could not list item right now.");
-    } finally {
-      setMarketBusy(false);
     }
   };
 
@@ -735,9 +664,6 @@ export default function InventoryPage() {
           <Link href="/rewards" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]">
             Rewards Hub
           </Link>
-          <Link href="/marketplace" className="loot-secondary-button inline-flex rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.14em]">
-            Auction House
-          </Link>
         </div>
       </main>
 
@@ -755,7 +681,6 @@ export default function InventoryPage() {
             <div className="mt-3 grid grid-cols-2 gap-2 text-[0.63rem] font-bold uppercase tracking-[0.12em]">
               <span className="rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[#dceaff]">Rarity: {RARITY_LABEL[hoveredItem.rarity] ?? hoveredItem.rarity}</span>
               <span className="rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[#dceaff]">Qty: {hoveredItem.quantity}</span>
-              <span className="rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[#dceaff]">Market: {toMarketValue(hoveredItem)}</span>
               <span className="rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[#dceaff]">Drop: {DROP_HINT_BY_RARITY[hoveredItem.rarity] ?? "Unknown"}</span>
             </div>
           </motion.aside>
@@ -788,65 +713,9 @@ export default function InventoryPage() {
                 <button
                   type="button"
                   className="loot-secondary-button w-full rounded-2xl px-4 py-3 text-sm font-black uppercase tracking-[0.12em]"
-                  onClick={() => {
-                    setShowMarketModal(true);
-                    setListingPrice(Math.max(MARKETPLACE_MIN_PRICE, Math.round(toMarketValue(chestMenu.item) / Math.max(1, chestMenu.item.quantity))));
-                    setListingQuantity(1);
-                  }}
-                >
-                  Sell on Marketplace
-                </button>
-                <button
-                  type="button"
-                  className="loot-secondary-button w-full rounded-2xl px-4 py-3 text-sm font-black uppercase tracking-[0.12em]"
                   onClick={() => setShowRewardsModal(true)}
                 >
                   View Possible Rewards
-                </button>
-              </div>
-            </motion.section>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showMarketModal && selectedMarketItem ? (
-          <motion.div className="fixed inset-0 z-[170]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <button type="button" className="absolute inset-0 bg-black/70 backdrop-blur-[6px]" onClick={() => setShowMarketModal(false)} aria-label="Close marketplace modal" />
-
-            <motion.section className="absolute left-1/2 top-1/2 w-[min(94vw,520px)] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/18 bg-[linear-gradient(180deg,rgba(11,22,38,0.98),rgba(7,13,22,0.98))] p-6" initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}>
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#9ad6ff]">Create Listing</p>
-              <h3 className="mt-2 text-2xl font-black text-white">{selectedMarketItem.name}</h3>
-
-              <div className="mt-4 rounded-2xl border border-white/12 bg-black/28 p-3 text-sm text-[#c2d7ee]">
-                <p>Rarity: {RARITY_LABEL[selectedMarketItem.rarity] ?? selectedMarketItem.rarity}</p>
-                <p className="mt-1">Available: {selectedMarketItem.quantity}</p>
-                <p className="mt-1">Suggested: {Math.round(toMarketValue(selectedMarketItem) / Math.max(1, selectedMarketItem.quantity))}</p>
-              </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <label className="grid gap-1 text-sm font-semibold text-[#cde1f8]">
-                  Quantity
-                  <input type="number" min={1} max={selectedMarketItem.quantity} value={listingQuantity} onChange={(event) => setListingQuantity(Math.max(1, Math.min(selectedMarketItem.quantity, Number(event.target.value) || 1)))} className="rounded-xl border border-white/16 bg-black/35 px-3 py-2 outline-none" />
-                </label>
-                <label className="grid gap-1 text-sm font-semibold text-[#cde1f8]">
-                  Price per unit
-                  <input type="number" min={MARKETPLACE_MIN_PRICE} value={listingPrice} onChange={(event) => setListingPrice(Math.max(MARKETPLACE_MIN_PRICE, Number(event.target.value) || MARKETPLACE_MIN_PRICE))} className="rounded-xl border border-white/16 bg-black/35 px-3 py-2 outline-none" />
-                </label>
-              </div>
-
-              <div className="mt-4 rounded-2xl border border-white/12 bg-black/25 p-3 text-sm text-[#d4e6fa]">
-                <p>Gross: {(listingPrice * listingQuantity).toLocaleString("en-US")}</p>
-                <p>Marketplace Fee (5%): {calculateMarketplaceFee(listingPrice * listingQuantity).toLocaleString("en-US")}</p>
-                <p>You Receive: {calculateMarketplaceReceive(listingPrice * listingQuantity).toLocaleString("en-US")}</p>
-              </div>
-
-              <div className="mt-5 flex gap-2">
-                <button type="button" onClick={createListing} disabled={marketBusy} className="loot-gold-button flex-1 rounded-full px-4 py-3 text-xs font-black uppercase tracking-[0.14em] disabled:cursor-not-allowed">
-                  {marketBusy ? "Listing..." : "Confirm Listing"}
-                </button>
-                <button type="button" onClick={() => setShowMarketModal(false)} className="loot-secondary-button rounded-full px-4 py-3 text-xs font-black uppercase tracking-[0.14em]">
-                  Cancel
                 </button>
               </div>
             </motion.section>
