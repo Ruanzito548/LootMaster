@@ -42,6 +42,7 @@ export default function ProfileWithdrawPage() {
   const [amountInput, setAmountInput] = useState("");
   const [method, setMethod] = useState<WithdrawMethod | "">("");
   const [destination, setDestination] = useState("");
+  const [confirmHighValue, setConfirmHighValue] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -50,7 +51,8 @@ export default function ProfileWithdrawPage() {
   const hasValidAmount = Number.isFinite(amount) && amount > 0;
   const canPickMethod = hasValidAmount;
   const canFillDestination = canPickMethod && method !== "";
-  const canSubmit = canFillDestination && destination.trim() !== "" && !submitting;
+  const requiresHighValueConfirmation = Number.isFinite(amount) && amount > 100;
+  const canSubmit = canFillDestination && destination.trim() !== "" && (!requiresHighValueConfirmation || confirmHighValue) && !submitting;
 
   const activeStep = !amountInput ? 1 : method === "" ? 2 : 3;
 
@@ -88,6 +90,7 @@ export default function ProfileWithdrawPage() {
           amount,
           payoutMethod: method,
           payoutReference: destination.trim(),
+          confirmHighValue,
         }),
       });
 
@@ -102,6 +105,7 @@ export default function ProfileWithdrawPage() {
       setAmountInput("");
       setMethod("");
       setDestination("");
+      setConfirmHighValue(false);
       reload();
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "Could not create withdrawal request.");
@@ -250,7 +254,10 @@ export default function ProfileWithdrawPage() {
                         min="0"
                         step="0.01"
                         value={amountInput}
-                        onChange={(event) => setAmountInput(event.target.value)}
+                        onChange={(event) => {
+                          setAmountInput(event.target.value);
+                          setConfirmHighValue(false);
+                        }}
                         placeholder="100"
                         className="w-full rounded-xl border border-[#d4af5a]/35 bg-[#0b1320] px-12 py-3 text-right text-2xl font-black text-[#f2f7ff] outline-none transition focus:border-[#f2c879] focus:ring-2 focus:ring-[#f2c879]/15"
                       />
@@ -328,6 +335,18 @@ export default function ProfileWithdrawPage() {
                     </p>
                   </div>
                 </div>
+
+                {requiresHighValueConfirmation ? (
+                  <label className="flex items-start gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-[#f5dfaa]">
+                    <input
+                      type="checkbox"
+                      checked={confirmHighValue}
+                      onChange={(event) => setConfirmHighValue(event.target.checked)}
+                      className="mt-1 h-4 w-4 accent-[#d4af5a]"
+                    />
+                    <span>I confirm that I want to withdraw more than 100 Loot Coins and that the payout destination is correct.</span>
+                  </label>
+                ) : null}
               </div>
 
               <aside className="rounded-[1.5rem] border border-[#d4af5a]/20 bg-[#0d1821]/80 p-4">

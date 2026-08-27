@@ -8,10 +8,30 @@ type RequestBody = {
   amount?: number;
   payoutMethod?: string;
   payoutReference?: string;
+  confirmHighValue?: boolean;
 };
 
+const HIGH_VALUE_CONFIRMATION_THRESHOLD = 100;
+
 function isEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isPixKey(value: string): boolean {
+  if (value.length > 254) {
+    return false;
+  }
+
+  const digitsOnly = value.replace(/[.\-()\s]/g, "");
+  const isCpf = /^\d{11}$/.test(digitsOnly);
+  const isPhone = /^\+?\d{10,13}$/.test(value.replace(/[\s()-]/g, ""));
+  const isRandomKey = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+  return isCpf || isPhone || isRandomKey || isEmail(value);
+}
+
+function isUsdtWalletAddress(value: string): boolean {
+  return /^(T[1-9A-HJ-NP-Za-km-z]{33}|0x[a-fA-F0-9]{40})$/.test(value);
 }
 
 function toFiniteNumber(value: unknown): number {
@@ -37,12 +57,13 @@ export async function POST(request: Request): Promise<Response> {
   const amount = toFiniteNumber(body.amount);
   const payoutMethod = (body.payoutMethod ?? "").trim();
   const payoutReference = (body.payoutReference ?? "").trim();
+  const confirmHighValue = body.confirmHighValue === true;
 
   if (!Number.isFinite(amount) || amount <= 0) {
     return Response.json({ error: "Invalid withdraw amount." }, { status: 422 });
   }
 
-  if (!payoutMethod) {
+  if (!(payoutMethod === "pix" || payoutMethod === "paypal" || payoutMethod === "crypto-usdt")) {
     return Response.json({ error: "Payout method is required." }, { status: 422 });
   }
 
@@ -54,15 +75,19 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "PayPal method requires a valid email address." }, { status: 422 });
   }
 
-  if (payoutMethod === "pix" && payoutReference.length < 6) {
+  if (payoutMethod === "pix" && !isPixKey(payoutReference)) {
     return Response.json({ error: "PIX method requires a valid PIX key." }, { status: 422 });
   }
 
-  if (payoutMethod === "crypto-usdt" && payoutReference.length < 12) {
+  if (payoutMethod === "crypto-usdt" && !isUsdtWalletAddress(payoutReference)) {
     return Response.json({ error: "USDT method requires a valid wallet address." }, { status: 422 });
   }
 
   const normalizedAmount = Math.round(amount * 100) / 100;
+
+  if (normalizedAmount > HIGH_VALUE_CONFIRMATION_THRESHOLD && !confirmHighValue) {
+    return Response.json({ error: "Additional confirmation is required for withdrawals above 100 Loot Coins." }, { status: 428 });
+  }
 
   try {
     const adminDb = getAdminDb();
