@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
 import { buildUserAdminSearchIndex } from "@/lib/admin-search";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { calculateLevelProgress } from "@/lib/level-rewards";
@@ -27,24 +28,6 @@ function getAvatarUrl(user: DiscordUser): string {
   return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
 }
 
-function getLinkTokenFromState(rawState: string | null): string | null {
-  if (!rawState) {
-    return null;
-  }
-
-  try {
-    const payload = JSON.parse(Buffer.from(rawState, "base64url").toString("utf8")) as {
-      linkToken?: unknown;
-    };
-
-    return typeof payload.linkToken === "string" && payload.linkToken.trim()
-      ? payload.linkToken.trim()
-      : null;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * GET /api/auth/discord/callback
  * Handles the Discord OAuth2 redirect, exchanges the code for a Firebase custom token,
@@ -54,12 +37,28 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");
   const error = searchParams.get("error");
-  const linkToken = getLinkTokenFromState(searchParams.get("state"));
+  const state = searchParams.get("state")?.trim() ?? "";
 
-  if (error || !code) {
+  if (error || !code || !state) {
     return NextResponse.redirect(
       new URL(`/login?error=${encodeURIComponent(error ?? "access_denied")}`, request.url),
     );
+  }
+
+  const stateRef = getAdminDb().collection("oauth-states").doc(state);
+  let linkToken: string | null = null;
+  try {
+    await getAdminDb().runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(stateRef);
+      const data = snapshot.data() as Record<string, unknown> | undefined;
+      if (!snapshot.exists || typeof data?.expiresAt !== "number" || data.expiresAt < Date.now()) {
+        throw new Error("Invalid OAuth state.");
+      }
+      linkToken = typeof data.linkToken === "string" && data.linkToken.trim() ? data.linkToken.trim() : null;
+      transaction.delete(stateRef);
+    });
+  } catch {
+    return NextResponse.redirect(new URL("/login?error=invalid_oauth_state", request.url));
   }
 
   const clientId = process.env.DISCORD_CLIENT_ID;
@@ -198,8 +197,14 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Pass token to client via redirect
+  const handoffCode = crypto.randomUUID();
+  await getAdminDb().collection("auth-handoffs").doc(handoffCode).set({
+    customToken,
+    createdAt: FieldValue.serverTimestamp(),
+    expiresAt: Date.now() + 60_000,
+  });
+
   const redirectUrl = new URL("/login", request.url);
-  redirectUrl.searchParams.set("customToken", customToken);
+  redirectUrl.searchParams.set("code", handoffCode);
   return NextResponse.redirect(redirectUrl);
 }

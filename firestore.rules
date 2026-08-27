@@ -24,8 +24,16 @@ service cloud.firestore {
     // USERS
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) || isAdmin();
-      allow update, delete: if isOwner(userId) || isAdmin();
+      allow create: if isAdmin()
+        || (isOwner(userId)
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.keys()
+            .hasOnly(["uid", "username", "email", "photoURL", "coverURL", "authProvider", "assignedAgentId", "createdAt", "updatedAt"]));
+      allow update: if isAdmin()
+        || (isOwner(userId)
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(["username", "photoURL", "coverURL", "updatedAt"]));
+      allow delete: if isAdmin();
     }
 
     // NEWS

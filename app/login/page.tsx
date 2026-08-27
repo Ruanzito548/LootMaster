@@ -18,6 +18,7 @@ const DISCORD_ERROR_LABELS: Record<string, string> = {
   access_denied: "Discord access denied. Please try again.",
   token_exchange_failed: "Could not exchange Discord token. Please try again.",
   user_fetch_failed: "Could not fetch your Discord profile. Please try again.",
+  invalid_oauth_state: "Your sign-in session expired. Please try again.",
   server_misconfigured: "Discord OAuth is not configured on this server.",
 };
 
@@ -84,7 +85,7 @@ function LoginContent() {
   }, []);
 
   useEffect(() => {
-    const customToken = params.get("customToken");
+    const exchangeCode = params.get("code");
     const error = params.get("error");
 
     if (error) {
@@ -94,13 +95,25 @@ function LoginContent() {
       return;
     }
 
-    if (!customToken || !auth) {
+    if (!exchangeCode || !auth) {
       return;
     }
 
+    const firebaseAuth = auth;
     setLoading(true);
     setPendingProvider(true);
-    signInWithCustomToken(auth, customToken)
+    fetch("/api/auth/session/exchange", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: exchangeCode }),
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Could not complete sign-in.");
+        const result = (await response.json()) as { customToken?: string };
+        if (!result.customToken) throw new Error("Could not complete sign-in.");
+        return signInWithCustomToken(firebaseAuth, result.customToken);
+      })
       .then(() => router.replace("/"))
       .catch((err: unknown) => {
         if (err instanceof FirebaseError) {

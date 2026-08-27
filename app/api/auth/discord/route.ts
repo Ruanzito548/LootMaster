@@ -1,12 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-function encodeState(linkToken: string | null) {
-  if (!linkToken) {
-    return null;
-  }
-
-  return Buffer.from(JSON.stringify({ linkToken }), "utf8").toString("base64url");
-}
+import { getAdminDb } from "@/lib/firebase-admin";
 
 /**
  * GET /api/auth/discord
@@ -15,7 +8,7 @@ function encodeState(linkToken: string | null) {
 export async function GET(request: NextRequest) {
   const clientId = process.env.DISCORD_CLIENT_ID;
   const redirectUri = process.env.DISCORD_REDIRECT_URI;
-  const linkToken = request.nextUrl.searchParams.get("linkToken")?.trim() ?? null;
+  const linkToken = request.nextUrl.searchParams.get("linkToken")?.trim() || null;
 
   if (!clientId || !redirectUri) {
     return NextResponse.json(
@@ -31,10 +24,13 @@ export async function GET(request: NextRequest) {
     scope: "identify email",
   });
 
-  const encodedState = encodeState(linkToken);
-  if (encodedState) {
-    params.set("state", encodedState);
-  }
+  const state = crypto.randomUUID();
+  await getAdminDb().collection("oauth-states").doc(state).set({
+    linkToken,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 5 * 60_000,
+  });
+  params.set("state", state);
 
   return NextResponse.redirect(
     `https://discord.com/api/oauth2/authorize?${params.toString()}`,

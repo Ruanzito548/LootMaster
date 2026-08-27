@@ -26,7 +26,6 @@ type CheckoutBody = {
   countryCode?: string;
   locale?: string;
   currency?: "BRL" | "USD" | "EUR" | "GBP";
-  fxRateFromBrl?: number;
   nickname: string;
   serverId: string;
   server: string;
@@ -35,7 +34,10 @@ type CheckoutBody = {
   email: string;
   agentReferralCode?: string;
   hasServerOptions: boolean;
-  customerUid?: string;
+};
+
+type ExchangeRatePayload = {
+  rates?: Record<string, unknown>;
 };
 
 function computePricingBreakdown(
@@ -135,6 +137,24 @@ async function resolveSiteFeeSettings() {
   return sanitizeSiteFeeSettings(snapshot.data());
 }
 
+async function resolveServerRates(): Promise<Record<string, number>> {
+  try {
+    const response = await fetch("https://open.er-api.com/v6/latest/BRL", {
+      next: { revalidate: 300 },
+    });
+    const payload = (await response.json()) as ExchangeRatePayload;
+    const rates = payload.rates ?? {};
+    return {
+      BRL: 1,
+      USD: typeof rates.USD === "number" && Number.isFinite(rates.USD) ? rates.USD : 0.18,
+      EUR: typeof rates.EUR === "number" && Number.isFinite(rates.EUR) ? rates.EUR : 0.16,
+      GBP: typeof rates.GBP === "number" && Number.isFinite(rates.GBP) ? rates.GBP : 0.14,
+    };
+  } catch {
+    return { BRL: 1, USD: 0.18, EUR: 0.16, GBP: 0.14 };
+  }
+}
+
 export async function POST(request: Request): Promise<Response> {
   let body: CheckoutBody;
 
@@ -156,7 +176,6 @@ export async function POST(request: Request): Promise<Response> {
     countryCode,
     locale,
     currency,
-    fxRateFromBrl,
     nickname,
     serverId,
     server,
@@ -165,7 +184,6 @@ export async function POST(request: Request): Promise<Response> {
     email,
     agentReferralCode,
     hasServerOptions,
-    customerUid,
   } = body;
 
   const requiresFaction = hasServerOptions && gameId !== "retail";
@@ -184,6 +202,19 @@ export async function POST(request: Request): Promise<Response> {
       { error: `Missing required fields: ${missingFields.join(", ")}.` },
       { status: 422 },
     );
+  }
+
+  const textFields: Array<[string, unknown, number]> = [
+    ["gameId", gameId, 80],
+    ["gameTitle", gameTitle, 120],
+    ["categoryTitle", categoryTitle, 120],
+    ["nickname", nickname, 120],
+    ["email", email, 254],
+    ["server", server, 120],
+    ["faction", faction, 80],
+  ];
+  if (textFields.some(([, value, maxLength]) => typeof value !== "string" || value.trim().length > maxLength)) {
+    return Response.json({ error: "One or more fields are invalid." }, { status: 422 });
   }
 
   if (hasServerOptions && (!serverId?.trim() || !server?.trim())) {
@@ -263,16 +294,8 @@ export async function POST(request: Request): Promise<Response> {
 
   const normalizedCurrency = (currency ?? "USD").toLowerCase();
   const selectedCurrency = ["brl", "usd", "eur", "gbp"].includes(normalizedCurrency) ? normalizedCurrency : "usd";
-  const parsedFxRate = typeof fxRateFromBrl === "number" && Number.isFinite(fxRateFromBrl) && fxRateFromBrl > 0
-    ? fxRateFromBrl
-    : 1;
-
-  const usdToCurrencyRate = getUsdToCurrencyRate(selectedCurrency.toUpperCase(), {
-    USD: 1,
-    BRL: selectedCurrency === "brl" ? parsedFxRate : 1,
-    EUR: selectedCurrency === "eur" ? parsedFxRate : 1,
-    GBP: selectedCurrency === "gbp" ? parsedFxRate : 1,
-  });
+  const serverRates = await resolveServerRates();
+  const usdToCurrencyRate = getUsdToCurrencyRate(selectedCurrency.toUpperCase(), serverRates);
 
   const unitAmount = Math.max(1, Math.round(unitAmountBrl * usdToCurrencyRate));
 
@@ -397,7 +420,15 @@ export async function POST(request: Request): Promise<Response> {
 
   const stripe = new Stripe(secretKey);
 
-  const origin = request.headers.get("origin") ?? "http://localhost:3000";
+  const configuredOrigins = new Set(
+    [process.env.APP_URL, "http://localhost:3000"]
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value)),
+  );
+  const requestOrigin = request.headers.get("origin")?.trim();
+  const origin = requestOrigin && configuredOrigins.has(requestOrigin)
+    ? requestOrigin
+    : process.env.APP_URL?.trim() ?? "http://localhost:3000";
 
   const paymentMethodTypes = (
     paymentMethod === "pix" ? ["pix"] : paymentMethod === "paypal" ? ["paypal"] : ["card"]
@@ -435,7 +466,7 @@ export async function POST(request: Request): Promise<Response> {
     currency: selectedCurrency.toUpperCase(),
     clientIp,
     hasServerOptions: String(hasServerOptions),
-    customerUid: customerUid?.trim() ?? "",
+    customerUid: "",
     agentReferralCode: normalizeAgentCode(agentReferralCode),
     supplierPercentage: String(supplierDefaultPercent),
     // Keep legacy field for compatibility with historical flows.

@@ -460,18 +460,18 @@ export async function ensureUserProfileDoc(user: User, input?: EnsureProfileInpu
     ? mapUserProfile(user.uid, existingRaw)
     : createDefaultProfile(user);
 
-  const mergedProfile: UserProfile = {
-    ...baseProfile,
-    username: input?.username?.trim() || baseProfile.username,
-    email: input?.email?.trim().toLowerCase() || baseProfile.email,
-    photoURL: user.photoURL || baseProfile.photoURL,
-  };
+  const username = input?.username?.trim() || baseProfile.username;
+  const email = input?.email?.trim().toLowerCase() || baseProfile.email;
+  const photoURL = user.photoURL || baseProfile.photoURL;
 
   await setDoc(
     ref,
     {
-      ...mergedProfile,
       uid: user.uid,
+      username,
+      email,
+      photoURL,
+      coverURL: baseProfile.coverURL,
       authProvider: "google",
       assignedAgentId: input?.assignedAgentId ?? existingRaw?.assignedAgentId ?? null,
       updatedAt: serverTimestamp(),
@@ -480,7 +480,16 @@ export async function ensureUserProfileDoc(user: User, input?: EnsureProfileInpu
     { merge: true },
   );
 
-  return mergedProfile;
+  return mapUserProfile(user.uid, {
+    ...(existingRaw ?? {}),
+    uid: user.uid,
+    username,
+    email,
+    photoURL,
+    coverURL: baseProfile.coverURL,
+    authProvider: "google",
+    assignedAgentId: input?.assignedAgentId ?? existingRaw?.assignedAgentId ?? null,
+  });
 }
 
 export async function fetchUserProfile(uid: string): Promise<UserProfile | null> {
