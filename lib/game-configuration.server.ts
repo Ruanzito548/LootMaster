@@ -17,12 +17,12 @@ export async function getLiveGameConfiguration(): Promise<GameConfiguration> {
     const snapshot = await adminDb.collection(GAME_CONFIGURATION_COLLECTION).doc(GAME_CONFIGURATION_DOC_ID).get();
 
     if (!snapshot.exists) {
-      return buildDefaultGameConfiguration();
+      return { ...buildDefaultGameConfiguration(), byGame: {} };
     }
 
     return sanitizeGameConfiguration(snapshot.data());
   } catch {
-    return buildDefaultGameConfiguration();
+    return { ...buildDefaultGameConfiguration(), byGame: {} };
   }
 }
 

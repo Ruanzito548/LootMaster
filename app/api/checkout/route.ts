@@ -122,7 +122,7 @@ async function resolvePricingConfig(gameId: string, serverId: string, faction: s
     }
   }
 
-  return defaultGoldConfigEntry;
+  return null;
 }
 
 async function isCheckoutCategoryEnabled(gameId: string, categoryId: string): Promise<boolean> {
@@ -133,7 +133,7 @@ async function isCheckoutCategoryEnabled(gameId: string, categoryId: string): Pr
       .get();
 
     if (!snapshot.exists) {
-      return true;
+      return false;
     }
 
     return canAccessCategory(sanitizeGameConfiguration(snapshot.data()), gameId, categoryId, false);
@@ -164,10 +164,9 @@ async function resolveServerRates(): Promise<Record<string, number>> {
       BRL: 1,
       USD: typeof rates.USD === "number" && Number.isFinite(rates.USD) ? rates.USD : 0.18,
       EUR: typeof rates.EUR === "number" && Number.isFinite(rates.EUR) ? rates.EUR : 0.16,
-      GBP: typeof rates.GBP === "number" && Number.isFinite(rates.GBP) ? rates.GBP : 0.14,
     };
   } catch {
-    return { BRL: 1, USD: 0.18, EUR: 0.16, GBP: 0.14 };
+    return { BRL: 1, USD: 0.18, EUR: 0.16 };
   }
 }
 
@@ -292,6 +291,9 @@ export async function POST(request: Request): Promise<Response> {
       serverId?.trim() ?? "",
       requiresFaction ? faction?.trim() ?? "" : "",
     );
+    if (!authoritativeConfig) {
+      return Response.json({ error: "Price configuration is unavailable." }, { status: 503 });
+    }
   } catch {
     return Response.json({ error: "Could not load price configuration." }, { status: 503 });
   }
@@ -324,7 +326,11 @@ export async function POST(request: Request): Promise<Response> {
   const unitAmountBrl = pricingBreakdown.chargedTotalCents;
 
   const normalizedCurrency = (currency ?? "USD").toLowerCase();
-  const selectedCurrency = ["brl", "usd", "eur", "gbp"].includes(normalizedCurrency) ? normalizedCurrency : "usd";
+  if (!(normalizedCurrency === "brl" || normalizedCurrency === "usd" || normalizedCurrency === "eur")) {
+    return Response.json({ error: "Invalid currency." }, { status: 422 });
+  }
+
+  const selectedCurrency = normalizedCurrency;
   const serverRates = await resolveServerRates();
   const usdToCurrencyRate = getUsdToCurrencyRate(selectedCurrency.toUpperCase(), serverRates);
 

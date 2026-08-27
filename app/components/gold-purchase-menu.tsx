@@ -617,11 +617,6 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
           <div className="mt-4 space-y-3 text-sm">
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
               <span>Currency</span>
-              <span>Currency</span>
-              <span className="font-semibold text-[#e7f5ff]">{selectedCurrency}</span>
-            </div>
-            <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
-              <span>Currency</span>
               <span className="font-semibold text-[#e7f5ff]">{selectedCurrency}</span>
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">

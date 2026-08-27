@@ -20,7 +20,6 @@ const FALLBACK_RATES: Record<string, number> = {
   BRL: 1,
   USD: 0.18,
   EUR: 0.16,
-  GBP: 0.14,
 };
 
 async function resolveBrlBaseRates() {
@@ -40,7 +39,6 @@ async function resolveBrlBaseRates() {
       BRL: 1,
       USD: typeof rates.USD === "number" && Number.isFinite(rates.USD) ? rates.USD : FALLBACK_RATES.USD,
       EUR: typeof rates.EUR === "number" && Number.isFinite(rates.EUR) ? rates.EUR : FALLBACK_RATES.EUR,
-      GBP: typeof rates.GBP === "number" && Number.isFinite(rates.GBP) ? rates.GBP : FALLBACK_RATES.GBP,
     };
   } catch {
     return FALLBACK_RATES;
