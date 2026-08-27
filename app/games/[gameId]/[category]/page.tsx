@@ -63,7 +63,7 @@ export default async function ServerSelectionPage(props: PageProps<"/games/[game
 
         {category === "gold" ? (
           <section>
-            <GoldPurchaseMenu gameId={game.id} gameTitle={game.title} categoryTitle={selectedCategory.title} servers={servers} />
+            <GoldPurchaseMenu gameId={game.id} categoryId={selectedCategory.id} gameTitle={game.title} servers={servers} />
           </section>
         ) : category === "accounts" ? (
           <section className="gm-panel rounded-[1.5rem] p-4 sm:p-6">

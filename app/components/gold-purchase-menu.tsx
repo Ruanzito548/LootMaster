@@ -15,8 +15,8 @@ import { getUsdToCurrencyRate } from "../../lib/checkout-pricing";
 
 type GoldPurchaseMenuProps = {
   gameId: string;
+  categoryId: string;
   gameTitle: string;
-  categoryTitle: string;
   servers: GameServer[];
 };
 
@@ -92,7 +92,7 @@ function normalizeReferralCode(value: string | null | undefined) {
   return (value ?? "").trim().toUpperCase();
 }
 
-export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: GoldPurchaseMenuProps) {
+export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: GoldPurchaseMenuProps) {
   const searchParams = useSearchParams();
   const [fullGoldConfig, setFullGoldConfig] = useState(emptyGoldConfig);
   const [selectedServerId, setSelectedServerId] = useState("");
@@ -104,7 +104,6 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [customerUid, setCustomerUid] = useState("");
   const [countryConfig, setCountryConfig] = useState<CountryConfig>(DEFAULT_COUNTRY_CONFIG);
   const [supportedCountries, setSupportedCountries] = useState<CountryConfig[]>([DEFAULT_COUNTRY_CONFIG]);
   const [ratesByCurrency, setRatesByCurrency] = useState<Record<string, number>>(FALLBACK_RATES);
@@ -131,8 +130,6 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
     }
 
     return onAuthStateChanged(auth, (user) => {
-      setCustomerUid(user?.uid ?? "");
-
       if (user?.email) {
         setEmail((current) => (current.trim() ? current : user.email ?? current));
       }
@@ -270,10 +267,8 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
         },
         body: JSON.stringify({
           gameId,
-          gameTitle,
-          categoryTitle,
+          categoryId,
           goldAmount: safeGoldAmount,
-          pricePerThousand: goldConfig.pricePerThousand,
           paymentMethod,
           country: countryConfig.countryName,
           countryCode: countryConfig.countryCode,
@@ -281,16 +276,12 @@ export function GoldPurchaseMenu({ gameId, gameTitle, categoryTitle, servers }: 
           currency: selectedCurrency,
           paymentGateway: selectedPayment?.gateway ?? "stripe",
           paymentProvider: selectedPayment?.provider ?? "Stripe",
-          fxRateFromBrl: usdToCurrencyRate,
           nickname: nickname.trim(),
           serverId: selectedServerId,
-          server: selectedServer?.name ?? "",
           faction: selectedFaction,
           deliveryMethod,
           email: email.trim(),
           agentReferralCode: agentReferralCode.trim(),
-          hasServerOptions,
-          customerUid,
         }),
       });
 

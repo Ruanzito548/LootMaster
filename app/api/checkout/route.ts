@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 
 import { defaultGoldConfigEntry } from "@/app/data/gold-config";
-import { getServersByGameId } from "@/app/data/games";
+import { getGameById, getServiceCategoryById, getServersByGameId } from "@/app/data/games";
 import { normalizeAgentCode } from "@/lib/agency";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { resolveDiscordChannelId } from "@/lib/discord-channel-resolver";
@@ -14,26 +14,22 @@ import {
 import { getUsdToCurrencyRate } from "@/lib/checkout-pricing";
 
 type CheckoutBody = {
-  gameId: string;
-  gameTitle: string;
-  categoryTitle: string;
+  gameId?: unknown;
+  categoryId?: unknown;
   goldAmount: number;
-  pricePerThousand: number;
-  paymentMethod: "pix" | "card" | "paypal" | "balance";
+  paymentMethod?: unknown;
   paymentGateway?: "stripe" | "paypal" | "internal";
   paymentProvider?: "Pix" | "Stripe" | "PayPal" | "Loot Coins";
   country?: string;
   countryCode?: string;
   locale?: string;
   currency?: "BRL" | "USD" | "EUR" | "GBP";
-  nickname: string;
-  serverId: string;
-  server: string;
-  faction: string;
-  deliveryMethod: string;
-  email: string;
+  nickname?: unknown;
+  serverId?: unknown;
+  faction?: unknown;
+  deliveryMethod?: unknown;
+  email?: unknown;
   agentReferralCode?: string;
-  hasServerOptions: boolean;
 };
 
 type ExchangeRatePayload = {
@@ -164,36 +160,48 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const {
-    gameId,
-    gameTitle,
-    categoryTitle,
+    gameId: rawGameId,
+    categoryId: rawCategoryId,
     goldAmount,
-    paymentMethod,
+    paymentMethod: rawPaymentMethod,
     paymentGateway,
     paymentProvider,
     country,
     countryCode,
     locale,
     currency,
-    nickname,
-    serverId,
-    server,
-    faction,
-    deliveryMethod,
-    email,
+    nickname: rawNickname,
+    serverId: rawServerId,
+    faction: rawFaction,
+    deliveryMethod: rawDeliveryMethod,
+    email: rawEmail,
     agentReferralCode,
-    hasServerOptions,
   } = body;
 
+  const gameId = typeof rawGameId === "string" ? rawGameId.trim() : "";
+  const categoryId = typeof rawCategoryId === "string" ? rawCategoryId.trim() : "";
+  const paymentMethod = typeof rawPaymentMethod === "string" ? rawPaymentMethod.trim() : "";
+  const serverId = typeof rawServerId === "string" ? rawServerId.trim() : "";
+  const faction = typeof rawFaction === "string" ? rawFaction.trim() : "";
+  const deliveryMethod = typeof rawDeliveryMethod === "string" ? rawDeliveryMethod.trim() : "";
+  const nickname = typeof rawNickname === "string" ? rawNickname.trim() : "";
+  const email = typeof rawEmail === "string" ? rawEmail.trim() : "";
+  const game = getGameById(gameId);
+  const category = getServiceCategoryById(categoryId);
+  const knownServers = getServersByGameId(gameId);
+  const hasServerOptions = knownServers.length > 0;
   const requiresFaction = hasServerOptions && gameId !== "retail";
+  const resolvedServer = knownServers.find((entry) => entry.id === serverId);
+  const gameTitle = game?.title ?? "";
+  const categoryTitle = category?.title ?? "";
+  const server = resolvedServer?.name ?? "";
   const missingFields = [
-    !gameId?.trim() ? "gameId" : null,
-    !gameTitle?.trim() ? "gameTitle" : null,
-    !categoryTitle?.trim() ? "categoryTitle" : null,
+    !gameId ? "gameId" : null,
+    !categoryId ? "categoryId" : null,
     !Number.isFinite(goldAmount) || goldAmount <= 0 ? "goldAmount" : null,
-    !email?.trim() ? "email" : null,
-    !nickname?.trim() ? "nickname" : null,
-    !deliveryMethod?.trim() ? "deliveryMethod" : null,
+    !email ? "email" : null,
+    !nickname ? "nickname" : null,
+    !deliveryMethod ? "deliveryMethod" : null,
   ].filter(Boolean);
 
   if (missingFields.length > 0) {
@@ -203,20 +211,27 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  if (!game || !category || category.id !== "gold") {
+    return Response.json({ error: "Invalid game or service category." }, { status: 422 });
+  }
+
+  if (!(paymentMethod === "pix" || paymentMethod === "card" || paymentMethod === "paypal" || paymentMethod === "balance")) {
+    return Response.json({ error: "Invalid payment method." }, { status: 422 });
+  }
+
   const textFields: Array<[string, unknown, number]> = [
     ["gameId", gameId, 80],
-    ["gameTitle", gameTitle, 120],
-    ["categoryTitle", categoryTitle, 120],
+    ["categoryId", categoryId, 40],
     ["nickname", nickname, 120],
     ["email", email, 254],
-    ["server", server, 120],
+    ["serverId", serverId, 80],
     ["faction", faction, 80],
   ];
   if (textFields.some(([, value, maxLength]) => typeof value !== "string" || value.trim().length > maxLength)) {
     return Response.json({ error: "One or more fields are invalid." }, { status: 422 });
   }
 
-  if (hasServerOptions && (!serverId?.trim() || !server?.trim())) {
+  if (hasServerOptions && (!serverId || !resolvedServer)) {
     return Response.json({ error: "Server is required for this game." }, { status: 422 });
   }
 
@@ -224,8 +239,7 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "Faction is required for this game." }, { status: 422 });
   }
 
-  const knownServers = getServersByGameId(gameId);
-  const requiresServer = knownServers.length > 0;
+  const requiresServer = hasServerOptions;
 
   const allowedDeliveryMethods = new Set(["Face to face", "Mailbox"]);
   if (!allowedDeliveryMethods.has(deliveryMethod.trim())) {
@@ -234,11 +248,6 @@ export async function POST(request: Request): Promise<Response> {
 
   if (requiresServer && !serverId?.trim()) {
     return Response.json({ error: "Server is required for this game." }, { status: 422 });
-  }
-
-  const resolvedServer = knownServers.find((entry) => entry.id === serverId);
-  if (requiresServer && !resolvedServer) {
-    return Response.json({ error: "Invalid server for selected game." }, { status: 422 });
   }
 
   if (requiresServer && requiresFaction) {
