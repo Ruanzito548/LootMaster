@@ -526,6 +526,7 @@ export async function POST(request: Request): Promise<Response> {
     countryCode: countryCode ?? "",
     locale: locale ?? "",
     currency: selectedCurrency.toUpperCase(),
+    email,
     clientIp,
     hasServerOptions: String(hasServerOptions),
     customerUid: "",

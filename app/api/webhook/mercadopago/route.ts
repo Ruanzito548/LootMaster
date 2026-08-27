@@ -55,14 +55,24 @@ export async function POST(request: Request): Promise<Response> {
   const orderData = order.data() as Record<string, unknown> | undefined;
   if (!orderData) return Response.json({ error: "Order not found." }, { status: 404 });
 
+  const orderEmail = String(orderData.customerEmail ?? orderData.email ?? payment.payer?.email ?? "").trim().toLowerCase();
+  const orderMetadata = Object.fromEntries(
+    Object.entries(orderData)
+      .filter(([, value]) => typeof value === "string" || typeof value === "number" || typeof value === "boolean")
+      .map(([key, value]) => [key, String(value)]),
+  );
+  if (orderEmail) {
+    orderMetadata.email = orderEmail;
+  }
+
   const session = {
     id: orderId,
     amount_total: payment.transaction_amount * 100,
     currency: "brl",
-    customer_email: payment.payer?.email ?? String(orderData.customerEmail ?? ""),
+    customer_email: orderEmail,
     payment_status: "paid",
     created: payment.date_created ? Math.floor(new Date(payment.date_created).getTime() / 1000) : Math.floor(Date.now() / 1000),
-    metadata: Object.fromEntries(Object.entries(orderData).filter(([key, value]) => key !== "metadata" && typeof value === "string" || typeof value === "number" || typeof value === "boolean").map(([key, value]) => [key, String(value)])),
+    metadata: orderMetadata,
   } as unknown as Stripe.Checkout.Session;
 
   try {
