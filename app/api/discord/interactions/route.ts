@@ -106,7 +106,7 @@ function getSupplierApplySuccessMessage(result: {
   if (!result.configured) {
     return hasSiteAccount
       ? "Application submitted successfully. We found your site account. Automatic linking is temporarily unavailable, but an admin can still select you normally."
-      : "Application submitted successfully. We could not find a site account for this Discord user. Create your account to unlock payout credits when selected.";
+      : "Application submitted successfully. We could not find a site account for this Discord user. Sign in with Discord to unlock payout credits when selected.";
   }
 
   if (!result.linkRequired) {
@@ -161,17 +161,17 @@ function getFriendlyApplyError(error: unknown): string {
 function getOnboardingFallbackMessage(hasSiteAccount: boolean) {
   return hasSiteAccount
     ? "Application submitted successfully. We identified your site account. Automatic linking is temporarily unavailable, but the admin can continue with your selection."
-    : "Application submitted successfully. We could not find a site account for this Discord user. Create your account to ensure payout credit when selected.";
+    : "Application submitted successfully. We could not find a site account for this Discord user. Sign in with Discord to ensure payout credit when selected.";
 }
 
 function getFallbackSignupUrl(request: Request) {
   const appUrl = process.env.APP_URL?.trim();
   if (appUrl) {
-    return `${appUrl.replace(/\/$/, "")}/cadastro`;
+    return `${appUrl.replace(/\/$/, "")}/login`;
   }
 
   try {
-    return new URL("/cadastro", request.url).toString();
+    return new URL("/login", request.url).toString();
   } catch {
     return null;
   }
