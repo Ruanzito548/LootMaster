@@ -1,6 +1,18 @@
-import Link from "next/link";
+"use client";
 
-export default function CheckoutSuccessPage() {
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+
+function CheckoutSuccessContent() {
+  const searchParams = useSearchParams();
+  const deliveryMethod = searchParams.get("delivery_method");
+  const deliveryTime = deliveryMethod === "Mailbox"
+    ? "Your gold will be delivered by mail within up to 2 hours."
+    : deliveryMethod === "Face to face"
+      ? "Your gold will be delivered face to face within up to 30 minutes."
+      : "Your delivery time depends on the delivery method selected during checkout.";
+
   return (
     <div className="loot-shell">
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 py-32 text-center lg:px-8">
@@ -16,9 +28,7 @@ export default function CheckoutSuccessPage() {
             Check your email for the receipt.
           </p>
           <div className="mx-auto mt-6 max-w-md rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-left text-sm text-[color:var(--text-muted)]">
-            <p>Estimated delivery times:</p>
-            <p className="mt-1">Mailbox: up to 2 hours.</p>
-            <p>Face to face: up to 30 minutes.</p>
+            <p>{deliveryTime}</p>
           </div>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
@@ -38,4 +48,8 @@ export default function CheckoutSuccessPage() {
       </main>
     </div>
   );
+}
+
+export default function CheckoutSuccessPage() {
+  return <Suspense><CheckoutSuccessContent /></Suspense>;
 }

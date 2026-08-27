@@ -456,7 +456,9 @@ export async function POST(request: Request): Promise<Response> {
         console.error("[Loot Coins Checkout] Could not send Discord notification:", error);
       }
 
-      return Response.json({ url: `/checkout/success?session_id=${orderId}` });
+      return Response.json({
+        url: `/checkout/success?session_id=${encodeURIComponent(orderId)}&delivery_method=${encodeURIComponent(deliveryMethod)}`,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not complete Loot Coins payment.";
       const status = message.includes("Insufficient") ? 422 : message.includes("Firebase") ? 503 : 500;
@@ -622,7 +624,7 @@ export async function POST(request: Request): Promise<Response> {
           quantity: 1,
         },
       ],
-      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&delivery_method=${encodeURIComponent(deliveryMethod)}`,
       cancel_url: `${origin}/checkout/cancel`,
     });
 

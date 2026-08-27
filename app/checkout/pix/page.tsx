@@ -8,7 +8,7 @@ import { Suspense, useEffect, useState } from "react";
 function PixPaymentContent() {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("payment_id") ?? "";
-  const [payment, setPayment] = useState<{ status: string; externalReference: string; qrCode: string; qrCodeBase64: string } | null>(null);
+  const [payment, setPayment] = useState<{ status: string; externalReference: string; deliveryMethod: string; qrCode: string; qrCodeBase64: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ function PixPaymentContent() {
         if (!response.ok) return;
 
         if (data.status === "approved" && data.externalReference) {
-          window.location.replace(`/checkout/success?session_id=${encodeURIComponent(data.externalReference)}`);
+          window.location.replace(`/checkout/success?session_id=${encodeURIComponent(data.externalReference)}&delivery_method=${encodeURIComponent(payment.deliveryMethod)}`);
           return;
         }
 
