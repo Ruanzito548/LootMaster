@@ -161,6 +161,14 @@ async function sendSupplierIntroMessage(channelId: string, input: CreatePrivateS
       ],
     }),
   });
+
+  await discordRequest(`/channels/${channelId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({
+      content:
+        "Please send a video showing the gold delivery to Support@lootmaster.gg after completing this order.",
+    }),
+  });
 }
 
 async function discordRequest(path: string, init: RequestInit) {
