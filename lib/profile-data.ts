@@ -464,21 +464,26 @@ export async function ensureUserProfileDoc(user: User, input?: EnsureProfileInpu
   const email = input?.email?.trim().toLowerCase() || baseProfile.email;
   const photoURL = user.photoURL || baseProfile.photoURL;
 
-  await setDoc(
-    ref,
-    {
-      uid: user.uid,
-      username,
-      email,
-      photoURL,
-      coverURL: baseProfile.coverURL,
-      authProvider: "google",
-      assignedAgentId: input?.assignedAgentId ?? existingRaw?.assignedAgentId ?? null,
-      updatedAt: serverTimestamp(),
-      ...(snapshot.exists() ? {} : { createdAt: serverTimestamp() }),
-    },
-    { merge: true },
-  );
+  const profilePayload = snapshot.exists()
+    ? {
+        username,
+        photoURL,
+        coverURL: baseProfile.coverURL,
+        updatedAt: serverTimestamp(),
+      }
+    : {
+        uid: user.uid,
+        username,
+        email,
+        photoURL,
+        coverURL: baseProfile.coverURL,
+        authProvider: "google",
+        assignedAgentId: input?.assignedAgentId ?? null,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      };
+
+  await setDoc(ref, profilePayload, { merge: true });
 
   return mapUserProfile(user.uid, {
     ...(existingRaw ?? {}),
@@ -487,8 +492,7 @@ export async function ensureUserProfileDoc(user: User, input?: EnsureProfileInpu
     email,
     photoURL,
     coverURL: baseProfile.coverURL,
-    authProvider: "google",
-    assignedAgentId: input?.assignedAgentId ?? existingRaw?.assignedAgentId ?? null,
+    ...(existingRaw ? {} : { authProvider: "google", assignedAgentId: input?.assignedAgentId ?? null }),
   });
 }
 

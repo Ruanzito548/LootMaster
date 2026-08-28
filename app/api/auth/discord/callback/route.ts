@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     ? "https://lootmaster.gg/api/auth/discord/callback"
     : process.env.DISCORD_REDIRECT_URI?.trim() || "http://localhost:3000/api/auth/discord/callback";
 
-  if (!clientId || !clientSecret) {
+  if (!clientId || !/^\d{17,20}$/.test(clientId.trim()) || !clientSecret) {
     return NextResponse.redirect(new URL("/login?error=server_misconfigured", request.url));
   }
 

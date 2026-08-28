@@ -12,9 +12,9 @@ export async function GET(request: NextRequest) {
     : process.env.DISCORD_REDIRECT_URI?.trim() || "http://localhost:3000/api/auth/discord/callback";
   const linkToken = request.nextUrl.searchParams.get("linkToken")?.trim() || null;
 
-  if (!clientId) {
+  if (!clientId || !/^\d{17,20}$/.test(clientId.trim())) {
     return NextResponse.json(
-      { error: "Discord OAuth is not configured on this server." },
+      { error: "Discord OAuth is misconfigured: DISCORD_CLIENT_ID must be the numeric Application ID." },
       { status: 500 },
     );
   }
