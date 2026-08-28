@@ -255,7 +255,7 @@ export default async function AdminOrderApplicantsPage(
         partnerCommissionCents: partnerCommissionUsdCents,
         partnerCommissionPercent,
         netProfitCents: netProfitUsdCents,
-        profitMarginPercent: totalUsdCents > 0 ? (netProfitUsdCents / totalUsdCents) * 100 : 0,
+        profitMarginPercent: goldUsdCents > 0 ? (netProfitUsdCents / goldUsdCents) * 100 : 0,
         orderCreatedAtIso,
         dailyOrdersCount,
         weeklyOrdersCount,
