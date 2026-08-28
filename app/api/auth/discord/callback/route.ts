@@ -4,6 +4,7 @@ import { buildUserAdminSearchIndex } from "@/lib/admin-search";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { calculateLevelProgress } from "@/lib/level-rewards";
 import { consumeDiscordLinkTokenWithWalletBackend } from "@/lib/wallet-backend";
+import { hashRequestIp } from "@/lib/auth-antiabuse";
 
 type DiscordTokenResponse = {
   access_token: string;
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest) {
 
   const stateRef = getAdminDb().collection("oauth-states").doc(state);
   let linkToken: string | null = null;
+  let ipHash: string | null = null;
   try {
     await getAdminDb().runTransaction(async (transaction) => {
       const snapshot = await transaction.get(stateRef);
@@ -55,6 +57,7 @@ export async function GET(request: NextRequest) {
         throw new Error("Invalid OAuth state.");
       }
       linkToken = typeof data.linkToken === "string" && data.linkToken.trim() ? data.linkToken.trim() : null;
+      ipHash = typeof data.ipHash === "string" && data.ipHash ? data.ipHash : null;
       transaction.delete(stateRef);
     });
   } catch {
@@ -117,6 +120,12 @@ export async function GET(request: NextRequest) {
   const snapshot = await userRef.get();
 
   if (!snapshot.exists) {
+    const effectiveIpHash = ipHash ?? hashRequestIp(request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip")?.trim() || "unknown");
+    const accountCountSnapshot = await db.collection("users").where("signupIpHash", "==", effectiveIpHash).limit(4).get();
+    if (accountCountSnapshot.size >= 3) {
+      return NextResponse.redirect(new URL("/login?error=signup_limit_reached", request.url));
+    }
+
     const initialProgress = calculateLevelProgress(0);
     const adminSearch = buildUserAdminSearchIndex({
       uid: firebaseUid,
@@ -157,6 +166,7 @@ export async function GET(request: NextRequest) {
       giftCardsCrafted: 0,
       totalRewardsClaimed: 0,
       authProvider: "discord",
+      signupIpHash: effectiveIpHash,
       createdAt: new Date().toISOString(),
       ...adminSearch,
     });

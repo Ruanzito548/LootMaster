@@ -56,6 +56,7 @@ export async function POST(request: Request): Promise<Response> {
   if (!orderData) return Response.json({ error: "Order not found." }, { status: 404 });
 
   const orderEmail = String(orderData.customerEmail ?? orderData.email ?? payment.payer?.email ?? "").trim().toLowerCase();
+  const payerName = [payment.payer?.first_name, payment.payer?.last_name].filter(Boolean).join(" ").trim();
   const orderMetadata = Object.fromEntries(
     Object.entries(orderData)
       .filter(([, value]) => typeof value === "string" || typeof value === "number" || typeof value === "boolean")
@@ -70,6 +71,7 @@ export async function POST(request: Request): Promise<Response> {
     amount_total: payment.transaction_amount * 100,
     currency: "brl",
     customer_email: orderEmail,
+    customer_details: { name: String(orderData.customerName ?? payerName) },
     payment_status: "paid",
     created: payment.date_created ? Math.floor(new Date(payment.date_created).getTime() / 1000) : Math.floor(Date.now() / 1000),
     metadata: orderMetadata,

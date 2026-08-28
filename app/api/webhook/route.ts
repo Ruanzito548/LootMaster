@@ -217,6 +217,7 @@ export async function persistPaidOrder(session: Stripe.Checkout.Session, supplie
       amountTotalCents,
       currency: (session.currency ?? "brl").toLowerCase(),
       customerEmail: session.customer_email ?? "",
+      customerName: session.customer_details?.name ?? meta.customerName ?? "",
       customerUid: meta.customerUid ?? "",
       agentReferralCode: meta.agentReferralCode ?? "",
       baseProductCents,

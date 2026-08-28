@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { getRequestIp, hashRequestIp } from "@/lib/auth-antiabuse";
 
 /**
  * GET /api/auth/discord
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
   const state = crypto.randomUUID();
   await getAdminDb().collection("oauth-states").doc(state).set({
     linkToken,
+    ipHash: hashRequestIp(getRequestIp(request)),
     createdAt: Date.now(),
     expiresAt: Date.now() + 5 * 60_000,
   });

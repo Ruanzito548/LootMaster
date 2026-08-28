@@ -20,6 +20,7 @@ const DISCORD_ERROR_LABELS: Record<string, string> = {
   user_fetch_failed: "Could not fetch your Discord profile. Please try again.",
   invalid_oauth_state: "Your sign-in session expired. Please try again.",
   server_misconfigured: "Discord OAuth is not configured on this server.",
+  signup_limit_reached: "The maximum number of accounts from this network has been reached.",
 };
 
 const FIREBASE_ERROR_LABELS: Record<string, string> = {

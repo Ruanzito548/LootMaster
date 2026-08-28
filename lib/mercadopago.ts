@@ -8,7 +8,7 @@ export type MercadoPagoPixPayment = {
   currency_id: string;
   external_reference?: string;
   metadata?: Record<string, unknown>;
-  payer?: { email?: string };
+  payer?: { email?: string; first_name?: string; last_name?: string; identification?: { type?: string; number?: string } };
   date_created?: string;
 };
 
