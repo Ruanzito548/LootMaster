@@ -12,6 +12,7 @@ export type OrderFinancials = {
   grossRevenue: number;
   supplierPayout: number;
   grossProfit: number;
+  cardFeePercent: number;
   cardFee: number;
   cashback: number;
   operationalReserve: number;
@@ -34,6 +35,7 @@ export function computeOrderFinancials(
   cardFeePercentRaw: number,
   cashbackPercentRaw: number,
   operationalReservePercentRaw: number,
+  cardFeeBaseCents = grossRevenueCents,
 ): OrderFinancials {
   const grossRevenue = Math.max(0, Math.round(grossRevenueCents));
   const supplierPercentage = clampPercent(supplierPercentageRaw);
@@ -43,7 +45,8 @@ export function computeOrderFinancials(
 
   const supplierPayout = Math.max(0, Math.round(grossRevenue * (supplierPercentage / 100)));
   const grossProfit = Math.max(0, grossRevenue - supplierPayout);
-  const cardFee = Math.max(0, Math.round(grossRevenue * (cardFeePercent / 100)));
+  const cardFeeBase = Math.max(0, Math.round(cardFeeBaseCents));
+  const cardFee = Math.max(0, Math.round(cardFeeBase * (cardFeePercent / 100)));
   const cashback = Math.max(0, Math.round(grossRevenue * (cashbackPercent / 100)));
   const operationalReserve = Math.max(0, Math.round(grossRevenue * (operationalReservePercent / 100)));
   const netProfit = grossProfit - cardFee - cashback - operationalReserve;
@@ -53,6 +56,7 @@ export function computeOrderFinancials(
     grossRevenue,
     supplierPayout,
     grossProfit,
+    cardFeePercent,
     cardFee,
     cashback,
     operationalReserve,
@@ -101,6 +105,7 @@ export function buildOrderFinancialSnapshot(
     cardFeePercent,
     cashbackPercent,
     operationalReservePercent,
+    asFiniteNumber(record.baseProductCents) ?? grossRevenue,
   );
 
   return {
@@ -108,6 +113,7 @@ export function buildOrderFinancialSnapshot(
     grossRevenue: asFiniteNumber(record.grossRevenue) ?? computed.grossRevenue,
     supplierPayout: asFiniteNumber(record.supplierPayout) ?? asFiniteNumber(record.sellerAmountCents) ?? computed.supplierPayout,
     grossProfit: asFiniteNumber(record.grossProfit) ?? computed.grossProfit,
+    cardFeePercent,
     cardFee: asFiniteNumber(record.cardFee) ?? computed.cardFee,
     cashback: asFiniteNumber(record.cashback) ?? computed.cashback,
     operationalReserve: asFiniteNumber(record.operationalReserve) ?? computed.operationalReserve,

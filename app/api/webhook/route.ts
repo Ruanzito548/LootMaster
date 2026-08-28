@@ -205,6 +205,7 @@ export async function persistPaidOrder(session: Stripe.Checkout.Session, supplie
     costs.cardGatewayFeePercent,
     costs.cashbackPercent,
     costs.operationalReservePercent,
+    baseProductCents,
   );
   const supplierPayout = Math.max(0, Math.round(baseProductCents * (financialBase.supplierPercentage / 100)));
   const grossProfit = Math.max(0, amountTotalCents - supplierPayout);

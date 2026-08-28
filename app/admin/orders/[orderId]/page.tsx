@@ -114,7 +114,12 @@ export default async function AdminOrderApplicantsPage(
       });
       const totalUsdCents = convertCentsToUsdCents(amountTotalCents, sourceCurrency, usdRates);
       const supplierPayoutUsdCents = financials.supplierPayout;
-      const gatewayUsdCents = convertCentsToUsdCents(financials.cardFee, sourceCurrency, usdRates);
+      const baseProductCents =
+        typeof data.baseProductCents === "number" && Number.isFinite(data.baseProductCents)
+          ? data.baseProductCents
+          : amountTotalCents;
+      const gatewaySourceCents = Math.max(0, Math.round(baseProductCents * (financials.cardFeePercent / 100)));
+      const gatewayUsdCents = convertCentsToUsdCents(gatewaySourceCents, sourceCurrency, usdRates);
       const cashbackUsdCents = convertCentsToUsdCents(financials.cashback, sourceCurrency, usdRates);
       const operationalReserveUsdCents = convertCentsToUsdCents(financials.operationalReserve, sourceCurrency, usdRates);
       const feeTransferDoc = await adminDb.collection("fee-transfers").doc(orderId).get();
