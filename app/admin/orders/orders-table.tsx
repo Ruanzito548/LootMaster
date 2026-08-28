@@ -18,9 +18,9 @@ function formatMoney(cents: number, currencyCode: string): string {
   }).format(cents / 100);
 }
 
-function OrderSlaTimer({ createdAtIso, deliveryMethod }: Pick<OrderRow, "createdAtIso" | "deliveryMethod">) {
+function OrderSlaTimer({ createdAtIso }: Pick<OrderRow, "createdAtIso">) {
   const [now, setNow] = useState(() => Date.now());
-  const deliveryLimitMs = deliveryMethod === "Face to face" ? 30 * 60 * 1000 : 2 * 60 * 60 * 1000;
+  const deliveryLimitMs = 2 * 60 * 60 * 1000;
   const createdAt = createdAtIso ? new Date(createdAtIso).getTime() : Number.NaN;
   const remainingMs = Number.isFinite(createdAt) ? createdAt + deliveryLimitMs - now : 0;
   const isOverdue = remainingMs <= 0;
@@ -49,7 +49,7 @@ function OrderSlaTimer({ createdAtIso, deliveryMethod }: Pick<OrderRow, "created
 function getSlaState(row: OrderRow, now: number): "on-time" | "soon" | "overdue" | "unknown" {
   const createdAt = row.createdAtIso ? new Date(row.createdAtIso).getTime() : Number.NaN;
   if (!Number.isFinite(createdAt)) return "unknown";
-  const limit = row.deliveryMethod === "Face to face" ? 30 * 60 * 1000 : 2 * 60 * 60 * 1000;
+  const limit = 2 * 60 * 60 * 1000;
   const remaining = createdAt + limit - now;
   if (remaining <= 0) return "overdue";
   if (remaining <= 15 * 60 * 1000) return "soon";
@@ -495,7 +495,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
                 <td className="px-2 py-2 text-xs font-medium uppercase text-green-400">{row.paymentMethod}</td>
                 {showSlaTimer ? (
                   <td className="px-2 py-2">
-                    <OrderSlaTimer createdAtIso={row.createdAtIso} deliveryMethod={row.deliveryMethod} />
+                    <OrderSlaTimer createdAtIso={row.createdAtIso} />
                   </td>
                 ) : null}
                 <td className="px-2 py-2">

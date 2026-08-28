@@ -89,7 +89,7 @@ function PixPaymentContent() {
 
   const stage = getPaymentStage(payment?.status ?? "pending");
   const deliveryLabel = payment?.deliveryMethod === "Mailbox" ? "Mail" : payment?.deliveryMethod || "-";
-  const deliveryTime = payment?.deliveryMethod === "Mailbox" ? "Up to 2 hours" : payment?.deliveryMethod === "Face to face" ? "Up to 30 minutes" : "-";
+  const deliveryTime = payment ? "Up to 2 hours" : "-";
 
   const copyPixCode = async () => {
     if (!payment) return;

@@ -1,17 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
 
 function CheckoutSuccessContent() {
-  const searchParams = useSearchParams();
-  const deliveryMethod = searchParams.get("delivery_method");
-  const deliveryTime = deliveryMethod === "Mailbox"
-    ? "Your gold will be delivered by mail within up to 2 hours."
-    : deliveryMethod === "Face to face"
-      ? "Your gold will be delivered face to face within up to 30 minutes."
-      : "Your delivery time depends on the delivery method selected during checkout.";
+  const deliveryTime = "Your gold will be delivered within up to 2 hours.";
 
   return (
     <div className="loot-shell">
@@ -51,5 +43,5 @@ function CheckoutSuccessContent() {
 }
 
 export default function CheckoutSuccessPage() {
-  return <Suspense><CheckoutSuccessContent /></Suspense>;
+  return <CheckoutSuccessContent />;
 }

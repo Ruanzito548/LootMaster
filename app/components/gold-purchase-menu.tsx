@@ -560,9 +560,6 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
                   </option>
                 ))}
               </select>
-              <p className="mt-2 text-xs leading-5 text-[#88a8d1]">
-                Estimated delivery: {deliveryMethod === "Mailbox" ? "up to 2 hours by mail." : "up to 30 minutes face to face."}
-              </p>
             </div>
 
             <div className="sm:col-span-2">
@@ -684,6 +681,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
             <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#d3e9ff]">Total</p>
             <p className="text-2xl font-black text-[#6ee7ff]">{formatCurrency(finalPriceLocalized, selectedCurrency, selectedLocale)}</p>
           </div>
+          <p className="mt-2 text-right text-xs font-semibold text-[#88a8d1]">Estimated delivery: up to 2 hours.</p>
 
           {paymentMethod === "balance" ? (
             <div className="mt-3 rounded-xl border border-[#facc15]/25 bg-[#3b2f0b]/35 px-3 py-3">
