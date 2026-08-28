@@ -9,6 +9,25 @@ export type FeeBreakdown = {
   lootmasterFeeCents: number;
 };
 
+export function computeFeeBreakdownFromNetRevenue(
+  netRevenueCents: number,
+  supplierPayoutCents: number,
+  agentFeeSharePercentRaw: number,
+): FeeBreakdown {
+  const netRevenue = Math.max(0, Math.round(netRevenueCents));
+  const supplierPayout = Math.max(0, Math.round(supplierPayoutCents));
+  const commissionBaseCents = Math.max(0, netRevenue - supplierPayout);
+  const agentFeeSharePercent = clampPercent(agentFeeSharePercentRaw);
+  const agentPayoutCents = Math.max(0, Math.round(commissionBaseCents * (agentFeeSharePercent / 100)));
+  const lootmasterFeeCents = Math.max(0, commissionBaseCents - agentPayoutCents);
+
+  return {
+    platformFeeCents: commissionBaseCents,
+    agentPayoutCents,
+    lootmasterFeeCents,
+  };
+}
+
 export function computeFeeBreakdown(
   totalCents: number,
   commissionPercentRaw: number,

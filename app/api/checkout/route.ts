@@ -2,7 +2,7 @@ import Stripe from "stripe";
 
 import { defaultGoldConfigEntry } from "@/app/data/gold-config";
 import { getGameById, getServiceCategoryById, getServersByGameId } from "@/app/data/games";
-import { computeFeeBreakdown, normalizeAgentCode } from "@/lib/agency";
+import { computeFeeBreakdownFromNetRevenue, normalizeAgentCode } from "@/lib/agency";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { resolveDiscordChannelId } from "@/lib/discord-channel-resolver";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
@@ -451,8 +451,11 @@ export async function POST(request: Request): Promise<Response> {
       const supplierPercentage = supplierDefaultPercent;
       const supplierPayout = Math.round(pricingBreakdown.baseProductCents * (supplierPercentage / 100));
       const grossProfit = Math.max(0, amountUsdCents - supplierPayout);
-      const commissionPercent = Math.max(0, 100 - supplierPercentage);
-      const feeBreakdown = computeFeeBreakdown(pricingBreakdown.baseProductCents, commissionPercent, partnerUid ? partnerFeeSharePercent : 0);
+      const feeBreakdown = computeFeeBreakdownFromNetRevenue(
+        amountUsdCents,
+        supplierPayout,
+        partnerUid ? partnerFeeSharePercent : 0,
+      );
       const partnerDiscountPartnerCents = Math.round(basePrice * 0.05 * 100);
       const partnerDiscountLootMasterCents = Math.round(basePrice * 0.05 * 100);
       const agentPayoutCents = Math.max(0, feeBreakdown.agentPayoutCents - partnerDiscountPartnerCents);
@@ -532,9 +535,9 @@ export async function POST(request: Request): Promise<Response> {
             customerUid: decodedToken.uid,
             customerEmail: email.trim(),
             amountTotalCents: amountUsdCents,
-            commissionBaseCents: pricingBreakdown.baseProductCents,
+            commissionBaseCents: feeBreakdown.platformFeeCents,
             currency: "usd",
-            commissionPercent,
+            commissionPercent: Math.max(0, 100 - supplierPercentage),
             platformFeeCents: agentPayoutCents + lootmasterFeeCents,
             agentUid: partnerUid,
             agentFeeSharePercent: partnerFeeSharePercent,

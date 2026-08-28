@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { FieldValue } from "firebase-admin/firestore";
 
 import {
-  computeFeeBreakdown,
+  computeFeeBreakdownFromNetRevenue,
   DEFAULT_AGENT_FEE_SHARE_PERCENT,
   normalizeAgentCode,
 } from "@/lib/agency";
@@ -449,18 +449,21 @@ export async function processFeeTransfer(session: Stripe.Checkout.Session): Prom
   const baseProductCents = Number(meta.baseProductCents ?? meta.baseAmountCents ?? 0) || 0;
   const supplierPercentage = await resolveSessionSupplierPercent(session);
   const commissionPercent = Math.max(0, 100 - supplierPercentage);
-  const commissionBaseCents = baseProductCents > 0 ? baseProductCents : totalCents;
+  const supplierPayoutBaseCents = baseProductCents > 0 ? baseProductCents : totalCents;
   const customerAgent = await resolveCustomerAgent(session);
-  const feeBreakdown = computeFeeBreakdown(
-    commissionBaseCents,
-    commissionPercent,
+  const costs = await resolveSessionCostPercents(session);
+  const gatewayFeeCents = Math.max(0, Math.round(totalCents * (costs.cardGatewayFeePercent / 100)));
+  const supplierPayoutCents = Math.max(0, Math.round(supplierPayoutBaseCents * (supplierPercentage / 100)));
+  const feeBreakdown = computeFeeBreakdownFromNetRevenue(
+    totalCents - gatewayFeeCents,
+    supplierPayoutCents,
     customerAgent.agentUid ? customerAgent.agentFeeSharePercent : 0,
   );
   const partnerDiscountCents = Math.max(0, Number(meta.partnerDiscountPartnerCents ?? 0) || 0);
   const lootMasterDiscountCents = Math.max(0, Number(meta.partnerDiscountLootMasterCents ?? 0) || 0);
   const agentPayoutCents = Math.max(0, feeBreakdown.agentPayoutCents - partnerDiscountCents);
   const lootmasterFeeCents = Math.max(0, feeBreakdown.lootmasterFeeCents - lootMasterDiscountCents);
-  const platformFeeCents = agentPayoutCents + lootmasterFeeCents;
+  const calculatedPlatformFeeCents = agentPayoutCents + lootmasterFeeCents;
   const agentPayoutLootCoins = Math.round((agentPayoutCents / 100) * 100) / 100;
 
   const feeRef = adminDb.collection("fee-transfers").doc(session.id);
@@ -480,10 +483,10 @@ export async function processFeeTransfer(session: Stripe.Checkout.Session): Prom
         customerUid: customerAgent.customerUid,
         customerEmail: session.customer_email ?? "",
         amountTotalCents: totalCents,
-        commissionBaseCents,
+        commissionBaseCents: feeBreakdown.platformFeeCents,
         currency: (session.currency ?? "brl").toLowerCase(),
         commissionPercent,
-        platformFeeCents,
+        platformFeeCents: calculatedPlatformFeeCents,
         agentUid: customerAgent.agentUid,
         agentFeeSharePercent: customerAgent.agentUid ? customerAgent.agentFeeSharePercent : 0,
         agentPayoutCents,
@@ -507,7 +510,7 @@ export async function processFeeTransfer(session: Stripe.Checkout.Session): Prom
         assignedAgentId: customerAgent.agentUid,
         commissionPercent,
         supplierPercentage,
-        platformFeeCents,
+        platformFeeCents: calculatedPlatformFeeCents,
         agentPayoutCents,
         lootmasterFeeCents,
         platformProfitCents: lootmasterFeeCents,
@@ -516,14 +519,14 @@ export async function processFeeTransfer(session: Stripe.Checkout.Session): Prom
       { merge: true },
     );
 
-    if (customerAgent.customerUid && platformFeeCents > 0) {
+    if (customerAgent.customerUid && calculatedPlatformFeeCents > 0) {
       writeActivityLog(tx, adminDb, {
         userUid: customerAgent.customerUid,
         actorRole: "system",
         actionType: "platform_fee_charged",
         category: "marketplace",
         description: `Platform fee charged for order ${session.id}.`,
-        value: platformFeeCents / 100,
+        value: calculatedPlatformFeeCents / 100,
         valueUnit: "usd",
         origin: "stripe:webhook:fee-transfer",
         status: "completed",

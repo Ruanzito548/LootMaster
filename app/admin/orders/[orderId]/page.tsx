@@ -125,6 +125,10 @@ export default async function AdminOrderApplicantsPage(
           : 0;
       const partnerCommissionUsdCents = convertCentsToUsdCents(partnerCommissionSourceCents, sourceCurrency, usdRates);
       const grossProfitUsdCents = Math.max(0, totalUsdCents - supplierPayoutUsdCents);
+      const partnerCommissionPercent =
+        typeof feeTransferData.agentFeeSharePercent === "number" && Number.isFinite(feeTransferData.agentFeeSharePercent)
+          ? feeTransferData.agentFeeSharePercent
+          : 0;
       const netProfitUsdCents = Math.max(
         0,
         grossProfitUsdCents - gatewayUsdCents - cashbackUsdCents - operationalReserveUsdCents - partnerCommissionUsdCents,
@@ -236,10 +240,7 @@ export default async function AdminOrderApplicantsPage(
         operationalReserveCents: operationalReserveUsdCents,
         operationalReservePercent: typeof data.operationalReservePercent === "number" ? data.operationalReservePercent : 0,
         partnerCommissionCents: partnerCommissionUsdCents,
-        partnerCommissionPercent:
-          typeof feeTransferData.agentFeeSharePercent === "number" && Number.isFinite(feeTransferData.agentFeeSharePercent)
-            ? feeTransferData.agentFeeSharePercent
-            : 0,
+        partnerCommissionPercent,
         netProfitCents: netProfitUsdCents,
         profitMarginPercent: totalUsdCents > 0 ? (netProfitUsdCents / totalUsdCents) * 100 : 0,
         orderCreatedAtIso,
