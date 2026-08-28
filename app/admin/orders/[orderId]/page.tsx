@@ -116,17 +116,11 @@ export default async function AdminOrderApplicantsPage(
       });
       const totalUsdCents = convertCentsToUsdCents(amountTotalCents, sourceCurrency, usdRates);
       const paymentMethod = typeof data.paymentMethod === "string" ? data.paymentMethod.toLowerCase() : "";
-      const paymentSurchargeCents =
-        typeof data.paymentSurchargeCents === "number" && Number.isFinite(data.paymentSurchargeCents)
-          ? Math.max(0, Math.round(data.paymentSurchargeCents))
-          : 0;
       const cardFeePercent = financials.cardFeePercent;
       const goldSourceCents =
-        paymentSurchargeCents > 0
-          ? Math.max(0, amountTotalCents - paymentSurchargeCents)
-          : paymentMethod === "card"
-            ? Math.max(0, Math.round(amountTotalCents / (1 + cardFeePercent / 100)))
-            : amountTotalCents;
+        paymentMethod === "card"
+          ? Math.max(0, Math.round(amountTotalCents / (1 + cardFeePercent / 100)))
+          : amountTotalCents;
       const goldUsdCents = convertCentsToUsdCents(goldSourceCents, sourceCurrency, usdRates);
       const supplierPayoutSourceCents = Math.max(0, Math.round(goldSourceCents * (financials.supplierPercentage / 100)));
       const supplierPayoutUsdCents = convertCentsToUsdCents(supplierPayoutSourceCents, sourceCurrency, usdRates);
