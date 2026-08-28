@@ -41,6 +41,7 @@ function LoginContent() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const referralProcessedRef = useRef(false);
+  const exchangeStartedRef = useRef<string | null>(null);
   const linkToken = (params.get("token") ?? "").trim();
 
   const applyStoredReferral = async (user: User) => {
@@ -103,6 +104,12 @@ function LoginContent() {
     if (!exchangeCode || !auth) {
       return;
     }
+
+    if (exchangeStartedRef.current === exchangeCode) {
+      return;
+    }
+
+    exchangeStartedRef.current = exchangeCode;
 
     const firebaseAuth = auth;
     setLoading(true);
