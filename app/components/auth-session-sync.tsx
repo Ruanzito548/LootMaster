@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { onIdTokenChanged } from "firebase/auth";
 
 import { auth } from "@/lib/firebase";
@@ -23,6 +23,8 @@ async function clearSessionCookie() {
 }
 
 export function AuthSessionSync() {
+  const hadAuthenticatedUser = useRef(false);
+
   useEffect(() => {
     if (!auth) {
       return;
@@ -32,10 +34,14 @@ export function AuthSessionSync() {
       void (async () => {
         try {
           if (!user) {
-            await clearSessionCookie();
+            if (hadAuthenticatedUser.current) {
+              await clearSessionCookie();
+              hadAuthenticatedUser.current = false;
+            }
             return;
           }
 
+          hadAuthenticatedUser.current = true;
           const idToken = await user.getIdToken();
           await upsertSessionCookie(idToken);
         } catch {
