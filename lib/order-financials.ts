@@ -14,8 +14,10 @@ export type OrderFinancials = {
   grossProfit: number;
   cardFeePercent: number;
   cardFee: number;
+  cashbackPercent: number;
   cashback: number;
   operationalReserve: number;
+  operationalReservePercent: number;
   netProfit: number;
 };
 
@@ -35,7 +37,8 @@ export function computeOrderFinancials(
   cardFeePercentRaw: number,
   cashbackPercentRaw: number,
   operationalReservePercentRaw: number,
-  cardFeeBaseCents = grossRevenueCents,
+    cardFeeBaseCents = grossRevenueCents,
+    costBaseCents = grossRevenueCents,
 ): OrderFinancials {
   const grossRevenue = Math.max(0, Math.round(grossRevenueCents));
   const supplierPercentage = clampPercent(supplierPercentageRaw);
@@ -46,9 +49,10 @@ export function computeOrderFinancials(
   const supplierPayout = Math.max(0, Math.round(grossRevenue * (supplierPercentage / 100)));
   const grossProfit = Math.max(0, grossRevenue - supplierPayout);
   const cardFeeBase = Math.max(0, Math.round(cardFeeBaseCents));
+    const costBase = Math.max(0, Math.round(costBaseCents));
   const cardFee = Math.max(0, Math.round(cardFeeBase * (cardFeePercent / 100)));
-  const cashback = Math.max(0, Math.round(grossRevenue * (cashbackPercent / 100)));
-  const operationalReserve = Math.max(0, Math.round(grossRevenue * (operationalReservePercent / 100)));
+    const cashback = Math.max(0, Math.round(costBase * (cashbackPercent / 100)));
+    const operationalReserve = Math.max(0, Math.round(costBase * (operationalReservePercent / 100)));
   const netProfit = grossProfit - cardFee - cashback - operationalReserve;
 
   return {
@@ -58,8 +62,10 @@ export function computeOrderFinancials(
     grossProfit,
     cardFeePercent,
     cardFee,
+    cashbackPercent,
     cashback,
     operationalReserve,
+    operationalReservePercent,
     netProfit,
   };
 }
@@ -105,7 +111,8 @@ export function buildOrderFinancialSnapshot(
     cardFeePercent,
     cashbackPercent,
     operationalReservePercent,
-    asFiniteNumber(record.baseProductCents) ?? grossRevenue,
+      asFiniteNumber(record.baseProductCents) ?? grossRevenue,
+      asFiniteNumber(record.baseProductCents) ?? grossRevenue,
   );
 
   return {
@@ -115,7 +122,9 @@ export function buildOrderFinancialSnapshot(
     grossProfit: asFiniteNumber(record.grossProfit) ?? computed.grossProfit,
     cardFeePercent,
     cardFee: asFiniteNumber(record.cardFee) ?? computed.cardFee,
+    cashbackPercent,
     cashback: asFiniteNumber(record.cashback) ?? computed.cashback,
+    operationalReservePercent,
     operationalReserve: asFiniteNumber(record.operationalReserve) ?? computed.operationalReserve,
     netProfit: asFiniteNumber(record.netProfit) ?? asFiniteNumber(record.platformProfitCents) ?? computed.netProfit,
   };

@@ -206,6 +206,7 @@ export async function persistPaidOrder(session: Stripe.Checkout.Session, supplie
     costs.cashbackPercent,
     costs.operationalReservePercent,
     baseProductCents,
+    baseProductCents,
   );
   const supplierPayout = Math.max(0, Math.round(baseProductCents * (financialBase.supplierPercentage / 100)));
   const grossProfit = Math.max(0, amountTotalCents - supplierPayout);
@@ -452,11 +453,9 @@ export async function processFeeTransfer(session: Stripe.Checkout.Session): Prom
   const commissionPercent = Math.max(0, 100 - supplierPercentage);
   const supplierPayoutBaseCents = baseProductCents > 0 ? baseProductCents : totalCents;
   const customerAgent = await resolveCustomerAgent(session);
-  const costs = await resolveSessionCostPercents(session);
-  const gatewayFeeCents = Math.max(0, Math.round(totalCents * (costs.cardGatewayFeePercent / 100)));
   const supplierPayoutCents = Math.max(0, Math.round(supplierPayoutBaseCents * (supplierPercentage / 100)));
   const feeBreakdown = computeFeeBreakdownFromNetRevenue(
-    totalCents - gatewayFeeCents,
+    supplierPayoutBaseCents,
     supplierPayoutCents,
     customerAgent.agentUid ? customerAgent.agentFeeSharePercent : 0,
   );

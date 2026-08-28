@@ -452,7 +452,7 @@ export async function POST(request: Request): Promise<Response> {
       const supplierPayout = Math.round(pricingBreakdown.baseProductCents * (supplierPercentage / 100));
       const grossProfit = Math.max(0, amountUsdCents - supplierPayout);
       const feeBreakdown = computeFeeBreakdownFromNetRevenue(
-        amountUsdCents,
+        pricingBreakdown.baseProductCents,
         supplierPayout,
         partnerUid ? partnerFeeSharePercent : 0,
       );

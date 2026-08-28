@@ -4,6 +4,7 @@ import { FieldPath } from "firebase-admin/firestore";
 
 import { getAdminDb } from "@/lib/firebase-admin";
 import { convertCentsToUsdCents, getUsdRates, normalizeCurrency } from "@/lib/currency-conversion";
+import { computeFeeBreakdownFromNetRevenue } from "@/lib/agency";
 import { buildOrderFinancialSnapshot } from "@/lib/order-financials";
 import { buildDefaultSiteFeeSettings } from "@/lib/site-fee-settings";
 import { isDiscordAutoSendEnabled } from "@/lib/discord-settings";
@@ -53,6 +54,7 @@ export default async function AdminOrderApplicantsPage(
     totalLabel: "--",
     payoutLabel: "--",
     totalCents: 0,
+    goldCents: 0,
     supplierPayoutCents: 0,
     supplierPercentage: 0,
     gatewayLabel: "Gateway",
@@ -113,6 +115,11 @@ export default async function AdminOrderApplicantsPage(
         operationalReservePercent: defaults.operationalReservePercent,
       });
       const totalUsdCents = convertCentsToUsdCents(amountTotalCents, sourceCurrency, usdRates);
+      const goldSourceCents =
+        typeof data.baseProductCents === "number" && Number.isFinite(data.baseProductCents)
+          ? data.baseProductCents
+          : amountTotalCents;
+      const goldUsdCents = convertCentsToUsdCents(goldSourceCents, sourceCurrency, usdRates);
       const supplierPayoutUsdCents = financials.supplierPayout;
       const baseProductCents =
         typeof data.baseProductCents === "number" && Number.isFinite(data.baseProductCents)
@@ -120,23 +127,23 @@ export default async function AdminOrderApplicantsPage(
           : amountTotalCents;
       const gatewaySourceCents = Math.max(0, Math.round(baseProductCents * (financials.cardFeePercent / 100)));
       const gatewayUsdCents = convertCentsToUsdCents(gatewaySourceCents, sourceCurrency, usdRates);
-      const cashbackUsdCents = convertCentsToUsdCents(financials.cashback, sourceCurrency, usdRates);
-      const operationalReserveUsdCents = convertCentsToUsdCents(financials.operationalReserve, sourceCurrency, usdRates);
+      const cashbackUsdCents = Math.max(0, Math.round(goldUsdCents * (financials.cashbackPercent / 100)));
+      const operationalReserveUsdCents = Math.max(0, Math.round(goldUsdCents * (financials.operationalReservePercent / 100)));
       const feeTransferDoc = await adminDb.collection("fee-transfers").doc(orderId).get();
       const feeTransferData = feeTransferDoc.exists ? (feeTransferDoc.data() as Record<string, unknown>) : {};
-      const partnerCommissionSourceCents =
-        typeof feeTransferData.agentPayoutCents === "number" && Number.isFinite(feeTransferData.agentPayoutCents)
-          ? feeTransferData.agentPayoutCents
-          : 0;
-      const partnerCommissionUsdCents = convertCentsToUsdCents(partnerCommissionSourceCents, sourceCurrency, usdRates);
-      const grossProfitUsdCents = Math.max(0, totalUsdCents - supplierPayoutUsdCents);
+      const grossProfitUsdCents = Math.max(0, goldUsdCents - supplierPayoutUsdCents);
       const partnerCommissionPercent =
         typeof feeTransferData.agentFeeSharePercent === "number" && Number.isFinite(feeTransferData.agentFeeSharePercent)
           ? feeTransferData.agentFeeSharePercent
           : 0;
+      const partnerCommissionUsdCents = computeFeeBreakdownFromNetRevenue(
+        goldUsdCents,
+        supplierPayoutUsdCents,
+        partnerCommissionPercent,
+      ).agentPayoutCents;
       const netProfitUsdCents = Math.max(
         0,
-        grossProfitUsdCents - gatewayUsdCents - cashbackUsdCents - operationalReserveUsdCents - partnerCommissionUsdCents,
+        grossProfitUsdCents - cashbackUsdCents - operationalReserveUsdCents - partnerCommissionUsdCents,
       );
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
       const paymentMethod = typeof data.paymentMethod === "string" ? data.paymentMethod : "";
@@ -235,6 +242,7 @@ export default async function AdminOrderApplicantsPage(
         totalLabel: formatMoney(totalUsdCents),
         payoutLabel: formatMoney(supplierPayoutUsdCents),
         totalCents: totalUsdCents,
+        goldCents: goldUsdCents,
         supplierPayoutCents: supplierPayoutUsdCents,
         supplierPercentage: financials.supplierPercentage,
         gatewayLabel: resolveGatewayLabel(paymentMethod),
@@ -283,6 +291,7 @@ export default async function AdminOrderApplicantsPage(
           totalLabel: formatMoney(totalUsdCents),
           payoutLabel: formatMoney(supplierPayoutUsdCents),
           totalCents: totalUsdCents,
+          goldCents: totalUsdCents,
           supplierPayoutCents: supplierPayoutUsdCents,
           supplierPercentage: Number(session.metadata?.supplierPercentage ?? 75) || 75,
           gatewayLabel: resolveGatewayLabel(session.metadata?.paymentMethod ?? ""),

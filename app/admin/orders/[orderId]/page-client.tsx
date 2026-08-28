@@ -24,6 +24,7 @@ type OrderSummary = {
   totalLabel: string;
   payoutLabel: string;
   totalCents: number;
+  goldCents: number;
   supplierPayoutCents: number;
   supplierPercentage: number;
   gatewayLabel: string;
@@ -394,15 +395,20 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
               <span className="font-semibold text-green-200">{formatMoney(summary.totalCents)}</span>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-green-300">Valor após taxa do meio de pagamento ({summary.gatewayPercent.toFixed(2)}%)</span>
-              <span className="font-semibold text-green-200">{formatMoney(summary.totalCents - summary.gatewayCents)}</span>
+              <span className="text-green-300">Valor do gold</span>
+              <span className="font-semibold text-green-200">{formatMoney(summary.goldCents)}</span>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-green-300">Fornecedor ({summary.supplierPercentage.toFixed(2)}%)</span>
+              <span className="text-green-300">Repasse ao fornecedor ({summary.supplierPercentage.toFixed(2)}%)</span>
               <span className="font-semibold text-rose-300">{formatDeduction(summary.supplierPayoutCents)}</span>
             </div>
+            <div className="border-t border-dashed border-green-900 pt-2" />
             <div className="flex items-center justify-between gap-3">
-              <span className="text-green-300">Comissão do parceiro ({summary.partnerCommissionPercent.toFixed(2)}%)</span>
+              <span className="font-bold text-green-100">Lucro Bruto</span>
+              <span className="font-bold text-green-100">{formatMoney(summary.goldCents - summary.supplierPayoutCents)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-green-300">Comissão do agente ({summary.partnerCommissionPercent.toFixed(2)}% do lucro bruto)</span>
               <span className="font-semibold text-rose-300">{formatDeduction(summary.partnerCommissionCents)}</span>
             </div>
             <div className="flex items-center justify-between gap-3">
@@ -413,8 +419,6 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
               <span className="text-green-300">Reserva Operacional ({summary.operationalReservePercent.toFixed(2)}%)</span>
               <span className="font-semibold text-rose-300">{formatDeduction(summary.operationalReserveCents)}</span>
             </div>
-            <div className="border-t border-dashed border-green-900 pt-2" />
-
             <div className="flex items-center justify-between gap-3">
               <span className="font-bold text-green-100">Lucro Líquido</span>
               <span className="font-bold text-green-100">{formatMoney(summary.netProfitCents)}</span>
