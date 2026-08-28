@@ -418,7 +418,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
                         className="w-16 rounded border border-green-800 bg-black px-1 py-1 text-xs text-green-300"
                       />
                       <span className="text-xs text-green-500">%</span>
-                      <span className="text-xs text-amber-300">{formatMoney(row.totalCents * (editingSupplierPercent / 100), row.currency)}</span>
+                      <span className="text-xs text-amber-300">{formatMoney(row.baseProductCents * (editingSupplierPercent / 100), row.currency)}</span>
                       <button
                         type="button"
                         onClick={() => void saveSupplier(row.id)}

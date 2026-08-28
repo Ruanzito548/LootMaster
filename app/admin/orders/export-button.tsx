@@ -19,6 +19,7 @@ export type OrderRow = {
   total: string;
   currency: string;
   totalCents: number;
+  baseProductCents: number;
   supplierName: string;
   supplierPercentage: number;
   supplierPayout: number;

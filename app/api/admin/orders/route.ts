@@ -115,6 +115,12 @@ export async function GET(request: Request): Promise<Response> {
         const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
         const assignedAgent = assignedAgentId ? agentByUid.get(assignedAgentId) : null;
         const totalCents = typeof data.amountTotalCents === "number" ? data.amountTotalCents : 0;
+        const baseProductCents =
+          typeof data.baseProductCents === "number" && data.baseProductCents > 0
+            ? data.baseProductCents
+            : typeof data.baseAmountCents === "number" && data.baseAmountCents > 0
+              ? data.baseAmountCents
+              : totalCents;
         const currency = normalizeCurrency(data.currency);
         const supplierPercentage =
           typeof data.supplierPercentage === "number" && Number.isFinite(data.supplierPercentage) ? data.supplierPercentage : 75;
@@ -123,6 +129,7 @@ export async function GET(request: Request): Promise<Response> {
             ? data.supplierPayout
             : Math.round(totalCents * (supplierPercentage / 100));
         const totalUsdCents = convertCentsToUsdCents(totalCents, currency, usdRates);
+        const baseProductUsdCents = convertCentsToUsdCents(baseProductCents, currency, usdRates);
         const supplierPayoutUsdCents = supplierPayout;
         const grossProfitUsdCents = Math.max(0, totalUsdCents - supplierPayoutUsdCents);
         const cardFee = typeof data.cardFee === "number" && Number.isFinite(data.cardFee) ? data.cardFee : 0;
@@ -162,6 +169,7 @@ export async function GET(request: Request): Promise<Response> {
           total: `$${(totalUsdCents / 100).toFixed(2)}`,
           currency: "usd",
           totalCents: totalUsdCents,
+          baseProductCents: baseProductUsdCents,
           supplierName: typeof data.supplierName === "string" && data.supplierName ? data.supplierName : "--",
           supplierPercentage,
           supplierPayout: supplierPayoutUsdCents,
