@@ -49,7 +49,7 @@ export async function PUT(request: Request): Promise<Response> {
     return Response.json({ error: message }, { status: statusFromErrorMessage(message) });
   }
 
-  if (body.autoSendEnabled === undefined && body.channelsByGame === undefined) {
+  if (body.autoSendEnabled === undefined && body.channelsByGame === undefined && body.paymentMethods === undefined) {
     return Response.json({ error: "Invalid payload: nothing to update." }, { status: 422 });
   }
 

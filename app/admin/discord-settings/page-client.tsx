@@ -279,9 +279,9 @@ export function AdminDiscordSettingsClient() {
               {PAYMENT_METHOD_LABELS.map(([method, label]) => {
                 const enabled = settings.paymentMethods[method];
                 return (
-                  <button key={method} type="button" role="switch" aria-checked={enabled} onClick={() => void togglePaymentMethod(method)} disabled={saving} className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${enabled ? "border-green-700 bg-green-950/30" : "border-green-950 bg-black"}`}>
-                    <span><span className="block text-sm font-semibold text-green-200">{label}</span><span className="mt-1 block text-xs text-green-700">{enabled ? "Ativo no checkout" : "Desativado no checkout"}</span></span>
-                    <span className={`relative inline-flex h-8 w-14 items-center rounded-full border ${enabled ? "border-green-600 bg-green-700/60" : "border-green-900 bg-black"}`}><span className={`inline-block h-5 w-5 rounded-full bg-green-200 transition ${enabled ? "translate-x-7" : "translate-x-1"}`} /></span>
+                  <button key={method} type="button" role="switch" aria-checked={enabled} onClick={() => void togglePaymentMethod(method)} disabled={saving} className={`flex min-h-20 items-center justify-between gap-4 rounded-xl border-2 px-4 py-4 text-left shadow-[0_10px_24px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${enabled ? "border-emerald-500/70 bg-emerald-950/50 hover:bg-emerald-900/50" : "border-rose-500/50 bg-rose-950/30 hover:bg-rose-900/35"}`}>
+                    <span><span className="block text-base font-black text-white">{label}</span><span className={`mt-1 block text-xs font-bold uppercase tracking-[0.1em] ${enabled ? "text-emerald-300" : "text-rose-300"}`}>{enabled ? "Ativo no checkout" : "Desativado no checkout"}</span></span>
+                    <span className={`relative inline-flex h-9 w-16 shrink-0 items-center rounded-full border-2 ${enabled ? "border-emerald-300 bg-emerald-500/70" : "border-rose-300/70 bg-rose-950"}`}><span className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-[0.55rem] font-black text-slate-900 shadow-[0_0_12px_rgba(255,255,255,0.5)] transition ${enabled ? "translate-x-7" : "translate-x-1"}`}>{enabled ? "ON" : "OFF"}</span></span>
                   </button>
                 );
               })}
