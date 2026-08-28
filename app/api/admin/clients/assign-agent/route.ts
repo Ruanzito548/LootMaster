@@ -51,6 +51,11 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ error: "Agent not found." }, { status: 404 });
     }
 
+    const clientData = clientDoc.data() as Record<string, unknown>;
+    if (clientData.isAgent === true) {
+      return Response.json({ error: "A partner cannot be assigned to another partner." }, { status: 409 });
+    }
+
     const agentData = agentDoc.data() as Record<string, unknown>;
     if (agentData.isAgent !== true) {
       return Response.json({ error: "Selected user is not an agent." }, { status: 409 });

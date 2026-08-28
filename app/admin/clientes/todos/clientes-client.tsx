@@ -306,6 +306,12 @@ export default function ClientesAdminClient() {
       return;
     }
 
+    const client = rows.find((row) => row.uid === clientUid);
+    if (client?.isAgent) {
+      setErrorMessage("Um parceiro não pode ser vinculado a outro parceiro.");
+      return;
+    }
+
     const key = `assign:${clientUid}`;
     setLoadingKey(key);
     setErrorMessage(null);
@@ -434,10 +440,10 @@ export default function ClientesAdminClient() {
                               void assignAgent(row.uid, nextAgentUid);
                             }
                           }}
-                          disabled={loadingKey === assignKey}
+                          disabled={loadingKey === assignKey || row.isAgent}
                           className="rounded-md border border-green-800 bg-black px-3 py-2 text-xs text-green-300"
                         >
-                          <option value="">Vincular parceiro...</option>
+                          <option value="">{row.isAgent ? "Parceiro não pode ser vinculado" : "Vincular parceiro..."}</option>
                           {agents.map((agent) => (
                             <option key={agent.uid} value={agent.uid} disabled={agent.uid === row.uid}>
                               {agent.username} ({agent.uid})
