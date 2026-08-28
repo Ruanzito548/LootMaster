@@ -238,13 +238,13 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
       const data = (await response.json()) as { error?: string; ok?: boolean };
 
       if (!response.ok || !data.ok) {
-        setErrorMessage(data.error ?? "Could not resend order to Discord.");
+        setErrorMessage(data.error ?? "Não foi possível reenviar a ordem ao Discord.");
         return;
       }
 
-      setInfoMessage("Order resent to Discord successfully.");
+      setInfoMessage("Ordem reenviada ao Discord com sucesso.");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not resend order to Discord.");
+      setErrorMessage(error instanceof Error ? error.message : "Não foi possível reenviar a ordem ao Discord.");
     } finally {
       setIsResending(false);
     }
@@ -278,11 +278,11 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
       const data = (await response.json()) as { error?: string; ok?: boolean };
 
       if (!response.ok || !data.ok) {
-        setErrorMessage(data.error ?? "Could not complete supplier payout.");
+        setErrorMessage(data.error ?? "Não foi possível concluir o repasse do fornecedor.");
         return;
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not complete supplier payout.");
+      setErrorMessage(error instanceof Error ? error.message : "Não foi possível concluir o repasse do fornecedor.");
     } finally {
       setIsCompleting(false);
     }
@@ -316,10 +316,10 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
       const data = (await response.json()) as { error?: string; ok?: boolean };
 
       if (!response.ok || !data.ok) {
-        setErrorMessage(data.error ?? "Could not close the order channel.");
+        setErrorMessage(data.error ?? "Não foi possível fechar o canal da ordem.");
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not close the order channel.");
+      setErrorMessage(error instanceof Error ? error.message : "Não foi possível fechar o canal da ordem.");
     } finally {
       setIsClosing(false);
     }
@@ -329,7 +329,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
     <section className="mt-6 space-y-6">
       <article className="rounded-2xl border border-green-900 bg-black p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Order Summary</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Resumo da ordem</p>
           {!discordAutoSendEnabled ? (
             <button
               type="button"
@@ -343,19 +343,19 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-green-700">Order ID</p>
+            <p className="text-xs uppercase tracking-wide text-green-700">ID da ordem</p>
             <p className="mt-1 break-all text-sm font-semibold text-green-300">{summary.orderId}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-green-700">Order</p>
+            <p className="text-xs uppercase tracking-wide text-green-700">Ordem</p>
             <p className="mt-1 text-sm font-semibold text-green-300">{summary.gameTitle} / {summary.categoryTitle}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-green-700">Character</p>
+            <p className="text-xs uppercase tracking-wide text-green-700">Personagem</p>
             <p className="mt-1 text-sm font-semibold text-green-300">{summary.nickname}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-green-700">Gold Amount</p>
+            <p className="text-xs uppercase tracking-wide text-green-700">Quantidade de gold</p>
             <p className="mt-1 text-sm font-semibold text-green-300">{summary.goldAmount.toLocaleString("en-US")} gold</p>
           </div>
           <div>
@@ -371,13 +371,13 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
             <p className="mt-1 text-sm font-semibold text-green-300">{formatMoney(summary.totalCents)}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-green-700">Supplier Payout</p>
+            <p className="text-xs uppercase tracking-wide text-green-700">Repasse do fornecedor</p>
             <p className="mt-1 text-sm font-semibold text-green-300">
               {formatMoney(summary.supplierPayoutCents)} ({summary.supplierPercentage.toFixed(2)}%)
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-green-700">Assigned Agent</p>
+            <p className="text-xs uppercase tracking-wide text-green-700">Parceiro vinculado</p>
             <p className="mt-1 text-sm font-semibold text-green-300">{summary.agentName}</p>
             {summary.agentEmail !== "--" ? (
               <p className="mt-1 text-xs text-green-500">{summary.agentEmail}</p>
@@ -433,18 +433,18 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
         <article className="rounded-2xl border border-emerald-800 bg-emerald-950/20 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-500">Selected Supplier</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-500">Fornecedor selecionado</p>
               <h2 className="mt-2 text-xl font-semibold text-emerald-300">{dispatch.selectedSupplierName}</h2>
               <p className="mt-1 text-sm text-emerald-200">{dispatch.selectedSupplierEmail}</p>
               <p className="mt-1 text-sm text-emerald-200">
-                {dispatch.selectedSupplierDiscordHandle || "No Discord handle"} / {dispatch.selectedSupplierDiscordUserId}
+                {dispatch.selectedSupplierDiscordHandle || "Sem usuário do Discord"} / {dispatch.selectedSupplierDiscordUserId}
               </p>
               <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-emerald-400">
-                Status: {dispatch.status === "completed" ? "Completed" : dispatch.status === "paid" ? "Paid" : "Assigned"}
+                Status: {dispatch.status === "completed" ? "Concluído" : dispatch.status === "paid" ? "Pago" : "Atribuído"}
               </p>
               {dispatch.lootCoinsPayoutAmount > 0 ? (
                 <p className="mt-1 text-xs font-semibold text-emerald-300">
-                  Loot Coins sent: {dispatch.lootCoinsPayoutAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  Loot Coins enviados: {dispatch.lootCoinsPayoutAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               ) : null}
             </div>
@@ -455,7 +455,7 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
                   target="_blank"
                   className="inline-flex rounded-md border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-950/40"
                 >
-                  Open Discord channel
+                  Abrir canal do Discord
                 </Link>
               ) : null}
               <button
@@ -465,8 +465,8 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
                 className="inline-flex rounded-md border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {isCompleting
-                  ? "Marking as paid..."
-                  : "Mark as paid"}
+                  ? "Marcando como pago..."
+                  : "Marcar como pago"}
               </button>
               <button
                 type="button"
@@ -475,10 +475,10 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
                 className="inline-flex rounded-md border border-rose-700 px-4 py-2 text-sm font-semibold text-rose-200 transition hover:bg-rose-950/40 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {dispatch.channelClosed
-                  ? "Completed"
+                  ? "Concluído"
                   : isClosing
-                  ? "Completing..."
-                  : "Mark as complete"}
+                  ? "Concluindo..."
+                  : "Marcar como concluído"}
               </button>
             </div>
           </div>
@@ -487,10 +487,10 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
 
       {!isAuthenticated ? (
         <article className="rounded-2xl border border-amber-900 bg-amber-950/20 p-6 text-amber-200">
-          <p className="text-sm font-semibold">Sign in with Google before reviewing applicants and selecting a supplier.</p>
+          <p className="text-sm font-semibold">Entre com uma conta para revisar as aplicações e selecionar um fornecedor.</p>
           <div className="mt-4">
             <Link href="/login" className="inline-flex rounded-md border border-amber-700 px-4 py-2 text-sm font-semibold text-amber-200 transition hover:bg-amber-950/40">
-              Open login
+              Abrir login
             </Link>
           </div>
         </article>
@@ -506,16 +506,16 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
         {applications.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-green-600">No suppliers have applied for this order yet.</p>
+          <p className="px-5 py-4 text-sm text-green-600">Nenhum fornecedor se candidatou a esta ordem ainda.</p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
-                <th className="px-4 py-3">Supplier</th>
+                <th className="px-4 py-3">Fornecedor</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Discord</th>
                 <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Action</th>
+                <th className="px-4 py-3">Ação</th>
               </tr>
             </thead>
             <tbody>
@@ -530,11 +530,11 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
                     <td className="px-4 py-3 font-medium text-green-300">{application.supplierName}</td>
                     <td className="px-4 py-3 text-xs text-green-500">{application.supplierEmail}</td>
                     <td className="px-4 py-3 text-xs text-green-500">
-                      {application.supplierDiscordHandle || "No handle"}
-                      <span className="ml-1 text-green-700">/ {application.supplierDiscordUserId || "Missing User ID"}</span>
+                      {application.supplierDiscordHandle || "Sem identificador"}
+                      <span className="ml-1 text-green-700">/ {application.supplierDiscordUserId || "ID ausente"}</span>
                     </td>
                     <td className="px-4 py-3 text-xs font-semibold uppercase text-green-400">
-                      {isSelected ? "Selected" : application.status}
+                      {isSelected ? "Selecionado" : application.status}
                     </td>
                     <td className="px-4 py-3">
                       <button
@@ -550,12 +550,12 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
                         className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-300 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         {isSelected
-                          ? "Supplier selected"
+                          ? "Fornecedor selecionado"
                           : submittingId === application.applicationId
-                          ? "Creating thread..."
+                          ? "Criando canal..."
                           : dispatch?.selectedApplicationId
-                          ? "Switch to this supplier"
-                          : "Select supplier"}
+                          ? "Trocar para este fornecedor"
+                          : "Selecionar fornecedor"}
                       </button>
                     </td>
                   </tr>
