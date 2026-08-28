@@ -115,17 +115,21 @@ export default async function AdminOrderApplicantsPage(
         operationalReservePercent: defaults.operationalReservePercent,
       });
       const totalUsdCents = convertCentsToUsdCents(amountTotalCents, sourceCurrency, usdRates);
+      const paymentMethod = typeof data.paymentMethod === "string" ? data.paymentMethod.toLowerCase() : "";
+      const paymentSurchargeCents =
+        typeof data.paymentSurchargeCents === "number" && Number.isFinite(data.paymentSurchargeCents)
+          ? Math.max(0, Math.round(data.paymentSurchargeCents))
+          : 0;
+      const cardFeePercent = financials.cardFeePercent;
       const goldSourceCents =
-        typeof data.baseProductCents === "number" && Number.isFinite(data.baseProductCents)
-          ? data.baseProductCents
-          : amountTotalCents;
+        paymentSurchargeCents > 0
+          ? Math.max(0, amountTotalCents - paymentSurchargeCents)
+          : paymentMethod === "card"
+            ? Math.max(0, Math.round(amountTotalCents / (1 + cardFeePercent / 100)))
+            : amountTotalCents;
       const goldUsdCents = convertCentsToUsdCents(goldSourceCents, sourceCurrency, usdRates);
-      const supplierPayoutUsdCents = financials.supplierPayout;
-      const baseProductCents =
-        typeof data.baseProductCents === "number" && Number.isFinite(data.baseProductCents)
-          ? data.baseProductCents
-          : amountTotalCents;
-      const gatewaySourceCents = Math.max(0, Math.round(baseProductCents * (financials.cardFeePercent / 100)));
+      const supplierPayoutUsdCents = Math.max(0, Math.round(goldUsdCents * (financials.supplierPercentage / 100)));
+      const gatewaySourceCents = Math.max(0, amountTotalCents - goldSourceCents);
       const gatewayUsdCents = convertCentsToUsdCents(gatewaySourceCents, sourceCurrency, usdRates);
       const cashbackUsdCents = Math.max(0, Math.round(goldUsdCents * (financials.cashbackPercent / 100)));
       const operationalReserveUsdCents = Math.max(0, Math.round(goldUsdCents * (financials.operationalReservePercent / 100)));
@@ -146,7 +150,6 @@ export default async function AdminOrderApplicantsPage(
         grossProfitUsdCents - cashbackUsdCents - operationalReserveUsdCents - partnerCommissionUsdCents,
       );
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
-      const paymentMethod = typeof data.paymentMethod === "string" ? data.paymentMethod : "";
       const orderCreatedAtIso =
         typeof data.stripeCreatedAt === "string" && data.stripeCreatedAt
           ? data.stripeCreatedAt
@@ -247,7 +250,7 @@ export default async function AdminOrderApplicantsPage(
         supplierPercentage: financials.supplierPercentage,
         gatewayLabel: resolveGatewayLabel(paymentMethod),
         gatewayCents: gatewayUsdCents,
-        gatewayPercent: typeof data.cardFeePercent === "number" ? data.cardFeePercent : 0,
+        gatewayPercent: cardFeePercent,
         cashbackCents: cashbackUsdCents,
         cashbackPercent: typeof data.cashbackPercent === "number" ? data.cashbackPercent : 0,
         operationalReserveCents: operationalReserveUsdCents,
