@@ -47,14 +47,14 @@ const adminSections = [
   {
     id: "07",
     title: "Clientes",
-    description: "Gerencie vínculos cliente-agente e promova clientes para agentes.",
+    description: "Gerencie vínculos cliente-partner e promova clientes para partners.",
     href: "/admin/clientes",
     icon: ShieldCheck,
   },
   {
     id: "08",
-    title: "Comissões de Agentes",
-    description: "Acompanhe os repasses reais recebidos pelos agentes e pela LootMaster em cada compra.",
+    title: "Comissões de Partners",
+    description: "Acompanhe os repasses reais recebidos pelos partners e pela LootMaster em cada compra.",
     href: "/admin/taxas",
     icon: Wallet2,
   },

@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
   { href: "/games", label: "Games", icon: Gamepad2 },
   { href: "/rewards", label: "Rewards", icon: Gift },
   { href: "/profile#inventory", label: "Inventory", icon: Package },
-  { href: "/painel-agente", label: "Painel Agente", icon: LayoutDashboard, requiresAgent: true },
+  { href: "/painel-agente", label: "Partner Panel", icon: LayoutDashboard, requiresAgent: true },
   { href: "/admin", label: "Admin", icon: Shield, requiresAdmin: true },
 ];
 
@@ -44,7 +44,7 @@ const profileItems: NavItem[] = [
   { href: "/profile", label: "My Profile", icon: UserRound },
   { href: "/rewards", label: "Rewards", icon: Gift },
   { href: "/profile#inventory", label: "Inventory", icon: Package },
-  { href: "/painel-agente", label: "Painel Agente", icon: LayoutDashboard, requiresAgent: true },
+  { href: "/painel-agente", label: "Partner Panel", icon: LayoutDashboard, requiresAgent: true },
   { href: "/profile#history", label: "History", icon: LayoutDashboard },
   { href: "/profile#wallet", label: "Wallet", icon: Wallet },
 ];

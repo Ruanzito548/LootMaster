@@ -262,7 +262,7 @@ export default function ClientesAdminClient() {
     { icon: Users, label: "Total de clientes", value: rows.length, caption: "Registros carregados", tone: "text-[#e6c46a]" },
     { icon: UserCheck, label: "Ativos", value: stats.active, caption: `${rows.length ? ((stats.active / rows.length) * 100).toFixed(1) : "0.0"}% do total`, tone: "text-[#45c982]" },
     { icon: UserRound, label: "Novos este mês", value: stats.recent, caption: "Dentro da janela de novos", tone: "text-[#72c8ff]" },
-    { icon: CircleHelp, label: "Sem agente", value: stats.withoutAgent, caption: `${rows.length ? ((stats.withoutAgent / rows.length) * 100).toFixed(1) : "0.0"}% do total`, tone: "text-[#f2b35f]" },
+    { icon: CircleHelp, label: "Sem partner", value: stats.withoutAgent, caption: `${rows.length ? ((stats.withoutAgent / rows.length) * 100).toFixed(1) : "0.0"}% do total`, tone: "text-[#f2b35f]" },
   ];
 
   useEffect(() => {
@@ -353,7 +353,7 @@ export default function ClientesAdminClient() {
   if (!isAuthenticated) {
     return (
       <p className="mt-6 rounded-xl border border-amber-900 bg-amber-950/20 px-5 py-4 text-sm font-medium text-amber-300">
-        Sign in with an admin account to manage clients and agents.
+        Sign in with an admin account to manage clients and partners.
       </p>
     );
   }
@@ -377,7 +377,7 @@ export default function ClientesAdminClient() {
           <input id="clients-search" type="search" value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="Buscar por usuário, email ou UID..." className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] py-2.5 pl-9 pr-3 text-sm text-[#e2e6ea] outline-none transition focus:border-[#d4af5a]/70" />
         </label>
         <label className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]">Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] px-3 py-2.5 text-sm text-[#e2e6ea]"><option value="all">Todos</option><option value="novo">Novos</option><option value="ativo">Ativos</option><option value="inativo">Inativos</option></select></label>
-        <label className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]">Agente<select value={agentFilter} onChange={(event) => setAgentFilter(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] px-3 py-2.5 text-sm text-[#e2e6ea]"><option value="all">Todos os agentes</option><option value="none">Sem agente</option>{agents.map((agent) => <option key={agent.uid} value={agent.uid}>{agent.username}</option>)}</select></label>
+        <label className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]">Partner<select value={agentFilter} onChange={(event) => setAgentFilter(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] px-3 py-2.5 text-sm text-[#e2e6ea]"><option value="all">Todos os partners</option><option value="none">Sem partner</option>{agents.map((agent) => <option key={agent.uid} value={agent.uid}>{agent.username}</option>)}</select></label>
         <label className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#8e98a3]">Ordenar por<select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as "newest" | "oldest" | "lootCoins")} className="mt-2 w-full rounded-lg border border-white/10 bg-[#0c121b] px-3 py-2.5 text-sm text-[#e2e6ea]"><option value="newest">Mais recentes</option><option value="oldest">Mais antigos</option><option value="lootCoins">Mais Loot Coins</option></select></label>
         <button type="button" onClick={() => { setSearchText(""); setStatusFilter("all"); setAgentFilter("all"); setSortOrder("newest"); }} className="self-end rounded-lg border border-[#d4af5a]/35 px-3 py-2.5 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#e6c46a] hover:bg-[#2a2110]">Limpar filtros</button>
       </div>
@@ -395,7 +395,7 @@ export default function ClientesAdminClient() {
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Ultimo acesso</th>
-                <th className="px-4 py-3">Agente atual</th>
+                <th className="px-4 py-3">Partner atual</th>
                 <th className="px-4 py-3">Acoes</th>
               </tr>
             </thead>
@@ -412,7 +412,7 @@ export default function ClientesAdminClient() {
                       <div className="flex items-center gap-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#172538] text-sm font-black text-[#e6c46a]">{row.username.charAt(0).toUpperCase()}</span><div><p className="font-semibold text-[#f0ede4]">{row.username}</p><p className="mt-1 text-xs text-[#748092]">{row.uid}</p><p className="mt-1 text-[0.6rem] font-bold uppercase tracking-[0.1em] text-[#d4af5a]">{row.lootCoins.toFixed(2)} Loot Coins</p></div></div>
                       {row.isAgent ? (
                         <p className="mt-1 text-xs font-semibold text-emerald-400">
-                          Agente ({row.agentFeeSharePercent.toFixed(2)}% da taxa da plataforma)
+                          Partner ({row.agentFeeSharePercent.toFixed(2)}% da taxa da plataforma)
                         </p>
                       ) : null}
                     </td>
@@ -423,7 +423,7 @@ export default function ClientesAdminClient() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-[#a8b3c1]">{formatLastAccess(row.lastActivityAt)}</td>
-                    <td className="px-4 py-3 text-xs text-[#e6c46a]">{row.assignedAgentId ?? "Sem agente"}</td>
+                    <td className="px-4 py-3 text-xs text-[#e6c46a]">{row.assignedAgentId ?? "Sem partner"}</td>
                     <td className="px-4 py-3">
                       <div className="flex min-w-[420px] flex-wrap items-center gap-2">
                         <select
@@ -437,7 +437,7 @@ export default function ClientesAdminClient() {
                           disabled={loadingKey === assignKey}
                           className="rounded-md border border-green-800 bg-black px-3 py-2 text-xs text-green-300"
                         >
-                          <option value="">Vincular agente...</option>
+                          <option value="">Vincular partner...</option>
                           {agents.map((agent) => (
                             <option key={agent.uid} value={agent.uid} disabled={agent.uid === row.uid}>
                               {agent.username} ({agent.uid})
@@ -451,7 +451,7 @@ export default function ClientesAdminClient() {
                           disabled={loadingKey === promoteKey || row.isAgent}
                           className="inline-flex rounded-md border border-emerald-700 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          {loadingKey === promoteKey ? "Promovendo..." : row.isAgent ? "Ja e agente" : "Tornar agente"}
+                          {loadingKey === promoteKey ? "Promovendo..." : row.isAgent ? "Já é partner" : "Tornar partner"}
                         </button>
 
                         <button
@@ -460,7 +460,7 @@ export default function ClientesAdminClient() {
                           disabled={loadingKey === unassignKey || !row.assignedAgentId}
                           className="inline-flex rounded-md border border-rose-700 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-950/40 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          {loadingKey === unassignKey ? "Desvinculando..." : "Desvincular agente"}
+                          {loadingKey === unassignKey ? "Desvinculando..." : "Desvincular partner"}
                         </button>
                       </div>
                     </td>

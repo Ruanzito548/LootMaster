@@ -586,7 +586,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
 
             <div className="sm:col-span-2">
               <label htmlFor="agent-referral-code" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
-                Agent referral code (optional)
+                Partner referral code (optional)
               </label>
               <div className="relative mt-2">
                 <input
@@ -601,7 +601,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
                 />
               </div>
               <p className="mt-2 text-xs text-[#88a8d1]">
-                Enter the agent code here on the client&apos;s first completed purchase to bind the account automatically.
+                Enter the partner code here on the client&apos;s first completed purchase to bind the account automatically.
               </p>
             </div>
           </div>
@@ -647,7 +647,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
               <span className="font-semibold text-[#e7f5ff]">{deliveryMethod || "-"}</span>
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">
-              <span>Agent code</span>
+              <span>Partner code</span>
               <span className="max-w-[10rem] truncate font-semibold text-[#e7f5ff]">{agentReferralCode.trim() || "-"}</span>
             </div>
             <div className="flex items-center justify-between gap-2 text-[#b9d2ec]">

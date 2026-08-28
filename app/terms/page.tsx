@@ -12,7 +12,7 @@ const sections: readonly TermsSection[] = [
     title: "1. About Loot Master",
     paragraphs: [
       "Loot Master is a gaming marketplace that provides users with access to digital gaming products, virtual goods, gaming-related services, rewards, and other digital content.",
-      "Some products or services available through Loot Master may be supplied or fulfilled by third-party sellers, agents, partners, or service providers.",
+      "Some products or services available through Loot Master may be supplied or fulfilled by third-party sellers, partners, or service providers.",
       "Loot Master may modify, add, suspend, or remove products, services, features, or games at any time.",
     ],
   },

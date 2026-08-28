@@ -531,7 +531,7 @@ export function DashboardClient({
     },
     {
       id: "agent",
-      label: "Comissões de agentes (pagas)",
+      label: "Comissões de partners (pagas)",
       currentPercent: configuredPercents.agentCommissionPercent,
       effectivePercent: computeEffectivePercent(totalAgentCommissionPaid, totalRevenue),
       valueCents: totalAgentCommissionPaid,
@@ -786,13 +786,13 @@ export function DashboardClient({
                   href="/admin/taxas"
                   className="inline-flex items-center rounded-full border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/20"
                 >
-                  Comissões de agentes
+                  Comissões de partners
                 </Link>
                 <Link
                   href="/admin/clientes/agentes"
                   className="inline-flex items-center rounded-full border border-fuchsia-500/40 bg-fuchsia-500/10 px-4 py-2 text-sm font-semibold text-fuchsia-200 transition hover:border-fuchsia-400 hover:bg-fuchsia-500/20"
                 >
-                  Agentes
+                  Partners
                 </Link>
                 <Link
                   href="/admin/clientes/todos"
@@ -846,9 +846,9 @@ export function DashboardClient({
                 <p className="mt-2 text-2xl font-black text-cyan-300">{totalOrders}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:col-span-2 xl:col-span-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Comissões de agentes pagas</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Comissões de partners pagas</p>
                 <p className="mt-2 text-2xl font-black text-amber-300">{formatMoney(totalAgentCommissionPaid, displayCurrency)}</p>
-                <p className="mt-1 text-xs text-slate-500">Valor real vindo dos registros de repasse em Comissões de agentes.</p>
+                <p className="mt-1 text-xs text-slate-500">Valor real vindo dos registros de repasse em Comissões de partners.</p>
               </div>
             </div>
 

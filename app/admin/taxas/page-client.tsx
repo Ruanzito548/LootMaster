@@ -167,9 +167,9 @@ export function AdminTaxasClient() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin</p>
-            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Comissões de Agentes</h1>
+            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Comissões de Partners</h1>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-green-600">
-              Registro paginado dos repasses reais por compra para agentes e para a LootMaster.
+              Registro paginado dos repasses reais por compra para partners e para a LootMaster.
             </p>
             <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-green-700">
               Carregamento incremental de {PAGE_SIZE} registros por vez.
@@ -180,7 +180,7 @@ export function AdminTaxasClient() {
               href="/admin/clientes"
               className="inline-flex items-center rounded-md border border-green-800 px-4 py-2 text-sm font-medium text-green-400 transition hover:bg-green-950"
             >
-              Clientes e agentes
+              Clientes e partners
             </Link>
             <Link
               href="/admin"
@@ -195,7 +195,7 @@ export function AdminTaxasClient() {
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar order, cliente, agente ou status"
+            placeholder="Buscar order, cliente, partner ou status"
             className="rounded-xl border border-green-900 bg-black/30 px-3 py-3 text-sm text-green-100 outline-none focus:border-green-700"
           />
           <div className="rounded-xl border border-green-900 bg-black/30 px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-green-600">
@@ -214,7 +214,7 @@ export function AdminTaxasClient() {
 
         <section className="mt-6 overflow-x-auto rounded-xl border border-green-900 bg-black">
           {loading ? (
-            <p className="px-5 py-4 text-sm text-green-600">Carregando comissões de agentes...</p>
+            <p className="px-5 py-4 text-sm text-green-600">Carregando comissões de partners...</p>
           ) : filteredItems.length === 0 ? (
             <p className="px-5 py-4 text-sm text-green-600">Nenhum registro de comissão encontrado.</p>
           ) : (
@@ -225,8 +225,8 @@ export function AdminTaxasClient() {
                   <th className="px-4 py-3">Cliente</th>
                   <th className="px-4 py-3">Total</th>
                   <th className="px-4 py-3">Taxa total</th>
-                  <th className="px-4 py-3">Agente</th>
-                  <th className="px-4 py-3">Repasse agente</th>
+                  <th className="px-4 py-3">Partner</th>
+                  <th className="px-4 py-3">Repasse partner</th>
                   <th className="px-4 py-3">LootMaster</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Criado em</th>
@@ -250,7 +250,7 @@ export function AdminTaxasClient() {
                         {formatMoney(row.platformFeeCents, currency)} ({row.commissionPercent.toFixed(2)}%)
                       </td>
                       <td className="px-4 py-3 text-xs text-green-500">
-                        {row.agentUid ? `${row.agentUid} (${row.agentFeeSharePercent.toFixed(2)}%)` : "Sem agente"}
+                        {row.agentUid ? `${row.agentUid} (${row.agentFeeSharePercent.toFixed(2)}%)` : "Sem partner"}
                       </td>
                       <td className="px-4 py-3 text-xs font-semibold text-emerald-300">
                         {formatMoney(row.agentPayoutCents, currency)}

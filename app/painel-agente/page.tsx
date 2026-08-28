@@ -203,7 +203,7 @@ export default function PainelAgentePage() {
         const payload = (await response.json()) as AgentPanelPayload & { error?: string };
 
         if (!response.ok) {
-          throw new Error(payload.error ?? "Could not load the agent panel.");
+          throw new Error(payload.error ?? "Could not load the partner panel.");
         }
 
         if (!cancelled) {
@@ -211,7 +211,7 @@ export default function PainelAgentePage() {
         }
       } catch (error) {
         if (!cancelled) {
-          setPanelError(error instanceof Error ? error.message : "Could not load the agent panel.");
+          setPanelError(error instanceof Error ? error.message : "Could not load the partner panel.");
           setPanelData(null);
         }
       } finally {
@@ -324,7 +324,7 @@ export default function PainelAgentePage() {
     return (
       <div className="min-h-screen px-4 pb-10 pt-6 text-slate-200 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1500px]">
-          <p className="text-sm text-slate-400">Loading agent panel...</p>
+          <p className="text-sm text-slate-400">Loading partner panel...</p>
         </div>
       </div>
     );
@@ -334,7 +334,7 @@ export default function PainelAgentePage() {
     return (
       <div className="min-h-screen px-4 pb-10 pt-6 text-slate-200 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1500px] rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5">
-          <p className="text-sm font-semibold text-amber-200">Sign in to access the agent panel.</p>
+          <p className="text-sm font-semibold text-amber-200">Sign in to access the partner panel.</p>
           <Link
             href="/login"
             className="mt-3 inline-flex rounded-lg border border-amber-300/40 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-amber-100 transition hover:bg-amber-500/20"
@@ -350,7 +350,7 @@ export default function PainelAgentePage() {
     return (
       <div className="min-h-screen px-4 pb-10 pt-6 text-slate-200 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1500px] rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5">
-          <p className="text-sm font-semibold text-rose-200">Your user does not have agent permission for this panel.</p>
+          <p className="text-sm font-semibold text-rose-200">Your user does not have partner permission for this panel.</p>
           <Link
             href="/profile"
             className="mt-3 inline-flex rounded-lg border border-rose-300/40 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-rose-100 transition hover:bg-rose-500/20"
@@ -381,7 +381,7 @@ export default function PainelAgentePage() {
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#0b131d] via-[#0b131d]/60 to-transparent" />
 
             <div className="relative">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">Agent Panel</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">Partner Panel</p>
               <h1 className="mt-2 inline-flex items-center gap-2 text-3xl font-black text-white sm:text-4xl">
                 Welcome, {profile.username}
                 <Sparkles className="h-5 w-5 text-[#f2c879]" />
