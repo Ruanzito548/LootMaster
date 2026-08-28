@@ -175,6 +175,9 @@ export default function PainelAgentePage() {
   const [clientsPage, setClientsPage] = useState(1);
   const [transactionsPage, setTransactionsPage] = useState(1);
   const [chartPeriod, setChartPeriod] = useState<"month" | "all">("month");
+  const [partnerCode, setPartnerCode] = useState<string | null>(null);
+  const [partnerCodeLoading, setPartnerCodeLoading] = useState(false);
+  const [partnerCodeMessage, setPartnerCodeMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -320,6 +323,34 @@ export default function PainelAgentePage() {
   const pagedClients = clients.slice((clientsPage - 1) * ROWS_PER_PAGE, clientsPage * ROWS_PER_PAGE);
   const pagedTransactions = transactions.slice((transactionsPage - 1) * ROWS_PER_PAGE, transactionsPage * ROWS_PER_PAGE);
 
+  const generatePartnerCode = async () => {
+    if (!user || partnerCodeLoading) return;
+
+    setPartnerCodeLoading(true);
+    setPartnerCodeMessage(null);
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/agent/referral-code", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = (await response.json()) as { code?: string; error?: string };
+      if (!response.ok || !payload.code) throw new Error(payload.error ?? "Não foi possível gerar o código do parceiro.");
+      setPartnerCode(payload.code);
+      setPartnerCodeMessage("Código pronto para compartilhar.");
+    } catch (error) {
+      setPartnerCodeMessage(error instanceof Error ? error.message : "Não foi possível gerar o código do parceiro.");
+    } finally {
+      setPartnerCodeLoading(false);
+    }
+  };
+
+  const copyPartnerCode = async () => {
+    if (!partnerCode) return;
+    await navigator.clipboard.writeText(`${window.location.origin}/?agent=${encodeURIComponent(partnerCode)}`);
+    setPartnerCodeMessage("Link do parceiro copiado.");
+  };
+
   if (status === "loading") {
     return (
       <div className="min-h-screen px-4 pb-10 pt-6 text-slate-200 sm:px-6 lg:px-8">
@@ -445,6 +476,23 @@ export default function PainelAgentePage() {
                 pending={{ cents: commissionStats.pendingCents, label: formatMoney(commissionStats.pendingCents, commissionStats.currency), pct: commissionStats.pendingPct }}
                 available={{ cents: commissionStats.availableCents, label: formatMoney(commissionStats.availableCents, commissionStats.currency), pct: commissionStats.availablePct }}
               />
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[1.5rem] border border-[#f2c879]/25 bg-[#0b131d] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.2)] sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-[#f2c879]">Código do parceiro</p>
+              <p className="mt-2 text-sm text-slate-400">Gere um link para seus clientes usarem na primeira compra.</p>
+              {partnerCode ? <p className="mt-3 font-data text-lg font-black tracking-[0.12em] text-white">{partnerCode}</p> : null}
+              {partnerCodeMessage ? <p className="mt-2 text-xs font-semibold text-emerald-300">{partnerCodeMessage}</p> : null}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => void generatePartnerCode()} disabled={partnerCodeLoading} className="inline-flex items-center gap-2 rounded-xl border border-[#f2c879]/50 bg-[#f2c879]/10 px-4 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[#f2c879] transition hover:bg-[#f2c879]/20 disabled:cursor-not-allowed disabled:opacity-50">
+                <Sparkles className="size-4" /> {partnerCodeLoading ? "Gerando..." : partnerCode ? "Atualizar código" : "Gerar código"}
+              </button>
+              {partnerCode ? <button type="button" onClick={() => void copyPartnerCode()} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-slate-200 transition hover:bg-white/10"><Copy className="size-4" /> Copiar link</button> : null}
             </div>
           </div>
         </section>
