@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Shield, Sparkles } from "lucide-react";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FirebaseError } from "firebase/app";
 import {
   type User,
@@ -34,11 +34,9 @@ const benefits = [
 ] as const;
 
 function LoginContent() {
-  const router = useRouter();
   const params = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [pendingProvider, setPendingProvider] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const referralProcessedRef = useRef(false);
   const exchangeStartedRef = useRef<string | null>(null);
@@ -82,8 +80,6 @@ function LoginContent() {
     }
 
     return onAuthStateChanged(auth, (user) => {
-      setLoggedIn(Boolean(user));
-
       if (user) {
         void applyStoredReferral(user);
       }
@@ -152,14 +148,15 @@ function LoginContent() {
           throw new Error(sessionError.error ?? "Could not create the login session.");
         }
 
+        await firebaseAuth.authStateReady();
         return credential;
       })
-      .then(() => router.replace("/"))
+      .then(() => window.location.replace("/"))
       .catch((err: unknown) => {
         if (firebaseAuth.currentUser) {
           void createSessionFromCurrentUser().then((sessionReady) => {
             if (sessionReady) {
-              router.replace("/");
+              window.location.replace("/");
               return;
             }
             setErrorMessage("Could not create the login session.");
@@ -177,10 +174,10 @@ function LoginContent() {
         setLoading(false);
         setPendingProvider(false);
       });
-  }, [params, router]);
+  }, [params]);
 
   const loginWithDiscord = () => {
-    if (!auth || loading || loggedIn) {
+    if (!auth || loading || pendingProvider) {
       return;
     }
 
@@ -274,7 +271,7 @@ function LoginContent() {
                 <button
                   type="button"
                   onClick={loginWithDiscord}
-                  disabled={loading || loggedIn || !firebaseEnabled}
+                  disabled={loading || pendingProvider || !firebaseEnabled}
                   className="group flex w-full items-center justify-between gap-3 rounded-xl border border-[#5865F2]/80 bg-[linear-gradient(180deg,#5865F2,#4a58d9)] px-4 py-4 text-left text-base font-black uppercase tracking-[0.08em] text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(88,101,242,0.38)] disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
                 >
                   <span className="flex items-center gap-3">
