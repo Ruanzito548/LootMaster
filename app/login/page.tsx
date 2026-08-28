@@ -22,6 +22,12 @@ const DISCORD_ERROR_LABELS: Record<string, string> = {
   server_misconfigured: "Discord OAuth is not configured on this server.",
 };
 
+const FIREBASE_ERROR_LABELS: Record<string, string> = {
+  "auth/invalid-custom-token": "O Firebase rejeitou o token de login. Verifique se o projeto Firebase da Vercel é o mesmo usado pelo servidor.",
+  "auth/unauthorized-domain": "O domínio lootmaster.gg não está autorizado no Firebase Authentication.",
+  "auth/network-request-failed": "Não foi possível comunicar com o Firebase. Verifique a conexão e tente novamente.",
+};
+
 const benefits = [
   { icon: Shield, title: "100% SECURE", text: "Your data is safe with us", accent: "text-[#d9b76a]" },
   { icon: Sparkles, title: "INSTANT ACCESS", text: "Get in the game in seconds", accent: "text-[#8fc1ff]" },
@@ -108,9 +114,9 @@ function LoginContent() {
       cache: "no-store",
     })
       .then(async (response) => {
-        if (!response.ok) throw new Error("Could not complete sign-in.");
-        const result = (await response.json()) as { customToken?: string };
-        if (!result.customToken) throw new Error("Could not complete sign-in.");
+        const result = (await response.json().catch(() => ({}))) as { customToken?: string; error?: string };
+        if (!response.ok) throw new Error(result.error ?? "Could not complete sign-in.");
+        if (!result.customToken) throw new Error("The login token was not returned by the server.");
         const credential = await signInWithCustomToken(firebaseAuth, result.customToken);
         const idToken = await credential.user.getIdToken();
         const sessionResponse = await fetch("/api/auth/session", {
@@ -120,7 +126,8 @@ function LoginContent() {
         });
 
         if (!sessionResponse.ok) {
-          throw new Error("Could not create the login session.");
+          const sessionError = (await sessionResponse.json().catch(() => ({}))) as { error?: string };
+          throw new Error(sessionError.error ?? "Could not create the login session.");
         }
 
         return credential;
@@ -128,7 +135,7 @@ function LoginContent() {
       .then(() => router.replace("/"))
       .catch((err: unknown) => {
         if (err instanceof FirebaseError) {
-          setErrorMessage(getFriendlyAuthError(err.code, "Could not sign in."));
+          setErrorMessage(FIREBASE_ERROR_LABELS[err.code] ?? getFriendlyAuthError(err.code, "Could not sign in."));
         } else {
           setErrorMessage(err instanceof Error ? err.message : "Could not sign in.");
         }
