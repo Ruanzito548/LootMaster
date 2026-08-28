@@ -144,16 +144,6 @@ function LoginContent() {
       });
   }, [params, router]);
 
-  useEffect(() => {
-    if (!auth) {
-      return;
-    }
-
-    if (loggedIn) {
-      router.replace("/");
-    }
-  }, [loggedIn, router]);
-
   const loginWithDiscord = () => {
     if (!auth || loading || loggedIn) {
       return;
