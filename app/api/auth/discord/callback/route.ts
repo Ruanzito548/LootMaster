@@ -63,9 +63,11 @@ export async function GET(request: NextRequest) {
 
   const clientId = process.env.DISCORD_CLIENT_ID;
   const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-  const redirectUri = process.env.DISCORD_REDIRECT_URI;
+  const redirectUri = process.env.NODE_ENV === "production"
+    ? "https://lootmaster.gg/api/auth/discord/callback"
+    : process.env.DISCORD_REDIRECT_URI?.trim() || "http://localhost:3000/api/auth/discord/callback";
 
-  if (!clientId || !clientSecret || !redirectUri) {
+  if (!clientId || !clientSecret) {
     return NextResponse.redirect(new URL("/login?error=server_misconfigured", request.url));
   }
 

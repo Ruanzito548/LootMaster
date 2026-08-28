@@ -7,10 +7,12 @@ import { getAdminDb } from "@/lib/firebase-admin";
  */
 export async function GET(request: NextRequest) {
   const clientId = process.env.DISCORD_CLIENT_ID;
-  const redirectUri = process.env.DISCORD_REDIRECT_URI;
+  const redirectUri = process.env.NODE_ENV === "production"
+    ? "https://lootmaster.gg/api/auth/discord/callback"
+    : process.env.DISCORD_REDIRECT_URI?.trim() || "http://localhost:3000/api/auth/discord/callback";
   const linkToken = request.nextUrl.searchParams.get("linkToken")?.trim() || null;
 
-  if (!clientId || !redirectUri) {
+  if (!clientId) {
     return NextResponse.json(
       { error: "Discord OAuth is not configured on this server." },
       { status: 500 },
