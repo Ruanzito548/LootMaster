@@ -19,6 +19,7 @@ import {
 } from "@/lib/site-fee-settings";
 import { getUsdToCurrencyRate } from "@/lib/checkout-pricing";
 import { createMercadoPagoPixPayment } from "@/lib/mercadopago";
+import { createPayPalOrder } from "@/lib/paypal";
 
 type CheckoutBody = {
   gameId?: unknown;
@@ -580,13 +581,6 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  if (!secretKey) {
-    return Response.json({ error: "Payment gateway not configured." }, { status: 503 });
-  }
-
-  const stripe = new Stripe(secretKey);
-
   const configuredAppUrl = process.env.APP_URL?.trim();
   const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() || process.env.VERCEL_URL?.trim();
   const resolvedAppUrl = configuredAppUrl || (vercelUrl ? `https://${vercelUrl.replace(/^https?:\/\//, "")}` : "");
@@ -614,10 +608,6 @@ export async function POST(request: Request): Promise<Response> {
   const origin = requestOrigin && configuredOrigins.has(requestOrigin)
     ? requestOrigin
     : appUrl;
-
-  const paymentMethodTypes = (
-    paymentMethod === "pix" ? ["pix"] : paymentMethod === "paypal" ? ["paypal"] : ["card"]
-  ) as unknown as Stripe.Checkout.SessionCreateParams["payment_method_types"];
 
   const clientIp =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
@@ -708,6 +698,51 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  if (paymentMethod === "paypal") {
+    if (selectedCurrency !== "usd" && selectedCurrency !== "eur") {
+      return Response.json({ error: "PayPal payments must use USD or EUR currency." }, { status: 422 });
+    }
+
+    const internalOrderId = `paypal_${crypto.randomUUID().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+    try {
+      const paypalOrder = await createPayPalOrder({
+        amount: unitAmount / 100,
+        currency: selectedCurrency.toUpperCase() as "USD" | "EUR",
+        orderId: internalOrderId,
+        description: `${validatedGoldAmount.toLocaleString("en-US")} gold - ${gameTitle}`,
+        returnUrl: `${origin}/api/checkout/paypal/return`,
+        cancelUrl: `${origin}/checkout/cancel`,
+        metadata,
+      });
+
+      await getAdminDb().collection("order-checkouts").doc(internalOrderId).set({
+        orderId: internalOrderId,
+        paymentStatus: "pending",
+        orderStatus: "pending_payment",
+        amountTotalCents: unitAmount,
+        customerEmail: email,
+        ...metadata,
+        currency: selectedCurrency,
+        paypalOrderId: paypalOrder.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      return Response.json({ url: paypalOrder.approvalUrl });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "PayPal order creation failed.";
+      return Response.json({ error: message }, { status: 503 });
+    }
+  }
+
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    return Response.json({ error: "Payment gateway not configured." }, { status: 503 });
+  }
+
+  const stripe = new Stripe(secretKey);
+  const paymentMethodTypes = ["card"] as unknown as Stripe.Checkout.SessionCreateParams["payment_method_types"];
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -730,7 +765,6 @@ export async function POST(request: Request): Promise<Response> {
                 `Delivery: ${deliveryMethod}`,
                 `Character: ${nickname}`,
                 paymentMethod === "card" ? `Card gateway fee applied (${cardGatewayFeePercent.toFixed(2)}%)` : null,
-                paymentMethod === "paypal" ? "PayPal checkout" : null,
               ]
                 .filter(Boolean)
                 .join(" | "),
