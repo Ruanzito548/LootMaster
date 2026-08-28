@@ -128,11 +128,14 @@ export default async function AdminOrderApplicantsPage(
             ? Math.max(0, Math.round(amountTotalCents / (1 + cardFeePercent / 100)))
             : amountTotalCents;
       const goldUsdCents = convertCentsToUsdCents(goldSourceCents, sourceCurrency, usdRates);
-      const supplierPayoutUsdCents = Math.max(0, Math.round(goldUsdCents * (financials.supplierPercentage / 100)));
+      const supplierPayoutSourceCents = Math.max(0, Math.round(goldSourceCents * (financials.supplierPercentage / 100)));
+      const supplierPayoutUsdCents = convertCentsToUsdCents(supplierPayoutSourceCents, sourceCurrency, usdRates);
       const gatewaySourceCents = Math.max(0, amountTotalCents - goldSourceCents);
       const gatewayUsdCents = convertCentsToUsdCents(gatewaySourceCents, sourceCurrency, usdRates);
-      const cashbackUsdCents = Math.max(0, Math.round(goldUsdCents * (financials.cashbackPercent / 100)));
-      const operationalReserveUsdCents = Math.max(0, Math.round(goldUsdCents * (financials.operationalReservePercent / 100)));
+      const cashbackSourceCents = Math.max(0, Math.round(goldSourceCents * (financials.cashbackPercent / 100)));
+      const operationalReserveSourceCents = Math.max(0, Math.round(goldSourceCents * (financials.operationalReservePercent / 100)));
+      const cashbackUsdCents = convertCentsToUsdCents(cashbackSourceCents, sourceCurrency, usdRates);
+      const operationalReserveUsdCents = convertCentsToUsdCents(operationalReserveSourceCents, sourceCurrency, usdRates);
       const feeTransferDoc = await adminDb.collection("fee-transfers").doc(orderId).get();
       const feeTransferData = feeTransferDoc.exists ? (feeTransferDoc.data() as Record<string, unknown>) : {};
       const grossProfitUsdCents = Math.max(0, goldUsdCents - supplierPayoutUsdCents);
