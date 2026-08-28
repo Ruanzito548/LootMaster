@@ -197,9 +197,15 @@ export function AdminDiscordSettingsClient() {
 
         <section className="mt-6 rounded-2xl border border-green-900 bg-black p-6">
           {loading ? (
-            <p className="text-sm text-green-600">Carregando configurações...</p>
+            <div className="flex min-h-16 items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wide text-green-500">Envio automático ao Discord</p>
+                <p className="mt-1 text-sm text-green-600">Carregando configuração...</p>
+              </div>
+              <span className="h-9 w-16 animate-pulse rounded-full border border-green-900 bg-green-950/40" aria-hidden="true" />
+            </div>
           ) : settings ? (
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-6">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-wide text-green-500">Envio automático ao Discord</p>
                 <p className="mt-1 text-sm text-green-600">
@@ -211,18 +217,19 @@ export function AdminDiscordSettingsClient() {
               <button
                 type="button"
                 role="switch"
+                aria-label={settings.autoSendEnabled ? "Desativar envio automático ao Discord" : "Ativar envio automático ao Discord"}
                 aria-checked={settings.autoSendEnabled}
                 onClick={() => void toggleAutoSend()}
                 disabled={saving}
-                className={`relative inline-flex h-8 w-16 shrink-0 items-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                className={`relative inline-flex h-10 w-20 shrink-0 items-center rounded-full border-2 transition disabled:cursor-not-allowed disabled:opacity-50 ${
                   settings.autoSendEnabled
                     ? "border-green-600 bg-green-700/60"
                     : "border-green-900 bg-black"
                 }`}
               >
                 <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-green-200 transition ${
-                    settings.autoSendEnabled ? "translate-x-9" : "translate-x-1"
+                  className={`inline-block h-7 w-7 transform rounded-full bg-green-200 shadow-[0_0_12px_rgba(134,239,172,0.55)] transition ${
+                    settings.autoSendEnabled ? "translate-x-10" : "translate-x-1"
                   }`}
                 />
               </button>
