@@ -31,9 +31,8 @@ type NavGroup = {
 const groups: NavGroup[] = [
   { label: "Dashboard", icon: LayoutDashboard, items: [{ href: "/admin/dashboard", label: "Visão geral" }] },
   { label: "Itens", icon: Package, items: [{ href: "/admin/items", label: "Inventário e itens" }] },
-  { label: "Cadastros", icon: Users, items: [{ href: "/admin/clientes/todos", label: "Usuários" }] },
+  { label: "Cadastros", icon: Users, items: [{ href: "/admin/clientes/todos", label: "Usuários" }, { href: "/admin/clientes/agentes", label: "Parceiros" }] },
   { label: "Financeiro", icon: BarChart3, items: [{ href: "/admin/taxas", label: "Comissões e repasses" }, { href: "/admin/calculadora-financeira", label: "Dashboard financeiro" }] },
-  { label: "Parceiros", icon: Users, items: [{ href: "/admin/clientes/agentes", label: "Parceiros" }] },
   { label: "Relatórios", icon: FileText, items: [{ href: "/admin/history", label: "Histórico operacional" }] },
   { label: "Configurações", icon: Settings, items: [{ href: "/admin/game-configuration", label: "Jogos" }, { href: "/admin/chests", label: "Rewards e Baús" }, { href: "/admin/discord-settings", label: "Pagamentos e Discord" }] },
   { label: "Extrato", icon: Wallet, items: [{ href: "/admin/orders/abertas", label: "Ordens Abertas" }, { href: "/admin/orders/completas", label: "Ordens Completas" }, { href: "/admin/withdrawals/aprovar", label: "Aprovar Saque" }, { href: "/admin/withdrawals/aprovados", label: "Saques Aprovados" }, { href: "/admin/withdrawals/rejeitados", label: "Saques Rejeitados" }, { href: "/admin/giftcard-claims/abertas", label: "Giftcards Abertos" }, { href: "/admin/giftcard-claims/completas", label: "Giftcards Completos" }] },
