@@ -11,6 +11,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 type PutBody = {
   autoSendEnabled?: unknown;
   channelsByGame?: unknown;
+  paymentMethods?: unknown;
 };
 
 function statusFromErrorMessage(message: string): number {
@@ -60,6 +61,7 @@ export async function PUT(request: Request): Promise<Response> {
     const sanitized = sanitizeDiscordSettings({
       autoSendEnabled: body.autoSendEnabled === undefined ? current.autoSendEnabled : body.autoSendEnabled,
       channelsByGame: body.channelsByGame === undefined ? current.channelsByGame : body.channelsByGame,
+      paymentMethods: body.paymentMethods === undefined ? current.paymentMethods : body.paymentMethods,
       updatedAtMs: Date.now(),
     });
 

@@ -9,8 +9,16 @@ import { useProfileSession } from "@/app/profile/use-profile-session";
 type DiscordSettings = {
   autoSendEnabled: boolean;
   channelsByGame: Record<string, string>;
+  paymentMethods: Record<"pix" | "card" | "paypal" | "balance", boolean>;
   updatedAtMs: number;
 };
+
+const PAYMENT_METHOD_LABELS = [
+  ["pix", "PIX"],
+  ["card", "Cartão"],
+  ["paypal", "PayPal"],
+  ["balance", "Loot Coins"],
+] as const;
 
 const GAME_LABELS: { gameId: string; label: string }[] = [
   { gameId: "tbc-anniversary", label: "WoW TBC Anniversary" },
@@ -114,6 +122,32 @@ export function AdminDiscordSettingsClient() {
       setInfoMessage("Configurações do Discord atualizadas com sucesso.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Não foi possível salvar as configurações do Discord.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const togglePaymentMethod = async (method: keyof DiscordSettings["paymentMethods"]) => {
+    if (!settings || saving) return;
+
+    setSaving(true);
+    setErrorMessage(null);
+    setInfoMessage(null);
+    try {
+      const headers = await getAuthorizationHeader(user);
+      if (!headers) throw new Error("Sua sessão ainda não está pronta. Aguarde alguns segundos e tente novamente.");
+      const paymentMethods = { ...settings.paymentMethods, [method]: !settings.paymentMethods[method] };
+      const response = await fetch("/api/admin/discord-settings", {
+        method: "PUT",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentMethods }),
+      });
+      const payload = (await response.json()) as { error?: string; settings?: DiscordSettings };
+      if (!response.ok || !payload.settings) throw new Error(payload.error ?? "Não foi possível salvar os métodos de pagamento.");
+      setSettings(payload.settings);
+      setInfoMessage("Métodos de pagamento atualizados com sucesso.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Não foi possível salvar os métodos de pagamento.");
     } finally {
       setSaving(false);
     }
@@ -233,6 +267,24 @@ export function AdminDiscordSettingsClient() {
                   }`}
                 />
               </button>
+            </div>
+          ) : null}
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-green-900 bg-black p-6">
+          <p className="text-sm font-semibold uppercase tracking-wide text-green-500">Métodos de pagamento</p>
+          <p className="mt-1 text-sm text-green-600">Ative ou desative os métodos disponíveis no checkout. A alteração também é validada no servidor.</p>
+          {loading ? <p className="mt-4 text-sm text-green-600">Carregando métodos...</p> : settings ? (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {PAYMENT_METHOD_LABELS.map(([method, label]) => {
+                const enabled = settings.paymentMethods[method];
+                return (
+                  <button key={method} type="button" role="switch" aria-checked={enabled} onClick={() => void togglePaymentMethod(method)} disabled={saving} className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${enabled ? "border-green-700 bg-green-950/30" : "border-green-950 bg-black"}`}>
+                    <span><span className="block text-sm font-semibold text-green-200">{label}</span><span className="mt-1 block text-xs text-green-700">{enabled ? "Ativo no checkout" : "Desativado no checkout"}</span></span>
+                    <span className={`relative inline-flex h-8 w-14 items-center rounded-full border ${enabled ? "border-green-600 bg-green-700/60" : "border-green-900 bg-black"}`}><span className={`inline-block h-5 w-5 rounded-full bg-green-200 transition ${enabled ? "translate-x-7" : "translate-x-1"}`} /></span>
+                  </button>
+                );
+              })}
             </div>
           ) : null}
         </section>

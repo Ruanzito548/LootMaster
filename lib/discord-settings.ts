@@ -13,6 +13,7 @@ export type DiscordChannelGameId = (typeof DISCORD_CHANNEL_GAME_IDS)[number];
 export type DiscordSettings = {
   autoSendEnabled: boolean;
   channelsByGame: Record<string, string>;
+  paymentMethods: Record<"pix" | "card" | "paypal" | "balance", boolean>;
   updatedAtMs: number;
 };
 
@@ -20,6 +21,7 @@ export function buildDefaultDiscordSettings(): DiscordSettings {
   return {
     autoSendEnabled: true,
     channelsByGame: {},
+    paymentMethods: { pix: true, card: true, paypal: true, balance: true },
     updatedAtMs: Date.now(),
   };
 }
@@ -54,6 +56,12 @@ export function sanitizeDiscordSettings(source: unknown): DiscordSettings {
   return {
     autoSendEnabled: typeof parsed.autoSendEnabled === "boolean" ? parsed.autoSendEnabled : fallback.autoSendEnabled,
     channelsByGame: sanitizeChannelsByGame(parsed.channelsByGame),
+    paymentMethods: {
+      pix: typeof parsed.paymentMethods?.pix === "boolean" ? parsed.paymentMethods.pix : fallback.paymentMethods.pix,
+      card: typeof parsed.paymentMethods?.card === "boolean" ? parsed.paymentMethods.card : fallback.paymentMethods.card,
+      paypal: typeof parsed.paymentMethods?.paypal === "boolean" ? parsed.paymentMethods.paypal : fallback.paymentMethods.paypal,
+      balance: typeof parsed.paymentMethods?.balance === "boolean" ? parsed.paymentMethods.balance : fallback.paymentMethods.balance,
+    },
     updatedAtMs:
       typeof parsed.updatedAtMs === "number" && Number.isFinite(parsed.updatedAtMs) ? parsed.updatedAtMs : fallback.updatedAtMs,
   };

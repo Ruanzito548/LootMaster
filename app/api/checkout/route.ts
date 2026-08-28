@@ -20,6 +20,7 @@ import {
 import { getUsdToCurrencyRate } from "@/lib/checkout-pricing";
 import { createMercadoPagoPixPayment } from "@/lib/mercadopago";
 import { createPayPalOrder } from "@/lib/paypal";
+import { DISCORD_SETTINGS_DOC_ID, buildDefaultDiscordSettings, sanitizeDiscordSettings } from "@/lib/discord-settings";
 
 type CheckoutBody = {
   gameId?: unknown;
@@ -249,6 +250,18 @@ export async function POST(request: Request): Promise<Response> {
 
   if (!(paymentMethod === "pix" || paymentMethod === "card" || paymentMethod === "paypal" || paymentMethod === "balance")) {
     return Response.json({ error: "Invalid payment method." }, { status: 422 });
+  }
+
+  try {
+    const paymentSettingsSnapshot = await getAdminDb().collection("app-config").doc(DISCORD_SETTINGS_DOC_ID).get();
+    const paymentMethods = paymentSettingsSnapshot.exists
+      ? sanitizeDiscordSettings(paymentSettingsSnapshot.data()).paymentMethods
+      : buildDefaultDiscordSettings().paymentMethods;
+    if (!paymentMethods[paymentMethod]) {
+      return Response.json({ error: "This payment method is currently unavailable." }, { status: 403 });
+    }
+  } catch {
+    return Response.json({ error: "Payment method configuration is unavailable." }, { status: 503 });
   }
 
   const textFields: Array<[string, unknown, number]> = [

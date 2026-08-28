@@ -11,6 +11,7 @@ import {
   sanitizeSiteFeeSettings,
 } from "@/lib/site-fee-settings";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { DISCORD_SETTINGS_DOC_ID, buildDefaultDiscordSettings, sanitizeDiscordSettings } from "@/lib/discord-settings";
 
 type FxPayload = {
   rates: Record<string, number>;
@@ -61,6 +62,7 @@ export async function GET(request: Request) {
   const rates = await resolveBrlBaseRates();
 
   let cardGatewayFeePercent = buildDefaultSiteFeeSettings().cardGatewayFeePercent;
+  let paymentMethods = buildDefaultDiscordSettings().paymentMethods;
 
   try {
     const adminDb = getAdminDb();
@@ -73,11 +75,19 @@ export async function GET(request: Request) {
     // Keep default card gateway fee when config cannot be loaded.
   }
 
+  try {
+    const paymentSnapshot = await getAdminDb().collection("app-config").doc(DISCORD_SETTINGS_DOC_ID).get();
+    if (paymentSnapshot.exists) paymentMethods = sanitizeDiscordSettings(paymentSnapshot.data()).paymentMethods;
+  } catch {
+    // Keep all payment methods enabled when the optional setting cannot be read.
+  }
+
   return Response.json({
     detectedCountryCode,
     countryConfig,
     rates,
     cardGatewayFeePercent,
+    paymentMethods,
     supportedCountries: Object.values(CHECKOUT_COUNTRY_CONFIG),
   });
 }

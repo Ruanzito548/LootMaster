@@ -36,6 +36,7 @@ type CountryConfig = {
   locale: string;
   currency: CheckoutCurrency;
   methods: CheckoutPaymentMethod[];
+  paymentMethods?: Record<PaymentMethod, boolean>;
 };
 
 const DEFAULT_COUNTRY_CONFIG: CountryConfig = {
@@ -149,13 +150,15 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
           supportedCountries?: CountryConfig[];
           rates?: Record<string, number>;
           cardGatewayFeePercent?: number;
+          paymentMethods?: Record<PaymentMethod, boolean>;
         };
 
         if (ignore) return;
 
         if (data.countryConfig) {
-          setCountryConfig(data.countryConfig);
-          const nextDefaultMethod = data.countryConfig.methods[0]?.id;
+          const methods = data.countryConfig.methods.filter((method) => data.paymentMethods?.[method.id] !== false);
+          setCountryConfig({ ...data.countryConfig, methods, paymentMethods: data.paymentMethods });
+          const nextDefaultMethod = methods[0]?.id;
           if (nextDefaultMethod) {
             setPaymentMethod(nextDefaultMethod);
           }
@@ -301,11 +304,13 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
         countryConfig?: CountryConfig;
         rates?: Record<string, number>;
         cardGatewayFeePercent?: number;
+        paymentMethods?: Record<PaymentMethod, boolean>;
       };
 
       if (data.countryConfig) {
-        setCountryConfig(data.countryConfig);
-        const nextMethod = data.countryConfig.methods[0]?.id;
+        const methods = data.countryConfig.methods.filter((method) => data.paymentMethods?.[method.id] !== false);
+        setCountryConfig({ ...data.countryConfig, methods, paymentMethods: data.paymentMethods });
+        const nextMethod = methods[0]?.id;
         if (nextMethod) {
           setPaymentMethod(nextMethod);
         }
