@@ -111,7 +111,19 @@ function LoginContent() {
         if (!response.ok) throw new Error("Could not complete sign-in.");
         const result = (await response.json()) as { customToken?: string };
         if (!result.customToken) throw new Error("Could not complete sign-in.");
-        return signInWithCustomToken(firebaseAuth, result.customToken);
+        const credential = await signInWithCustomToken(firebaseAuth, result.customToken);
+        const idToken = await credential.user.getIdToken();
+        const sessionResponse = await fetch("/api/auth/session", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${idToken}` },
+          cache: "no-store",
+        });
+
+        if (!sessionResponse.ok) {
+          throw new Error("Could not create the login session.");
+        }
+
+        return credential;
       })
       .then(() => router.replace("/"))
       .catch((err: unknown) => {
