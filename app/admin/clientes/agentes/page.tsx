@@ -11,12 +11,12 @@ export default function AdminAgentesPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin / Clientes</p>
-            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Partners</h1>
+            <h1 className="mt-1 text-3xl font-semibold text-green-300 sm:text-4xl">Parceiros</h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-green-600">
-              Ajuste a porcentagem da taxa da plataforma que cada partner recebe por compras dos clientes vinculados.
+              Ajuste a porcentagem da taxa da plataforma que cada parceiro recebe por compras dos clientes vinculados.
             </p>
             <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-green-700">
-              Carregamento incremental dos partners mais recentes do painel.
+              Carregamento incremental dos parceiros mais recentes do painel.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

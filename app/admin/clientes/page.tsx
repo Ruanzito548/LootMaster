@@ -4,13 +4,13 @@ const sections = [
   {
     id: "01",
     title: "Todos os clientes",
-    description: "Vincule clientes a partners, promova clientes a partners e gerencie desvinculos.",
+    description: "Vincule clientes a parceiros, promova clientes a parceiros e gerencie desvinculos.",
     href: "/admin/clientes/todos",
   },
   {
     id: "02",
-    title: "Partners",
-    description: "Visualize todos os partners ativos e ajuste a porcentagem da taxa de cada partner.",
+    title: "Parceiros",
+    description: "Visualize todos os parceiros ativos e ajuste a porcentagem da taxa de cada parceiro.",
     href: "/admin/clientes/agentes",
   },
 ];

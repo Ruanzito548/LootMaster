@@ -299,7 +299,7 @@ export default function AgentesAdminClient() {
   if (!isAuthenticated) {
     return (
       <p className="mt-6 rounded-xl border border-amber-900 bg-amber-950/20 px-5 py-4 text-sm font-medium text-amber-300">
-        Sign in with an admin account to manage partners.
+        Entre com uma conta de administrador para gerenciar parceiros.
       </p>
     );
   }
@@ -309,7 +309,7 @@ export default function AgentesAdminClient() {
       <div className="rounded-xl border border-emerald-900 bg-emerald-950/20 px-5 py-4 text-sm text-emerald-200">
         <p className="font-semibold uppercase tracking-[0.14em] text-emerald-400">Referral code</p>
         <p className="mt-2 leading-6 text-emerald-100">
-          Cada partner já tem um código. No checkout, o cliente pode usar <span className="font-semibold">?agent=CODIGO</span> para vincular a primeira compra automaticamente.
+          Cada parceiro já tem um código. No checkout, o cliente pode usar <span className="font-semibold">?agent=CODIGO</span> para vincular a primeira compra automaticamente.
         </p>
         {copiedCode ? <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400">Copiado: {copiedCode}</p> : null}
       </div>
@@ -322,7 +322,7 @@ export default function AgentesAdminClient() {
 
       <div className="flex flex-col gap-2 rounded-xl border border-green-900 bg-black/40 p-4 sm:flex-row sm:items-center sm:justify-between">
         <label className="text-xs font-semibold uppercase tracking-[0.14em] text-green-600" htmlFor="agents-search">
-          Buscar por partner ou email
+          Buscar por parceiro ou e-mail
         </label>
         <div className="flex w-full flex-wrap items-center gap-3 sm:max-w-xl">
           <input
@@ -344,14 +344,14 @@ export default function AgentesAdminClient() {
 
       <article className="overflow-x-auto rounded-xl border border-green-900 bg-black">
         {loading ? (
-          <p className="px-5 py-4 text-sm text-green-600">Carregando partners...</p>
+          <p className="px-5 py-4 text-sm text-green-600">Carregando parceiros...</p>
         ) : rows.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-green-600">Nenhum partner encontrado.</p>
+          <p className="px-5 py-4 text-sm text-green-600">Nenhum parceiro encontrado.</p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
-                <th className="px-4 py-3">Partner</th>
+                <th className="px-4 py-3">Parceiro</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Codigo</th>
                 <th className="px-4 py-3">% da taxa</th>
@@ -425,17 +425,17 @@ export default function AgentesAdminClient() {
             <div>
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#d4af5a]">Jogadores vinculados</p>
               <h2 className="mt-1 text-xl font-black text-[#f0ede4]">{selectedAgent.username}</h2>
-              <p className="mt-1 text-xs text-[#8e98a3]">Saldo do partner: {selectedAgent.lootCoins.toFixed(2)} Loot Coins</p>
+              <p className="mt-1 text-xs text-[#8e98a3]">Saldo do parceiro: {selectedAgent.lootCoins.toFixed(2)} Loot Coins</p>
             </div>
             <button type="button" onClick={() => setSelectedAgent(null)} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold uppercase text-[#a8b3c1] hover:text-[#e6c46a]">Fechar</button>
           </div>
-          {linkedClientsLoading ? <p className="mt-4 text-sm text-[#8e98a3]">Carregando jogadores...</p> : linkedClients.length === 0 ? <p className="mt-4 text-sm text-[#8e98a3]">Nenhum jogador vinculado a este partner.</p> : <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{linkedClients.map((client) => <div key={client.uid} className="rounded-lg border border-white/8 bg-[#0c121b] p-3"><p className="font-bold text-[#f0ede4]">{client.username}</p><p className="mt-1 text-xs text-[#748092]">{client.email}</p><p className="mt-2 text-xs font-bold text-[#e6c46a]">{client.lootCoins.toFixed(2)} Loot Coins</p></div>)}</div>}
+          {linkedClientsLoading ? <p className="mt-4 text-sm text-[#8e98a3]">Carregando jogadores...</p> : linkedClients.length === 0 ? <p className="mt-4 text-sm text-[#8e98a3]">Nenhum jogador vinculado a este parceiro.</p> : <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{linkedClients.map((client) => <div key={client.uid} className="rounded-lg border border-white/8 bg-[#0c121b] p-3"><p className="font-bold text-[#f0ede4]">{client.username}</p><p className="mt-1 text-xs text-[#748092]">{client.email}</p><p className="mt-2 text-xs font-bold text-[#e6c46a]">{client.lootCoins.toFixed(2)} Loot Coins</p></div>)}</div>}
         </section>
       ) : null}
 
       <div ref={loadMoreRef} className="flex justify-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-green-900 bg-black/25 px-4 py-2 text-[0.66rem] font-bold uppercase tracking-[0.14em] text-green-600">
-          {loadingMore ? "Carregando mais..." : nextCursor ? "Role para carregar mais" : "Sem mais partners"}
+          {loadingMore ? "Carregando mais..." : nextCursor ? "Role para carregar mais" : "Sem mais parceiros"}
         </span>
       </div>
     </section>

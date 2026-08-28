@@ -200,7 +200,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
   function exportVisibleRows() {
     const headers = [
       "ID",
-          "Data", "Status", "Partner", "Nickname", "E-mail", "Jogo", "Categoria", "Gold", "Servidor", "Facção", "Valor", "Repasse", "Lucro Bruto", "Lucro Líquido", "Fornecedor", "Fornecedor %", "Entrega", "Pagamento",
+          "Data", "Status", "Parceiro", "Nickname", "E-mail", "Jogo", "Categoria", "Gold", "Servidor", "Facção", "Valor", "Repasse", "Lucro Bruto", "Lucro Líquido", "Fornecedor", "Fornecedor %", "Entrega", "Pagamento",
     ];
 
     const csvRows = sortedRows.map((row) =>
@@ -310,7 +310,7 @@ export function OrdersTableWithActions({ rows, onReload, showSlaTimer = false }:
           <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("created")} className="inline-flex items-center gap-1">Data <span>{sortBy === "created" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("status")} className="inline-flex items-center gap-1">Status <span>{sortBy === "status" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
-            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("agent")} className="inline-flex items-center gap-1">Partner <span>{sortBy === "agent" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+            <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("agent")} className="inline-flex items-center gap-1">Parceiro <span>{sortBy === "agent" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("nickname")} className="inline-flex items-center gap-1">Nickname <span>{sortBy === "nickname" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("email")} className="inline-flex items-center gap-1">E-mail <span>{sortBy === "email" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
             <th className="px-2 py-2"><button type="button" onClick={() => toggleSort("game")} className="inline-flex items-center gap-1">Jogo <span>{sortBy === "game" ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}</span></button></th>

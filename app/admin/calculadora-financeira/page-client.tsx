@@ -481,8 +481,8 @@ export function FinancialCalculatorClient() {
       `Taxa cartao (${formatPercent(parseDecimalInput(scenarioInputs.cardGatewayFeePercent))}): ${formatUsdFromCents(scenario.cardFee)}`,
       `Cashback (${formatPercent(parseDecimalInput(scenarioInputs.cashbackPercent))}): ${formatUsdFromCents(scenario.cashback)}`,
       `Reserva operacional (${formatPercent(parseDecimalInput(scenarioInputs.operationalReservePercent))}): ${formatUsdFromCents(scenario.operationalReserve)}`,
-      `Receita com partner vinculado: ${formatUsdFromCents(monthlyRevenueWithAgentCents)}`,
-      `Comissao do partner (${formatPercent(agentCommissionPercent)}): ${formatUsdFromCents(agentCommissionCost)}`,
+      `Receita com parceiro vinculado: ${formatUsdFromCents(monthlyRevenueWithAgentCents)}`,
+      `Comissao do parceiro (${formatPercent(agentCommissionPercent)}): ${formatUsdFromCents(agentCommissionCost)}`,
       `Lucro liquido: ${formatUsdFromCents(netProfit)}`,
       `Investimento em outros projetos (${formatPercent(otherProjectsInvestmentPercent)}): ${formatUsdFromCents(investmentInOtherProjects)}`,
       `Lucro liquido final: ${formatUsdFromCents(finalNetProfit)}`,
@@ -656,7 +656,7 @@ export function FinancialCalculatorClient() {
               <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">Ajustes Financeiros</h1>
               <p className="max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
                 Simule cenarios com o mesmo metodo do dashboard: fornecedor, gateway, cashback, reserva operacional,
-                comissao do partner e investimento em outros projetos.
+                comissao do parceiro e investimento em outros projetos.
               </p>
             </div>
 
@@ -766,8 +766,8 @@ export function FinancialCalculatorClient() {
                 onChange={(next) => setScenarioInputs((current) => ({ ...current, operationalReservePercent: next }))}
               />
               <PercentRow
-                label="Comissao do Partner (%)"
-                helper="Comissao paga ao partner sobre a receita"
+                label="Comissao do Parceiro (%)"
+                helper="Comissao paga ao parceiro sobre a receita"
                 value={scenarioInputs.agentCommissionPercent}
                 onChange={(next) => setScenarioInputs((current) => ({ ...current, agentCommissionPercent: next }))}
               />
@@ -797,7 +797,7 @@ export function FinancialCalculatorClient() {
                     <td className="px-4 py-3 text-right font-black text-cyan-300 tabular-nums">{formatUsdFromCents(scenario.operationalReserve)}</td>
                   </tr>
                   <tr className="bg-white/[0.03]">
-                    <td className="px-4 py-3 text-slate-300">Comissao do Partner</td>
+                    <td className="px-4 py-3 text-slate-300">Comissao do Parceiro</td>
                     <td className="px-4 py-3 text-right font-black text-cyan-300 tabular-nums">{formatUsdFromCents(agentCommissionCost)}</td>
                   </tr>
                   <tr className="bg-white/[0.03]">
@@ -836,7 +836,7 @@ export function FinancialCalculatorClient() {
 
             <div className="mt-4 grid gap-3">
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                Vendas por dia (com partner)
+                Vendas por dia (com parceiro)
                 <input
                   type="number"
                   inputMode="decimal"
@@ -848,7 +848,7 @@ export function FinancialCalculatorClient() {
                 />
               </label>
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                Vendas por dia (sem partner)
+                Vendas por dia (sem parceiro)
                 <input
                   type="number"
                   inputMode="decimal"
@@ -896,7 +896,7 @@ export function FinancialCalculatorClient() {
             </div>
 
             <p className="mt-4 text-sm text-slate-400">
-              {salesPerDayTotal.toFixed(2)} vendas/dia ({salesPerDayWithAgent.toFixed(2)} com partner + {salesPerDayWithoutAgent.toFixed(2)} sem partner) x {averageSaleValue.toFixed(2)} USD x {activeDays} dias
+              {salesPerDayTotal.toFixed(2)} vendas/dia ({salesPerDayWithAgent.toFixed(2)} com parceiro + {salesPerDayWithoutAgent.toFixed(2)} sem parceiro) x {averageSaleValue.toFixed(2)} USD x {activeDays} dias
             </p>
             <p className="mt-2 text-lg font-black text-cyan-300">Receita: {formatUsdFromCents(monthlyRevenueCents)}</p>
           </article>
