@@ -352,7 +352,7 @@ function createDefaultProfile(user: Pick<User, "uid" | "displayName" | "email" |
     email: user.email?.trim().toLowerCase() || "",
     photoURL: user.photoURL || defaultPhotoURL,
     coverURL: defaultCoverURL,
-    lootCoins: 1250,
+    lootCoins: 0,
     lootCoinsEarned: 0,
     lootCoinsSpent: 0,
     tickets: 12,
