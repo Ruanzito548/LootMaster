@@ -195,10 +195,10 @@ export default function WithdrawalsClient({ mode }: Props) {
 
   const sectionEmptyText =
     mode === "pending"
-      ? "No pending withdrawal requests."
+      ? "Nenhuma solicitação de saque pendente."
       : mode === "approved"
-        ? "No approved withdrawals yet."
-        : "No rejected withdrawals.";
+        ? "Nenhum saque aprovado ainda."
+        : "Nenhum saque rejeitado.";
 
   const canDownloadSpreadsheet = mode === "approved" || mode === "rejected";
 
@@ -325,7 +325,7 @@ export default function WithdrawalsClient({ mode }: Props) {
                           disabled={!isAuthenticated || !isPending || busy}
                           className="inline-flex rounded-md border border-emerald-700 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          {busy ? "Working..." : "Approve"}
+                          {busy ? "Processando..." : "Marcar como pago"}
                         </button>
                         <button
                           type="button"
@@ -333,7 +333,7 @@ export default function WithdrawalsClient({ mode }: Props) {
                           disabled={!isAuthenticated || !isPending || busy}
                           className="inline-flex rounded-md border border-rose-700 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-950/40 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          {busy ? "Working..." : "Reject"}
+                          {busy ? "Processando..." : "Rejeitar"}
                         </button>
                       </div>
                     </td>

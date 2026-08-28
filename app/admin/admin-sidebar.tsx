@@ -35,7 +35,7 @@ const groups: NavGroup[] = [
   { label: "Financeiro", icon: BarChart3, items: [{ href: "/admin/taxas", label: "Comissões e repasses" }, { href: "/admin/calculadora-financeira", label: "Dashboard financeiro" }] },
   { label: "Relatórios", icon: FileText, items: [{ href: "/admin/history", label: "Histórico operacional" }] },
   { label: "Configurações", icon: Settings, items: [{ href: "/admin/game-configuration", label: "Jogos" }, { href: "/admin/chests", label: "Rewards e Baús" }, { href: "/admin/discord-settings", label: "Pagamentos e Discord" }] },
-  { label: "Extrato", icon: Wallet, items: [{ href: "/admin/orders/abertas", label: "Ordens Abertas" }, { href: "/admin/orders/completas", label: "Ordens Completas" }, { href: "/admin/withdrawals/aprovar", label: "Aprovar Saque" }, { href: "/admin/withdrawals/aprovados", label: "Saques Aprovados" }, { href: "/admin/withdrawals/rejeitados", label: "Saques Rejeitados" }, { href: "/admin/giftcard-claims/abertas", label: "Giftcards Abertos" }, { href: "/admin/giftcard-claims/completas", label: "Giftcards Completos" }] },
+  { label: "Extrato", icon: Wallet, items: [{ href: "/admin/orders/abertas", label: "Ordens Abertas" }, { href: "/admin/orders/completas", label: "Ordens Completas" }, { href: "/admin/withdrawals/aprovar", label: "Saques Pendentes" }, { href: "/admin/withdrawals/aprovados", label: "Saques Aprovados" }, { href: "/admin/withdrawals/rejeitados", label: "Saques Rejeitados" }, { href: "/admin/giftcard-claims/abertas", label: "Giftcards Abertos" }, { href: "/admin/giftcard-claims/completas", label: "Giftcards Completos" }] },
 ];
 
 export function AdminSidebar({ mobileOpen, onMobileClose }: AdminSidebarProps) {

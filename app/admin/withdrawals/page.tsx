@@ -39,7 +39,7 @@ export default async function AdminWithdrawalsPage() {
       ) : (
         <section className="mt-6 grid gap-4 md:grid-cols-3">
           <Link href="/admin/withdrawals/aprovar" className="rounded-xl border border-green-800/60 bg-black/40 p-4 transition hover:border-green-600/70 hover:bg-green-950/30">
-            <p className="text-xs uppercase tracking-[0.14em] text-green-600">Aprovar Saque</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-green-600">Saques Pendentes</p>
             <p className="mt-2 text-2xl font-black text-green-200">{pendingCount}</p>
             <p className="mt-1 text-sm text-green-500">Solicitacoes pendentes de revisao.</p>
           </Link>

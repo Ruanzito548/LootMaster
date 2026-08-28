@@ -11,7 +11,7 @@ export default function AdminWithdrawalsPendingPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Admin / Saques</p>
-          <h1 className="mt-1 text-3xl font-semibold text-green-200 sm:text-4xl">Aprovar Saque</h1>
+          <h1 className="mt-1 text-3xl font-semibold text-green-200 sm:text-4xl">Saques Pendentes</h1>
           <p className="mt-2 text-sm text-green-500">Solicitacoes pendentes para aprovar ou rejeitar.</p>
         </div>
       </div>
