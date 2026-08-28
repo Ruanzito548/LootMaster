@@ -255,17 +255,6 @@ export default function AgentesAdminClient() {
     window.setTimeout(() => setCopiedCode((current) => (current === agentReferralCode.trim() ? null : current)), 1500);
   };
 
-  const copyReferralLink = async (agentReferralCode: string) => {
-    if (!agentReferralCode.trim()) {
-      return;
-    }
-
-    const referralLink = `${window.location.origin}/?agent=${encodeURIComponent(agentReferralCode.trim())}`;
-    await navigator.clipboard.writeText(referralLink);
-    setCopiedCode(agentReferralCode.trim());
-    window.setTimeout(() => setCopiedCode((current) => (current === agentReferralCode.trim() ? null : current)), 1500);
-  };
-
   const showLinkedClients = async (agent: AgentRow) => {
     if (!auth?.currentUser) return;
     setSelectedAgent(agent);
@@ -309,7 +298,7 @@ export default function AgentesAdminClient() {
       <div className="rounded-xl border border-emerald-900 bg-emerald-950/20 px-5 py-4 text-sm text-emerald-200">
         <p className="font-semibold uppercase tracking-[0.14em] text-emerald-400">Referral code</p>
         <p className="mt-2 leading-6 text-emerald-100">
-          Cada parceiro já tem um código. No checkout, o cliente pode usar <span className="font-semibold">?agent=CODIGO</span> para vincular a primeira compra automaticamente.
+          Cada parceiro já tem um código. O cliente deve fazer login com Discord e informar o código na etapa de pagamento.
         </p>
         {copiedCode ? <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400">Copiado: {copiedCode}</p> : null}
       </div>
@@ -401,14 +390,6 @@ export default function AgentesAdminClient() {
                         className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-300 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Copiar codigo
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void copyReferralLink(row.agentReferralCode)}
-                        disabled={!row.agentReferralCode}
-                        className="inline-flex rounded-md border border-green-800 px-3 py-2 text-xs font-semibold text-green-300 transition hover:bg-green-950 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        Copiar link
                       </button>
                     </div>
                   </td>

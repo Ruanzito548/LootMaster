@@ -3,9 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { startTransition, useEffect, useMemo, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, type User } from "firebase/auth";
 import { Banknote, Check, Coins, CreditCard, Headphones, Landmark, Mail, ScrollText, ShieldCheck, Sparkles, Sword, Swords, UserRound, Zap } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 
 import { defaultGoldConfigEntry, emptyGoldConfig, getGoldConfigFor } from "../data/gold-config";
 import type { GameServer } from "../data/games";
@@ -93,7 +92,6 @@ function normalizeReferralCode(value: string | null | undefined) {
 }
 
 export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: GoldPurchaseMenuProps) {
-  const searchParams = useSearchParams();
   const [fullGoldConfig, setFullGoldConfig] = useState(emptyGoldConfig);
   const [selectedServerId, setSelectedServerId] = useState("");
   const [selectedFaction, setSelectedFaction] = useState("");
@@ -101,6 +99,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
   const [nickname, setNickname] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState(deliveryMethods[0].value);
   const [email, setEmail] = useState("");
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -131,25 +130,12 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
     }
 
     return onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
       if (user?.email) {
         setEmail((current) => (current.trim() ? current : user.email ?? current));
       }
     });
   }, []);
-
-  useEffect(() => {
-    const nextCode = normalizeReferralCode(
-      searchParams.get("agent") ??
-        searchParams.get("ref") ??
-        searchParams.get("refId") ??
-        searchParams.get("agentId") ??
-        searchParams.get("agent_id"),
-    );
-
-    if (nextCode) {
-      setAgentReferralCode((current) => (current.trim() ? current : nextCode));
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     let ignore = false;
@@ -228,18 +214,21 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
   const completedSteps = [stepServerDone, stepAmountDone, stepDetailsDone, formReady].filter(Boolean).length;
 
   const basePrice = (safeGoldAmount / 1000) * goldConfig.pricePerThousand;
+  const partnerDiscount = currentUser && agentReferralCode.trim() ? basePrice * 0.1 : 0;
+  const discountedBasePrice = Math.max(0, basePrice - partnerDiscount);
   const deliveryAdjustment = 0;
   const paymentAdjustment =
     paymentMethod === "card"
-      ? basePrice * (cardGatewayFeePercent / 100)
+      ? discountedBasePrice * (cardGatewayFeePercent / 100)
       : 0;
-  const finalPrice = Math.max(0, basePrice + deliveryAdjustment + paymentAdjustment);
+  const finalPrice = Math.max(0, discountedBasePrice + deliveryAdjustment + paymentAdjustment);
   const selectedPayment = countryConfig.methods.find((method) => method.id === paymentMethod) ?? countryConfig.methods[0];
   const selectedCurrency = countryConfig.currency;
   const selectedLocale = countryConfig.locale;
   const usdToCurrencyRate = getUsdToCurrencyRate(selectedCurrency, ratesByCurrency);
   const finalPriceLocalized = finalPrice * usdToCurrencyRate;
-  const basePriceLocalized = basePrice * usdToCurrencyRate;
+  const basePriceLocalized = discountedBasePrice * usdToCurrencyRate;
+  const partnerDiscountLocalized = partnerDiscount * usdToCurrencyRate;
   const paymentAdjustmentLocalized = paymentAdjustment * usdToCurrencyRate;
   const lootCoinAmount = Math.max(0, finalPrice);
 
@@ -261,7 +250,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
     setCheckoutError(null);
 
     try {
-      const idToken = paymentMethod === "balance" ? await auth?.currentUser?.getIdToken() : null;
+      const idToken = currentUser ? await currentUser.getIdToken() : null;
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: {
@@ -514,6 +503,26 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
                 </button>
               ))}
             </div>
+
+            <div>
+              <label htmlFor="agent-referral-code" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
+                Partner discount code (optional)
+              </label>
+              <input
+                id="agent-referral-code"
+                type="text"
+                maxLength={20}
+                value={agentReferralCode}
+                disabled={!stepAmountDone || !currentUser}
+                onChange={(event) => setAgentReferralCode(normalizeReferralCode(event.target.value))}
+                placeholder="PARTNER123"
+                className="gm-input mt-2 px-4 py-3 text-sm font-semibold uppercase tracking-[0.12em] disabled:cursor-not-allowed"
+              />
+              <p className="mt-2 text-xs text-[#88a8d1]">
+                {currentUser ? "A valid partner code gives you 10% off this purchase." : "Log in with Discord to use a partner discount code."}
+              </p>
+              {!currentUser ? <Link href="/login" className="mt-2 inline-flex text-xs font-bold text-[#facc15] underline">Log in with Discord</Link> : null}
+            </div>
           </div>
         </article>
 
@@ -581,26 +590,6 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
               </div>
             </div>
 
-            <div className="sm:col-span-2">
-              <label htmlFor="agent-referral-code" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
-                Partner referral code (optional)
-              </label>
-              <div className="relative mt-2">
-                <input
-                  id="agent-referral-code"
-                  type="text"
-                  maxLength={20}
-                  value={agentReferralCode}
-                  disabled={!stepAmountDone}
-                  onChange={(event) => setAgentReferralCode(normalizeReferralCode(event.target.value))}
-                  placeholder="AGENT123"
-                  className="gm-input px-4 py-3 text-sm font-semibold uppercase tracking-[0.12em] disabled:cursor-not-allowed"
-                />
-              </div>
-              <p className="mt-2 text-xs text-[#88a8d1]">
-                Enter the partner code here on the client&apos;s first completed purchase to bind the account automatically.
-              </p>
-            </div>
           </div>
         </article>
       </div>
@@ -681,6 +670,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
             <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#d3e9ff]">Total</p>
             <p className="text-2xl font-black text-[#6ee7ff]">{formatCurrency(finalPriceLocalized, selectedCurrency, selectedLocale)}</p>
           </div>
+          {partnerDiscount > 0 ? <div className="mt-2 flex items-center justify-between gap-2 text-xs text-[#86efac]"><span>Partner discount (10%)</span><span>-{formatCurrency(partnerDiscountLocalized, selectedCurrency, selectedLocale)}</span></div> : null}
           <p className="mt-2 text-right text-xs font-semibold text-[#88a8d1]">Estimated delivery: up to 2 hours.</p>
 
           {paymentMethod === "balance" ? (

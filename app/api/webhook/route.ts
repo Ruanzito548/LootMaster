@@ -455,7 +455,12 @@ export async function processFeeTransfer(session: Stripe.Checkout.Session): Prom
     commissionPercent,
     customerAgent.agentUid ? customerAgent.agentFeeSharePercent : 0,
   );
-  const agentPayoutLootCoins = Math.round((feeBreakdown.agentPayoutCents / 100) * 100) / 100;
+  const partnerDiscountCents = Math.max(0, Number(meta.partnerDiscountPartnerCents ?? 0) || 0);
+  const lootMasterDiscountCents = Math.max(0, Number(meta.partnerDiscountLootMasterCents ?? 0) || 0);
+  const agentPayoutCents = Math.max(0, feeBreakdown.agentPayoutCents - partnerDiscountCents);
+  const lootmasterFeeCents = Math.max(0, feeBreakdown.lootmasterFeeCents - lootMasterDiscountCents);
+  const platformFeeCents = agentPayoutCents + lootmasterFeeCents;
+  const agentPayoutLootCoins = Math.round((agentPayoutCents / 100) * 100) / 100;
 
   const feeRef = adminDb.collection("fee-transfers").doc(session.id);
   const checkoutRef = adminDb.collection("order-checkouts").doc(session.id);
@@ -477,11 +482,14 @@ export async function processFeeTransfer(session: Stripe.Checkout.Session): Prom
         commissionBaseCents,
         currency: (session.currency ?? "brl").toLowerCase(),
         commissionPercent,
-        platformFeeCents: feeBreakdown.platformFeeCents,
+        platformFeeCents,
         agentUid: customerAgent.agentUid,
         agentFeeSharePercent: customerAgent.agentUid ? customerAgent.agentFeeSharePercent : 0,
-        agentPayoutCents: feeBreakdown.agentPayoutCents,
-        lootmasterFeeCents: feeBreakdown.lootmasterFeeCents,
+        agentPayoutCents,
+        lootmasterFeeCents,
+        partnerDiscountCents: partnerDiscountCents + lootMasterDiscountCents,
+        partnerDiscountPartnerCents: partnerDiscountCents,
+        partnerDiscountLootMasterCents: lootMasterDiscountCents,
         agentPayoutLootCoins,
         agentPayoutCredited: false,
         status: "pending_completion",
@@ -498,23 +506,23 @@ export async function processFeeTransfer(session: Stripe.Checkout.Session): Prom
         assignedAgentId: customerAgent.agentUid,
         commissionPercent,
         supplierPercentage,
-        platformFeeCents: feeBreakdown.platformFeeCents,
-        agentPayoutCents: feeBreakdown.agentPayoutCents,
-        lootmasterFeeCents: feeBreakdown.lootmasterFeeCents,
-        platformProfitCents: feeBreakdown.lootmasterFeeCents,
+        platformFeeCents,
+        agentPayoutCents,
+        lootmasterFeeCents,
+        platformProfitCents: lootmasterFeeCents,
         updatedAt: new Date().toISOString(),
       },
       { merge: true },
     );
 
-    if (customerAgent.customerUid && feeBreakdown.platformFeeCents > 0) {
+    if (customerAgent.customerUid && platformFeeCents > 0) {
       writeActivityLog(tx, adminDb, {
         userUid: customerAgent.customerUid,
         actorRole: "system",
         actionType: "platform_fee_charged",
         category: "marketplace",
         description: `Platform fee charged for order ${session.id}.`,
-        value: feeBreakdown.platformFeeCents / 100,
+        value: platformFeeCents / 100,
         valueUnit: "usd",
         origin: "stripe:webhook:fee-transfer",
         status: "completed",
@@ -525,6 +533,19 @@ export async function processFeeTransfer(session: Stripe.Checkout.Session): Prom
         },
         mirrorToAdminAudit: true,
       });
+    }
+
+    if (customerAgent.customerUid && meta.agentReferralCode) {
+      tx.set(
+        adminDb.collection("users").doc(customerAgent.customerUid),
+        {
+          partnerDiscountUsed: true,
+          partnerDiscountCodeUsed: String(meta.agentReferralCode).trim().toUpperCase(),
+          partnerDiscountUsedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
     }
   });
 }

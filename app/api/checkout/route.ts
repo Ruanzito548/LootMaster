@@ -2,7 +2,7 @@ import Stripe from "stripe";
 
 import { defaultGoldConfigEntry } from "@/app/data/gold-config";
 import { getGameById, getServiceCategoryById, getServersByGameId } from "@/app/data/games";
-import { normalizeAgentCode } from "@/lib/agency";
+import { computeFeeBreakdown, normalizeAgentCode } from "@/lib/agency";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { resolveDiscordChannelId } from "@/lib/discord-channel-resolver";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
@@ -289,6 +289,72 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  let customerUid = "";
+  let partnerUid = "";
+  let partnerFeeSharePercent = 0;
+  if (agentReferralCode) {
+    const authorization = request.headers.get("authorization") ?? "";
+    const token = authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
+    if (!token) {
+      return Response.json({ error: "Log in with Discord before using a partner code." }, { status: 401 });
+    }
+
+    try {
+      const decodedToken = await getAdminAuth().verifyIdToken(token, true);
+      customerUid = decodedToken.uid;
+      const customerDoc = await getAdminDb().collection("users").doc(customerUid).get();
+      const customerData = customerDoc.data() as Record<string, unknown> | undefined;
+      if (customerData?.isAgent === true) {
+        return Response.json({ error: "Partners cannot use partner discount codes." }, { status: 422 });
+      }
+      const usedLegacyPartnerCode = typeof customerData?.assignedByReferralCode === "string" && customerData.assignedByReferralCode.trim();
+      if (customerData?.partnerDiscountUsed === true || customerData?.partnerDiscountCodeUsed === true || usedLegacyPartnerCode) {
+        return Response.json({ error: "Partner discount codes are available only on the first purchase. Use a regular coupon instead." }, { status: 422 });
+      }
+
+      const recordedSpent = typeof customerData?.totalSpentCents === "number" && Number.isFinite(customerData.totalSpentCents)
+        ? customerData.totalSpentCents
+        : 0;
+      const customerOrders = await getAdminDb()
+        .collection("order-checkouts")
+        .where("customerUid", "==", customerUid)
+        .limit(25)
+        .get();
+      const hasPaidOrder = customerOrders.docs.some((order) => {
+        const orderData = order.data() as Record<string, unknown>;
+        return orderData.paymentStatus === "paid" || orderData.orderStatus === "paid" || orderData.orderStatus === "completed";
+      });
+      const verifiedEmail = typeof customerData?.email === "string" ? customerData.email.trim().toLowerCase() : "";
+      const emailOrders = verifiedEmail
+        ? await getAdminDb().collection("order-checkouts").where("customerEmail", "==", verifiedEmail).limit(25).get()
+        : null;
+      const hasPaidEmailOrder = emailOrders?.docs.some((order) => {
+        const orderData = order.data() as Record<string, unknown>;
+        return orderData.paymentStatus === "paid" || orderData.orderStatus === "paid" || orderData.orderStatus === "completed";
+      }) ?? false;
+      if (recordedSpent > 0 || hasPaidOrder || hasPaidEmailOrder) {
+        return Response.json({ error: "Partner discount codes are available only on the first purchase. Use a regular coupon instead." }, { status: 422 });
+      }
+
+      const partnerSnapshot = await getAdminDb()
+        .collection("users")
+        .where("agentReferralCode", "==", agentReferralCode.toUpperCase())
+        .where("isAgent", "==", true)
+        .limit(1)
+        .get();
+      if (partnerSnapshot.empty || partnerSnapshot.docs[0]?.id === customerUid) {
+        return Response.json({ error: "Partner discount code not found." }, { status: 422 });
+      }
+      partnerUid = partnerSnapshot.docs[0].id;
+      const partnerData = partnerSnapshot.docs[0].data() as Record<string, unknown>;
+      partnerFeeSharePercent = typeof partnerData.agentFeeSharePercent === "number" && Number.isFinite(partnerData.agentFeeSharePercent)
+        ? partnerData.agentFeeSharePercent
+        : 50;
+    } catch {
+      return Response.json({ error: "Your Discord session is invalid. Log in again before using a partner code." }, { status: 401 });
+    }
+  }
+
   let authoritativeConfig;
   let supplierDefaultPercent = buildDefaultSiteFeeSettings().supplierDefaultPercent;
   let cardGatewayFeePercent = buildDefaultSiteFeeSettings().cardGatewayFeePercent;
@@ -332,7 +398,9 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const basePrice = (validatedGoldAmount / 1000) * authoritativeConfig.pricePerThousand;
-  const pricingBreakdown = computePricingBreakdown(basePrice, paymentMethod, deliveryMethod, cardGatewayFeePercent);
+  const partnerDiscount = agentReferralCode ? basePrice * 0.1 : 0;
+  const discountedBasePrice = Math.max(0, basePrice - partnerDiscount);
+  const pricingBreakdown = computePricingBreakdown(discountedBasePrice, paymentMethod, deliveryMethod, cardGatewayFeePercent);
   const unitAmountBrl = pricingBreakdown.chargedTotalCents;
 
   const normalizedCurrency = (currency ?? "USD").toLowerCase();
@@ -369,6 +437,12 @@ export async function POST(request: Request): Promise<Response> {
       const supplierPercentage = supplierDefaultPercent;
       const supplierPayout = Math.round(pricingBreakdown.baseProductCents * (supplierPercentage / 100));
       const grossProfit = Math.max(0, amountUsdCents - supplierPayout);
+      const commissionPercent = Math.max(0, 100 - supplierPercentage);
+      const feeBreakdown = computeFeeBreakdown(pricingBreakdown.baseProductCents, commissionPercent, partnerUid ? partnerFeeSharePercent : 0);
+      const partnerDiscountPartnerCents = Math.round(basePrice * 0.05 * 100);
+      const partnerDiscountLootMasterCents = Math.round(basePrice * 0.05 * 100);
+      const agentPayoutCents = Math.max(0, feeBreakdown.agentPayoutCents - partnerDiscountPartnerCents);
+      const lootmasterFeeCents = Math.max(0, feeBreakdown.lootmasterFeeCents - partnerDiscountLootMasterCents);
       const adminDb = getAdminDb();
 
       await adminDb.runTransaction(async (transaction) => {
@@ -387,6 +461,13 @@ export async function POST(request: Request): Promise<Response> {
         transaction.set(userRef, {
           lootCoins: Math.round((currentLootCoins - amountUsdCents / 100) * 100) / 100,
           lootCoinsSpent: (typeof userData.lootCoinsSpent === "number" ? userData.lootCoinsSpent : 0) + amountUsdCents / 100,
+          ...(agentReferralCode ? {
+            assignedAgentId: partnerUid,
+            assignedByReferralCode: normalizeAgentCode(agentReferralCode),
+            partnerDiscountUsed: true,
+            partnerDiscountCodeUsed: normalizeAgentCode(agentReferralCode),
+            partnerDiscountUsedAt: new Date().toISOString(),
+          } : {}),
           updatedAt: new Date().toISOString(),
         }, { merge: true });
         transaction.set(orderRef, {
@@ -412,6 +493,15 @@ export async function POST(request: Request): Promise<Response> {
           paymentMethod: "balance",
           paymentGateway: "internal",
           paymentProvider: "Loot Coins",
+          assignedAgentId: partnerUid,
+          agentReferralCode: normalizeAgentCode(agentReferralCode),
+          partnerDiscountCents: Math.round(partnerDiscount * 100),
+          partnerDiscountPartnerCents,
+          partnerDiscountLootMasterCents,
+          platformFeeCents: agentPayoutCents + lootmasterFeeCents,
+          agentPayoutCents,
+          agentFeeSharePercent: partnerUid ? partnerFeeSharePercent : 0,
+          lootmasterFeeCents,
           supplierPercentage,
           grossRevenue: amountUsdCents,
           supplierPayout,
@@ -422,6 +512,30 @@ export async function POST(request: Request): Promise<Response> {
           stripeCreatedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
+        if (partnerUid) {
+          transaction.set(adminDb.collection("fee-transfers").doc(orderId), {
+            orderId,
+            customerUid: decodedToken.uid,
+            customerEmail: email.trim(),
+            amountTotalCents: amountUsdCents,
+            commissionBaseCents: pricingBreakdown.baseProductCents,
+            currency: "usd",
+            commissionPercent,
+            platformFeeCents: agentPayoutCents + lootmasterFeeCents,
+            agentUid: partnerUid,
+            agentFeeSharePercent: partnerFeeSharePercent,
+            agentPayoutCents,
+            lootmasterFeeCents,
+            partnerDiscountCents: Math.round(partnerDiscount * 100),
+            partnerDiscountPartnerCents,
+            partnerDiscountLootMasterCents,
+            agentPayoutLootCoins: Math.round((agentPayoutCents / 100) * 100) / 100,
+            agentPayoutCredited: false,
+            status: "pending_completion",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        }
       });
 
       try {
@@ -538,8 +652,12 @@ export async function POST(request: Request): Promise<Response> {
     email,
     clientIp,
     hasServerOptions: String(hasServerOptions),
-    customerUid: "",
+    customerUid,
+    partnerUid,
     agentReferralCode: normalizeAgentCode(agentReferralCode),
+    partnerDiscountCents: String(Math.round(partnerDiscount * 100)),
+    partnerDiscountPartnerCents: String(Math.round((basePrice * 0.05) * 100)),
+    partnerDiscountLootMasterCents: String(Math.round((basePrice * 0.05) * 100)),
     supplierPercentage: String(supplierDefaultPercent),
     // Keep legacy field for compatibility with historical flows.
     commissionPercent: String(100 - supplierDefaultPercent),

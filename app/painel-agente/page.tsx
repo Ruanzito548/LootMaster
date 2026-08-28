@@ -347,8 +347,8 @@ export default function PainelAgentePage() {
 
   const copyPartnerCode = async () => {
     if (!partnerCode) return;
-    await navigator.clipboard.writeText(`${window.location.origin}/?agent=${encodeURIComponent(partnerCode)}`);
-    setPartnerCodeMessage("Link do parceiro copiado.");
+    await navigator.clipboard.writeText(partnerCode);
+    setPartnerCodeMessage("Código do parceiro copiado.");
   };
 
   if (status === "loading") {
@@ -484,7 +484,7 @@ export default function PainelAgentePage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-[#f2c879]">Código do parceiro</p>
-              <p className="mt-2 text-sm text-slate-400">Gere um link para seus clientes usarem na primeira compra.</p>
+              <p className="mt-2 text-sm text-slate-400">Gere um código para seus clientes usarem durante o pagamento.</p>
               {partnerCode ? <p className="mt-3 font-data text-lg font-black tracking-[0.12em] text-white">{partnerCode}</p> : null}
               {partnerCodeMessage ? <p className="mt-2 text-xs font-semibold text-emerald-300">{partnerCodeMessage}</p> : null}
             </div>
@@ -492,7 +492,7 @@ export default function PainelAgentePage() {
               <button type="button" onClick={() => void generatePartnerCode()} disabled={partnerCodeLoading} className="inline-flex items-center gap-2 rounded-xl border border-[#f2c879]/50 bg-[#f2c879]/10 px-4 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[#f2c879] transition hover:bg-[#f2c879]/20 disabled:cursor-not-allowed disabled:opacity-50">
                 <Sparkles className="size-4" /> {partnerCodeLoading ? "Gerando..." : partnerCode ? "Atualizar código" : "Gerar código"}
               </button>
-              {partnerCode ? <button type="button" onClick={() => void copyPartnerCode()} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-slate-200 transition hover:bg-white/10"><Copy className="size-4" /> Copiar link</button> : null}
+              {partnerCode ? <button type="button" onClick={() => void copyPartnerCode()} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-slate-200 transition hover:bg-white/10"><Copy className="size-4" /> Copiar código</button> : null}
             </div>
           </div>
         </section>
