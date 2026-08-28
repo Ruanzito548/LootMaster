@@ -62,7 +62,10 @@ export default async function AdminOrderApplicantsPage(
     cashbackPercent: 0,
     operationalReserveCents: 0,
     operationalReservePercent: 0,
+    partnerCommissionCents: 0,
+    partnerCommissionPercent: 0,
     netProfitCents: 0,
+    profitMarginPercent: 0,
     orderCreatedAtIso: null as string | null,
     dailyOrdersCount: 1,
     weeklyOrdersCount: 1,
@@ -114,10 +117,17 @@ export default async function AdminOrderApplicantsPage(
       const gatewayUsdCents = convertCentsToUsdCents(financials.cardFee, sourceCurrency, usdRates);
       const cashbackUsdCents = convertCentsToUsdCents(financials.cashback, sourceCurrency, usdRates);
       const operationalReserveUsdCents = convertCentsToUsdCents(financials.operationalReserve, sourceCurrency, usdRates);
+      const feeTransferDoc = await adminDb.collection("fee-transfers").doc(orderId).get();
+      const feeTransferData = feeTransferDoc.exists ? (feeTransferDoc.data() as Record<string, unknown>) : {};
+      const partnerCommissionSourceCents =
+        typeof feeTransferData.agentPayoutCents === "number" && Number.isFinite(feeTransferData.agentPayoutCents)
+          ? feeTransferData.agentPayoutCents
+          : 0;
+      const partnerCommissionUsdCents = convertCentsToUsdCents(partnerCommissionSourceCents, sourceCurrency, usdRates);
       const grossProfitUsdCents = Math.max(0, totalUsdCents - supplierPayoutUsdCents);
       const netProfitUsdCents = Math.max(
         0,
-        grossProfitUsdCents - gatewayUsdCents - cashbackUsdCents - operationalReserveUsdCents,
+        grossProfitUsdCents - gatewayUsdCents - cashbackUsdCents - operationalReserveUsdCents - partnerCommissionUsdCents,
       );
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
       const paymentMethod = typeof data.paymentMethod === "string" ? data.paymentMethod : "";
@@ -225,7 +235,13 @@ export default async function AdminOrderApplicantsPage(
         cashbackPercent: typeof data.cashbackPercent === "number" ? data.cashbackPercent : 0,
         operationalReserveCents: operationalReserveUsdCents,
         operationalReservePercent: typeof data.operationalReservePercent === "number" ? data.operationalReservePercent : 0,
+        partnerCommissionCents: partnerCommissionUsdCents,
+        partnerCommissionPercent:
+          typeof feeTransferData.agentFeeSharePercent === "number" && Number.isFinite(feeTransferData.agentFeeSharePercent)
+            ? feeTransferData.agentFeeSharePercent
+            : 0,
         netProfitCents: netProfitUsdCents,
+        profitMarginPercent: totalUsdCents > 0 ? (netProfitUsdCents / totalUsdCents) * 100 : 0,
         orderCreatedAtIso,
         dailyOrdersCount,
         weeklyOrdersCount,
@@ -270,7 +286,10 @@ export default async function AdminOrderApplicantsPage(
           cashbackPercent: 0,
           operationalReserveCents: 0,
           operationalReservePercent: 0,
+          partnerCommissionCents: 0,
+          partnerCommissionPercent: 0,
           netProfitCents: totalUsdCents - supplierPayoutUsdCents,
+          profitMarginPercent: totalUsdCents > 0 ? ((totalUsdCents - supplierPayoutUsdCents) / totalUsdCents) * 100 : 0,
           orderCreatedAtIso: typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : null,
           dailyOrdersCount: 1,
           weeklyOrdersCount: 1,

@@ -33,7 +33,10 @@ type OrderSummary = {
   cashbackPercent: number;
   operationalReserveCents: number;
   operationalReservePercent: number;
+  partnerCommissionCents: number;
+  partnerCommissionPercent: number;
   netProfitCents: number;
+  profitMarginPercent: number;
   orderCreatedAtIso: string | null;
   dailyOrdersCount: number;
   weeklyOrdersCount: number;
@@ -42,24 +45,6 @@ type OrderSummary = {
   agentName: string;
   agentEmail: string;
 };
-
-type OperationalCostValueType = "percent" | "fixed";
-type OperationalCostFrequency = "once" | "per_order" | "daily" | "weekly" | "monthly" | "annual";
-type OperationalCostCurrency = "USD" | "BRL";
-
-type OperationalCostItem = {
-  id: string;
-  name: string;
-  value: number;
-  valueType: OperationalCostValueType;
-  currency: OperationalCostCurrency;
-  frequency: OperationalCostFrequency;
-  isActive: boolean;
-};
-
-const OPERATIONAL_COST_STORAGE_KEY = "dashboard-operational-cost-items-v1";
-const FX_RATE_STORAGE_KEY = "dashboard-usd-to-brl-rate-v1";
-const DEFAULT_USD_TO_BRL_RATE = 5.5;
 
 function formatMoneyUsdFromUsdCents(amountInUsdCents: number) {
   return new Intl.NumberFormat("en-US", {
@@ -72,38 +57,6 @@ function formatMoneyUsdFromUsdCents(amountInUsdCents: number) {
 
 function formatDeductionUsdFromUsdCents(amountInUsdCents: number) {
   return `-${formatMoneyUsdFromUsdCents(Math.abs(amountInUsdCents))}`;
-}
-
-function parseOperationalCostItem(value: unknown): OperationalCostItem | null {
-  if (!value || typeof value !== "object") return null;
-
-  const row = value as Partial<OperationalCostItem>;
-  const name = typeof row.name === "string" ? row.name.trim() : "";
-
-  if (!name) return null;
-
-  const parsedValue = typeof row.value === "number" && Number.isFinite(row.value) ? row.value : 0;
-  const valueType = row.valueType === "percent" || row.valueType === "fixed" ? row.valueType : "fixed";
-  const currency = row.currency === "BRL" ? "BRL" : "USD";
-  const frequency =
-    row.frequency === "once" ||
-    row.frequency === "per_order" ||
-    row.frequency === "daily" ||
-    row.frequency === "weekly" ||
-    row.frequency === "monthly" ||
-    row.frequency === "annual"
-      ? row.frequency
-      : "monthly";
-
-  return {
-    id: typeof row.id === "string" && row.id ? row.id : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    name,
-    value: Math.max(0, parsedValue),
-    valueType,
-    currency,
-    frequency,
-    isActive: row.isActive !== false,
-  };
 }
 
 type Props = {
@@ -122,82 +75,10 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
   const [isResending, setIsResending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
-  const [operationalCostItems, setOperationalCostItems] = useState<OperationalCostItem[]>([]);
-  const [usdToBrlRateInput, setUsdToBrlRateInput] = useState(DEFAULT_USD_TO_BRL_RATE.toFixed(2));
   const submitLockRef = useRef(false);
 
-  const parsedUsdToBrlRate = Number(usdToBrlRateInput.replace(",", "."));
-  const usdToBrlRate = Number.isFinite(parsedUsdToBrlRate) && parsedUsdToBrlRate > 0 ? parsedUsdToBrlRate : DEFAULT_USD_TO_BRL_RATE;
   const formatMoney = (amountInUsdCents: number) => formatMoneyUsdFromUsdCents(amountInUsdCents);
   const formatDeduction = (amountInUsdCents: number) => formatDeductionUsdFromUsdCents(amountInUsdCents);
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(OPERATIONAL_COST_STORAGE_KEY);
-      if (!raw) return;
-
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return;
-
-      const recovered = parsed
-        .map(parseOperationalCostItem)
-        .filter((item): item is OperationalCostItem => item !== null);
-
-      setOperationalCostItems(recovered);
-    } catch {
-      setOperationalCostItems([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      const rawRate = window.localStorage.getItem(FX_RATE_STORAGE_KEY);
-      if (!rawRate) return;
-
-      const parsedRate = Number(rawRate);
-      if (!Number.isFinite(parsedRate) || parsedRate <= 0) return;
-
-      setUsdToBrlRateInput(parsedRate.toFixed(2));
-    } catch {
-      // Keep default rate.
-    }
-  }, []);
-
-  const operationalCostPerOrderCents = operationalCostItems
-    .filter((item) => item.isActive)
-    .reduce((acc, item) => {
-      if (item.valueType === "percent") {
-        return acc + Math.round(summary.totalCents * (item.value / 100));
-      }
-
-      const baseFixedUsdCents = item.currency === "BRL"
-        ? Math.round((item.value * 100) / usdToBrlRate)
-        : Math.round(item.value * 100);
-
-      if (item.frequency === "per_order") {
-        return acc + baseFixedUsdCents;
-      }
-
-      if (item.frequency === "daily") {
-        return acc + Math.round(baseFixedUsdCents / Math.max(summary.dailyOrdersCount, 1));
-      }
-
-      if (item.frequency === "weekly") {
-        return acc + Math.round(baseFixedUsdCents / Math.max(summary.weeklyOrdersCount, 1));
-      }
-
-      if (item.frequency === "monthly") {
-        return acc + Math.round(baseFixedUsdCents / Math.max(summary.monthlyOrdersCount, 1));
-      }
-
-      if (item.frequency === "annual") {
-        return acc + Math.round(baseFixedUsdCents / Math.max(summary.annualOrdersCount, 1));
-      }
-
-      return acc + baseFixedUsdCents;
-    }, 0);
-
-  const netAfterOperationalCents = summary.netProfitCents - operationalCostPerOrderCents;
 
   useEffect(() => {
     if (!auth) {
@@ -509,16 +390,20 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
 
           <div className="mt-3 space-y-2 text-sm">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-green-200">Venda</span>
+              <span className="text-green-200">Valor total pago</span>
               <span className="font-semibold text-green-200">{formatMoney(summary.totalCents)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-green-300">Valor após taxa do meio de pagamento ({summary.gatewayPercent.toFixed(2)}%)</span>
+              <span className="font-semibold text-green-200">{formatMoney(summary.totalCents - summary.gatewayCents)}</span>
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-green-300">Fornecedor ({summary.supplierPercentage.toFixed(2)}%)</span>
               <span className="font-semibold text-rose-300">{formatDeduction(summary.supplierPayoutCents)}</span>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-green-300">{summary.gatewayLabel} ({summary.gatewayPercent.toFixed(2)}%)</span>
-              <span className="font-semibold text-rose-300">{formatDeduction(summary.gatewayCents)}</span>
+              <span className="text-green-300">Comissão do parceiro ({summary.partnerCommissionPercent.toFixed(2)}%)</span>
+              <span className="font-semibold text-rose-300">{formatDeduction(summary.partnerCommissionCents)}</span>
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-green-300">Cashback / Loot Coins ({summary.cashbackPercent.toFixed(2)}%)</span>
@@ -528,16 +413,17 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
               <span className="text-green-300">Reserva Operacional ({summary.operationalReservePercent.toFixed(2)}%)</span>
               <span className="font-semibold text-rose-300">{formatDeduction(summary.operationalReserveCents)}</span>
             </div>
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-green-300">Custo Operacional</span>
-              <span className="font-semibold text-rose-300">{formatDeduction(operationalCostPerOrderCents)}</span>
-            </div>
-
             <div className="border-t border-dashed border-green-900 pt-2" />
 
             <div className="flex items-center justify-between gap-3">
               <span className="font-bold text-green-100">Lucro Líquido</span>
-              <span className="font-bold text-green-100">{formatMoney(netAfterOperationalCents)}</span>
+              <span className="font-bold text-green-100">{formatMoney(summary.netProfitCents)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3 border-t border-dashed border-green-900 pt-2">
+              <span className="font-bold text-green-100">Margem de lucro da venda</span>
+              <span className={`font-bold ${summary.profitMarginPercent >= 0 ? "text-green-100" : "text-rose-300"}`}>
+                {summary.profitMarginPercent.toFixed(2)}%
+              </span>
             </div>
           </div>
         </article>
