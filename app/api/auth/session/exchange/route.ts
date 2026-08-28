@@ -1,3 +1,4 @@
+import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 export async function POST(request: Request): Promise<Response> {
@@ -21,7 +22,7 @@ export async function POST(request: Request): Promise<Response> {
       if (!snapshot.exists || typeof data?.customToken !== "string" || typeof data.expiresAt !== "number" || data.expiresAt < Date.now()) {
         throw new Error("Invalid exchange code.");
       }
-      transaction.delete(ref);
+      transaction.set(ref, { lastExchangedAt: FieldValue.serverTimestamp() }, { merge: true });
       return data.customToken;
     });
 

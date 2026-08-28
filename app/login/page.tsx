@@ -114,6 +114,21 @@ function LoginContent() {
     const firebaseAuth = auth;
     setLoading(true);
     setPendingProvider(true);
+    const createSessionFromCurrentUser = async () => {
+      const currentUser = firebaseAuth.currentUser;
+      if (!currentUser) {
+        return false;
+      }
+
+      const idToken = await currentUser.getIdToken();
+      const sessionResponse = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${idToken}` },
+        cache: "no-store",
+      });
+      return sessionResponse.ok;
+    };
+
     fetch("/api/auth/session/exchange", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -141,6 +156,19 @@ function LoginContent() {
       })
       .then(() => router.replace("/"))
       .catch((err: unknown) => {
+        if (firebaseAuth.currentUser) {
+          void createSessionFromCurrentUser().then((sessionReady) => {
+            if (sessionReady) {
+              router.replace("/");
+              return;
+            }
+            setErrorMessage("Could not create the login session.");
+            setLoading(false);
+            setPendingProvider(false);
+          });
+          return;
+        }
+
         if (err instanceof FirebaseError) {
           setErrorMessage(FIREBASE_ERROR_LABELS[err.code] ?? getFriendlyAuthError(err.code, "Could not sign in."));
         } else {
