@@ -288,7 +288,6 @@ async function resolveCustomerProfile(session: Stripe.Checkout.Session): Promise
   const adminDb = getAdminDb();
   const meta = session.metadata ?? {};
   const customerUidFromMeta = typeof meta.customerUid === "string" ? meta.customerUid.trim() : "";
-  const customerEmail = (session.customer_email ?? "").trim().toLowerCase();
 
   let customerUid: string | null = customerUidFromMeta || null;
   let customerData: Record<string, unknown> | null = null;
@@ -299,19 +298,6 @@ async function resolveCustomerProfile(session: Stripe.Checkout.Session): Promise
       customerData = customerDoc.data() as Record<string, unknown>;
     } else {
       customerUid = null;
-    }
-  }
-
-  if (!customerUid && customerEmail) {
-    const customerSnapshot = await adminDb
-      .collection("users")
-      .where("email", "==", customerEmail)
-      .limit(1)
-      .get();
-
-    if (!customerSnapshot.empty) {
-      customerUid = customerSnapshot.docs[0].id;
-      customerData = customerSnapshot.docs[0].data() as Record<string, unknown>;
     }
   }
 

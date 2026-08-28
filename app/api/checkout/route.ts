@@ -306,16 +306,23 @@ export async function POST(request: Request): Promise<Response> {
   let customerUid = "";
   let partnerUid = "";
   let partnerFeeSharePercent = 0;
+  const authorization = request.headers.get("authorization") ?? "";
+  const token = authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
+
+  if (token) {
+    try {
+      customerUid = (await getAdminAuth().verifyIdToken(token, true)).uid;
+    } catch {
+      customerUid = "";
+    }
+  }
+
   if (agentReferralCode) {
-    const authorization = request.headers.get("authorization") ?? "";
-    const token = authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
-    if (!token) {
+    if (!token || !customerUid) {
       return Response.json({ error: "Log in with Discord before using a partner code." }, { status: 401 });
     }
 
     try {
-      const decodedToken = await getAdminAuth().verifyIdToken(token, true);
-      customerUid = decodedToken.uid;
       const customerDoc = await getAdminDb().collection("users").doc(customerUid).get();
       const customerData = customerDoc.data() as Record<string, unknown> | undefined;
       if (customerData?.isAgent === true) {
