@@ -58,6 +58,7 @@ function mapRow(docId: string, data: Record<string, unknown>): WithdrawalRow {
     requestId: docId,
     uid: typeof data.uid === "string" ? data.uid : "",
     email: typeof data.email === "string" ? data.email : "",
+    fullName: typeof data.fullName === "string" ? data.fullName : "--",
     amount: typeof data.amount === "number" && Number.isFinite(data.amount) ? data.amount : 0,
     payoutMethod: typeof data.payoutMethod === "string" ? data.payoutMethod : "--",
     payoutReference: typeof data.payoutReference === "string" ? data.payoutReference : "--",

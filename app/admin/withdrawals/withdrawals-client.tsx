@@ -30,6 +30,13 @@ async function getAuthorizationHeader(user: User | null) {
   return token ? { Authorization: `Bearer ${token}` } : null;
 }
 
+function formatWithdrawalStatus(status: WithdrawalRow["status"]) {
+  if (status === "pending_review") return "Pendente";
+  if (status === "approved") return "Pago";
+  if (status === "rejected") return "Rejeitado";
+  return status;
+}
+
 async function fetchWithdrawalsPage(input: {
   user: User | null;
   mode: Props["mode"];
@@ -106,7 +113,7 @@ export default function WithdrawalsClient({ mode }: Props) {
       setRows(page.items);
       setNextCursor(page.nextCursor);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not load withdrawal requests.");
+      setErrorMessage(error instanceof Error ? error.message : "Não foi possível carregar as solicitações de saque.");
     } finally {
       setLoading(false);
     }
@@ -143,7 +150,7 @@ export default function WithdrawalsClient({ mode }: Props) {
             });
             setNextCursor(page.nextCursor);
           } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : "Could not load more withdrawals.");
+            setErrorMessage(error instanceof Error ? error.message : "Não foi possível carregar mais saques.");
           } finally {
             setLoadingMore(false);
           }
@@ -181,13 +188,13 @@ export default function WithdrawalsClient({ mode }: Props) {
       const data = (await response.json()) as { error?: string; ok?: boolean };
 
       if (!response.ok || !data.ok) {
-        setErrorMessage(data.error ?? "Could not review withdrawal request.");
+        setErrorMessage(data.error ?? "Não foi possível revisar a solicitação de saque.");
         return;
       }
 
       setRows((current) => current.filter((row) => row.requestId !== requestId));
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not review withdrawal request.");
+      setErrorMessage(error instanceof Error ? error.message : "Não foi possível revisar a solicitação de saque.");
     } finally {
       setBusyId(null);
     }
@@ -216,19 +223,21 @@ export default function WithdrawalsClient({ mode }: Props) {
     };
 
     const header = [
-      "Request",
+      "Solicitação",
+      "Nome completo",
       "UID",
-      "Email",
-      "Amount Loot",
-      "Method",
-      "Destination",
+      "E-mail",
+      "Valor Loot",
+      "Método",
+      "Destino",
       "Status",
-      "Created At",
-      "Reviewed At",
+      "Criado em",
+      "Revisado em",
     ];
 
     const body = rows.map((row) => [
       row.requestId,
+      row.fullName,
       row.uid,
       row.email,
       row.amount.toFixed(2),
@@ -288,6 +297,7 @@ export default function WithdrawalsClient({ mode }: Props) {
             <thead>
               <tr className="border-b border-green-900 text-xs font-semibold uppercase tracking-wide text-green-600">
                 <th className="px-4 py-3">Solicitação</th>
+                <th className="px-4 py-3">Nome completo</th>
                 <th className="px-4 py-3">Usuário</th>
                 <th className="px-4 py-3">Valor</th>
                 <th className="px-4 py-3">Método</th>
@@ -305,6 +315,7 @@ export default function WithdrawalsClient({ mode }: Props) {
                 return (
                   <tr key={row.requestId} className={`border-b border-green-950 ${index % 2 === 0 ? "" : "bg-green-950/20"}`}>
                     <td className="px-4 py-3 text-xs text-green-500">{row.requestId}</td>
+                    <td className="px-4 py-3 text-xs font-semibold text-green-300">{row.fullName}</td>
                     <td className="px-4 py-3 text-xs text-green-400">
                       <p>{row.email || "Sem e-mail"}</p>
                       <p className="text-green-700">{row.uid}</p>
@@ -312,7 +323,7 @@ export default function WithdrawalsClient({ mode }: Props) {
                     <td className="px-4 py-3 font-semibold text-green-300">{row.amount.toFixed(2)} Loot</td>
                     <td className="px-4 py-3 uppercase text-green-500">{row.payoutMethod}</td>
                     <td className="px-4 py-3 text-xs text-green-500">{row.payoutReference}</td>
-                    <td className="px-4 py-3 text-xs font-semibold uppercase text-green-400">{row.status.replace("_", " ")}</td>
+                    <td className="px-4 py-3 text-xs font-semibold uppercase text-green-400">{formatWithdrawalStatus(row.status)}</td>
                     <td className="px-4 py-3 text-xs text-green-500">
                       <p>{row.createdAtLabel}</p>
                       {row.reviewedAtLabel !== "--" ? <p className="text-green-700">Revisado: {row.reviewedAtLabel}</p> : null}
@@ -347,7 +358,7 @@ export default function WithdrawalsClient({ mode }: Props) {
 
       <div ref={loadMoreRef} className="flex justify-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-green-900 bg-black/25 px-4 py-2 text-[0.66rem] font-bold uppercase tracking-[0.14em] text-green-600">
-          {loadingMore ? "Loading more..." : nextCursor ? "Scroll to load more" : "No more rows"}
+          {loadingMore ? "Carregando mais..." : nextCursor ? "Role para carregar mais" : "Não há mais registros"}
         </span>
       </div>
     </section>

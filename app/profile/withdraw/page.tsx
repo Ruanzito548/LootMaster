@@ -40,6 +40,7 @@ const formatLootAmount = (value: number) =>
 export default function ProfileWithdrawPage() {
   const { status, profile, reload } = useProfileSession();
   const [amountInput, setAmountInput] = useState("");
+  const [fullName, setFullName] = useState("");
   const [method, setMethod] = useState<WithdrawMethod | "">("");
   const [destination, setDestination] = useState("");
   const [confirmHighValue, setConfirmHighValue] = useState(false);
@@ -52,7 +53,7 @@ export default function ProfileWithdrawPage() {
   const canPickMethod = hasValidAmount;
   const canFillDestination = canPickMethod && method !== "";
   const requiresHighValueConfirmation = Number.isFinite(amount) && amount > 100;
-  const canSubmit = canFillDestination && destination.trim() !== "" && (!requiresHighValueConfirmation || confirmHighValue) && !submitting;
+  const canSubmit = fullName.trim() !== "" && fullName.trim().length <= 50 && canFillDestination && destination.trim() !== "" && (!requiresHighValueConfirmation || confirmHighValue) && !submitting;
 
   const activeStep = !amountInput ? 1 : method === "" ? 2 : 3;
 
@@ -88,6 +89,7 @@ export default function ProfileWithdrawPage() {
         },
         body: JSON.stringify({
           amount,
+          fullName: fullName.trim(),
           payoutMethod: method,
           payoutReference: destination.trim(),
           confirmHighValue,
@@ -103,6 +105,7 @@ export default function ProfileWithdrawPage() {
 
       setFeedback("Withdrawal request submitted. It is now pending admin review.");
       setAmountInput("");
+      setFullName("");
       setMethod("");
       setDestination("");
       setConfirmHighValue(false);
@@ -233,6 +236,30 @@ export default function ProfileWithdrawPage() {
           <div className="relative mt-8 rounded-[1.75rem] border border-[#d4af5a]/20 bg-[#09131d]/85 p-5 shadow-[inset_0_1px_0_rgba(212,175,90,0.08)] sm:p-6">
             <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
               <div className="space-y-6">
+                <div className="grid gap-5 md:grid-cols-[1fr_300px] md:items-start">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#d4af5a]/35 bg-[#171d2a] text-[#f6d67b]">
+                      <ShieldCheck className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[0.62rem] font-black uppercase tracking-[0.22em] text-[#caa75d]">Nome completo</p>
+                      <p className="mt-2 text-sm text-[#9bb0ca]">Informe seu nome completo para o pagamento.</p>
+                    </div>
+                  </div>
+
+                  <div className="w-full">
+                    <input
+                      value={fullName}
+                      onChange={(event) => setFullName(event.target.value.slice(0, 50))}
+                      maxLength={50}
+                      placeholder="Nome e sobrenome"
+                      autoComplete="name"
+                      className="w-full rounded-xl border border-[#d4af5a]/35 bg-[#0b1320] px-4 py-3 text-sm font-semibold text-[#edf4fc] outline-none transition focus:border-[#f2c879] focus:ring-2 focus:ring-[#f2c879]/15"
+                    />
+                    <p className="mt-2 text-right text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#8aa6c8]">{fullName.length}/50 caracteres</p>
+                  </div>
+                </div>
+
                 <div className="grid gap-5 md:grid-cols-[1fr_300px] md:items-start">
                   <div className="flex items-start gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#d4af5a]/35 bg-[#171d2a] text-[#f6d67b]">

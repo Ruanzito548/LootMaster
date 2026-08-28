@@ -6,6 +6,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 
 type RequestBody = {
   amount?: number;
+  fullName?: string;
   payoutMethod?: string;
   payoutReference?: string;
   confirmHighValue?: boolean;
@@ -55,12 +56,21 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const amount = toFiniteNumber(body.amount);
+  const fullName = (body.fullName ?? "").trim();
   const payoutMethod = (body.payoutMethod ?? "").trim();
   const payoutReference = (body.payoutReference ?? "").trim();
   const confirmHighValue = body.confirmHighValue === true;
 
   if (!Number.isFinite(amount) || amount <= 0) {
     return Response.json({ error: "Invalid withdraw amount." }, { status: 422 });
+  }
+
+  if (!fullName) {
+    return Response.json({ error: "Nome completo é obrigatório." }, { status: 422 });
+  }
+
+  if (fullName.length > 50) {
+    return Response.json({ error: "O nome completo deve ter no máximo 50 caracteres." }, { status: 422 });
   }
 
   if (!(payoutMethod === "pix" || payoutMethod === "paypal" || payoutMethod === "crypto-usdt")) {
@@ -141,6 +151,7 @@ export async function POST(request: Request): Promise<Response> {
         requestId: withdrawRef.id,
         uid: decodedToken.uid,
         email: decodedToken.email ?? "",
+        fullName,
         amount: normalizedAmount,
         currency: "LOOT",
         status: "pending_review",
