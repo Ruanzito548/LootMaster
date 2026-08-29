@@ -2,6 +2,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { computeOrderFinancials } from "@/lib/order-financials";
+import { computeFeeBreakdownFromNetRevenue } from "@/lib/agency";
 import { clampPercent } from "@/lib/percent-utils";
 
 type RequestBody = {
@@ -96,6 +97,66 @@ export async function POST(request: Request): Promise<Response> {
         },
         { merge: true },
       );
+
+      // Re-sync the partner commission so it reflects the corrected supplier percentage instead of staying frozen at checkout time.
+      const feeTransferRef = adminDb.collection("fee-transfers").doc(orderId);
+      const feeTransferSnapshot = await tx.get(feeTransferRef);
+
+      if (feeTransferSnapshot.exists) {
+        const feeTransferData = feeTransferSnapshot.data() as Record<string, unknown>;
+        const alreadyCredited =
+          feeTransferData.agentPayoutCredited === true || feeTransferData.status === "processed";
+
+        if (!alreadyCredited) {
+          const agentUid = typeof feeTransferData.agentUid === "string" ? feeTransferData.agentUid.trim() : "";
+          const agentFeeSharePercent =
+            typeof feeTransferData.agentFeeSharePercent === "number" && Number.isFinite(feeTransferData.agentFeeSharePercent)
+              ? feeTransferData.agentFeeSharePercent
+              : 0;
+          const partnerDiscountPartnerCents =
+            typeof feeTransferData.partnerDiscountPartnerCents === "number" && Number.isFinite(feeTransferData.partnerDiscountPartnerCents)
+              ? feeTransferData.partnerDiscountPartnerCents
+              : 0;
+          const partnerDiscountLootMasterCents =
+            typeof feeTransferData.partnerDiscountLootMasterCents === "number" && Number.isFinite(feeTransferData.partnerDiscountLootMasterCents)
+              ? feeTransferData.partnerDiscountLootMasterCents
+              : 0;
+
+          const feeBreakdown = computeFeeBreakdownFromNetRevenue(
+            baseProductCents,
+            financials.supplierPayout,
+            agentUid ? agentFeeSharePercent : 0,
+          );
+          const agentPayoutCents = Math.max(0, feeBreakdown.agentPayoutCents - partnerDiscountPartnerCents);
+          const lootmasterFeeCents = Math.max(0, feeBreakdown.lootmasterFeeCents - partnerDiscountLootMasterCents);
+          const agentPayoutLootCoins = Math.round((agentPayoutCents / 100) * 100) / 100;
+
+          tx.set(
+            feeTransferRef,
+            {
+              commissionBaseCents: feeBreakdown.platformFeeCents,
+              commissionPercent: Math.max(0, 100 - financials.supplierPercentage),
+              platformFeeCents: agentPayoutCents + lootmasterFeeCents,
+              agentPayoutCents,
+              lootmasterFeeCents,
+              agentPayoutLootCoins,
+              updatedAt: new Date().toISOString(),
+            },
+            { merge: true },
+          );
+
+          tx.set(
+            ref,
+            {
+              platformFeeCents: agentPayoutCents + lootmasterFeeCents,
+              agentPayoutCents,
+              lootmasterFeeCents,
+              platformProfitCents: lootmasterFeeCents,
+            },
+            { merge: true },
+          );
+        }
+      }
 
       writeActivityLog(tx, adminDb, {
         userUid: targetUserUid,
