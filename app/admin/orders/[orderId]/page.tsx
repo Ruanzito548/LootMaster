@@ -66,6 +66,7 @@ export default async function AdminOrderApplicantsPage(
     operationalReservePercent: 0,
     partnerCommissionCents: 0,
     partnerCommissionPercent: 0,
+    partnerDiscountCents: 0,
     netProfitCents: 0,
     profitMarginPercent: 0,
     orderCreatedAtIso: null as string | null,
@@ -138,11 +139,15 @@ export default async function AdminOrderApplicantsPage(
         typeof feeTransferData.agentFeeSharePercent === "number" && Number.isFinite(feeTransferData.agentFeeSharePercent)
           ? feeTransferData.agentFeeSharePercent
           : 0;
-      const partnerCommissionUsdCents = computeFeeBreakdownFromNetRevenue(
-        goldUsdCents,
-        supplierPayoutUsdCents,
-        partnerCommissionPercent,
-      ).agentPayoutCents;
+      // Prefer the amount actually credited to the partner (net of partner-funded discounts) over a fresh recalculation.
+      const partnerCommissionUsdCents =
+        typeof feeTransferData.agentPayoutCents === "number" && Number.isFinite(feeTransferData.agentPayoutCents)
+          ? convertCentsToUsdCents(feeTransferData.agentPayoutCents, sourceCurrency, usdRates)
+          : computeFeeBreakdownFromNetRevenue(goldUsdCents, supplierPayoutUsdCents, partnerCommissionPercent).agentPayoutCents;
+      const partnerDiscountUsdCents =
+        typeof feeTransferData.partnerDiscountPartnerCents === "number" && Number.isFinite(feeTransferData.partnerDiscountPartnerCents)
+          ? convertCentsToUsdCents(feeTransferData.partnerDiscountPartnerCents, sourceCurrency, usdRates)
+          : 0;
       const netProfitUsdCents = Math.max(
         0,
         grossProfitUsdCents - cashbackUsdCents - operationalReserveUsdCents - partnerCommissionUsdCents,
@@ -255,6 +260,7 @@ export default async function AdminOrderApplicantsPage(
         operationalReservePercent: typeof data.operationalReservePercent === "number" ? data.operationalReservePercent : 0,
         partnerCommissionCents: partnerCommissionUsdCents,
         partnerCommissionPercent,
+        partnerDiscountCents: partnerDiscountUsdCents,
         netProfitCents: netProfitUsdCents,
         profitMarginPercent: goldUsdCents > 0 ? (netProfitUsdCents / goldUsdCents) * 100 : 0,
         orderCreatedAtIso,
@@ -305,6 +311,7 @@ export default async function AdminOrderApplicantsPage(
           operationalReservePercent: 0,
           partnerCommissionCents: 0,
           partnerCommissionPercent: 0,
+          partnerDiscountCents: 0,
           netProfitCents: totalUsdCents - supplierPayoutUsdCents,
           profitMarginPercent: totalUsdCents > 0 ? ((totalUsdCents - supplierPayoutUsdCents) / totalUsdCents) * 100 : 0,
           orderCreatedAtIso: typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : null,

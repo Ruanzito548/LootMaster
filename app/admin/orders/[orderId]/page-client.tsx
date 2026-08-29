@@ -36,6 +36,7 @@ type OrderSummary = {
   operationalReservePercent: number;
   partnerCommissionCents: number;
   partnerCommissionPercent: number;
+  partnerDiscountCents: number;
   netProfitCents: number;
   profitMarginPercent: number;
   orderCreatedAtIso: string | null;
@@ -412,6 +413,12 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
               <span className="text-green-300">Comissão do agente ({summary.partnerCommissionPercent.toFixed(2)}% do lucro bruto)</span>
               <span className="font-semibold text-rose-300">{formatDeduction(summary.partnerCommissionCents)}</span>
             </div>
+            {summary.partnerDiscountCents > 0 ? (
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span className="text-amber-400">Já descontado: desconto de primeira compra custeado pelo parceiro</span>
+                <span className="font-semibold text-amber-400">-{formatMoney(summary.partnerDiscountCents)}</span>
+              </div>
+            ) : null}
             <div className="flex items-center justify-between gap-3">
               <span className="text-green-300">Cashback / Loot Coins ({summary.cashbackPercent.toFixed(2)}%)</span>
               <span className="font-semibold text-rose-300">{formatDeduction(summary.cashbackCents)}</span>
