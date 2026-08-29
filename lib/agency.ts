@@ -1,5 +1,5 @@
 export const DEFAULT_PLATFORM_FEE_PERCENT = 15;
-export const DEFAULT_AGENT_FEE_SHARE_PERCENT = 50;
+export const DEFAULT_AGENT_FEE_SHARE_PERCENT = 30;
 
 import { clampPercent } from "./percent-utils";
 
