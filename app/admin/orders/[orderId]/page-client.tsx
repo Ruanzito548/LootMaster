@@ -45,6 +45,7 @@ type OrderSummary = {
   annualOrdersCount: number;
   agentName: string;
   agentEmail: string;
+  assignedAgentId: string;
 };
 
 function formatMoneyUsdFromUsdCents(amountInUsdCents: number) {
@@ -525,13 +526,26 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
             <tbody>
               {applications.map((application, index) => {
                 const isSelected = dispatch?.selectedApplicationId === application.applicationId;
+                const isPartnerApplication =
+                  Boolean(summary.assignedAgentId) && application.uid === summary.assignedAgentId;
 
                 return (
                   <tr
                     key={application.applicationId}
-                    className={`border-b border-green-950 ${index % 2 === 0 ? "" : "bg-green-950/20"}`}
+                    className={`border-b border-green-950 ${
+                      isPartnerApplication ? "bg-emerald-900/20" : index % 2 === 0 ? "" : "bg-green-950/20"
+                    }`}
                   >
-                    <td className="px-4 py-3 font-medium text-green-300">{application.supplierName}</td>
+                    <td className="px-4 py-3 font-medium">
+                      <span className={isPartnerApplication ? "text-emerald-400" : "text-green-300"}>
+                        {application.supplierName}
+                      </span>
+                      {isPartnerApplication ? (
+                        <span className="ml-2 inline-flex items-center rounded-full border border-emerald-500 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
+                          Cliente do parceiro
+                        </span>
+                      ) : null}
+                    </td>
                     <td className="px-4 py-3 text-xs text-green-500">{application.supplierEmail}</td>
                     <td className="px-4 py-3 text-xs text-green-500">
                       {application.supplierDiscordHandle || "Sem identificador"}

@@ -75,6 +75,7 @@ export default async function AdminOrderApplicantsPage(
     annualOrdersCount: 1,
     agentName: "--",
     agentEmail: "--",
+    assignedAgentId: "",
   };
   let loadError: string | null = null;
   let preloadError: string | null = null;
@@ -263,6 +264,7 @@ export default async function AdminOrderApplicantsPage(
         annualOrdersCount,
         agentName,
         agentEmail,
+        assignedAgentId,
       };
     }
   } catch (error) {
@@ -312,6 +314,7 @@ export default async function AdminOrderApplicantsPage(
           annualOrdersCount: 1,
           agentName: "--",
           agentEmail: "--",
+          assignedAgentId: "",
         };
       } catch (error) {
         loadError = error instanceof Error ? error.message : "Could not load order details.";
