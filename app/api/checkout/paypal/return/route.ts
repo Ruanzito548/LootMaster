@@ -14,6 +14,7 @@ import {
 import { resolveDiscordChannelId } from "@/lib/discord-channel-resolver";
 import { isDiscordAutoSendEnabled } from "@/lib/discord-settings";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
+import { resolveOrderCouponContext } from "@/lib/order-financials";
 import { syncPaidOrderToWalletBackend } from "@/lib/wallet-backend";
 
 function asMetadata(data: Record<string, unknown>) {
@@ -71,11 +72,13 @@ export async function GET(request: Request): Promise<Response> {
     await orderRef.set({ paymentStatus: "paid", orderStatus: "paid", paypalCaptureId: capture.id, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
 
     const meta = session.metadata ?? {};
+  const supplierGoldCents = resolveOrderCouponContext(meta).goldValueCents ?? Number(meta.baseProductCents ?? 0);
+  const supplierPayoutCents = Math.max(0, supplierGoldCents * supplierPercentage / 100);
     await syncPaidOrderToWalletBackend({
       orderId: session.id,
       customerId: session.customer_email ?? null,
       totalAmount: amount,
-      supplierPayout: Math.max(0, Number(meta.baseProductCents ?? 0) * supplierPercentage / 100 / 100),
+      supplierPayout: supplierPayoutCents / 100,
       currency: currencyCode.toUpperCase(),
       metadata: { gameId: meta.gameId ?? "", gameTitle: meta.gameTitle ?? "", categoryId: meta.categoryId ?? "", categoryTitle: meta.categoryTitle ?? "", server: meta.server ?? "", faction: meta.faction ?? "", nickname: meta.nickname ?? "", goldAmount: Number(meta.goldAmount ?? 0) || 0 },
     });
@@ -94,7 +97,7 @@ export async function GET(request: Request): Promise<Response> {
         nickname: meta.nickname ?? "-",
         paymentMethod: "paypal",
         finalAmountCents: String(session.amount_total),
-        supplierPayoutCents: String(Number(meta.baseProductCents ?? 0) * supplierPercentage / 100),
+        supplierPayoutCents: String(supplierPayoutCents),
         currency: currencyCode,
         email: session.customer_email ?? "-",
       });

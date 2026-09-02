@@ -34,9 +34,9 @@ type OrderSummary = {
   cashbackPercent: number;
   operationalReserveCents: number;
   operationalReservePercent: number;
+  couponUsed: boolean;
   partnerCommissionCents: number;
   partnerCommissionPercent: number;
-  partnerDiscountCents: number;
   netProfitCents: number;
   profitMarginPercent: number;
   orderCreatedAtIso: string | null;
@@ -393,6 +393,12 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
 
           <div className="mt-3 space-y-2 text-sm">
             <div className="flex items-center justify-between gap-3">
+              <span className="text-green-300">Uso de cupom/código</span>
+              <span className={`font-semibold ${summary.couponUsed ? "text-amber-300" : "text-green-200"}`}>
+                {summary.couponUsed ? "Sim" : "Não"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
               <span className="text-green-200">Valor total pago</span>
               <span className="font-semibold text-green-200">{formatMoney(summary.totalCents)}</span>
             </div>
@@ -413,14 +419,8 @@ export function AdminOrderApplicantsClient({ summary, initialApplications, disco
               <span className="text-green-300">Comissão do agente ({summary.partnerCommissionPercent.toFixed(2)}% do lucro bruto)</span>
               <span className="font-semibold text-rose-300">{formatDeduction(summary.partnerCommissionCents)}</span>
             </div>
-            {summary.partnerDiscountCents > 0 ? (
-              <div className="flex items-center justify-between gap-3 text-xs">
-                <span className="text-amber-400">Já descontado: desconto de primeira compra custeado pelo parceiro</span>
-                <span className="font-semibold text-amber-400">-{formatMoney(summary.partnerDiscountCents)}</span>
-              </div>
-            ) : null}
             <div className="flex items-center justify-between gap-3">
-              <span className="text-green-300">Cashback / Loot Coins ({summary.cashbackPercent.toFixed(2)}%)</span>
+              <span className="text-green-300">Cashback / Loot Coins ({(summary.couponUsed ? 0 : summary.cashbackPercent).toFixed(2)}%)</span>
               <span className="font-semibold text-rose-300">{formatDeduction(summary.cashbackCents)}</span>
             </div>
             <div className="flex items-center justify-between gap-3">

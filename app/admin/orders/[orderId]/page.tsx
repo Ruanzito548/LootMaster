@@ -4,8 +4,11 @@ import { FieldPath } from "firebase-admin/firestore";
 
 import { getAdminDb } from "@/lib/firebase-admin";
 import { convertCentsToUsdCents, getUsdRates, normalizeCurrency } from "@/lib/currency-conversion";
-import { computeFeeBreakdownFromNetRevenue } from "@/lib/agency";
-import { buildOrderFinancialSnapshot, computeOrderSummaryFinancials } from "@/lib/order-financials";
+import {
+  buildOrderFinancialSnapshot,
+  computeOrderSummaryFinancials,
+  resolveOrderCouponContext,
+} from "@/lib/order-financials";
 import { buildDefaultSiteFeeSettings } from "@/lib/site-fee-settings";
 import { isDiscordAutoSendEnabled } from "@/lib/discord-settings";
 
@@ -64,9 +67,9 @@ export default async function AdminOrderApplicantsPage(
     cashbackPercent: 0,
     operationalReserveCents: 0,
     operationalReservePercent: 0,
+    couponUsed: false,
     partnerCommissionCents: 0,
     partnerCommissionPercent: 0,
-    partnerDiscountCents: 0,
     netProfitCents: 0,
     profitMarginPercent: 0,
     orderCreatedAtIso: null as string | null,
@@ -122,33 +125,21 @@ export default async function AdminOrderApplicantsPage(
       const partnerCommissionPercent =
         typeof feeTransferData.agentFeeSharePercent === "number" && Number.isFinite(feeTransferData.agentFeeSharePercent)
           ? feeTransferData.agentFeeSharePercent
+          : typeof data.agentFeeSharePercent === "number" && Number.isFinite(data.agentFeeSharePercent)
+            ? data.agentFeeSharePercent
           : 0;
-      const baseSummary = computeOrderSummaryFinancials({
-        totalPaidCents: amountTotalCents,
-        paymentMethod,
-        supplierPercentage: financials.supplierPercentage,
-        cardFeePercent: financials.cardFeePercent,
-        cashbackPercent: financials.cashbackPercent,
-        operationalReservePercent: financials.operationalReservePercent,
-      });
-      // Prefer the amount actually credited to the partner (net of partner-funded discounts) over a fresh recalculation.
-      const partnerCommissionSourceCents =
-        typeof feeTransferData.agentPayoutCents === "number" && Number.isFinite(feeTransferData.agentPayoutCents)
-          ? feeTransferData.agentPayoutCents
-          : computeFeeBreakdownFromNetRevenue(baseSummary.goldValue, baseSummary.supplierPayout, partnerCommissionPercent).agentPayoutCents;
-      const partnerDiscountSourceCents =
-        typeof feeTransferData.partnerDiscountPartnerCents === "number" && Number.isFinite(feeTransferData.partnerDiscountPartnerCents)
-          ? feeTransferData.partnerDiscountPartnerCents
-          : 0;
+      const couponContext = resolveOrderCouponContext(data, feeTransferData);
       const financialSummary = computeOrderSummaryFinancials({
         totalPaidCents: amountTotalCents,
+        goldValueCents: couponContext.goldValueCents,
+        discountCents: couponContext.discountCents,
+        couponUsed: couponContext.couponUsed,
         paymentMethod,
         supplierPercentage: financials.supplierPercentage,
         cardFeePercent: financials.cardFeePercent,
         cashbackPercent: financials.cashbackPercent,
         operationalReservePercent: financials.operationalReservePercent,
-        agentCommissionCents: partnerCommissionSourceCents,
-        partnerDiscountCents: partnerDiscountSourceCents,
+        agentCommissionPercent: partnerCommissionPercent,
       });
       const toUsd = (amountCents: number) => convertCentsToUsdCents(amountCents, sourceCurrency, usdRates);
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
@@ -257,9 +248,9 @@ export default async function AdminOrderApplicantsPage(
         cashbackPercent: financials.cashbackPercent,
         operationalReserveCents: toUsd(financialSummary.operationalReserve),
         operationalReservePercent: financials.operationalReservePercent,
+        couponUsed: financialSummary.couponUsed,
         partnerCommissionCents: toUsd(financialSummary.agentCommission),
         partnerCommissionPercent,
-        partnerDiscountCents: toUsd(financialSummary.partnerDiscount),
         netProfitCents: toUsd(financialSummary.netProfit),
         profitMarginPercent: financialSummary.profitMarginPercent,
         orderCreatedAtIso,
@@ -308,9 +299,9 @@ export default async function AdminOrderApplicantsPage(
           cashbackPercent: 0,
           operationalReserveCents: 0,
           operationalReservePercent: 0,
+          couponUsed: false,
           partnerCommissionCents: 0,
           partnerCommissionPercent: 0,
-          partnerDiscountCents: 0,
           netProfitCents: totalUsdCents - supplierPayoutUsdCents,
           profitMarginPercent: totalUsdCents > 0 ? ((totalUsdCents - supplierPayoutUsdCents) / totalUsdCents) * 100 : 0,
           orderCreatedAtIso: typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : null,

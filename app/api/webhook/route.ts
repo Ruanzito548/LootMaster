@@ -2,7 +2,6 @@ import Stripe from "stripe";
 import { FieldValue } from "firebase-admin/firestore";
 
 import {
-  computeFeeBreakdownFromNetRevenue,
   DEFAULT_AGENT_FEE_SHARE_PERCENT,
   normalizeAgentCode,
 } from "@/lib/agency";
@@ -12,7 +11,7 @@ import { resolveDiscordChannelId } from "@/lib/discord-channel-resolver";
 import { isDiscordAutoSendEnabled } from "@/lib/discord-settings";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { fundChestWalletEconomyFromCashback, sanitizeChestWalletEconomyConfig } from "@/lib/chest-wallet-economy";
-import { computeOrderFinancials } from "@/lib/order-financials";
+import { computeOrderSummaryFinancials, resolveOrderCouponContext } from "@/lib/order-financials";
 import {
   SITE_FEE_SETTINGS_DOC_ID,
   buildDefaultSiteFeeSettings,
@@ -199,18 +198,18 @@ export async function persistPaidOrder(session: Stripe.Checkout.Session, supplie
   const deliverySurchargeCents = Number(meta.deliverySurchargeCents ?? 0) || 0;
   const paymentSurchargeCents = Number(meta.paymentSurchargeCents ?? 0) || 0;
   const costs = await resolveSessionCostPercents(session);
-  const financialBase = computeOrderFinancials(
-    amountTotalCents,
+  const couponContext = resolveOrderCouponContext(meta);
+  const financialSummary = computeOrderSummaryFinancials({
+    totalPaidCents: amountTotalCents,
+    goldValueCents: couponContext.goldValueCents,
+    discountCents: couponContext.discountCents,
+    couponUsed: couponContext.couponUsed,
+    paymentMethod: meta.paymentMethod ?? "",
     supplierPercentage,
-    costs.cardGatewayFeePercent,
-    costs.cashbackPercent,
-    costs.operationalReservePercent,
-    baseProductCents,
-    baseProductCents,
-  );
-  const supplierPayout = Math.max(0, Math.round(baseProductCents * (financialBase.supplierPercentage / 100)));
-  const grossProfit = Math.max(0, amountTotalCents - supplierPayout);
-  const netProfit = grossProfit - financialBase.cardFee - financialBase.cashback - financialBase.operationalReserve;
+    cardFeePercent: costs.cardGatewayFeePercent,
+    cashbackPercent: costs.cashbackPercent,
+    operationalReservePercent: costs.operationalReservePercent,
+  });
 
   await adminDb.collection("order-checkouts").doc(session.id).set(
     {
@@ -249,28 +248,28 @@ export async function persistPaidOrder(session: Stripe.Checkout.Session, supplie
       hasServerOptions: meta.hasServerOptions === "true",
       supplierId: meta.supplierId ?? "",
       supplierName: meta.supplierName ?? "",
-      supplierPercentage: financialBase.supplierPercentage,
+      supplierPercentage,
       grossRevenue: amountTotalCents,
-      supplierPayout,
-      grossProfit,
-      cardFee: financialBase.cardFee,
-      cashback: financialBase.cashback,
-      operationalReserve: financialBase.operationalReserve,
-      netProfit,
+      supplierPayout: financialSummary.supplierPayout,
+      grossProfit: financialSummary.grossProfit,
+      cardFee: financialSummary.gatewayFee,
+      cashback: financialSummary.cashback,
+      operationalReserve: financialSummary.operationalReserve,
+      netProfit: financialSummary.netProfit,
       cardFeePercent: costs.cardGatewayFeePercent,
-      cashbackPercent: costs.cashbackPercent,
+      cashbackPercent: financialSummary.couponUsed ? 0 : costs.cashbackPercent,
       operationalReservePercent: costs.operationalReservePercent,
       // Legacy fields kept for compatibility with old consumers.
-      commissionPercent: Math.max(0, 100 - financialBase.supplierPercentage),
-      sellerAmountCents: supplierPayout,
-      platformProfitCents: netProfit,
+      commissionPercent: Math.max(0, 100 - supplierPercentage),
+      sellerAmountCents: financialSummary.supplierPayout,
+      platformProfitCents: financialSummary.netProfit,
       stripeCreatedAt: typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : null,
       updatedAt: new Date().toISOString(),
     },
     { merge: true },
   );
 
-  await fundChestEconomyFromCashback(session.id, financialBase.cashback);
+  await fundChestEconomyFromCashback(session.id, financialSummary.cashback);
 }
 
 type ResolvedCustomerAgent = {
@@ -437,18 +436,24 @@ export async function processFeeTransfer(session: Stripe.Checkout.Session): Prom
   const baseProductCents = Number(meta.baseProductCents ?? meta.baseAmountCents ?? 0) || 0;
   const supplierPercentage = await resolveSessionSupplierPercent(session);
   const commissionPercent = Math.max(0, 100 - supplierPercentage);
-  const supplierPayoutBaseCents = baseProductCents > 0 ? baseProductCents : totalCents;
   const customerAgent = await resolveCustomerAgent(session);
-  const supplierPayoutCents = Math.max(0, Math.round(supplierPayoutBaseCents * (supplierPercentage / 100)));
-  const feeBreakdown = computeFeeBreakdownFromNetRevenue(
-    supplierPayoutBaseCents,
-    supplierPayoutCents,
-    customerAgent.agentUid ? customerAgent.agentFeeSharePercent : 0,
-  );
   const partnerDiscountCents = Math.max(0, Number(meta.partnerDiscountPartnerCents ?? 0) || 0);
   const lootMasterDiscountCents = Math.max(0, Number(meta.partnerDiscountLootMasterCents ?? 0) || 0);
-  const agentPayoutCents = Math.max(0, feeBreakdown.agentPayoutCents - partnerDiscountCents);
-  const lootmasterFeeCents = Math.max(0, feeBreakdown.lootmasterFeeCents - lootMasterDiscountCents);
+  const couponContext = resolveOrderCouponContext(meta);
+  const financialSummary = computeOrderSummaryFinancials({
+    totalPaidCents: totalCents,
+    goldValueCents: couponContext.goldValueCents ?? (baseProductCents > 0 ? baseProductCents : undefined),
+    discountCents: couponContext.discountCents,
+    couponUsed: couponContext.couponUsed,
+    paymentMethod: meta.paymentMethod ?? "",
+    supplierPercentage,
+    cardFeePercent: Number(meta.cardGatewayFeePercent ?? 0) || 0,
+    cashbackPercent: 0,
+    operationalReservePercent: 0,
+    agentCommissionPercent: customerAgent.agentUid ? customerAgent.agentFeeSharePercent : 0,
+  });
+  const agentPayoutCents = financialSummary.agentCommission;
+  const lootmasterFeeCents = Math.max(0, financialSummary.grossProfit - agentPayoutCents);
   const calculatedPlatformFeeCents = agentPayoutCents + lootmasterFeeCents;
   const agentPayoutLootCoins = Math.round((agentPayoutCents / 100) * 100) / 100;
 
@@ -469,7 +474,7 @@ export async function processFeeTransfer(session: Stripe.Checkout.Session): Prom
         customerUid: customerAgent.customerUid,
         customerEmail: session.customer_email ?? "",
         amountTotalCents: totalCents,
-        commissionBaseCents: feeBreakdown.platformFeeCents,
+        commissionBaseCents: financialSummary.grossProfit,
         currency: (session.currency ?? "brl").toLowerCase(),
         commissionPercent,
         platformFeeCents: calculatedPlatformFeeCents,
@@ -762,8 +767,8 @@ export async function POST(request: Request): Promise<Response> {
       const supplierPercentage = await resolveSessionSupplierPercent(session);
       const amountTotalCents = session.amount_total ?? 0;
       // Supplier share is calculated over the product value only, excluding payment gateway surcharge.
-      const supplierBaseCents =
-        Number(meta.baseProductCents ?? meta.baseAmountCents ?? amountTotalCents) || amountTotalCents;
+      const couponContext = resolveOrderCouponContext(meta);
+      const supplierBaseCents = couponContext.goldValueCents ?? amountTotalCents;
       const supplierPayoutCents = Math.max(0, Math.round(supplierBaseCents * (supplierPercentage / 100)));
 
       try {

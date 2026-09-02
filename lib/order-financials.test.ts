@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { computeOrderSummaryFinancials } from "./order-financials";
+import { computeOrderSummaryFinancials, resolveOrderCouponContext } from "./order-financials";
 
 describe("completed order financial summary", () => {
   it("matches the order summary values for a card payment", () => {
@@ -27,19 +27,52 @@ describe("completed order financial summary", () => {
     });
   });
 
-  it("does not subtract the already-accounted partner discount twice", () => {
+  it("keeps the original gold value and disables cashback when a coupon was used", () => {
     const summary = computeOrderSummaryFinancials({
-      totalPaidCents: 100_000,
-      paymentMethod: "pix",
-      supplierPercentage: 70,
+      totalPaidCents: 93_600,
+      goldValueCents: 100_000,
+      discountCents: 10_000,
+      paymentMethod: "card",
+      supplierPercentage: 73,
       cardFeePercent: 4,
-      cashbackPercent: 0,
-      operationalReservePercent: 0,
-      agentCommissionCents: 5_000,
-      partnerDiscountCents: 2_000,
+      cashbackPercent: 7,
+      operationalReservePercent: 2,
+      agentCommissionPercent: 50,
     });
 
-    expect(summary.partnerDiscount).toBe(2_000);
-    expect(summary.netProfit).toBe(25_000);
+    expect(summary).toMatchObject({
+      couponUsed: true,
+      totalPaid: 93_600,
+      goldValue: 100_000,
+      gatewayFee: 3_600,
+      supplierPayout: 73_000,
+      grossProfit: 17_000,
+      agentCommission: 8_500,
+      cashback: 0,
+      operationalReserve: 2_000,
+      netProfit: 6_500,
+      profitMarginPercent: 6.5,
+    });
+  });
+
+  it("rebuilds original gold from persisted checkout and fee-transfer fields", () => {
+    expect(
+      resolveOrderCouponContext(
+        { baseProductCents: "90000", agentReferralCode: "AGENT10" },
+        { partnerDiscountPartnerCents: "5000", partnerDiscountLootMasterCents: "5000" },
+      ),
+    ).toEqual({
+      couponUsed: true,
+      discountCents: 10_000,
+      goldValueCents: 100_000,
+    });
+  });
+
+  it("infers the fixed agent-code discount for legacy checkout records", () => {
+    expect(resolveOrderCouponContext({ baseProductCents: 90_000, agentReferralCode: "AGENT10" })).toEqual({
+      couponUsed: true,
+      discountCents: 10_000,
+      goldValueCents: 100_000,
+    });
   });
 });

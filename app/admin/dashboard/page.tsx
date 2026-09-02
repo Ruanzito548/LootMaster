@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { ADMIN_DASHBOARD_ORDERS_QUERY_LIMIT } from "@/lib/admin-query-limits";
-import { computeFeeBreakdownFromNetRevenue } from "@/lib/agency";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   SITE_FEE_SETTINGS_DOC_ID,
   buildDefaultSiteFeeSettings,
   sanitizeSiteFeeSettings,
 } from "@/lib/site-fee-settings";
-import { buildOrderFinancialSnapshot, computeOrderSummaryFinancials } from "@/lib/order-financials";
+import {
+  buildOrderFinancialSnapshot,
+  computeOrderSummaryFinancials,
+  resolveOrderCouponContext,
+} from "@/lib/order-financials";
 
 import { DashboardClient, type DashboardOrder } from "./dashboard-client";
 
@@ -103,36 +106,21 @@ export default async function DashboardPage() {
       const partnerCommissionPercent =
         typeof feeTransfer.agentFeeSharePercent === "number" && Number.isFinite(feeTransfer.agentFeeSharePercent)
           ? feeTransfer.agentFeeSharePercent
+          : typeof data.agentFeeSharePercent === "number" && Number.isFinite(data.agentFeeSharePercent)
+            ? data.agentFeeSharePercent
           : 0;
-      const baseSummary = computeOrderSummaryFinancials({
-        totalPaidCents,
-        paymentMethod,
-        supplierPercentage: financials.supplierPercentage,
-        cardFeePercent: financials.cardFeePercent,
-        cashbackPercent: financials.cashbackPercent,
-        operationalReservePercent: financials.operationalReservePercent,
-      });
-      const agentCommission =
-        typeof feeTransfer.agentPayoutCents === "number" && Number.isFinite(feeTransfer.agentPayoutCents)
-          ? feeTransfer.agentPayoutCents
-          : computeFeeBreakdownFromNetRevenue(
-              baseSummary.goldValue,
-              baseSummary.supplierPayout,
-              partnerCommissionPercent,
-            ).agentPayoutCents;
-      const partnerDiscount =
-        typeof feeTransfer.partnerDiscountPartnerCents === "number" && Number.isFinite(feeTransfer.partnerDiscountPartnerCents)
-          ? feeTransfer.partnerDiscountPartnerCents
-          : 0;
+      const couponContext = resolveOrderCouponContext(data, feeTransfer);
       const summary = computeOrderSummaryFinancials({
         totalPaidCents,
+        goldValueCents: couponContext.goldValueCents,
+        discountCents: couponContext.discountCents,
+        couponUsed: couponContext.couponUsed,
         paymentMethod,
         supplierPercentage: financials.supplierPercentage,
         cardFeePercent: financials.cardFeePercent,
         cashbackPercent: financials.cashbackPercent,
         operationalReservePercent: financials.operationalReservePercent,
-        agentCommissionCents: agentCommission,
-        partnerDiscountCents: partnerDiscount,
+        agentCommissionPercent: partnerCommissionPercent,
       });
 
       return {
@@ -140,9 +128,9 @@ export default async function DashboardPage() {
         createdUnix: parseIsoToUnixSeconds(typeof data.stripeCreatedAt === "string" ? data.stripeCreatedAt : null),
         amountTotal: summary.totalPaid,
         goldValue: summary.goldValue,
+        couponUsed: summary.couponUsed,
         agentCommission: summary.agentCommission,
         agentCommissionPercent: partnerCommissionPercent,
-        partnerDiscount: summary.partnerDiscount,
         currency: typeof data.currency === "string" && data.currency ? data.currency : "brl",
         statusLabel: "Completed",
         gameTitle: typeof data.gameTitle === "string" && data.gameTitle ? data.gameTitle : "--",

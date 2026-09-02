@@ -2,7 +2,7 @@ import Stripe from "stripe";
 
 import { defaultGoldConfigEntry } from "@/app/data/gold-config";
 import { getGameById, getServiceCategoryById, getServersByGameId } from "@/app/data/games";
-import { computeFeeBreakdownFromNetRevenue, normalizeAgentCode } from "@/lib/agency";
+import { normalizeAgentCode } from "@/lib/agency";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
 import { resolveDiscordChannelId } from "@/lib/discord-channel-resolver";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
@@ -18,6 +18,7 @@ import {
   sanitizeSiteFeeSettings,
 } from "@/lib/site-fee-settings";
 import { getUsdToCurrencyRate } from "@/lib/checkout-pricing";
+import { computeOrderSummaryFinancials } from "@/lib/order-financials";
 import { createMercadoPagoPixPayment } from "@/lib/mercadopago";
 import { createPayPalOrder } from "@/lib/paypal";
 import { DISCORD_SETTINGS_DOC_ID, buildDefaultDiscordSettings, sanitizeDiscordSettings } from "@/lib/discord-settings";
@@ -456,17 +457,24 @@ export async function POST(request: Request): Promise<Response> {
       const orderId = `lootcoin_${Date.now()}_${decodedToken.uid.slice(-8)}`;
       const amountUsdCents = pricingBreakdown.chargedTotalCents;
       const supplierPercentage = supplierDefaultPercent;
-      const supplierPayout = Math.round(pricingBreakdown.baseProductCents * (supplierPercentage / 100));
-      const grossProfit = Math.max(0, amountUsdCents - supplierPayout);
-      const feeBreakdown = computeFeeBreakdownFromNetRevenue(
-        pricingBreakdown.baseProductCents,
-        supplierPayout,
-        partnerUid ? partnerFeeSharePercent : 0,
-      );
       const partnerDiscountPartnerCents = Math.round(basePrice * 0.05 * 100);
       const partnerDiscountLootMasterCents = Math.round(basePrice * 0.05 * 100);
-      const agentPayoutCents = Math.max(0, feeBreakdown.agentPayoutCents - partnerDiscountPartnerCents);
-      const lootmasterFeeCents = Math.max(0, feeBreakdown.lootmasterFeeCents - partnerDiscountLootMasterCents);
+      const financialSummary = computeOrderSummaryFinancials({
+        totalPaidCents: amountUsdCents,
+        goldValueCents: Math.round(basePrice * 100),
+        discountCents: Math.round(partnerDiscount * 100),
+        couponUsed: Boolean(agentReferralCode),
+        paymentMethod: "balance",
+        supplierPercentage,
+        cardFeePercent: cardGatewayFeePercent,
+        cashbackPercent,
+        operationalReservePercent,
+        agentCommissionPercent: partnerUid ? partnerFeeSharePercent : 0,
+      });
+      const supplierPayout = financialSummary.supplierPayout;
+      const grossProfit = financialSummary.grossProfit;
+      const agentPayoutCents = financialSummary.agentCommission;
+      const lootmasterFeeCents = Math.max(0, grossProfit - agentPayoutCents);
       const adminDb = getAdminDb();
 
       await adminDb.runTransaction(async (transaction) => {
@@ -530,9 +538,14 @@ export async function POST(request: Request): Promise<Response> {
           grossRevenue: amountUsdCents,
           supplierPayout,
           grossProfit,
-          netProfit: grossProfit,
+          cardFee: financialSummary.gatewayFee,
+          cashback: financialSummary.cashback,
+          cashbackPercent: financialSummary.couponUsed ? 0 : cashbackPercent,
+          operationalReserve: financialSummary.operationalReserve,
+          operationalReservePercent,
+          netProfit: financialSummary.netProfit,
           sellerAmountCents: supplierPayout,
-          platformProfitCents: grossProfit,
+          platformProfitCents: financialSummary.netProfit,
           stripeCreatedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
@@ -542,7 +555,7 @@ export async function POST(request: Request): Promise<Response> {
             customerUid: decodedToken.uid,
             customerEmail: email.trim(),
             amountTotalCents: amountUsdCents,
-            commissionBaseCents: feeBreakdown.platformFeeCents,
+            commissionBaseCents: grossProfit,
             currency: "usd",
             commissionPercent: Math.max(0, 100 - supplierPercentage),
             platformFeeCents: agentPayoutCents + lootmasterFeeCents,

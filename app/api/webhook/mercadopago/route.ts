@@ -12,6 +12,7 @@ import {
 import { resolveDiscordChannelId } from "@/lib/discord-channel-resolver";
 import { isDiscordAutoSendEnabled } from "@/lib/discord-settings";
 import { sendOrderNotificationViaBot } from "@/lib/discord-bot";
+import { resolveOrderCouponContext } from "@/lib/order-financials";
 import { syncPaidOrderToWalletBackend } from "@/lib/wallet-backend";
 import type Stripe from "stripe";
 
@@ -84,11 +85,13 @@ export async function POST(request: Request): Promise<Response> {
     await processFeeTransfer(session);
     await applyPurchaseLevelRewards(session);
     const meta = session.metadata ?? {};
+    const supplierGoldCents = resolveOrderCouponContext(meta).goldValueCents ?? Number(meta.baseProductCents ?? 0);
+    const supplierPayoutCents = Math.max(0, supplierGoldCents * supplierPercentage / 100);
     await syncPaidOrderToWalletBackend({
       orderId,
       customerId: session.customer_email ?? null,
       totalAmount: (payment.transaction_amount ?? 0),
-      supplierPayout: Math.max(0, Number(meta.baseProductCents ?? 0) * supplierPercentage / 100 / 100),
+      supplierPayout: supplierPayoutCents / 100,
       currency: "BRL",
       metadata: { gameId: meta.gameId ?? "", gameTitle: meta.gameTitle ?? "", categoryId: meta.categoryId ?? "", categoryTitle: meta.categoryTitle ?? "", server: meta.server ?? "", faction: meta.faction ?? "", nickname: meta.nickname ?? "", goldAmount: Number(meta.goldAmount ?? 0) || 0 },
     });
@@ -107,7 +110,7 @@ export async function POST(request: Request): Promise<Response> {
         nickname: meta.nickname ?? "-",
         paymentMethod: "pix",
         finalAmountCents: String(payment.transaction_amount * 100),
-        supplierPayoutCents: String(Number(meta.baseProductCents ?? 0) * supplierPercentage / 100),
+        supplierPayoutCents: String(supplierPayoutCents),
         currency: "brl",
         email: session.customer_email ?? "-",
       });

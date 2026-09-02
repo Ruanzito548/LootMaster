@@ -8,9 +8,9 @@ export type DashboardOrder = {
   createdUnix: number;
   amountTotal: number;
   goldValue: number;
+  couponUsed: boolean;
   agentCommission: number;
   agentCommissionPercent: number;
-  partnerDiscount: number;
   currency: string;
   statusLabel: string;
   gameTitle: string;
@@ -452,7 +452,6 @@ export function DashboardClient({
       amountTotal: convertAmountCents(order.amountTotal, orderCurrency, displayCurrency, currencyRates),
       goldValue: convertAmountCents(order.goldValue, orderCurrency, displayCurrency, currencyRates),
       agentCommission: convertAmountCents(order.agentCommission, orderCurrency, displayCurrency, currencyRates),
-      partnerDiscount: convertAmountCents(order.partnerDiscount, orderCurrency, displayCurrency, currencyRates),
       supplierPayout: convertAmountCents(order.supplierPayout, orderCurrency, displayCurrency, currencyRates),
       grossProfit: convertAmountCents(order.grossProfit, orderCurrency, displayCurrency, currencyRates),
       gatewayFee: convertAmountCents(order.gatewayFee, orderCurrency, displayCurrency, currencyRates),
@@ -484,9 +483,10 @@ export function DashboardClient({
   const totalCashback = displayOrders.reduce((acc, order) => acc + order.cashback, 0);
   const totalOperationalReserve = displayOrders.reduce((acc, order) => acc + order.operationalReserve, 0);
   const totalAgentCommission = displayOrders.reduce((acc, order) => acc + order.agentCommission, 0);
-  const totalPartnerDiscount = displayOrders.reduce((acc, order) => acc + order.partnerDiscount, 0);
   const totalNetProfit = displayOrders.reduce((acc, order) => acc + order.netProfit, 0);
   const totalOrders = displayOrders.length;
+  const couponOrders = displayOrders.filter((order) => order.couponUsed).length;
+  const nonCouponOrders = totalOrders - couponOrders;
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
   const totalProfitMargin = computeEffectivePercent(totalNetProfit, totalGoldValue);
   const supplierAveragePercent = computeEffectivePercent(totalPayout, totalGoldValue);
@@ -780,6 +780,7 @@ export function DashboardClient({
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Ordens completas</p>
                 <p className="font-data mt-2 text-2xl font-black text-white">{totalOrders}</p>
+                <p className="mt-1 text-xs text-slate-500">Cupom: {couponOrders} sim / {nonCouponOrders} não</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Ticket médio</p>
@@ -816,6 +817,10 @@ export function DashboardClient({
 
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-300">Uso de cupom/código</span>
+                  <span className="font-data font-semibold text-amber-300">{couponOrders} Sim / {nonCouponOrders} Não</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-200">Valor total pago</span>
                   <span className="font-data font-semibold text-slate-100">{formatMoney(totalRevenue, displayCurrency)}</span>
                 </div>
@@ -842,12 +847,6 @@ export function DashboardClient({
                   <span className="text-slate-300">Comissão do agente ({formatPercent(agentAveragePercent)} do lucro bruto)</span>
                   <span className="font-data font-semibold text-rose-300">{formatDeduction(totalAgentCommission, displayCurrency)}</span>
                 </div>
-                {totalPartnerDiscount > 0 ? (
-                  <div className="flex items-center justify-between gap-3 text-xs">
-                    <span className="text-amber-300">Já descontado: primeira compra custeada pelo parceiro</span>
-                    <span className="font-data font-semibold text-amber-300">{formatDeduction(totalPartnerDiscount, displayCurrency)}</span>
-                  </div>
-                ) : null}
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-300">Cashback / Loot Coins ({formatPercent(cashbackAveragePercent)})</span>
                   <span className="font-data font-semibold text-rose-300">{formatDeduction(totalCashback, displayCurrency)}</span>
