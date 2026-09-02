@@ -511,7 +511,7 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
 
             <div>
               <label htmlFor="agent-referral-code" className="text-[0.58rem] font-bold uppercase tracking-[0.15em] text-[#95b8e2]">
-                Partner discount code (optional)
+                Coupon or partner discount code (optional)
               </label>
               <input
                 id="agent-referral-code"
