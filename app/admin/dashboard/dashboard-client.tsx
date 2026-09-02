@@ -498,7 +498,7 @@ export function DashboardClient({
   const mixNonCouponOrders = displayOrders.length - mixCouponOrders;
   const mixProfitMargin = computeEffectivePercent(mixTotalNetProfit, mixTotalGoldValue);
   const mixSupplierAveragePercent = computeEffectivePercent(mixTotalPayout, mixTotalGoldValue);
-  const mixGatewayOrders = mixOrders.filter((order) => order.gatewayFee > 0);
+  const mixGatewayOrders = displayOrders.filter((order) => order.gatewayFee > 0);
   const mixGatewayDefinedPercent = mixGatewayOrders.length > 0
     ? mixGatewayOrders.reduce((total, order) => total + order.gatewayPercent, 0) / mixGatewayOrders.length
     : 0;
