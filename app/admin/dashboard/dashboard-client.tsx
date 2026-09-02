@@ -346,6 +346,8 @@ export function DashboardClient({
   const [range, setRange] = useState<RangeValue>("30");
   const [customRangeStartDate, setCustomRangeStartDate] = useState(initialRangeStartDate);
   const [customRangeEndDate, setCustomRangeEndDate] = useState(initialRangeEndDate);
+  const [mixRangeStartDate, setMixRangeStartDate] = useState(initialRangeStartDate);
+  const [mixRangeEndDate, setMixRangeEndDate] = useState(initialRangeEndDate);
   const [chartScope, setChartScope] = useState<ChartScope>("monthly");
   const [chartAnchorMs, setChartAnchorMs] = useState(() => normalizePeriodAnchorMs("monthly", currentNowMs, currentNowMs));
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
@@ -462,6 +464,39 @@ export function DashboardClient({
     } satisfies DashboardOrder;
   });
 
+  const mixStartMs = parseDateStartMs(mixRangeStartDate);
+  const mixEndMs = parseDateEndMs(mixRangeEndDate);
+  const mixBounds =
+    mixStartMs !== null && mixEndMs !== null
+      ? {
+          startMs: Math.min(mixStartMs, mixEndMs),
+          endMs: Math.max(mixStartMs, mixEndMs),
+        }
+      : null;
+  const mixOrders = baseFilteredOrders
+    .filter((order) => {
+      if (!mixBounds) return true;
+      const createdMs = order.createdUnix * 1000;
+      return createdMs >= mixBounds.startMs && createdMs <= mixBounds.endMs;
+    })
+    .map((order) => {
+      const orderCurrency = normalizeCurrency(order.currency);
+
+      return {
+        ...order,
+        amountTotal: convertAmountCents(order.amountTotal, orderCurrency, displayCurrency, currencyRates),
+        goldValue: convertAmountCents(order.goldValue, orderCurrency, displayCurrency, currencyRates),
+        agentCommission: convertAmountCents(order.agentCommission, orderCurrency, displayCurrency, currencyRates),
+        supplierPayout: convertAmountCents(order.supplierPayout, orderCurrency, displayCurrency, currencyRates),
+        grossProfit: convertAmountCents(order.grossProfit, orderCurrency, displayCurrency, currencyRates),
+        gatewayFee: convertAmountCents(order.gatewayFee, orderCurrency, displayCurrency, currencyRates),
+        cashback: convertAmountCents(order.cashback, orderCurrency, displayCurrency, currencyRates),
+        operationalReserve: convertAmountCents(order.operationalReserve, orderCurrency, displayCurrency, currencyRates),
+        netProfit: convertAmountCents(order.netProfit, orderCurrency, displayCurrency, currencyRates),
+        currency: displayCurrency,
+      } satisfies DashboardOrder;
+    });
+
   const revenueByCurrency = dashboardFilteredOrders.reduce<Record<DashboardCurrency, number>>(
     (acc, order) => {
       const orderCurrency = normalizeCurrency(order.currency);
@@ -477,23 +512,34 @@ export function DashboardClient({
 
   const totalRevenue = displayOrders.reduce((acc, order) => acc + order.amountTotal, 0);
   const totalGoldValue = displayOrders.reduce((acc, order) => acc + order.goldValue, 0);
-  const totalPayout = displayOrders.reduce((acc, order) => acc + order.supplierPayout, 0);
   const totalGrossProfit = displayOrders.reduce((acc, order) => acc + order.grossProfit, 0);
-  const totalGatewayFee = displayOrders.reduce((acc, order) => acc + order.gatewayFee, 0);
-  const totalCashback = displayOrders.reduce((acc, order) => acc + order.cashback, 0);
-  const totalOperationalReserve = displayOrders.reduce((acc, order) => acc + order.operationalReserve, 0);
-  const totalAgentCommission = displayOrders.reduce((acc, order) => acc + order.agentCommission, 0);
   const totalNetProfit = displayOrders.reduce((acc, order) => acc + order.netProfit, 0);
   const totalOrders = displayOrders.length;
   const couponOrders = displayOrders.filter((order) => order.couponUsed).length;
   const nonCouponOrders = totalOrders - couponOrders;
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
   const totalProfitMargin = computeEffectivePercent(totalNetProfit, totalGoldValue);
-  const supplierAveragePercent = computeEffectivePercent(totalPayout, totalGoldValue);
-  const gatewayAveragePercent = computeEffectivePercent(totalGatewayFee, totalGoldValue);
-  const agentAveragePercent = computeEffectivePercent(totalAgentCommission, totalGrossProfit);
-  const cashbackAveragePercent = computeEffectivePercent(totalCashback, totalGoldValue);
-  const reserveAveragePercent = computeEffectivePercent(totalOperationalReserve, totalGoldValue);
+
+  const mixTotalRevenue = mixOrders.reduce((acc, order) => acc + order.amountTotal, 0);
+  const mixTotalGoldValue = mixOrders.reduce((acc, order) => acc + order.goldValue, 0);
+  const mixTotalPayout = mixOrders.reduce((acc, order) => acc + order.supplierPayout, 0);
+  const mixTotalGrossProfit = mixOrders.reduce((acc, order) => acc + order.grossProfit, 0);
+  const mixTotalGatewayFee = mixOrders.reduce((acc, order) => acc + order.gatewayFee, 0);
+  const mixTotalCashback = mixOrders.reduce((acc, order) => acc + order.cashback, 0);
+  const mixTotalOperationalReserve = mixOrders.reduce((acc, order) => acc + order.operationalReserve, 0);
+  const mixTotalAgentCommission = mixOrders.reduce((acc, order) => acc + order.agentCommission, 0);
+  const mixTotalNetProfit = mixOrders.reduce((acc, order) => acc + order.netProfit, 0);
+  const mixCouponOrders = mixOrders.filter((order) => order.couponUsed).length;
+  const mixNonCouponOrders = mixOrders.length - mixCouponOrders;
+  const mixProfitMargin = computeEffectivePercent(mixTotalNetProfit, mixTotalGoldValue);
+  const mixSupplierAveragePercent = computeEffectivePercent(mixTotalPayout, mixTotalGoldValue);
+  const mixGatewayOrders = mixOrders.filter((order) => order.gatewayFee > 0);
+  const mixGatewayDefinedPercent = mixGatewayOrders.length > 0
+    ? mixGatewayOrders.reduce((total, order) => total + order.gatewayPercent, 0) / mixGatewayOrders.length
+    : 0;
+  const mixAgentAveragePercent = computeEffectivePercent(mixTotalAgentCommission, mixTotalGrossProfit);
+  const mixCashbackAveragePercent = computeEffectivePercent(mixTotalCashback, mixTotalGoldValue);
+  const mixReserveAveragePercent = computeEffectivePercent(mixTotalOperationalReserve, mixTotalGoldValue);
 
   const gameRevenueGrouped = new Map<string, number>();
   for (const order of displayOrders) {
@@ -801,14 +847,36 @@ export function DashboardClient({
           </article>
 
           <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-8">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Mix financeiro</p>
                 <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">Repasse x lucro</h2>
               </div>
-              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-emerald-300">
-                Dados reais
-              </span>
+              <div className="flex flex-wrap items-end gap-2">
+                <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                  De
+                  <input
+                    type="date"
+                    value={mixRangeStartDate}
+                    max={initialRangeEndDate}
+                    onChange={(event) => setMixRangeStartDate(event.target.value)}
+                    className="min-h-10 rounded-xl border border-white/10 bg-black/30 px-3 text-xs text-white outline-none transition focus:border-cyan-400"
+                  />
+                </label>
+                <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                  Até
+                  <input
+                    type="date"
+                    value={mixRangeEndDate}
+                    max={initialRangeEndDate}
+                    onChange={(event) => setMixRangeEndDate(event.target.value)}
+                    className="min-h-10 rounded-xl border border-white/10 bg-black/30 px-3 text-xs text-white outline-none transition focus:border-cyan-400"
+                  />
+                </label>
+                <span className="inline-flex min-h-10 items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 text-xs font-bold uppercase tracking-[0.16em] text-emerald-300">
+                  Dados reais
+                </span>
+              </div>
             </div>
 
             <article className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
@@ -818,50 +886,50 @@ export function DashboardClient({
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-300">Uso de cupom/código</span>
-                  <span className="font-data font-semibold text-amber-300">{couponOrders} Sim / {nonCouponOrders} Não</span>
+                  <span className="font-data font-semibold text-amber-300">{mixCouponOrders} Sim / {mixNonCouponOrders} Não</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-200">Valor total pago</span>
-                  <span className="font-data font-semibold text-slate-100">{formatMoney(totalRevenue, displayCurrency)}</span>
+                  <span className="font-data font-semibold text-slate-100">{formatMoney(mixTotalRevenue, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-300">Valor do gold</span>
-                  <span className="font-data font-semibold text-slate-100">{formatMoney(totalGoldValue, displayCurrency)}</span>
+                  <span className="font-data font-semibold text-slate-100">{formatMoney(mixTotalGoldValue, displayCurrency)}</span>
                 </div>
-                {totalGatewayFee > 0 ? (
+                {mixTotalGatewayFee > 0 ? (
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-slate-300">Gateway ({formatPercent(gatewayAveragePercent)} sobre o gold)</span>
-                    <span className="font-data font-semibold text-rose-300">{formatDeduction(totalGatewayFee, displayCurrency)}</span>
+                    <span className="text-slate-300">Gateway ({formatPercent(mixGatewayDefinedPercent)})</span>
+                    <span className="font-data font-semibold text-rose-300">{formatDeduction(mixTotalGatewayFee, displayCurrency)}</span>
                   </div>
                 ) : null}
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-300">Repasse ao fornecedor ({formatPercent(supplierAveragePercent)})</span>
-                  <span className="font-data font-semibold text-rose-300">{formatDeduction(totalPayout, displayCurrency)}</span>
+                  <span className="text-slate-300">Repasse ao fornecedor ({formatPercent(mixSupplierAveragePercent)})</span>
+                  <span className="font-data font-semibold text-rose-300">{formatDeduction(mixTotalPayout, displayCurrency)}</span>
                 </div>
                 <div className="border-t border-dashed border-white/15 pt-2" />
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-bold text-white">Lucro bruto</span>
-                  <span className="font-data font-bold text-white">{formatMoney(totalGrossProfit, displayCurrency)}</span>
+                  <span className="font-data font-bold text-white">{formatMoney(mixTotalGrossProfit, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-300">Comissão do agente ({formatPercent(agentAveragePercent)} do lucro bruto)</span>
-                  <span className="font-data font-semibold text-rose-300">{formatDeduction(totalAgentCommission, displayCurrency)}</span>
+                  <span className="text-slate-300">Comissão do agente ({formatPercent(mixAgentAveragePercent)} do lucro bruto)</span>
+                  <span className="font-data font-semibold text-rose-300">{formatDeduction(mixTotalAgentCommission, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-300">Cashback / Loot Coins ({formatPercent(cashbackAveragePercent)})</span>
-                  <span className="font-data font-semibold text-rose-300">{formatDeduction(totalCashback, displayCurrency)}</span>
+                  <span className="text-slate-300">Cashback / Loot Coins ({formatPercent(mixCashbackAveragePercent)})</span>
+                  <span className="font-data font-semibold text-rose-300">{formatDeduction(mixTotalCashback, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-300">Reserva operacional ({formatPercent(reserveAveragePercent)})</span>
-                  <span className="font-data font-semibold text-rose-300">{formatDeduction(totalOperationalReserve, displayCurrency)}</span>
+                  <span className="text-slate-300">Reserva operacional ({formatPercent(mixReserveAveragePercent)})</span>
+                  <span className="font-data font-semibold text-rose-300">{formatDeduction(mixTotalOperationalReserve, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3 border-t border-dashed border-white/15 pt-3">
                   <span className="font-black uppercase tracking-[0.12em] text-white">Lucro líquido</span>
-                  <span className="font-data text-xl font-black text-emerald-300">{formatMoney(totalNetProfit, displayCurrency)}</span>
+                  <span className="font-data text-xl font-black text-emerald-300">{formatMoney(mixTotalNetProfit, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-bold text-white">Margem de lucro das vendas</span>
-                  <span className="font-data font-bold text-amber-300">{formatPercent(totalProfitMargin)}</span>
+                  <span className="font-data font-bold text-amber-300">{formatPercent(mixProfitMargin)}</span>
                 </div>
               </div>
             </article>
