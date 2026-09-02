@@ -27,7 +27,7 @@ describe("completed order financial summary", () => {
     });
   });
 
-  it("keeps the original gold value and disables cashback when a coupon was used", () => {
+  it("keeps the original gold and agent commission when a coupon was used", () => {
     const summary = computeOrderSummaryFinancials({
       totalPaidCents: 93_600,
       goldValueCents: 100_000,
@@ -46,12 +46,12 @@ describe("completed order financial summary", () => {
       goldValue: 100_000,
       gatewayFee: 3_600,
       supplierPayout: 73_000,
-      grossProfit: 17_000,
-      agentCommission: 8_500,
+      grossProfit: 27_000,
+      agentCommission: 13_500,
       cashback: 0,
       operationalReserve: 2_000,
-      netProfit: 6_500,
-      profitMarginPercent: 6.5,
+      netProfit: 1_500,
+      profitMarginPercent: 1.5,
     });
   });
 

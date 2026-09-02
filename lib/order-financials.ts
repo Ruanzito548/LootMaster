@@ -132,11 +132,11 @@ export function computeOrderSummaryFinancials({
   const gatewayFee = isCardPayment ? Math.max(0, totalPaid - payableGoldValue) : 0;
   const netRevenue = Math.max(0, totalPaid - gatewayFee);
   const supplierPayout = Math.max(0, Math.round(goldValue * (supplierPercentage / 100)));
-  const grossProfit = Math.max(0, netRevenue - supplierPayout);
+  const grossProfit = Math.max(0, goldValue - supplierPayout);
   const agentCommission = Math.max(0, Math.round(grossProfit * (agentCommissionPercent / 100)));
   const cashback = couponUsed ? 0 : Math.max(0, Math.round(goldValue * (cashbackPercent / 100)));
   const operationalReserve = Math.max(0, Math.round(goldValue * (operationalReservePercent / 100)));
-  const netProfit = Math.max(0, grossProfit - agentCommission - cashback - operationalReserve);
+  const netProfit = Math.max(0, netRevenue - supplierPayout - agentCommission - cashback - operationalReserve);
 
   return {
     couponUsed,

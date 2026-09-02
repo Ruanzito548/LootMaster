@@ -2,7 +2,6 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { requireAuthenticatedAdminRequest } from "@/lib/admin-api-auth";
 import { writeActivityLog } from "@/lib/activity-history.server";
 import { computeOrderFinancials } from "@/lib/order-financials";
-import { computeFeeBreakdownFromNetRevenue } from "@/lib/agency";
 import { clampPercent } from "@/lib/percent-utils";
 
 type RequestBody = {
@@ -122,19 +121,23 @@ export async function POST(request: Request): Promise<Response> {
               ? feeTransferData.partnerDiscountLootMasterCents
               : 0;
 
-          const feeBreakdown = computeFeeBreakdownFromNetRevenue(
-            baseProductCents,
-            financials.supplierPayout,
-            agentUid ? agentFeeSharePercent : 0,
+          const totalDiscountCents = partnerDiscountPartnerCents + partnerDiscountLootMasterCents;
+          const originalGoldCents = baseProductCents + totalDiscountCents;
+          const originalSupplierPayoutCents = Math.max(
+            0,
+            Math.round(originalGoldCents * (financials.supplierPercentage / 100)),
           );
-          const agentPayoutCents = Math.max(0, feeBreakdown.agentPayoutCents - partnerDiscountPartnerCents);
-          const lootmasterFeeCents = Math.max(0, feeBreakdown.lootmasterFeeCents - partnerDiscountLootMasterCents);
+          const commissionBaseCents = Math.max(0, originalGoldCents - originalSupplierPayoutCents);
+          const agentPayoutCents = agentUid
+            ? Math.max(0, Math.round(commissionBaseCents * (agentFeeSharePercent / 100)))
+            : 0;
+          const lootmasterFeeCents = Math.max(0, commissionBaseCents - agentPayoutCents - totalDiscountCents);
           const agentPayoutLootCoins = Math.round((agentPayoutCents / 100) * 100) / 100;
 
           tx.set(
             feeTransferRef,
             {
-              commissionBaseCents: feeBreakdown.platformFeeCents,
+              commissionBaseCents,
               commissionPercent: Math.max(0, 100 - financials.supplierPercentage),
               platformFeeCents: agentPayoutCents + lootmasterFeeCents,
               agentPayoutCents,
