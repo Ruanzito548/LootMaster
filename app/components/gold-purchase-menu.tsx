@@ -520,13 +520,15 @@ export function GoldPurchaseMenu({ gameId, categoryId, gameTitle, servers }: Gol
                 value={agentReferralCode}
                 disabled={!stepAmountDone || !currentUser}
                 onChange={(event) => setAgentReferralCode(normalizeReferralCode(event.target.value))}
-                placeholder="PARTNER123"
+                placeholder={currentUser ? "COUPON OR AGENT CODE" : "LOG IN TO ENTER A CODE"}
                 className="gm-input mt-2 px-4 py-3 text-sm font-semibold uppercase tracking-[0.12em] disabled:cursor-not-allowed"
               />
               <p className="mt-2 text-xs text-[#88a8d1]">
-                {currentUser ? "A valid partner code gives you 10% off this purchase." : "Log in with Discord to use a partner discount code."}
+                {currentUser
+                  ? "Enter your coupon or agent code."
+                  : "You must be logged in to enter a coupon or agent code."}
               </p>
-              {!currentUser ? <Link href="/login" className="mt-2 inline-flex text-xs font-bold text-[#facc15] underline">Log in with Discord</Link> : null}
+              {!currentUser ? <Link href="/login" className="mt-2 inline-flex text-xs font-bold text-[#facc15] underline">Log in to enter a code</Link> : null}
             </div>
           </div>
         </article>
