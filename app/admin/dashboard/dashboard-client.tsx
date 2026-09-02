@@ -346,8 +346,6 @@ export function DashboardClient({
   const [range, setRange] = useState<RangeValue>("30");
   const [customRangeStartDate, setCustomRangeStartDate] = useState(initialRangeStartDate);
   const [customRangeEndDate, setCustomRangeEndDate] = useState(initialRangeEndDate);
-  const [mixRangeStartDate, setMixRangeStartDate] = useState(initialRangeStartDate);
-  const [mixRangeEndDate, setMixRangeEndDate] = useState(initialRangeEndDate);
   const [chartScope, setChartScope] = useState<ChartScope>("monthly");
   const [chartAnchorMs, setChartAnchorMs] = useState(() => normalizePeriodAnchorMs("monthly", currentNowMs, currentNowMs));
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
@@ -464,39 +462,6 @@ export function DashboardClient({
     } satisfies DashboardOrder;
   });
 
-  const mixStartMs = parseDateStartMs(mixRangeStartDate);
-  const mixEndMs = parseDateEndMs(mixRangeEndDate);
-  const mixBounds =
-    mixStartMs !== null && mixEndMs !== null
-      ? {
-          startMs: Math.min(mixStartMs, mixEndMs),
-          endMs: Math.max(mixStartMs, mixEndMs),
-        }
-      : null;
-  const mixOrders = baseFilteredOrders
-    .filter((order) => {
-      if (!mixBounds) return true;
-      const createdMs = order.createdUnix * 1000;
-      return createdMs >= mixBounds.startMs && createdMs <= mixBounds.endMs;
-    })
-    .map((order) => {
-      const orderCurrency = normalizeCurrency(order.currency);
-
-      return {
-        ...order,
-        amountTotal: convertAmountCents(order.amountTotal, orderCurrency, displayCurrency, currencyRates),
-        goldValue: convertAmountCents(order.goldValue, orderCurrency, displayCurrency, currencyRates),
-        agentCommission: convertAmountCents(order.agentCommission, orderCurrency, displayCurrency, currencyRates),
-        supplierPayout: convertAmountCents(order.supplierPayout, orderCurrency, displayCurrency, currencyRates),
-        grossProfit: convertAmountCents(order.grossProfit, orderCurrency, displayCurrency, currencyRates),
-        gatewayFee: convertAmountCents(order.gatewayFee, orderCurrency, displayCurrency, currencyRates),
-        cashback: convertAmountCents(order.cashback, orderCurrency, displayCurrency, currencyRates),
-        operationalReserve: convertAmountCents(order.operationalReserve, orderCurrency, displayCurrency, currencyRates),
-        netProfit: convertAmountCents(order.netProfit, orderCurrency, displayCurrency, currencyRates),
-        currency: displayCurrency,
-      } satisfies DashboardOrder;
-    });
-
   const revenueByCurrency = dashboardFilteredOrders.reduce<Record<DashboardCurrency, number>>(
     (acc, order) => {
       const orderCurrency = normalizeCurrency(order.currency);
@@ -520,17 +485,17 @@ export function DashboardClient({
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
   const totalProfitMargin = computeEffectivePercent(totalNetProfit, totalGoldValue);
 
-  const mixTotalRevenue = mixOrders.reduce((acc, order) => acc + order.amountTotal, 0);
-  const mixTotalGoldValue = mixOrders.reduce((acc, order) => acc + order.goldValue, 0);
-  const mixTotalPayout = mixOrders.reduce((acc, order) => acc + order.supplierPayout, 0);
-  const mixTotalGrossProfit = mixOrders.reduce((acc, order) => acc + order.grossProfit, 0);
-  const mixTotalGatewayFee = mixOrders.reduce((acc, order) => acc + order.gatewayFee, 0);
-  const mixTotalCashback = mixOrders.reduce((acc, order) => acc + order.cashback, 0);
-  const mixTotalOperationalReserve = mixOrders.reduce((acc, order) => acc + order.operationalReserve, 0);
-  const mixTotalAgentCommission = mixOrders.reduce((acc, order) => acc + order.agentCommission, 0);
-  const mixTotalNetProfit = mixOrders.reduce((acc, order) => acc + order.netProfit, 0);
-  const mixCouponOrders = mixOrders.filter((order) => order.couponUsed).length;
-  const mixNonCouponOrders = mixOrders.length - mixCouponOrders;
+  const mixTotalRevenue = displayOrders.reduce((acc, order) => acc + order.amountTotal, 0);
+  const mixTotalGoldValue = displayOrders.reduce((acc, order) => acc + order.goldValue, 0);
+  const mixTotalPayout = displayOrders.reduce((acc, order) => acc + order.supplierPayout, 0);
+  const mixTotalGrossProfit = displayOrders.reduce((acc, order) => acc + order.grossProfit, 0);
+  const mixTotalGatewayFee = displayOrders.reduce((acc, order) => acc + order.gatewayFee, 0);
+  const mixTotalCashback = displayOrders.reduce((acc, order) => acc + order.cashback, 0);
+  const mixTotalOperationalReserve = displayOrders.reduce((acc, order) => acc + order.operationalReserve, 0);
+  const mixTotalAgentCommission = displayOrders.reduce((acc, order) => acc + order.agentCommission, 0);
+  const mixTotalNetProfit = displayOrders.reduce((acc, order) => acc + order.netProfit, 0);
+  const mixCouponOrders = displayOrders.filter((order) => order.couponUsed).length;
+  const mixNonCouponOrders = displayOrders.length - mixCouponOrders;
   const mixProfitMargin = computeEffectivePercent(mixTotalNetProfit, mixTotalGoldValue);
   const mixSupplierAveragePercent = computeEffectivePercent(mixTotalPayout, mixTotalGoldValue);
   const mixGatewayOrders = mixOrders.filter((order) => order.gatewayFee > 0);
@@ -847,36 +812,14 @@ export function DashboardClient({
           </article>
 
           <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-8">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Mix financeiro</p>
                 <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">Repasse x lucro</h2>
               </div>
-              <div className="flex flex-wrap items-end gap-2">
-                <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                  De
-                  <input
-                    type="date"
-                    value={mixRangeStartDate}
-                    max={initialRangeEndDate}
-                    onChange={(event) => setMixRangeStartDate(event.target.value)}
-                    className="min-h-10 rounded-xl border border-white/10 bg-black/30 px-3 text-xs text-white outline-none transition focus:border-cyan-400"
-                  />
-                </label>
-                <label className="grid gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                  Até
-                  <input
-                    type="date"
-                    value={mixRangeEndDate}
-                    max={initialRangeEndDate}
-                    onChange={(event) => setMixRangeEndDate(event.target.value)}
-                    className="min-h-10 rounded-xl border border-white/10 bg-black/30 px-3 text-xs text-white outline-none transition focus:border-cyan-400"
-                  />
-                </label>
-                <span className="inline-flex min-h-10 items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 text-xs font-bold uppercase tracking-[0.16em] text-emerald-300">
-                  Dados reais
-                </span>
-              </div>
+              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-emerald-300">
+                Dados reais
+              </span>
             </div>
 
             <article className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
