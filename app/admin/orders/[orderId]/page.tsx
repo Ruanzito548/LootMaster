@@ -5,7 +5,7 @@ import { FieldPath } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { convertCentsToUsdCents, getUsdRates, normalizeCurrency } from "@/lib/currency-conversion";
 import { computeFeeBreakdownFromNetRevenue } from "@/lib/agency";
-import { buildOrderFinancialSnapshot } from "@/lib/order-financials";
+import { buildOrderFinancialSnapshot, computeOrderSummaryFinancials } from "@/lib/order-financials";
 import { buildDefaultSiteFeeSettings } from "@/lib/site-fee-settings";
 import { isDiscordAutoSendEnabled } from "@/lib/discord-settings";
 
@@ -116,42 +116,41 @@ export default async function AdminOrderApplicantsPage(
         cashbackPercent: defaults.cashbackPercent,
         operationalReservePercent: defaults.operationalReservePercent,
       });
-      const totalUsdCents = convertCentsToUsdCents(amountTotalCents, sourceCurrency, usdRates);
       const paymentMethod = typeof data.paymentMethod === "string" ? data.paymentMethod.toLowerCase() : "";
-      const cardFeePercent = financials.cardFeePercent;
-      const goldSourceCents =
-        paymentMethod === "card"
-          ? Math.max(0, Math.round(amountTotalCents / (1 + cardFeePercent / 100)))
-          : amountTotalCents;
-      const goldUsdCents = convertCentsToUsdCents(goldSourceCents, sourceCurrency, usdRates);
-      const supplierPayoutSourceCents = Math.max(0, Math.round(goldSourceCents * (financials.supplierPercentage / 100)));
-      const supplierPayoutUsdCents = convertCentsToUsdCents(supplierPayoutSourceCents, sourceCurrency, usdRates);
-      const gatewaySourceCents = Math.max(0, amountTotalCents - goldSourceCents);
-      const gatewayUsdCents = convertCentsToUsdCents(gatewaySourceCents, sourceCurrency, usdRates);
-      const cashbackSourceCents = Math.max(0, Math.round(goldSourceCents * (financials.cashbackPercent / 100)));
-      const operationalReserveSourceCents = Math.max(0, Math.round(goldSourceCents * (financials.operationalReservePercent / 100)));
-      const cashbackUsdCents = convertCentsToUsdCents(cashbackSourceCents, sourceCurrency, usdRates);
-      const operationalReserveUsdCents = convertCentsToUsdCents(operationalReserveSourceCents, sourceCurrency, usdRates);
       const feeTransferDoc = await adminDb.collection("fee-transfers").doc(orderId).get();
       const feeTransferData = feeTransferDoc.exists ? (feeTransferDoc.data() as Record<string, unknown>) : {};
-      const grossProfitUsdCents = Math.max(0, goldUsdCents - supplierPayoutUsdCents);
       const partnerCommissionPercent =
         typeof feeTransferData.agentFeeSharePercent === "number" && Number.isFinite(feeTransferData.agentFeeSharePercent)
           ? feeTransferData.agentFeeSharePercent
           : 0;
+      const baseSummary = computeOrderSummaryFinancials({
+        totalPaidCents: amountTotalCents,
+        paymentMethod,
+        supplierPercentage: financials.supplierPercentage,
+        cardFeePercent: financials.cardFeePercent,
+        cashbackPercent: financials.cashbackPercent,
+        operationalReservePercent: financials.operationalReservePercent,
+      });
       // Prefer the amount actually credited to the partner (net of partner-funded discounts) over a fresh recalculation.
-      const partnerCommissionUsdCents =
+      const partnerCommissionSourceCents =
         typeof feeTransferData.agentPayoutCents === "number" && Number.isFinite(feeTransferData.agentPayoutCents)
-          ? convertCentsToUsdCents(feeTransferData.agentPayoutCents, sourceCurrency, usdRates)
-          : computeFeeBreakdownFromNetRevenue(goldUsdCents, supplierPayoutUsdCents, partnerCommissionPercent).agentPayoutCents;
-      const partnerDiscountUsdCents =
+          ? feeTransferData.agentPayoutCents
+          : computeFeeBreakdownFromNetRevenue(baseSummary.goldValue, baseSummary.supplierPayout, partnerCommissionPercent).agentPayoutCents;
+      const partnerDiscountSourceCents =
         typeof feeTransferData.partnerDiscountPartnerCents === "number" && Number.isFinite(feeTransferData.partnerDiscountPartnerCents)
-          ? convertCentsToUsdCents(feeTransferData.partnerDiscountPartnerCents, sourceCurrency, usdRates)
+          ? feeTransferData.partnerDiscountPartnerCents
           : 0;
-      const netProfitUsdCents = Math.max(
-        0,
-        grossProfitUsdCents - cashbackUsdCents - operationalReserveUsdCents - partnerCommissionUsdCents,
-      );
+      const financialSummary = computeOrderSummaryFinancials({
+        totalPaidCents: amountTotalCents,
+        paymentMethod,
+        supplierPercentage: financials.supplierPercentage,
+        cardFeePercent: financials.cardFeePercent,
+        cashbackPercent: financials.cashbackPercent,
+        operationalReservePercent: financials.operationalReservePercent,
+        agentCommissionCents: partnerCommissionSourceCents,
+        partnerDiscountCents: partnerDiscountSourceCents,
+      });
+      const toUsd = (amountCents: number) => convertCentsToUsdCents(amountCents, sourceCurrency, usdRates);
       const assignedAgentId = typeof data.assignedAgentId === "string" ? data.assignedAgentId.trim() : "";
       const orderCreatedAtIso =
         typeof data.stripeCreatedAt === "string" && data.stripeCreatedAt
@@ -245,24 +244,24 @@ export default async function AdminOrderApplicantsPage(
         goldAmount: typeof data.goldAmount === "number" ? data.goldAmount : 0,
         server: typeof data.server === "string" ? data.server : "-",
         faction: typeof data.faction === "string" ? data.faction : "-",
-        totalLabel: formatMoney(totalUsdCents),
-        payoutLabel: formatMoney(supplierPayoutUsdCents),
-        totalCents: totalUsdCents,
-        goldCents: goldUsdCents,
-        supplierPayoutCents: supplierPayoutUsdCents,
+        totalLabel: formatMoney(toUsd(financialSummary.totalPaid)),
+        payoutLabel: formatMoney(toUsd(financialSummary.supplierPayout)),
+        totalCents: toUsd(financialSummary.totalPaid),
+        goldCents: toUsd(financialSummary.goldValue),
+        supplierPayoutCents: toUsd(financialSummary.supplierPayout),
         supplierPercentage: financials.supplierPercentage,
         gatewayLabel: resolveGatewayLabel(paymentMethod),
-        gatewayCents: gatewayUsdCents,
-        gatewayPercent: cardFeePercent,
-        cashbackCents: cashbackUsdCents,
-        cashbackPercent: typeof data.cashbackPercent === "number" ? data.cashbackPercent : 0,
-        operationalReserveCents: operationalReserveUsdCents,
-        operationalReservePercent: typeof data.operationalReservePercent === "number" ? data.operationalReservePercent : 0,
-        partnerCommissionCents: partnerCommissionUsdCents,
+        gatewayCents: toUsd(financialSummary.gatewayFee),
+        gatewayPercent: financials.cardFeePercent,
+        cashbackCents: toUsd(financialSummary.cashback),
+        cashbackPercent: financials.cashbackPercent,
+        operationalReserveCents: toUsd(financialSummary.operationalReserve),
+        operationalReservePercent: financials.operationalReservePercent,
+        partnerCommissionCents: toUsd(financialSummary.agentCommission),
         partnerCommissionPercent,
-        partnerDiscountCents: partnerDiscountUsdCents,
-        netProfitCents: netProfitUsdCents,
-        profitMarginPercent: goldUsdCents > 0 ? (netProfitUsdCents / goldUsdCents) * 100 : 0,
+        partnerDiscountCents: toUsd(financialSummary.partnerDiscount),
+        netProfitCents: toUsd(financialSummary.netProfit),
+        profitMarginPercent: financialSummary.profitMarginPercent,
         orderCreatedAtIso,
         dailyOrdersCount,
         weeklyOrdersCount,

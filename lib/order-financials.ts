@@ -21,6 +21,31 @@ export type OrderFinancials = {
   netProfit: number;
 };
 
+export type OrderSummaryFinancials = {
+  totalPaid: number;
+  goldValue: number;
+  supplierPayout: number;
+  grossProfit: number;
+  gatewayFee: number;
+  agentCommission: number;
+  partnerDiscount: number;
+  cashback: number;
+  operationalReserve: number;
+  netProfit: number;
+  profitMarginPercent: number;
+};
+
+type OrderSummaryFinancialInput = {
+  totalPaidCents: number;
+  paymentMethod: string;
+  supplierPercentage: number;
+  cardFeePercent: number;
+  cashbackPercent: number;
+  operationalReservePercent: number;
+  agentCommissionCents?: number;
+  partnerDiscountCents?: number;
+};
+
 function asFiniteNumber(value: unknown): number | null {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return null;
@@ -30,6 +55,49 @@ function asFiniteNumber(value: unknown): number | null {
 }
 
 export const clampPercent = sharedClampPercent;
+
+export function computeOrderSummaryFinancials({
+  totalPaidCents,
+  paymentMethod,
+  supplierPercentage: supplierPercentageRaw,
+  cardFeePercent: cardFeePercentRaw,
+  cashbackPercent: cashbackPercentRaw,
+  operationalReservePercent: operationalReservePercentRaw,
+  agentCommissionCents = 0,
+  partnerDiscountCents = 0,
+}: OrderSummaryFinancialInput): OrderSummaryFinancials {
+  const totalPaid = Math.max(0, Math.round(totalPaidCents));
+  const supplierPercentage = clampPercent(supplierPercentageRaw);
+  const cardFeePercent = clampPercent(cardFeePercentRaw);
+  const cashbackPercent = clampPercent(cashbackPercentRaw);
+  const operationalReservePercent = clampPercent(operationalReservePercentRaw);
+  const isCardPayment = paymentMethod.trim().toLowerCase() === "card";
+  const goldValue = isCardPayment
+    ? Math.max(0, Math.round(totalPaid / (1 + cardFeePercent / 100)))
+    : totalPaid;
+  const supplierPayout = Math.max(0, Math.round(goldValue * (supplierPercentage / 100)));
+  const grossProfit = Math.max(0, goldValue - supplierPayout);
+  const gatewayFee = Math.max(0, totalPaid - goldValue);
+  const agentCommission = Math.max(0, Math.round(agentCommissionCents));
+  const partnerDiscount = Math.max(0, Math.round(partnerDiscountCents));
+  const cashback = Math.max(0, Math.round(goldValue * (cashbackPercent / 100)));
+  const operationalReserve = Math.max(0, Math.round(goldValue * (operationalReservePercent / 100)));
+  const netProfit = Math.max(0, grossProfit - agentCommission - cashback - operationalReserve);
+
+  return {
+    totalPaid,
+    goldValue,
+    supplierPayout,
+    grossProfit,
+    gatewayFee,
+    agentCommission,
+    partnerDiscount,
+    cashback,
+    operationalReserve,
+    netProfit,
+    profitMarginPercent: goldValue > 0 ? (netProfit / goldValue) * 100 : 0,
+  };
+}
 
 export function computeOrderFinancials(
   grossRevenueCents: number,

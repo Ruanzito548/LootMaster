@@ -7,7 +7,10 @@ export type DashboardOrder = {
   id: string;
   createdUnix: number;
   amountTotal: number;
-  agentCommissionPaidCents: number;
+  goldValue: number;
+  agentCommission: number;
+  agentCommissionPercent: number;
+  partnerDiscount: number;
   currency: string;
   statusLabel: string;
   gameTitle: string;
@@ -23,22 +26,19 @@ export type DashboardOrder = {
   supplierPercentage: number;
   supplierPayout: number;
   grossProfit: number;
-  cardFee: number;
+  gatewayFee: number;
+  gatewayPercent: number;
   cashback: number;
+  cashbackPercent: number;
   operationalReserve: number;
+  operationalReservePercent: number;
   netProfit: number;
+  profitMarginPercent: number;
 };
 
 type DashboardClientProps = {
   orders: DashboardOrder[];
   loadError: string | null;
-  configuredPercents: {
-    supplierPercentage: number;
-    cardGatewayFeePercent: number;
-    cashbackPercent: number;
-    operationalReservePercent: number;
-    agentCommissionPercent: number;
-  };
 };
 
 type RangeValue = "7" | "30" | "90" | "all" | "custom";
@@ -71,16 +71,6 @@ function normalizeCurrency(value: string | null | undefined): DashboardCurrency 
   }
 
   return "USD";
-}
-
-function resolveGatewayLabel(paymentMethod: string) {
-  const normalized = paymentMethod.trim().toLowerCase();
-
-  if (!normalized || normalized === "--") return "Gateway";
-  if (normalized.includes("mercado")) return "Gateway Mercado Pago";
-  if (normalized.includes("stripe") || normalized.includes("card") || normalized.includes("cartao")) return "Gateway Stripe";
-  if (normalized.includes("pix")) return "Gateway";
-  return `Gateway ${paymentMethod}`;
 }
 
 function formatMoney(amountInCents: number, currency: DashboardCurrency) {
@@ -349,7 +339,6 @@ function convertAmountCents(
 export function DashboardClient({
   orders,
   loadError,
-  configuredPercents,
 }: DashboardClientProps) {
   const [currentNowMs, setCurrentNowMs] = useState(() => getNowMs());
   const initialRangeEndDate = formatDateInputFromMs(currentNowMs);
@@ -360,7 +349,6 @@ export function DashboardClient({
   const [chartScope, setChartScope] = useState<ChartScope>("monthly");
   const [chartAnchorMs, setChartAnchorMs] = useState(() => normalizePeriodAnchorMs("monthly", currentNowMs, currentNowMs));
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
   const [gameFilter, setGameFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [displayCurrency, setDisplayCurrency] = useState<DashboardCurrency>("BRL");
@@ -426,12 +414,10 @@ export function DashboardClient({
   const isMonthPickerOpen = chartScope === "monthly" && monthPickerOpen;
   const chartAnimated = true;
 
-  const statusOptions = ["all", ...Array.from(new Set(orders.map((order) => order.statusLabel)))];
   const gameOptions = ["all", ...Array.from(new Set(orders.map((order) => order.gameTitle)))];
   const paymentOptions = ["all", ...Array.from(new Set(orders.map((order) => order.paymentMethod)))];
 
   const baseFilteredOrders = orders.filter((order) => {
-    if (statusFilter !== "all" && order.statusLabel !== statusFilter) return false;
     if (gameFilter !== "all" && order.gameTitle !== gameFilter) return false;
     if (paymentFilter !== "all" && order.paymentMethod !== paymentFilter) return false;
     return true;
@@ -464,10 +450,12 @@ export function DashboardClient({
     return {
       ...order,
       amountTotal: convertAmountCents(order.amountTotal, orderCurrency, displayCurrency, currencyRates),
-      agentCommissionPaidCents: convertAmountCents(order.agentCommissionPaidCents, orderCurrency, displayCurrency, currencyRates),
+      goldValue: convertAmountCents(order.goldValue, orderCurrency, displayCurrency, currencyRates),
+      agentCommission: convertAmountCents(order.agentCommission, orderCurrency, displayCurrency, currencyRates),
+      partnerDiscount: convertAmountCents(order.partnerDiscount, orderCurrency, displayCurrency, currencyRates),
       supplierPayout: convertAmountCents(order.supplierPayout, orderCurrency, displayCurrency, currencyRates),
       grossProfit: convertAmountCents(order.grossProfit, orderCurrency, displayCurrency, currencyRates),
-      cardFee: convertAmountCents(order.cardFee, orderCurrency, displayCurrency, currencyRates),
+      gatewayFee: convertAmountCents(order.gatewayFee, orderCurrency, displayCurrency, currencyRates),
       cashback: convertAmountCents(order.cashback, orderCurrency, displayCurrency, currencyRates),
       operationalReserve: convertAmountCents(order.operationalReserve, orderCurrency, displayCurrency, currencyRates),
       netProfit: convertAmountCents(order.netProfit, orderCurrency, displayCurrency, currencyRates),
@@ -489,67 +477,23 @@ export function DashboardClient({
   );
 
   const totalRevenue = displayOrders.reduce((acc, order) => acc + order.amountTotal, 0);
+  const totalGoldValue = displayOrders.reduce((acc, order) => acc + order.goldValue, 0);
   const totalPayout = displayOrders.reduce((acc, order) => acc + order.supplierPayout, 0);
-  const totalGatewayFee = displayOrders.reduce((acc, order) => acc + order.cardFee, 0);
+  const totalGrossProfit = displayOrders.reduce((acc, order) => acc + order.grossProfit, 0);
+  const totalGatewayFee = displayOrders.reduce((acc, order) => acc + order.gatewayFee, 0);
   const totalCashback = displayOrders.reduce((acc, order) => acc + order.cashback, 0);
   const totalOperationalReserve = displayOrders.reduce((acc, order) => acc + order.operationalReserve, 0);
-  const totalAgentCommissionPaid = displayOrders.reduce((acc, order) => acc + order.agentCommissionPaidCents, 0);
-  const orderNetProfit = displayOrders.reduce((acc, order) => acc + order.netProfit, 0);
+  const totalAgentCommission = displayOrders.reduce((acc, order) => acc + order.agentCommission, 0);
+  const totalPartnerDiscount = displayOrders.reduce((acc, order) => acc + order.partnerDiscount, 0);
+  const totalNetProfit = displayOrders.reduce((acc, order) => acc + order.netProfit, 0);
   const totalOrders = displayOrders.length;
-  const totalNetProfit = orderNetProfit;
-  const gatewayMethods = Array.from(new Set(displayOrders.map((order) => resolveGatewayLabel(order.paymentMethod))));
-  const gatewayLabel = gatewayMethods.length === 1 ? gatewayMethods[0] : "Gateway (misto)";
   const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
-  const compositionRows = [
-    {
-      id: "supplier",
-      label: "Repasse fornecedor",
-      currentPercent: configuredPercents.supplierPercentage,
-      effectivePercent: computeEffectivePercent(totalPayout, totalRevenue),
-      valueCents: totalPayout,
-    },
-    {
-      id: "gateway",
-      label: gatewayLabel,
-      currentPercent: configuredPercents.cardGatewayFeePercent,
-      effectivePercent: computeEffectivePercent(totalGatewayFee, totalRevenue),
-      valueCents: totalGatewayFee,
-    },
-    {
-      id: "cashback",
-      label: "Cashback / Loot Coins",
-      currentPercent: configuredPercents.cashbackPercent,
-      effectivePercent: computeEffectivePercent(totalCashback, totalRevenue),
-      valueCents: totalCashback,
-    },
-    {
-      id: "reserve",
-      label: "Reserva operacional",
-      currentPercent: configuredPercents.operationalReservePercent,
-      effectivePercent: computeEffectivePercent(totalOperationalReserve, totalRevenue),
-      valueCents: totalOperationalReserve,
-    },
-    {
-      id: "agent",
-      label: "Comissões de parceiros (pagas)",
-      currentPercent: configuredPercents.agentCommissionPercent,
-      effectivePercent: computeEffectivePercent(totalAgentCommissionPaid, totalRevenue),
-      valueCents: totalAgentCommissionPaid,
-    },
-  ];
-
-  const statusGrouped = new Map<string, number>();
-  for (const order of displayOrders) {
-    statusGrouped.set(order.statusLabel, (statusGrouped.get(order.statusLabel) || 0) + 1);
-  }
-
-  const statusBreakdown = Array.from(statusGrouped.entries())
-    .map(([label, count]) => ({
-      label,
-      count,
-      pct: totalOrders > 0 ? Math.round((count / totalOrders) * 100) : 0,
-    }))
-    .sort((a, b) => b.count - a.count);
+  const totalProfitMargin = computeEffectivePercent(totalNetProfit, totalGoldValue);
+  const supplierAveragePercent = computeEffectivePercent(totalPayout, totalGoldValue);
+  const gatewayAveragePercent = computeEffectivePercent(totalGatewayFee, totalGoldValue);
+  const agentAveragePercent = computeEffectivePercent(totalAgentCommission, totalGrossProfit);
+  const cashbackAveragePercent = computeEffectivePercent(totalCashback, totalGoldValue);
+  const reserveAveragePercent = computeEffectivePercent(totalOperationalReserve, totalGoldValue);
 
   const gameRevenueGrouped = new Map<string, number>();
   for (const order of displayOrders) {
@@ -666,7 +610,7 @@ export function DashboardClient({
       <main className="w-full px-4 py-8 sm:px-6 lg:px-8">
         <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
           <article className="rounded-[1.8rem] border border-white/10 bg-[#171A22] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] sm:p-6 xl:col-span-2">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
               <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 xl:col-span-2">
                 Período do dashboard
                 <select
@@ -705,21 +649,6 @@ export function DashboardClient({
                   </label>
                 </>
               ) : null}
-
-              <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                Status
-                <select
-                  className="min-h-[48px] w-full rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-white outline-none transition focus:border-cyan-400"
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value)}
-                >
-                  {statusOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option === "all" ? "Todos" : option}
-                    </option>
-                  ))}
-                </select>
-              </label>
 
               <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
                 Jogo
@@ -776,8 +705,7 @@ export function DashboardClient({
                 <p className="text-xs font-bold uppercase tracking-[0.28em] text-slate-400">Admin</p>
                 <h1 className="max-w-2xl text-4xl font-black leading-tight text-white sm:text-5xl">Dashboard Financeiro</h1>
                 <p className="max-w-3xl text-sm leading-7 text-slate-400 sm:text-base">
-                  Painel calculado direto dos pedidos registrados em <span className="font-semibold text-cyan-300">order-checkouts</span>, com repasse,
-                  lucro e atalhos rápidos para ajustar as taxas do site.
+                  Consolidado calculado exclusivamente a partir das ordens completas, seguindo o mesmo resumo financeiro exibido em cada ordem.
                 </p>
               </div>
 
@@ -834,21 +762,28 @@ export function DashboardClient({
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Valor do gold</p>
+                <p className="font-data mt-2 text-2xl font-black text-white">{formatMoney(totalGoldValue, displayCurrency)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Lucro bruto</p>
+                <p className="font-data mt-2 text-2xl font-black text-cyan-300">{formatMoney(totalGrossProfit, displayCurrency)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Lucro líquido</p>
+                <p className="font-data mt-2 text-2xl font-black text-emerald-300">{formatMoney(totalNetProfit, displayCurrency)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Margem líquida</p>
+                <p className="font-data mt-2 text-2xl font-black text-amber-300">{formatPercent(totalProfitMargin)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Ordens completas</p>
+                <p className="font-data mt-2 text-2xl font-black text-white">{totalOrders}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Ticket médio</p>
-                <p className="mt-2 text-2xl font-black text-white">{formatMoney(avgTicket, displayCurrency)}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Pedidos completos</p>
-                <p className="mt-2 text-2xl font-black text-emerald-300">{statusBreakdown.find((item) => item.label === "Completed")?.count ?? 0}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Pedidos filtrados</p>
-                <p className="mt-2 text-2xl font-black text-cyan-300">{totalOrders}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:col-span-2 xl:col-span-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Comissões de parceiros pagas</p>
-                <p className="mt-2 text-2xl font-black text-amber-300">{formatMoney(totalAgentCommissionPaid, displayCurrency)}</p>
-                <p className="mt-1 text-xs text-slate-500">Valor real vindo dos registros de repasse em Comissões de parceiros.</p>
+                <p className="font-data mt-2 text-2xl font-black text-white">{formatMoney(avgTicket, displayCurrency)}</p>
               </div>
             </div>
 
@@ -877,54 +812,58 @@ export function DashboardClient({
 
             <article className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Composição do Lucro</p>
-              <p className="mt-2 text-xs text-slate-500">
-                As porcentagens exibidas são as configurações atuais. Os valores em moeda são os valores reais históricos das ordens filtradas.
-              </p>
+              <p className="mt-2 text-xs text-slate-500">Soma dos resumos financeiros históricos das ordens completas selecionadas.</p>
 
-              <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_1.1fr]">
-                <div className="space-y-2 text-sm">
+              <div className="mt-4 space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-200">Valor total pago</span>
+                  <span className="font-data font-semibold text-slate-100">{formatMoney(totalRevenue, displayCurrency)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-300">Valor do gold</span>
+                  <span className="font-data font-semibold text-slate-100">{formatMoney(totalGoldValue, displayCurrency)}</span>
+                </div>
+                {totalGatewayFee > 0 ? (
                   <div className="flex items-center justify-between gap-3">
-                    <span className="font-semibold text-slate-200">Faturamento Bruto</span>
-                    <span className="font-black text-cyan-200">{formatMoney(totalRevenue, displayCurrency)}</span>
+                    <span className="text-slate-300">Gateway ({formatPercent(gatewayAveragePercent)} sobre o gold)</span>
+                    <span className="font-data font-semibold text-rose-300">{formatDeduction(totalGatewayFee, displayCurrency)}</span>
                   </div>
-
-                  {compositionRows.map((row) => (
-                    <div key={row.id} className="flex items-center justify-between gap-3">
-                      <span className="font-semibold text-slate-300">- {row.label}</span>
-                      <span className="font-black text-rose-300">{formatDeduction(row.valueCents, displayCurrency)}</span>
-                    </div>
-                  ))}
+                ) : null}
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-300">Repasse ao fornecedor ({formatPercent(supplierAveragePercent)})</span>
+                  <span className="font-data font-semibold text-rose-300">{formatDeduction(totalPayout, displayCurrency)}</span>
                 </div>
-
-                <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#111722]">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-white/10 text-[11px] uppercase tracking-[0.14em] text-slate-500">
-                        <th className="px-3 py-2">Linha</th>
-                        <th className="px-3 py-2 text-right">% atual</th>
-                        <th className="px-3 py-2 text-right">% média</th>
-                        <th className="px-3 py-2 text-right">Valor</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {compositionRows.map((row) => (
-                        <tr key={`table-${row.id}`} className="border-b border-white/5 text-slate-200">
-                          <td className="px-3 py-2">{row.label}</td>
-                          <td className="px-3 py-2 text-right text-cyan-300">{formatPercent(row.currentPercent)}</td>
-                          <td className="px-3 py-2 text-right text-emerald-300">{formatPercent(row.effectivePercent)}</td>
-                          <td className="px-3 py-2 text-right font-semibold text-rose-300">{formatDeduction(row.valueCents, displayCurrency)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="border-t border-dashed border-white/15 pt-2" />
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-bold text-white">Lucro bruto</span>
+                  <span className="font-data font-bold text-white">{formatMoney(totalGrossProfit, displayCurrency)}</span>
                 </div>
-              </div>
-
-              <div className="my-3 border-t border-dashed border-white/15" />
-
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Lucro Líquido</span>
-                <span className="text-right text-xl font-black text-fuchsia-300">{formatMoney(totalNetProfit, displayCurrency)}</span>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-300">Comissão do agente ({formatPercent(agentAveragePercent)} do lucro bruto)</span>
+                  <span className="font-data font-semibold text-rose-300">{formatDeduction(totalAgentCommission, displayCurrency)}</span>
+                </div>
+                {totalPartnerDiscount > 0 ? (
+                  <div className="flex items-center justify-between gap-3 text-xs">
+                    <span className="text-amber-300">Já descontado: primeira compra custeada pelo parceiro</span>
+                    <span className="font-data font-semibold text-amber-300">{formatDeduction(totalPartnerDiscount, displayCurrency)}</span>
+                  </div>
+                ) : null}
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-300">Cashback / Loot Coins ({formatPercent(cashbackAveragePercent)})</span>
+                  <span className="font-data font-semibold text-rose-300">{formatDeduction(totalCashback, displayCurrency)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-300">Reserva operacional ({formatPercent(reserveAveragePercent)})</span>
+                  <span className="font-data font-semibold text-rose-300">{formatDeduction(totalOperationalReserve, displayCurrency)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-t border-dashed border-white/15 pt-3">
+                  <span className="font-black uppercase tracking-[0.12em] text-white">Lucro líquido</span>
+                  <span className="font-data text-xl font-black text-emerald-300">{formatMoney(totalNetProfit, displayCurrency)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-bold text-white">Margem de lucro das vendas</span>
+                  <span className="font-data font-bold text-amber-300">{formatPercent(totalProfitMargin)}</span>
+                </div>
               </div>
             </article>
 
