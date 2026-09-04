@@ -38,6 +38,20 @@ describe("chest wallet economy", () => {
     expect(nextState.wallets.jackpotCommon.balanceUsd).toBeCloseTo(9.9, 5);
   });
 
+  it("omits optional ledger fields when reward context has no email", () => {
+    const state = buildDefaultChestWalletEconomyState();
+    const nextState = applyChestWalletReward(
+      state,
+      { walletKey: "normal", type: "normal", amountUsd: 1, percentOfWallet: 0, reason: "test" },
+      { userId: "user-1" },
+    );
+    const entry = nextState.ledger[0];
+
+    expect(entry && "userId" in entry).toBe(true);
+    expect(entry && "userEmail" in (entry.metadata ?? {})).toBe(false);
+    expect(entry && "chestId" in (entry.metadata ?? {})).toBe(false);
+  });
+
   it("pays jackpot rare using chest rarity percentage and never reaches 100%", () => {
     const config = buildDefaultChestWalletEconomyConfig();
     const state = buildDefaultChestWalletEconomyState();
